@@ -1,0 +1,124 @@
+use std::fmt;
+use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, KEY_READ, KEY_WRITE};
+use winreg::RegKey;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RootKey {
+    Hkcu,
+    Hklm,
+}
+
+impl RootKey {
+    pub fn to_hkey(self) -> winreg::HKEY {
+        match self {
+            RootKey::Hkcu => HKEY_CURRENT_USER,
+            RootKey::Hklm => HKEY_LOCAL_MACHINE,
+        }
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            RootKey::Hkcu => "HKCU",
+            RootKey::Hklm => "HKLM",
+        }
+    }
+}
+
+
+#[derive(Debug)]
+pub enum RegistryError {
+    OpenKeyFailed {
+        root: &'static str,
+        path: String,
+        source: std::io::Error,
+    },
+    CreateKeyFailed {
+        root: &'static str,
+        path: String,
+        source: std::io::Error,
+    },
+    GetValueFailed {
+        root: &'static str,
+        path: String,
+        name: String,
+        source: std::io::Error,
+    },
+    SetValueFailed {
+        root: &'static str,
+        path: String,
+        name: String,
+        source: std::io::Error,
+    },
+    DeleteValueFailed {
+        root: &'static str,
+        path: String,
+        name: String,
+        source: std::io::Error,
+    },
+}
+
+impl fmt::Display for RegistryError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::OpenKeyFailed { root, path, source } => {
+                write!(f, "Failed to open registry key {}\\{}: {}", root, path, source)
+            }
+            Self::CreateKeyFailed { root, path, source } => {
+                write!(f, "Failed to create registry key {}\\{}: {}", root, path, source)
+            }
+            Self::GetValueFailed { root, path, name, source } => {
+                write!(f, "Failed to get value {}\\{}\\{}: {}", root, path, name, source)
+            }
+            Self::SetValueFailed { root, path, name, source } => {
+                write!(f, "Failed to set value {}\\{}\\{}: {}", root, path, name, source)
+            }
+            Self::DeleteValueFailed { root, path, name, source } => {
+                write!(f, "Failed to delete value {}\\{}\\{}: {}", root, path, name, source)
+            }
+        }
+    }
+}
+
+impl std::error::Error for RegistryError {}
+
+pub struct SafeRegistry;
+
+impl SafeRegistry {
+    pub fn get_dword(root: RootKey, path: &str, name: &str) -> Result<u32, RegistryError> {
+        let hkey = RegKey::predef(root.to_hkey());
+        let key = hkey.open_subkey_with_flags(path, KEY_READ).map_err(|source| {
+            RegistryError::OpenKeyFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                source,
+            }
+        })?;
+        key.get_value::<u32, _>(name).map_err(|source| {
+            RegistryError::GetValueFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                name: name.to_string(),
+                source,
+            }
+        })
+    }
+
+    pub fn get_string(root: RootKey, path: &str, name: &str) -> Result<String, RegistryError> {
+        let hkey = RegKey::predef(root.to_hkey());
+        let key = hkey.open_subkey_with_flags(path, KEY_READ).map_err(|source| {
+            RegistryError::OpenKeyFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                source,
+            }
+        })?;
+        key.get_value::<String, _>(name).map_err(|source| {
+            RegistryError::GetValueFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                name: name.to_string(),
+                source,
+            }
+        })
+    }
+
