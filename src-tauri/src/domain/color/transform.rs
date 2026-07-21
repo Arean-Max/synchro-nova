@@ -1,0 +1,248 @@
+use crate::app::state::ColorSettings;
+use std::sync::{Arc, Condvar, Mutex, OnceLock};
+
+struct ColorGuardState {
+    active: Option<(ColorSettings, bool)>,
+    exiting: bool,
+}
+
+static COLOR_GUARD_SYNC: OnceLock<Arc<(Mutex<ColorGuardState>, Condvar)>> = OnceLock::new();
+
+fn get_guard_sync() -> &'static Arc<(Mutex<ColorGuardState>, Condvar)> {
+    COLOR_GUARD_SYNC.get_or_init(|| {
+        Arc::new((
+            Mutex::new(ColorGuardState {
+                active: None,
+                exiting: false,
+            }),
+            Condvar::new(),
+        ))
+    })
+}
+
+#[cfg(target_os = "windows")]
+pub fn start_color_guard() {
+    static STARTED: OnceLock<()> = OnceLock::new();
+    STARTED.get_or_init(|| {
+        let sync = Arc::clone(get_guard_sync());
+        std::thread::Builder::new()
+            .name("synchro-color-guard".to_string())
+            .spawn(move || {
+                let (lock, cvar) = &*sync;
+                loop {
+                    let mut state = match lock.lock() {
+                        Ok(g) => g,
+                        Err(e) => e.into_inner(),
+                    };
+
+                    if state.exiting {
+                        break;
+                    }
+
+                    state = match cvar.wait(state) {
+                        Ok(g) => g,
+                        Err(e) => e.into_inner(),
+                    };
+
+                    if state.exiting {
+                        break;
+                    }
+                }
+            })
+            .ok();
+    });
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn start_color_guard() {}
+
+pub fn stop_color_guard() {
+    let sync = get_guard_sync();
+    if let Ok(mut lock) = sync.0.lock() {
+        lock.exiting = true;
+        sync.1.notify_all();
+    }
+}
+
+fn set_active_color(color: Option<(ColorSettings, bool)>) {
+    let sync = get_guard_sync();
+    if let Ok(mut lock) = sync.0.lock() {
+        lock.active = color;
+        sync.1.notify_all();
+    }
+}
+
+pub fn get_active_color() -> Option<ColorSettings> {
+    let sync = get_guard_sync();
+    if let Ok(lock) = sync.0.lock() {
+        lock.active.as_ref().map(|(c, _)| c.clone())
+    } else {
+        None
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) -> Result<(), String> {
+    if !color.enabled {
+        set_active_color(None);
+        return reset_color_transform();
+    }
+
+    set_active_color(Some((color.clone(), show_on_recordings)));
+
+    let _ = apply_gamma_ramp(color.gamma);
+
+    let has_matrix_effect = !color.active_filter.is_empty()
+        || (color.saturation - 100.0).abs() >= 0.1
+        || color.hue.abs() >= 0.1
+        || (color.contrast - 100.0).abs() >= 0.1
+        || color.black_holo > 0.0
+        || (color.gamma - 100.0).abs() >= 0.1;
+
+    if !has_matrix_effect {
+        unsafe {
+            let effect = crate::platform::ffi::MagColorEffect {
+                transform: identity_matrix(),
+            };
+            let _ = crate::platform::ffi::winapi::MagInitialize();
+            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+        }
+    } else {
+        let _ = apply_magnification_color(color, show_on_recordings);
+    }
+
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub(crate) fn apply_color_transform(_color: &ColorSettings, _show_on_recordings: bool) -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+pub fn reset_color_transform() -> Result<(), String> {
+    set_active_color(None);
+    let effect = crate::platform::ffi::MagColorEffect {
+        transform: identity_matrix(),
+    };
+
+    unsafe {
+        let _ = crate::platform::ffi::winapi::MagInitialize();
+        let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+        let _ = crate::platform::ffi::winapi::mag_uninitialize();
+    }
+    if !super::black_holo::is_black_holo_active() {
+        let _ = apply_gamma_ramp(100.0);
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn reset_color_transform() -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) -> Result<(), String> {
+    let matrix = build_color_matrix(color, include_matrix_gamma);
+    let effect = crate::platform::ffi::MagColorEffect { transform: matrix };
+
+    unsafe {
+        crate::platform::ffi::winapi::MagInitialize();
+        if crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect) == 0 {
+            crate::platform::ffi::winapi::MagInitialize();
+            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+        }
+    }
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn apply_gamma_ramp(gamma_percent: f32) -> Result<(), String> {
+    let gamma = (gamma_percent / 100.0).clamp(0.5, 1.5);
+    let exponent = 1.0 / gamma;
+    let mut ramp = crate::platform::ffi::GammaRamp::default();
+
+    for index in 0..256 {
+        let normalized = index as f32 / 255.0;
+        let corrected = normalized.powf(exponent);
+
+        let val = (corrected * 65535.0).round() as u16;
+        ramp.red[index] = val;
+        ramp.green[index] = val;
+        ramp.blue[index] = val;
+    }
+
+    unsafe {
+        let hdc = crate::platform::ffi::winapi::GetDC(std::ptr::null_mut());
+        if hdc.is_null() {
+            return Err("Failed to acquire display device context".to_string());
+        }
+
+        let result = crate::platform::ffi::winapi::SetDeviceGammaRamp(hdc, &ramp);
+        let _ = crate::platform::ffi::winapi::ReleaseDC(std::ptr::null_mut(), hdc);
+
+        if result == 0 {
+            return Err("Display driver rejected gamma ramp".to_string());
+        }
+    }
+
+    Ok(())
+}
+
+pub(crate) fn gamma_fallback_matrix(gamma_percent: f32) -> [f32; 25] {
+    let gamma = (gamma_percent / 100.0).clamp(0.5, 1.5);
+    if (gamma - 1.0).abs() < 0.005 {
+        return identity_matrix();
+    }
+    let lift = (gamma - 1.0) * 0.35;
+    let gain = (1.0 + lift).clamp(0.7, 1.25);
+    let mut m = identity_matrix();
+    m[0] = gain;
+    m[6] = gain;
+    m[12] = gain;
+    m
+}
+
+pub(crate) fn build_color_matrix(color: &ColorSettings, include_matrix_gamma: bool) -> [f32; 25] {
+    let mut matrix = identity_matrix();
+
+    let saturation = color.saturation / 100.0;
+    let contrast = color.contrast / 100.0;
+
+    match color.active_filter.as_str() {
+        "rust_cold_tactical" => {
+            matrix = multiply_matrix(matrix, saturation_matrix(saturation));
+            matrix = multiply_matrix(matrix, channel_gain_matrix(0.92, 1.00, 1.08));
+            matrix = multiply_matrix(matrix, contrast_matrix(contrast));
+        }
+        "rust_midnight_neon" => {
+            matrix = multiply_matrix(matrix, saturation_matrix(saturation));
+            matrix = multiply_matrix(matrix, channel_gain_matrix(0.88, 0.94, 1.25));
+            matrix = multiply_matrix(matrix, shadow_bias_matrix(-0.015, 0.00, 0.04));
+            matrix = multiply_matrix(matrix, contrast_matrix(contrast));
+        }
+        "clear_sight" => {
+            matrix = multiply_matrix(matrix, saturation_matrix(saturation));
+            matrix = multiply_matrix(matrix, channel_gain_matrix(1.02, 1.04, 1.00));
+            matrix = multiply_matrix(matrix, contrast_matrix(contrast));
+        }
+        _ => {
+            matrix = multiply_matrix(matrix, saturation_matrix(saturation));
+            matrix = multiply_matrix(matrix, contrast_matrix(contrast));
+        }
+    }
+
+    if color.hue.abs() >= 0.1 {
+        matrix = multiply_matrix(matrix, hue_matrix(color.hue.to_radians()));
+    }
+    if color.black_holo > 0.0 {
+        matrix = multiply_matrix(matrix, black_holo_matrix(color.black_holo / 100.0));
+    }
+    if include_matrix_gamma && (color.gamma - 100.0).abs() >= 0.1 {
+        matrix = multiply_matrix(matrix, gamma_fallback_matrix(color.gamma));
+    }
+    matrix
+}
+
