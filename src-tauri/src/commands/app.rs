@@ -1,0 +1,76 @@
+use std::sync::Mutex;
+use tauri::{AppHandle, Manager, State, Window};
+
+use crate::app::state::{AppSettings, PersistedState, RuntimeState};
+use crate::app::workers::trim_process_memory;
+use crate::settings::set_autostart;
+
+static PENDING_NAVIGATION: Mutex<Option<String>> = Mutex::new(None);
+
+pub fn set_pending_navigation(page: String) {
+    if let Ok(mut lock) = PENDING_NAVIGATION.lock() {
+        *lock = Some(page);
+    }
+}
+
+#[tauri::command]
+pub fn get_pending_navigation() -> Option<String> {
+    if let Ok(mut lock) = PENDING_NAVIGATION.lock() {
+        lock.take()
+    } else {
+        None
+    }
+}
+
+#[tauri::command]
+pub fn get_app_state(state: State<'_, RuntimeState>) -> Result<PersistedState, String> {
+    state.snapshot()
+}
+
+#[tauri::command]
+pub fn update_app_settings(
+    settings: AppSettings,
+    state: State<'_, RuntimeState>,
+    app: AppHandle,
+) -> Result<PersistedState, String> {
+    let settings = settings.sanitized();
+    let current = state.snapshot()?;
+
+    if current.settings.autostart_windows != settings.autostart_windows {
+        let _ = set_autostart(&app, settings.autostart_windows);
+    }
+
+    if current.settings.show_on_recordings != settings.show_on_recordings {
+        let _ = crate::domain::color::apply_color_transform(&current.color, settings.show_on_recordings);
+    }
+
+    {
+        let mut data = state
+            .data
+            .lock()
+            .map_err(|_| "Settings lock poisoned".to_string())?;
+        data.settings = settings;
+        data.is_admin = current.is_admin;
+        let snapshot = data.clone();
+        state.save(&snapshot)?;
+    }
+
+    state.snapshot()
+}
+
+#[tauri::command]
+pub fn minimize_window(window: Window) {
+    let _ = window.minimize();
+}
+
+#[tauri::command]
+pub fn toggle_window_maximize(window: Window) {
+    if let Ok(maximized) = window.is_maximized() {
+        if maximized {
+            let _ = window.unmaximize();
+        } else {
+            let _ = window.maximize();
+        }
+    }
+}
+
