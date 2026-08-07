@@ -81,4 +81,88 @@ button {
 .app-shell {
   position: relative;
   isolation: isolate;
-  display: grid;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: 1fr;
+  width: 100vw;
+  height: 100vh;
+  min-width: 860px;
+  min-height: 540px;
+  background: var(--bg-main);
+  overflow: hidden;
+}
+
+.low-spec-mode .app-shell,
+.app-low-spec {
+  background: var(--bg-main);
+}
+
+.low-spec-mode .app-shell *,
+.low-spec-mode .app-shell *::before,
+.low-spec-mode .app-shell *::after {
+  animation-duration: 1ms !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
+}
+
+.titlebar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 34px;
+  background: transparent;
+  border-bottom: 0;
+  user-select: none;
+  pointer-events: none;
+}
+
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+  height: 100%;
+  padding-left: 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 620;
+  opacity: 0;
+  pointer-events: auto;
+}
+
+[data-window-drag] {
+  cursor: default;
+}
+
+.titlebar-logo {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+.titlebar-logo .brand-mark {
+  width: 18px;
+  height: 18px;
+  flex-basis: 18px;
+}
+
+.titlebar-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.window-controls {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  margin-left: auto;
+  pointer-events: auto;
+}
+
