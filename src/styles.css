@@ -1,0 +1,84 @@
+:root {
+  color-scheme: dark;
+  --bg-sidebar: #131313;
+  --bg-main: #141414;
+  --bg-card: #1f1f1f;
+  --bg-card-strong: #232323;
+  --bg-field: #1e1e1e;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-primary: #ffffff;
+  --text-secondary: #9e9e9e;
+  --text-tertiary: #6b7280;
+  --accent-blue: #2563eb;
+  --accent-blue-hover: #1d4ed8;
+  --ui-accent: #ffffff;
+  --ui-accent-fg: #ffffff;
+  --ui-accent-text: #111113;
+  --ui-accent-thumb: #141416;
+  --ui-accent-glow: rgba(255, 255, 255, 0.28);
+  --ui-accent-border: transparent;
+  --badge-amber-bg: rgba(245, 158, 11, 0.18);
+  --badge-amber-text: #fbbf24;
+  --radius-card: 12px;
+  --radius-button: 8px;
+  --radius-checkbox: 6px;
+  --radius-input: 8px;
+}
+
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input, textarea, [contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+html,
+body {
+  color-scheme: dark;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #141414;
+  color: var(--text-primary);
+  font-family: "Segoe UI Variable", "Segoe UI", Inter, Arial, sans-serif;
+}
+
+body {
+  display: block;
+}
+
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  display: grid;
