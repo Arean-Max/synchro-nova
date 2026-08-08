@@ -417,4 +417,88 @@ button {
 .workspace.sidebar-collapsed .nav-list {
   margin: 0;
 }
-
+
+.workspace.sidebar-collapsed .sidebar-spacer {
+  display: block;
+  flex: 1;
+  min-height: 12px;
+}
+
+.workspace.sidebar-collapsed .nav-item {
+  justify-content: center;
+  padding: 0;
+  min-height: 48px;
+  border-radius: 10px;
+}
+
+.workspace.sidebar-collapsed .nav-item span {
+  display: none;
+}
+
+.workspace.sidebar-collapsed .nav-item .icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  margin: 0 auto;
+  transition: transform 200ms ease;
+}
+
+.workspace.sidebar-collapsed .nav-item:hover .icon {
+  transform: scale(1.12);
+}
+
+.workspace.sidebar-collapsed .exit-button {
+  justify-content: center;
+  padding: 0;
+  min-height: 52px;
+  border-radius: 10px;
+}
+
+.workspace.sidebar-collapsed .exit-button span {
+  display: none;
+}
+
+.workspace.sidebar-collapsed .exit-button .icon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  margin: 0 auto;
+}
+
+.nav-label {
+  margin: 0 6px 14px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+}
+
+.saved-label {
+  margin-top: 28px;
+}
+
+.community-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.community-label strong {
+  padding: 2px 7px;
+  color: #b8c1d1;
+  border: 1px solid #3a3a3f;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.035);
+  font-size: 9px;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+
+.nav-list {
+  display: grid;
+  gap: 4px;
+}
+
+.nav-item,
