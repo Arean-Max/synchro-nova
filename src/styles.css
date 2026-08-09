@@ -669,4 +669,88 @@ button {
 .slider-meta span:first-child {
   letter-spacing: -0.01em;
 }
-
+
+.slider-meta span:last-child,
+.slider-value-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #f4f4f5;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+  min-width: 48px;
+  text-align: center;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.slider-meta span:last-child:hover,
+.slider-value-badge:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.slider-value-badge:focus-within,
+.slider-value-badge:has(input) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15) !important;
+}
+
+.slider-inline-input {
+  width: 100%;
+  min-width: 32px;
+  max-width: 44px;
+  height: 18px;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: #ffffff;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0;
+  text-align: center;
+  outline: none !important;
+  box-shadow: none !important;
+  -moz-appearance: textfield;
+  caret-color: #ffffff;
+}
+
+.slider-inline-input:focus,
+.slider-inline-input:active {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.slider-inline-input::selection {
+  background: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+
+.slider-inline-input::-webkit-outer-spin-button,
+.slider-inline-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.slider-track {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  background: #27272a;
+  transition: background 150ms ease;
+}
