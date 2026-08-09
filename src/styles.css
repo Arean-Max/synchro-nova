@@ -921,4 +921,88 @@ button.check-row:active {
   border: 1px solid var(--ui-accent-border, rgba(255, 255, 255, 0.2));
   box-shadow: 0 4px 14px var(--ui-accent-glow, rgba(255, 255, 255, 0.2));
 }
-
+
+.btn-primary:hover {
+  filter: brightness(0.92);
+  color: var(--ui-accent-text, #111113);
+}
+
+.restore-highlight-btn {
+  background: var(--ui-accent, #ffffff) !important;
+  color: var(--ui-accent-text, #111113) !important;
+  box-shadow: 0 0 16px var(--ui-accent-glow, rgba(255, 255, 255, 0.4)) !important;
+  border: 1px solid var(--ui-accent-border, var(--ui-accent, #ffffff)) !important;
+  animation: pulseRestore 1.6s infinite alternate ease-in-out;
+}
+
+@keyframes pulseRestore {
+  from {
+    box-shadow: 0 0 8px var(--ui-accent-glow, rgba(255, 255, 255, 0.25));
+  }
+  to {
+    box-shadow: 0 0 20px var(--ui-accent-glow, rgba(255, 255, 255, 0.6));
+  }
+}
+
+.restore-dimmed {
+  opacity: 0.4;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+.btn-outline,
+.preset-btn {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.03));
+  border-color: #3a3a3f;
+}
+
+.btn-outline:hover,
+.preset-btn:hover {
+  border-color: #4b4b51;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.05));
+}
+
+.presets-card {
+  padding-bottom: 18px;
+}
+
+.spectrum-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: #19191c;
+}
+
+.spectrum {
+  height: 33px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, #ec403f, #f5df31, #57e057, #39c5ff, #3134ef, #e245df, #f3396c);
+}
+
+.spectrum-b {
+  filter: saturate(0.92) brightness(0.88);
+}
+
+.spectrum-c {
+  filter: saturate(1.24) brightness(1.06);
+}
+
+.spectrum-d {
+  filter: saturate(1.5) brightness(1.13);
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.preset-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
