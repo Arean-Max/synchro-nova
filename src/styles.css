@@ -1173,4 +1173,88 @@ button.check-row:active {
   width: 138%;
   color: rgba(255, 255, 255, 0.1);
   font-size: 68px;
-  font-weight: 900;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 0.88;
+  text-align: center;
+  text-transform: uppercase;
+  text-shadow: 0 0 28px color-mix(in srgb, var(--game-accent) 34%, transparent);
+  transform: translate(-50%, -50%) rotate(-8deg);
+  pointer-events: none;
+}
+
+.game-card-watermark.image {
+  width: 86%;
+  max-height: 52%;
+  object-fit: contain;
+  opacity: 0.18;
+  filter: grayscale(1) brightness(1.85) contrast(1.25) drop-shadow(0 0 26px color-mix(in srgb, var(--game-accent) 30%, transparent));
+  mix-blend-mode: screen;
+}
+
+.game-card-logo-image {
+  position: relative;
+  z-index: 2;
+  width: 78%;
+  max-height: 28%;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.64));
+}
+
+.game-card-logo {
+  position: relative;
+  z-index: 2;
+  max-width: 100%;
+  overflow: hidden;
+  color: #fff;
+  font-size: 34px;
+  font-weight: 860;
+  line-height: 0.98;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  text-shadow: 0 12px 30px rgba(0, 0, 0, 0.56);
+}
+
+.game-card[data-has-image="true"] .game-card-logo,
+.game-card[data-has-image="true"] .game-card-logo-image,
+.game-card[data-has-image="true"] .game-card-watermark {
+  display: none !important;
+}
+
+.game-card[data-logo-loaded="true"] .game-card-logo {
+  opacity: 0;
+}
+
+.panel-open .game-card-logo {
+  font-size: 26px;
+}
+
+.panel-open .game-card-watermark {
+  font-size: 52px;
+}
+
+.panel-open .game-card-logo-image {
+  width: 82%;
+  max-height: 31%;
+}
+
+.game-card-source {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  z-index: 2;
+  padding: 4px 8px;
+  color: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.28);
+  font-size: 10px;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.game-carousel-title {
+  position: relative;
+  display: grid;
