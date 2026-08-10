@@ -1089,4 +1089,88 @@ button.check-row:active {
   color: var(--text-primary);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  background:
+  background:
+    radial-gradient(circle at 50% 15%, color-mix(in srgb, var(--game-accent) 34%, transparent), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+    #1a1a1d;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  cursor: default;
+  transition:
+    transform 340ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 260ms ease,
+    filter 260ms ease,
+    box-shadow 260ms ease;
+}
+
+.panel-open .game-card {
+  width: 214px;
+  height: 278px;
+}
+
+.game-card[data-offset="0"] {
+  z-index: 6;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.game-card[data-offset="-1"] {
+  z-index: 4;
+  opacity: 0.72;
+  filter: brightness(0.72) saturate(0.86);
+  transform: translate(calc(-50% - 172px), -50%) scale(0.86);
+}
+
+.game-card[data-offset="1"] {
+  z-index: 4;
+  opacity: 0.72;
+  filter: brightness(0.72) saturate(0.86);
+  transform: translate(calc(-50% + 172px), -50%) scale(0.86);
+}
+
+.game-card[data-offset="-2"] {
+  z-index: 2;
+  opacity: 0.24;
+  filter: brightness(0.54) saturate(0.72);
+  transform: translate(calc(-50% - 330px), -50%) scale(0.72);
+}
+
+.game-card[data-offset="2"] {
+  z-index: 2;
+  opacity: 0.24;
+  filter: brightness(0.54) saturate(0.72);
+  transform: translate(calc(-50% + 330px), -50%) scale(0.72);
+}
+
+.game-card-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
+  transform: scale(1.04);
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1), opacity 260ms ease;
+}
+
+.game-card-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.62)),
+    radial-gradient(circle at 50% 42%, transparent 0 26%, rgba(0, 0, 0, 0.52) 78%);
+}
+
+.game-card[data-offset="0"] .game-card-image {
+  opacity: 0.96;
+  transform: scale(1);
+}
+
+.game-card-watermark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 138%;
+  color: rgba(255, 255, 255, 0.1);
+  font-size: 68px;
+  font-weight: 900;
