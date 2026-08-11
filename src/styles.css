@@ -1257,4 +1257,88 @@ button.check-row:active {
 
 .game-carousel-title {
   position: relative;
-  display: grid;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-height: 50px;
+  padding-top: 6px;
+  overflow: hidden;
+  text-align: center;
+  isolation: isolate;
+}
+
+.game-title-watermark {
+  position: absolute;
+  inset: -12px 0 auto 0;
+  z-index: 0;
+  color: color-mix(in srgb, var(--game-accent) 36%, transparent);
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  line-height: 0.9;
+  opacity: 0.16;
+  text-align: center;
+  text-transform: uppercase;
+  filter: blur(0.3px);
+  pointer-events: none;
+}
+
+.game-title-watermark.image {
+  left: 50%;
+  right: auto;
+  top: 50%;
+  width: min(380px, 64%);
+  max-height: 54px;
+  object-fit: contain;
+  opacity: 0.14;
+  filter: grayscale(1) brightness(1.9) contrast(1.25);
+  transform: translate(-50%, -50%);
+}
+
+.game-carousel-title strong,
+.game-carousel-title span:not(.game-title-watermark) {
+  position: relative;
+  z-index: 1;
+}
+
+.game-carousel-title strong {
+  max-width: min(520px, 100%);
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 780;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-carousel-title span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.game-carousel-empty {
+  display: grid;
+  place-items: center;
+  min-height: 360px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: rgba(31, 31, 31, 0.52);
+}
+
+.game-empty-state {
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+.color-game-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9;
+  width: min(500px, 45vw);
+  min-width: 420px;
+  padding: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(31, 31, 31, 0.96), rgba(18, 18, 20, 0.98)),
