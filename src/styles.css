@@ -1425,4 +1425,88 @@ button.check-row:active {
   filter: grayscale(1) brightness(1.9) contrast(1.25);
   pointer-events: none;
 }
-
+
+.color-game-head > div {
+  position: relative;
+  z-index: 1;
+}
+
+.app-shell:not(.app-low-spec) .game-card-logo {
+  animation: game-logo-pop 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.app-shell:not(.app-low-spec) .game-card[data-offset="0"] .game-card-watermark {
+  animation: none;
+}
+
+.app-shell:not(.app-low-spec) .game-carousel-title strong {
+  animation: game-title-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.app-shell:not(.app-low-spec) .color-game-panel {
+  animation: none;
+}
+
+.app-shell:not(.app-low-spec) .color-game-drawer {
+  animation: color-drawer-in 360ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.app-shell.stable-drawer .color-game-drawer {
+  animation: none !important;
+}
+
+.app-shell:not(.app-low-spec) .color-template-btn,
+.app-shell:not(.app-low-spec) .btn,
+.app-shell:not(.app-low-spec) .nav-item {
+  transition: transform 170ms ease, background 170ms ease, border-color 170ms ease, color 170ms ease, opacity 170ms ease;
+}
+
+.app-shell:not(.app-low-spec) .color-template-btn:hover,
+.app-shell:not(.app-low-spec) .btn:hover,
+.app-shell:not(.app-low-spec) .nav-item:hover {
+  transform: translateY(-1px);
+}
+
+@keyframes game-logo-pop {
+  from {
+    opacity: 0.72;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes game-title-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes game-watermark-drift {
+  0%,
+  100% {
+    opacity: 0.1;
+    transform: translate(-50%, -50%) rotate(-8deg) scale(1);
+  }
+  50% {
+    opacity: 0.16;
+    transform: translate(-50%, -52%) rotate(-7deg) scale(1.035);
+  }
+}
+
+@keyframes color-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
