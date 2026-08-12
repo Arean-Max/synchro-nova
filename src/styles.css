@@ -1761,4 +1761,88 @@ button.check-row:active {
   flex-direction: column;
   flex: 1 1 auto;
 }
-
+
+.color-templates-card .color-template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.color-templates-card .color-template-item {
+  min-height: 48px;
+}
+
+.btn:disabled {
+  color: var(--text-tertiary);
+  border-color: var(--border-subtle);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.color-template-section {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+}
+
+.color-template-section h3 {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.color-template-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.color-template-item {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 46px;
+}
+
+.color-template-item .color-template-btn {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  border-radius: 8px;
+  transition: padding-right 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.color-template-delete-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #dc2626;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), opacity 140ms ease;
+  z-index: 2;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.color-template-delete-btn .icon {
+  width: 15px;
+  height: 15px;
+  color: #ffffff;
+}
+
+.color-template-item:hover .color-template-delete-btn,
+.color-template-item:focus-within .color-template-delete-btn {
+  opacity: 1;
