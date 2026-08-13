@@ -1929,4 +1929,88 @@ button.check-row:active {
 .color-template-item.active {
   background: var(--ui-accent-glow, rgba(37, 99, 235, 0.14));
   border-color: var(--ui-accent, #2563eb);
-  box-shadow: 0 0 16px var(--ui-accent-glow, rgba(37, 99, 235, 0.25));
+  box-shadow: 0 0 16px var(--ui-accent-glow, rgba(37, 99, 235, 0.25));
+}
+
+.color-template-btn {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 10px 14px;
+  padding-right: 38px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.color-template-indicator {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  margin-right: 9px;
+  flex-shrink: 0;
+  transition: all 180ms ease;
+}
+
+.color-template-item.active .color-template-indicator {
+  background: var(--ui-accent, #2563eb);
+  box-shadow: 0 0 8px var(--ui-accent, #2563eb);
+  transform: scale(1.25);
+}
+
+.color-template-item:hover .color-template-indicator {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.color-template-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #d4d4d8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  transition: color 150ms ease;
+}
+
+.color-template-item:hover .color-template-name,
+.color-template-item.active .color-template-name {
+  color: #ffffff;
+}
+
+.color-template-item.active .color-template-name {
+  font-weight: 700;
+}
+
+.black-holo-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+.black-holo-check-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.black-holo-check-row:hover {
+  background: rgba(255, 255, 255, 0.05);
