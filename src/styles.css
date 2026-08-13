@@ -2013,4 +2013,88 @@ button.check-row:active {
 }
 
 .black-holo-check-row:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-0.5px);
+}
+
+.black-holo-check-row:active {
+  transform: scale(0.988);
+}
+
+.black-holo-check-row.active {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: var(--ui-accent-border, rgba(255, 255, 255, 0.22));
+  box-shadow: 0 0 16px var(--ui-accent-glow, rgba(255, 255, 255, 0.18));
+}
+
+.black-holo-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: #f4f4f5;
+  letter-spacing: -0.01em;
+}
+
+.black-holo-target-icon {
+  color: var(--ui-accent-fg, var(--ui-accent, #ffffff));
+  flex-shrink: 0;
+}
+
+.black-holo-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.holo-gpu-icon-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.holo-gpu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: filter 180ms ease, transform 180ms ease;
+}
+
+.holo-gpu-icon.nvidia {
+  color: #76b900;
+  filter: drop-shadow(0 0 7px rgba(118, 185, 0, 0.45));
+}
+
+.holo-gpu-icon.amd {
+  color: #ed1c24;
+  filter: drop-shadow(0 0 7px rgba(237, 28, 36, 0.5));
+}
+
+.holo-gpu-icon.intel {
+  color: #38bdf8;
+  filter: drop-shadow(0 0 7px rgba(56, 189, 248, 0.45));
+}
+
+.holo-gpu-icon.unknown {
+  color: #a1a1aa;
+}
+
+.black-holo-check-row .ios-switch {
+  pointer-events: none;
+}
+
+.card-head-with-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 6px;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+}
+
