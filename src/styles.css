@@ -2181,4 +2181,88 @@ button.check-row:active {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  margin-top: 0 !important;
+  margin-top: 0 !important;
+  padding: 2px 0;
+  gap: 5px;
+}
+
+.filter-active-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.filter-active-hint-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+}
+
+.filter-active-hint-text {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-active-hint-text strong {
+  color: #ffffff;
+  font-weight: 650;
+}
+
+.filter-hint-disable-btn {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0;
+  transition: all 140ms ease;
+}
+
+.filter-hint-disable-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.filter-hint-disable-btn .icon {
+  width: 13px;
+  height: 13px;
+}
+
+.fine-tuning-filters-wrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.fine-tuning-filters-grid {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+.color-filter-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
