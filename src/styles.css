@@ -2601,4 +2601,88 @@ button.check-row:active {
   align-items: center;
   gap: 8px;
   min-width: 0;
-  margin-top: 2px;
+  margin-top: 2px;
+}
+
+.color-template-save .text-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.color-template-save .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.tweaks-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 14px;
+}
+
+.tweaks-page.admin-locked .scroll-panel,
+.tweaks-page.admin-locked .tweaks-actions {
+  filter: blur(6px);
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.25s ease, opacity 0.25s ease;
+}
+
+.scroll-panel {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.scroll-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 999px;
+}
+
+.scroll-panel::-webkit-scrollbar-thumb {
+  background: #5d5d64;
+  border-radius: 999px;
+}
+
+.tweak-group + .tweak-group {
+  margin-top: 12px;
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary) !important;
+  font-size: 18px !important;
+  margin-bottom: 14px !important;
+}
+
+.group-title .icon {
+  width: 20px;
+  height: 20px;
+  color: var(--text-secondary);
+}
+
+.tweak-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  padding: 6px 4px;
+}
+
+.tweak-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px 8px 4px 4px;
