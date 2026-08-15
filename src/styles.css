@@ -2769,4 +2769,88 @@ button.check-row:active {
 
 
 .tweak-tile[data-category="safe"] {
-  border-bottom: 2px solid #22c55e !important;
+  border-bottom: 2px solid #22c55e !important;
+}
+
+.tweak-tile[data-category="admin"] {
+  border-bottom: 2px solid #facc15 !important;
+}
+
+.tweak-tile[data-category="experimental"] {
+  border-bottom: 2px solid #f87171 !important;
+}
+
+.tweak-tile[data-category="risk"] {
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+  border-bottom: 2px solid #ef4444 !important;
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.09) 0%, rgba(20, 11, 14, 0.95) 100%) !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.2), inset 0 0 12px rgba(239, 68, 68, 0.08) !important;
+}
+
+.tweak-tile[data-category="risk"]:hover {
+  border-color: rgba(239, 68, 68, 0.75) !important;
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.15) 0%, rgba(28, 14, 18, 0.98) 100%) !important;
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.35), inset 0 0 16px rgba(239, 68, 68, 0.14) !important;
+}
+
+.tweak-tile[data-category="risk"].installed {
+  border-color: rgba(239, 68, 68, 0.85) !important;
+  box-shadow: 0 0 28px rgba(239, 68, 68, 0.4), inset 0 0 20px rgba(239, 68, 68, 0.18) !important;
+}
+
+.tweak-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tweak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.tweak-badge svg {
+  width: 10px;
+  height: 10px;
+}
+
+.tweak-badge.user {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.tweak-badge.admin {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
+.tweak-title {
+  min-width: 80px;
+  flex: 1 1 auto;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 640;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tweak-help-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
