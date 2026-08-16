@@ -2937,4 +2937,88 @@ button.check-row:active {
   background: rgba(255, 255, 255, 0.06);
   font-weight: 800;
 }
-
+
+.tweak-note em {
+  min-width: 0;
+  overflow: hidden;
+  font-style: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+
+.tweaks-top-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 0 2px;
+  flex-wrap: wrap;
+}
+
+.tweaks-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tweak-action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.tweak-action-pill svg {
+  width: 13px;
+  height: 13px;
+  color: var(--text-tertiary);
+  transition: transform 260ms ease, color 160ms ease;
+}
+
+.tweak-action-pill:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text-primary);
+}
+
+.tweak-action-pill:hover svg {
+  color: var(--text-primary);
+  transform: rotate(35deg);
+}
+
+.tweak-action-pill:active {
+  transform: scale(0.97);
+}
+
+
+.ios-banner-container {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  width: min(490px, calc(100vw - 32px));
+  max-width: 490px;
+  padding: 0;
+}
+
+.ios-banner {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
