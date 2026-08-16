@@ -3021,4 +3021,88 @@ button.check-row:active {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  width: 100%;
+  width: 100%;
+  padding: 14px 38px 14px 14px;
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.14));
+  border-radius: var(--radius-card, 14px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  animation: iosBannerDrop 380ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1), background 180ms ease, border-color 180ms ease;
+  will-change: transform, opacity, filter;
+}
+
+.ios-banner:hover {
+  background: rgba(34, 34, 34, 0.98);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(1px);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.ios-banner.admin,
+.ios-banner.risk,
+.ios-banner.danger,
+.ios-banner.safe {
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.ios-banner.danger {
+  border-color: rgba(239, 68, 68, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 14px rgba(239, 68, 68, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.ios-banner.dismissing {
+  animation: iosBannerExit 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+  pointer-events: none;
+}
+
+.ios-banner-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ios-banner-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ios-banner-icon.safe {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1.5px solid rgba(34, 197, 94, 0.8);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.12);
+}
+
+.ios-banner-icon.admin,
+.ios-banner-icon.experimental {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1.5px solid rgba(217, 119, 6, 0.8);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.12);
+}
+
+.ios-banner-icon.danger,
+.ios-banner-icon.risk {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1.5px solid rgba(239, 68, 68, 0.8);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.12);
+}
+
+
+.clipboard-pill-toast {
+  position: fixed;
