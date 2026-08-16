@@ -3105,4 +3105,88 @@ button.check-row:active {
 
 
 .clipboard-pill-toast {
-  position: fixed;
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translate3d(-50%, 20px, 0) scale(0.92);
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(22, 22, 26, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1), opacity 220ms ease;
+  user-select: none;
+}
+
+.clipboard-pill-toast.visible {
+  opacity: 1;
+  transform: translate3d(-50%, 0, 0) scale(1);
+}
+
+.clipboard-pill-toast.hiding {
+  opacity: 0;
+  transform: translate3d(-50%, 14px, 0) scale(0.94);
+  transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1), opacity 200ms ease;
+}
+
+.clipboard-pill-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #22c55e;
+}
+
+.ios-banner-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 1px;
+}
+
+.ios-banner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ios-banner-app {
+  font-size: 10.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.2;
+}
+
+.ios-banner-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+  margin-top: 2px;
+}
+
+.ios-banner-message {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.35;
+  margin-top: 3px;
+}
+
+.ios-banner-close {
+  position: absolute;
+  top: 14px;
