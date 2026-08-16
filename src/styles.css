@@ -2853,4 +2853,88 @@ button.check-row:active {
   place-items: center;
   width: 19px;
   height: 19px;
-  border-radius: 50%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.tweak-help-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+  transform: scale(1.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.tweak-help-btn:active {
+  transform: scale(0.92);
+}
+
+.tweak-help-btn.tweak-error-btn {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #f87171;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+.tweak-help-btn.tweak-error-btn:hover {
+  background: rgba(239, 68, 68, 0.38);
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+}
+
+
+.tweak-tile.installed .tweak-title,
+.tweak-tile.selected .tweak-title {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.tweak-tile p {
+  min-height: 38px;
+  margin: 7px 0 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.34;
+}
+
+.tweak-tile.not-installed:not(.selected) p,
+.tweak-tile:not(.installed):not(.selected) p {
+  min-height: 30px;
+  font-size: 11.5px;
+  line-height: 1.26;
+}
+
+.tweak-note {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+  gap: 6px;
+  margin: auto 0 0 0;
+  padding-top: 8px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.tweak-note span {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: #d7d7dc;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 800;
+}
+
