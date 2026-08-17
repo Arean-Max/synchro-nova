@@ -3273,4 +3273,88 @@ button.check-row:active {
 
 .backup-minimal-dialog {
   position: relative;
-  width: 100%;
+  width: 100%;
+  max-width: 440px;
+  animation: modalScaleIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.backup-minimal-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  background: #1e1e1e;
+  border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.14));
+  border-radius: var(--radius-input, 8px);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 550;
+  outline: none;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.backup-minimal-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 450;
+}
+
+.backup-minimal-input:focus {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
+}
+
+
+.smart-tips-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  animation: fadeIn 180ms ease;
+}
+
+.smart-tips-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+}
+
+.smart-tips-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.smart-tips-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.smart-tips-glyph.big {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-primary);
+  flex-shrink: 0;
