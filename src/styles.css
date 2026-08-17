@@ -3189,4 +3189,88 @@ button.check-row:active {
 
 .ios-banner-close {
   position: absolute;
-  top: 14px;
+  top: 14px;
+  right: 14px;
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.42);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 140ms ease;
+  padding: 0;
+}
+
+.ios-banner-close svg {
+  width: 12px;
+  height: 12px;
+}
+
+.ios-banner-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+@keyframes iosBannerDrop {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -32px, 0) scale(0.92);
+    filter: blur(8px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes iosBannerExit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -26px, 0) scale(0.92);
+    filter: blur(8px);
+  }
+}
+
+@keyframes bannerShake {
+  0%, 100% { transform: translateX(-50%); }
+  20%, 60% { transform: translateX(calc(-50% - 6px)); }
+  40%, 80% { transform: translateX(calc(-50% + 6px)); }
+}
+
+.ios-banner-container.pulse-hint {
+  animation: bannerShake 360ms ease-in-out;
+}
+
+
+.backup-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 24px;
+  animation: fadeIn 150ms ease;
+  user-select: none;
+}
+
+.backup-minimal-dialog {
+  position: relative;
+  width: 100%;
