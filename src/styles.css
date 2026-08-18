@@ -3693,4 +3693,88 @@ button.check-row:active {
 .text-input:focus {
   border-color: rgba(255, 255, 255, 0.45);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
-}
+}
+
+.text-input.wide {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.text-field.muted {
+  color: var(--text-tertiary);
+}
+
+.input-like {
+  justify-content: space-between;
+  min-width: 190px;
+}
+
+.input-like.wide {
+  flex: 1 1 auto;
+  min-width: 280px;
+}
+
+.input-like .icon {
+  width: 17px;
+  height: 17px;
+  color: var(--text-secondary);
+}
+
+.empty-list {
+  flex: 1 1 auto;
+  min-height: 310px;
+  margin-top: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+
+.config-name-row .text-field {
+  flex: 1 1 auto;
+}
+
+.config-tools {
+  margin-top: 10px;
+}
+
+.backup-tools .btn {
+  flex: 0 1 auto;
+  min-width: 118px;
+}
+
+.backup-tools .btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.config-tools .input-like {
+  flex: 1 1 180px;
+}
+
+.config-tools .btn {
+  flex: 0 1 auto;
+  min-width: 128px;
+}
+
+.config-tools .btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.config-list {
+  flex: 1 1 auto;
+  min-height: 240px;
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--bg-card);
+}
+
+.empty-config-list {
+  padding: 0;
+}
+
+.config-row {
+  display: flex;
+  align-items: center;
