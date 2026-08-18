@@ -3777,4 +3777,88 @@ button.check-row:active {
 
 .config-row {
   display: flex;
-  align-items: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 12px;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.config-row + .config-row {
+  margin-top: 4px;
+}
+
+.config-row:not(.selected) {
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.config-row.selected {
+  background: #363644;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.config-check .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.config-row span:nth-child(2) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backup-row {
+  min-height: 50px;
+}
+
+.backup-name {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  white-space: normal;
+}
+
+.backup-name strong,
+.backup-name small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backup-name strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.backup-name small {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.config-row .backup-name {
+  display: grid;
+  white-space: normal;
+}
+
+.config-row em {
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-style: normal;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
