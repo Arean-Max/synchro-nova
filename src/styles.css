@@ -4701,4 +4701,88 @@ button.check-row:active {
 }
 
 .character-panel {
-  min-height: 0;
+  min-height: 0;
+  padding: 14px;
+}
+
+.character-panel h2 {
+  margin: 0 0 12px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 820;
+  line-height: 1.1;
+}
+
+.spec-row {
+  display: grid;
+  grid-template-columns: minmax(80px, 0.55fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 30px;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.spec-row span {
+  color: var(--text-secondary);
+}
+
+.spec-row strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 720;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spec-progress {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.spec-progress div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.spec-progress strong {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.resolution-tile {
+  display: grid;
+  place-items: center;
+  min-height: 62px;
+  margin-top: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.resolution-tile span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.resolution-tile strong {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 780;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-admin-row {
