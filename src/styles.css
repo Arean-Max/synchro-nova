@@ -4449,4 +4449,88 @@ button.check-row:active {
 .select-icons .icon {
   width: 18px;
   height: 18px;
+}
+
+.readonly-field {
+  color: var(--text-secondary);
+}
+
+.characteristics-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
+}
+
+.characteristics-actions {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 40px;
+}
+
+.character-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  min-height: 176px;
+}
+
+.character-metric,
+.character-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 10px;
+  background: var(--bg-card);
+  box-shadow: none;
+}
+
+.character-metric {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 102px;
+  grid-template-rows: auto 1fr auto auto;
+  min-height: 176px;
+  padding: 14px;
+}
+
+.metric-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #aeb4c0;
+  font-size: 11px;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.metric-head .icon {
+  width: 17px;
+  height: 17px;
+  color: #8aa6d9;
+}
+
+.metric-main {
+  align-self: start;
+  margin-top: 12px;
+}
+
+.metric-main strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metric-main em {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-style: normal;
 }
