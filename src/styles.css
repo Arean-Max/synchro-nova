@@ -5037,4 +5037,88 @@ button.check-row:active {
   border: 1px solid rgba(245, 158, 11, 0.28);
 }
 
-.apply-stat-pill.admin svg {
+.apply-stat-pill.admin svg {
+  width: 12px;
+  height: 12px;
+}
+
+.apply-complete-list {
+  padding: 16px 20px;
+  overflow-y: auto;
+  max-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.apply-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-card, #1f1f1f);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-button, 8px);
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.apply-result-item:hover {
+  background: var(--bg-card-strong, #242424);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.apply-result-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.apply-result-indicator {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.apply-result-indicator.applied {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.apply-result-indicator.applied svg {
+  width: 14px;
+  height: 14px;
+}
+
+.apply-result-indicator.requires-admin {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.apply-result-indicator.requires-admin svg {
+  width: 14px;
+  height: 14px;
+}
+
+.apply-result-indicator.skipped {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.apply-result-indicator.failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.apply-result-help-btn {
+  width: 26px;
+  height: 26px;
