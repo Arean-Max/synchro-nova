@@ -4869,4 +4869,88 @@ button.check-row:active {
 
 .apply-spinner-wrapper {
   position: relative;
-  width: 76px;
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+
+.apply-spinner-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3.5px solid rgba(255, 255, 255, 0.08);
+  border-top-color: var(--ui-accent, #38bdf8);
+  border-right-color: var(--ui-accent, #38bdf8);
+  animation: spinRing 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  box-shadow: 0 0 16px var(--ui-accent-glow, rgba(56, 189, 248, 0.3));
+}
+
+.apply-spinner-glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: var(--ui-accent-glow, rgba(56, 189, 248, 0.25));
+  filter: blur(16px);
+  opacity: 0.8;
+  animation: pulseGlow 1.8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.apply-spinner-icon {
+  position: relative;
+  z-index: 2;
+  color: var(--ui-accent-fg, var(--ui-accent, #ffffff));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apply-spinner-icon svg {
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 0 8px var(--ui-accent-glow, rgba(255, 255, 255, 0.5)));
+}
+
+.apply-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.01em;
+}
+
+.apply-modal-sub {
+  font-size: 13px;
+  color: var(--text-muted, #8e8e93);
+  margin: 0 0 24px 0;
+  max-width: 380px;
+  line-height: 1.45;
+}
+
+.apply-progress-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.apply-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ui-accent, #ffffff), #ffffff);
+  border-radius: 999px;
+  transition: width 100ms linear;
+  box-shadow: 0 0 12px var(--ui-accent-glow, rgba(255, 255, 255, 0.5));
+}
+
+.apply-progress-pct {
+  font-size: 15px;
+  font-weight: 750;
+  color: var(--ui-accent-fg, var(--ui-accent, #ffffff));
+  margin-top: 14px;
