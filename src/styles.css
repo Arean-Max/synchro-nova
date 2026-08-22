@@ -4785,4 +4785,88 @@ button.check-row:active {
   white-space: nowrap;
 }
 
-.settings-admin-row {
+.settings-admin-row {
+  margin-top: 14px;
+}
+
+@media (max-width: 860px) {
+  .workspace {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .main-panel {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .two-column,
+  .global-color-grid,
+  .color-game-panel,
+  .character-summary,
+  .characteristics-grid,
+  .characteristics-dashboard,
+  .tweak-grid,
+  .settings-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .color-page.panel-open .game-carousel {
+    padding-right: 0;
+  }
+
+  .color-game-drawer {
+    width: min(420px, 92vw);
+    min-width: 0;
+  }
+
+  .color-template-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .character-summary {
+    min-height: auto;
+  }
+
+  .character-metric {
+    min-height: 150px;
+  }
+
+  .presets-card {
+    max-width: none;
+  }
+}
+
+
+.apply-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: applyFadeIn 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.apply-modal-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 440px;
+  width: 90%;
+  animation: applyCardIn 260ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.apply-spinner-wrapper {
+  position: relative;
+  width: 76px;
