@@ -5373,4 +5373,88 @@ button.check-row:active {
 
 .driver-group {
   display: block;
-  width: 100%;
+  width: 100%;
+  min-height: auto;
+  height: auto;
+  box-sizing: border-box;
+}
+
+.driver-group + .driver-group {
+  margin-top: 14px;
+}
+
+.driver-group .group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary) !important;
+  font-size: 16px !important;
+  font-weight: 650;
+  margin-bottom: 14px !important;
+}
+
+.driver-group .group-title .icon {
+  width: 18px;
+  height: 18px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.group-count-badge {
+  display: none !important;
+}
+
+.driver-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+.driver-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 15px;
+  min-height: 136px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.driver-tile:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32);
+}
+
+.driver-tile.has-update {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.03);
+}
+
+.driver-tile.has-update:hover {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: rgba(245, 158, 11, 0.06);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);
+}
+
+.driver-tile-top {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.driver-vendor-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
