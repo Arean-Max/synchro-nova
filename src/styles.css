@@ -5205,4 +5205,88 @@ button.check-row:active {
 }
 
 .apply-result-badge.skipped {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.apply-result-badge.failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.apply-admin-notice {
+  margin: 0 20px 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.apply-admin-notice-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fbbf24;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.apply-admin-notice-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.apply-admin-elevate-btn {
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fef3c7;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 140ms ease;
+}
+
+.apply-admin-elevate-btn:hover {
+  background: rgba(245, 158, 11, 0.32);
+  transform: translateY(-0.5px);
+}
+
+.apply-admin-elevate-btn:active {
+  transform: scale(0.96);
+}
+
+.apply-result-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.apply-complete-actions {
+  padding: 16px 22px 18px;
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  background: #181818;
+}
+
+.btn-apply-ok {
+  flex: 1.2;
+  height: 40px;
+  border-radius: var(--radius-button, 8px);
+  background: #ffffff;
+  color: #141414;
+  font-size: 13.5px;
+  font-weight: 650;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  display: flex;
