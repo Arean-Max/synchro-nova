@@ -5457,4 +5457,88 @@ button.check-row:active {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  padding: 5px;
+  box-sizing: border-box;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.driver-tile:hover .driver-vendor-box {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.driver-vendor-box svg {
+  width: 18px;
+  height: 18px;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+.driver-tile-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 2px;
+}
+
+.driver-tile-name {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.driver-tile-provider {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.driver-tile-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.driver-tile-badge .icon {
+  width: 11px;
+  height: 11px;
+}
+
+.driver-tile-badge.uptodate {
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.driver-tile-badge.uptodate .icon {
+  color: var(--text-tertiary);
+}
+
+.driver-tile-badge.update {
+  color: var(--badge-amber-text, #fbbf24);
+  background: var(--badge-amber-bg, rgba(245, 158, 11, 0.14));
+  border: 1px solid rgba(245, 158, 11, 0.28);
