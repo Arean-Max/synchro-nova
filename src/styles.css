@@ -5541,4 +5541,88 @@ button.check-row:active {
 .driver-tile-badge.update {
   color: var(--badge-amber-text, #fbbf24);
   background: var(--badge-amber-bg, rgba(245, 158, 11, 0.14));
-  border: 1px solid rgba(245, 158, 11, 0.28);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+
+.driver-tile-specs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 7px;
+  font-size: 11.5px;
+}
+
+.driver-spec-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.driver-spec-item .spec-label {
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.driver-spec-item .spec-val {
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.driver-spec-item .spec-val.version {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-primary);
+}
+
+.driver-spec-item .spec-val.highlight-new {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--badge-amber-text, #fbbf24);
+}
+
+.driver-spec-item .spec-val.highlight-uptodate {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--badge-green-text, #34d399);
+}
+
+.driver-tile-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.driver-tile-btn {
+  width: 100%;
+  min-height: 32px !important;
+  height: 32px !important;
+  font-size: 12px !important;
+  border-radius: 7px !important;
+  padding: 0 12px !important;
+}
+
+.driver-tile-btn.is-uptodate {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  font-weight: 550;
+}
+
+.driver-tile-btn.is-uptodate:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+
+.driver-tile.has-update .driver-tile-btn {
