@@ -5625,4 +5625,88 @@ button.check-row:active {
   color: var(--text-primary);
 }
 
-.driver-tile.has-update .driver-tile-btn {
+.driver-tile.has-update .driver-tile-btn {
+  background: var(--ui-accent, #2563eb);
+  color: var(--ui-accent-text, #ffffff);
+  border-color: transparent;
+  font-weight: 650;
+  box-shadow: 0 2px 10px var(--ui-accent-glow, rgba(37, 99, 235, 0.3));
+}
+
+.driver-tile.has-update .driver-tile-btn:hover {
+  filter: brightness(1.1);
+}
+
+.driver-tile-btn .icon {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+.icon.spin {
+  animation: spinRing 1s linear infinite;
+}
+
+.drivers-actions {
+  flex: 0 0 auto;
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 2px;
+}
+}
+
+.driver-tile-top {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.driver-vendor-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  padding: 5px;
+  box-sizing: border-box;
+  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.driver-tile:hover .driver-vendor-box {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.driver-vendor-box svg {
+  width: 18px;
+  height: 18px;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+
+.driver-tile-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+  gap: 2px;
+}
+
+.driver-tile-name {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
