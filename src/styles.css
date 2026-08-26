@@ -6045,4 +6045,88 @@ button.check-row:active {
 }
 
 .update-progress-title {
-  font-size: 11px;
+  font-size: 11px;
+  color: #e2e8f0;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.update-progress-pct {
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  color: var(--ui-accent, #38bdf8);
+  font-weight: 600;
+}
+
+.manual-download-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 9.5px;
+  color: #38bdf8;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.85;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+
+.manual-download-link:hover {
+  opacity: 1;
+  color: #60a5fa;
+}
+
+.update-progress-bar-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.update-progress-bar-fill {
+  height: 100%;
+  background: var(--ui-accent, #38bdf8);
+  border-radius: 3px;
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 8px var(--ui-accent, #38bdf8);
+}
+
+.update-error-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+}
+
+.update-error-text {
+  font-size: 10.5px;
+  color: #f87171;
+  white-space: nowrap;
+}
+
+.sidebar-collapsed .sidebar-update-wrapper {
+  margin: 0 6px 8px;
+}
+
+.sidebar-collapsed .sidebar-update-wrapper .update-btn-label,
+.sidebar-collapsed .sidebar-update-wrapper .update-version-tag,
+.sidebar-collapsed .sidebar-update-wrapper .update-progress-header {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-update-wrapper .update-action-btn {
+  justify-content: center;
+  padding: 8px;
+}
+
+.page-binds {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
