@@ -6213,4 +6213,88 @@ button.check-row:active {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-.bind-row.recording-row {
+.bind-row.recording-row {
+  border-color: var(--ui-accent-border, rgba(255, 255, 255, 0.3));
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 16px var(--ui-accent-glow, rgba(255, 255, 255, 0.1));
+}
+
+.bind-key-col {
+  flex: 0 0 auto;
+  min-width: 130px;
+}
+
+.bind-key-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary, #ffffff);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.bind-key-badge:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.bind-key-badge.recording {
+  background: var(--ui-accent, #ffffff);
+  color: var(--ui-accent-text, #121214);
+  border-color: var(--ui-accent, #ffffff);
+  box-shadow: 0 0 14px var(--ui-accent-glow, rgba(255, 255, 255, 0.5));
+  animation: pulseRecording 1.4s infinite ease-in-out;
+}
+
+@keyframes pulseRecording {
+  0%, 100% {
+    box-shadow: 0 0 10px var(--ui-accent-glow, rgba(255, 255, 255, 0.4));
+  }
+  50% {
+    box-shadow: 0 0 20px var(--ui-accent-glow, rgba(255, 255, 255, 0.8));
+  }
+}
+
+.bind-key-badge.empty {
+  color: var(--text-secondary, #8e8e93);
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.recording-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff453a;
+  margin-right: 8px;
+  animation: blinkDot 0.8s infinite alternate;
+}
+
+@keyframes blinkDot {
+  from { opacity: 0.2; }
+  to { opacity: 1; }
+}
+
+.bind-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.25);
+  width: 18px;
+  height: 18px;
