@@ -6465,4 +6465,88 @@ button.check-row:active {
   height: 14px;
   flex-shrink: 0;
   margin-left: 8px;
+}
+
+.bind-item-check .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.bind-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.bind-toggle-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  outline: none;
+}
+
+.bind-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: var(--text-secondary, #8e8e93);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.bind-delete-btn .icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease, stroke 0.2s ease;
+}
+
+.bind-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  box-shadow: none;
+  transform: none;
+}
+
+.bind-delete-btn:hover .icon {
+  transform: none;
+}
+
+.bind-delete-btn:active {
+  transform: scale(0.96);
+}
+
+.binds-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  gap: 12px;
+}
+
+.binds-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary, #8e8e93);
+  margin-bottom: 4px;
 }
