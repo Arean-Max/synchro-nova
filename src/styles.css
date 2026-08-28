@@ -6885,4 +6885,21 @@ body.no-animations *::after {
   color: var(--text-secondary, #8e8e93);
 }
 
-.language-item-check {
+.language-item-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ui-accent, #ffffff);
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.language-item-check .icon {
+  width: 14px;
+  height: 14px;
+}
+
+
+
