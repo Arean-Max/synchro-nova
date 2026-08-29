@@ -127,4 +127,69 @@ function renderNotificationBannerDom() {
     const temp = document.createElement("div");
     temp.innerHTML = html;
     if (temp.firstElementChild) {
-      parent.appendChild(temp.firstElementChild);
+      parent.appendChild(temp.firstElementChild);
+    }
+  } else {
+    const existingBanner = containers[0].querySelector(".ios-banner");
+    const isSameAdmin =
+      existingBanner?.getAttribute("data-action") === "restart-as-admin" &&
+      viewState.activeImpactBanner?.isAdminPrompt;
+
+    if (isSameAdmin) {
+      const appEl = existingBanner.querySelector(".ios-banner-app");
+      const titleEl = existingBanner.querySelector(".ios-banner-title");
+      const msgEl = existingBanner.querySelector(".ios-banner-message");
+      if (appEl && viewState.activeImpactBanner?.appName) {
+        appEl.textContent = viewState.activeImpactBanner.appName;
+      }
+      if (titleEl && viewState.activeImpactBanner?.title) {
+        titleEl.textContent = viewState.activeImpactBanner.title;
+      }
+      if (msgEl && viewState.activeImpactBanner?.impactText) {
+        msgEl.textContent = viewState.activeImpactBanner.impactText;
+      }
+    } else {
+      containers[0].outerHTML = html;
+    }
+    for (let i = 1; i < containers.length; i++) {
+      containers[i].remove();
+    }
+  }
+  attachBannerHoverListeners();
+}
+
+function renderBackupModalDom() {
+  let backdrop = document.querySelector(".backup-modal-backdrop");
+  if (!viewState.showBackupNameModal) {
+    if (backdrop) backdrop.remove();
+    return;
+  }
+  const html = renderBackupNameModal(viewState, t);
+  if (!backdrop) {
+    const parent = document.getElementById("app") || document.body;
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    if (temp.firstElementChild) {
+      parent.appendChild(temp.firstElementChild);
+      const input = document.getElementById("custom-backup-name-input");
+      if (input instanceof HTMLInputElement) {
+        window.requestAnimationFrame(() => {
+          input.focus();
+          input.select();
+        });
+      }
+    }
+  } else {
+    backdrop.outerHTML = html;
+    const input = document.getElementById("custom-backup-name-input");
+    if (input instanceof HTMLInputElement) {
+      window.requestAnimationFrame(() => {
+        input.focus();
+      });
+    }
+  }
+}
+
+function renderApplyModalDom() {
+  let backdrop = document.getElementById("apply-modal-backdrop");
+  if (!viewState.applyModal) {
