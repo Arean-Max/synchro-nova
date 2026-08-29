@@ -192,4 +192,69 @@ function renderBackupModalDom() {
 
 function renderApplyModalDom() {
   let backdrop = document.getElementById("apply-modal-backdrop");
-  if (!viewState.applyModal) {
+  if (!viewState.applyModal) {
+    if (backdrop) backdrop.remove();
+    return;
+  }
+  const html = renderApplyModal(viewState.applyModal, t);
+  if (!backdrop) {
+    const parent = document.getElementById("app") || document.body;
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    if (temp.firstElementChild) {
+      parent.appendChild(temp.firstElementChild);
+    }
+  } else {
+    backdrop.outerHTML = html;
+  }
+}
+
+function updateApplyProgress(progress, statusText) {
+  if (!viewState.applyModal) return;
+  viewState.applyModal.progress = progress;
+  if (statusText) viewState.applyModal.statusText = statusText;
+  const pctEl = document.querySelector(".apply-progress-pct");
+  const fillEl = document.querySelector(".apply-progress-fill");
+  const subEl = document.querySelector(".apply-modal-sub");
+  const rounded = Math.min(100, Math.max(0, Math.round(progress)));
+  if (fillEl instanceof HTMLElement) fillEl.style.width = `${rounded}%`;
+  if (pctEl instanceof HTMLElement) pctEl.textContent = `${rounded}%`;
+  if (subEl instanceof HTMLElement && statusText) subEl.textContent = statusText;
+}
+
+function copyTextToClipboard(text) {
+  if (!text) return;
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).catch(() => {
+      fallbackCopyText(text);
+    });
+  } else {
+    fallbackCopyText(text);
+  }
+}
+
+function fallbackCopyText(text) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "-9999px";
+    ta.setAttribute("readonly", "");
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  } catch (e) {
+    console.error("Fallback clipboard copy failed:", e);
+  }
+}
+
+let pillToastTimer = null;
+function showPillToast(message) {
+  if (pillToastTimer) {
+    clearTimeout(pillToastTimer);
+    pillToastTimer = null;
+  }
+  let pill = document.querySelector(".clipboard-pill-toast");
