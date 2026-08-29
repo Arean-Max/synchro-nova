@@ -62,4 +62,69 @@ let carouselStepAt = 0;
 let trimTimer = 0;
 let impactBannerTimer = 0;
 
-function clearImpactBannerTimer() {
+function clearImpactBannerTimer() {
+  if (impactBannerTimer) {
+    window.clearTimeout(impactBannerTimer);
+    impactBannerTimer = 0;
+  }
+}
+
+function startImpactBannerTimer(delay = 3000) {
+  if (viewState.activeImpactBanner?.isAdminPrompt) return;
+  clearImpactBannerTimer();
+  impactBannerTimer = window.setTimeout(() => {
+    dismissNotificationBanner();
+  }, delay);
+}
+
+function attachBannerHoverListeners() {
+  const bannerEl = document.querySelector(".ios-banner");
+  if (!bannerEl) return;
+  bannerEl.onmouseenter = () => {
+    clearImpactBannerTimer();
+  };
+  bannerEl.onmouseleave = () => {
+    if (viewState.activeImpactBanner?.isAdminPrompt) return;
+    clearImpactBannerTimer();
+    impactBannerTimer = window.setTimeout(() => {
+      dismissNotificationBanner();
+    }, 600);
+  };
+}
+
+function dismissNotificationBanner(immediate = false) {
+  clearImpactBannerTimer();
+  const banners = document.querySelectorAll(".ios-banner");
+  if (!banners.length || immediate) {
+    viewState.activeImpactBanner = null;
+    renderNotificationBannerDom();
+    return;
+  }
+  banners.forEach((banner) => {
+    if (!banner.classList.contains("dismissing")) {
+      banner.classList.add("dismissing");
+    }
+  });
+  impactBannerTimer = window.setTimeout(() => {
+    viewState.activeImpactBanner = null;
+    impactBannerTimer = 0;
+    renderNotificationBannerDom();
+  }, 270);
+}
+
+function renderNotificationBannerDom() {
+  const containers = document.querySelectorAll(".ios-banner-container");
+  if (appState.isAdmin && viewState.activeImpactBanner?.isAdminPrompt) {
+    viewState.activeImpactBanner = null;
+  }
+  const html = renderIosNotification(viewState, t);
+  if (!html) {
+    containers.forEach((c) => c.remove());
+    return;
+  }
+  if (!containers.length) {
+    const parent = document.getElementById("app") || document.body;
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    if (temp.firstElementChild) {
+      parent.appendChild(temp.firstElementChild);
