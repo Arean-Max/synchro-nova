@@ -257,4 +257,69 @@ function showPillToast(message) {
     clearTimeout(pillToastTimer);
     pillToastTimer = null;
   }
-  let pill = document.querySelector(".clipboard-pill-toast");
+  let pill = document.querySelector(".clipboard-pill-toast");
+  if (!pill) {
+    pill = document.createElement("div");
+    pill.className = "clipboard-pill-toast";
+    document.body.appendChild(pill);
+  }
+  pill.innerHTML = `
+    <span class="clipboard-pill-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+    <span class="clipboard-pill-text">${escapeHtml(message)}</span>
+  `;
+  pill.classList.remove("hiding");
+  void pill.offsetWidth;
+  pill.classList.add("visible");
+
+  pillToastTimer = setTimeout(() => {
+    pill.classList.add("hiding");
+    setTimeout(() => {
+      pill.classList.remove("visible", "hiding");
+      pill.remove();
+    }, 280);
+  }, 2200);
+}
+
+function showErrorToast(title, err) {
+  const isRu = lang() === "ru";
+  const msg = (err && typeof err === "object" && err.message)
+    ? err.message
+    : (typeof err === "string" ? err : (err ? JSON.stringify(err) : "Unknown error"));
+  showToastBanner(title || (isRu ? "Ошибка" : "Error"), msg, "danger");
+}
+
+function showToastBanner(title, impactText, category = "safe") {
+  clearImpactBannerTimer();
+  const isRu = lang() === "ru";
+  const defaultAppName = category === "danger"
+    ? (isRu ? "ОШИБКА" : "ERROR")
+    : (isRu ? "УВЕДОМЛЕНИЕ" : "NOTIFICATION");
+  viewState.activeImpactBanner = {
+    title,
+    category,
+    appName: defaultAppName,
+    impactText: String(impactText || "")
+  };
+  renderNotificationBannerDom();
+  startImpactBannerTimer(category === "danger" ? 6000 : 3000);
+}
+
+function showTweakImpactBanner(tweakId) {
+  clearImpactBannerTimer();
+  const tweaks = allTweaks();
+  const tweak = tweaks.find((t) => t.id === tweakId);
+  if (!tweak) return;
+
+  const isRu = lang() === "ru";
+  const details = getTweakImpactDetails(tweak, t, isRu);
+  const title = tweakTitle(tweak, t);
+  const category = tweakCategory(tweak);
+
+  viewState.activeImpactBanner = {
+    tweakId: tweak.id,
+    title,
+    category,
+    appName: details.appName,
+    impactText: details.impactText
+  };
+  renderNotificationBannerDom();
