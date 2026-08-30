@@ -452,4 +452,69 @@ function getWin32Vk(event) {
     Quote: 222,
     Backquote: 192,
     Comma: 188,
-    Period: 190,
+    Period: 190,
+    Slash: 191
+  };
+  return vkMap[code] || 0;
+}
+
+function formatKeyLabel(event) {
+  const parts = [];
+  if (event.ctrlKey) parts.push("Ctrl");
+  if (event.altKey) parts.push("Alt");
+  if (event.shiftKey) parts.push("Shift");
+  if (event.metaKey) parts.push("Win");
+
+  let base = "";
+  const code = event.code || "";
+  if (code.startsWith("Key")) {
+    base = code.slice(3).toUpperCase();
+  } else if (code.startsWith("Digit")) {
+    base = code.slice(5);
+  } else if (code.startsWith("Numpad") && /^Numpad\d$/.test(code)) {
+    base = `Num ${code.slice(6)}`;
+  } else if (code === "NumpadEnter") {
+    base = "Num Enter";
+  } else if (code === "NumpadAdd") {
+    base = "Num +";
+  } else if (code === "NumpadSubtract") {
+    base = "Num -";
+  } else if (code === "NumpadMultiply") {
+    base = "Num *";
+  } else if (code === "NumpadDivide") {
+    base = "Num /";
+  } else if (code === "NumpadDecimal") {
+    base = "Num .";
+  } else if (/^F\d+$/.test(code)) {
+    base = code;
+  } else {
+    const specialMap = {
+      Space: "Space",
+      Enter: "Enter",
+      Tab: "Tab",
+      Backspace: "Backspace",
+      Delete: "Delete",
+      Insert: "Insert",
+      Home: "Home",
+      End: "End",
+      PageUp: "PageUp",
+      PageDown: "PageDown",
+      ArrowUp: "Up",
+      ArrowDown: "Down",
+      ArrowLeft: "Left",
+      ArrowRight: "Right",
+      Minus: "-",
+      Equal: "=",
+      BracketLeft: "[",
+      BracketRight: "]",
+      Backslash: "\\",
+      Semicolon: ";",
+      Quote: "'",
+      Backquote: "`",
+      Comma: ",",
+      Period: ".",
+      Slash: "/"
+    };
+    base = specialMap[code] || event.key?.toUpperCase() || code;
+  }
+
