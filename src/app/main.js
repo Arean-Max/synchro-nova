@@ -322,4 +322,69 @@ function showTweakImpactBanner(tweakId) {
     appName: details.appName,
     impactText: details.impactText
   };
-  renderNotificationBannerDom();
+  renderNotificationBannerDom();
+  startImpactBannerTimer(3000);
+}
+
+function showTweakErrorBanner(tweakId, errorMsg) {
+  clearImpactBannerTimer();
+  const tweaks = allTweaks();
+  const tweak = tweaks.find((t) => t.id === tweakId);
+  const isRu = lang() === "ru";
+  const title = tweak ? tweakTitle(tweak, t) : (tweakId || (isRu ? "Ошибка твика" : "Tweak Error"));
+  const impactText = errorMsg || (isRu ? "Не удалось применить данный твик в системе." : "Failed to apply this tweak to the system.");
+
+  viewState.activeImpactBanner = {
+    tweakId,
+    title: isRu ? `Сбой: ${title}` : `Failed: ${title}`,
+    category: "danger",
+    appName: isRu ? "СБОЙ ТВИКА" : "TWEAK ERROR",
+    impactText
+  };
+  renderNotificationBannerDom();
+  startImpactBannerTimer(8000);
+}
+
+function showRiskWarningBanner(tweak) {
+  clearImpactBannerTimer();
+  const isRu = lang() === "ru";
+  const title = tweakTitle(tweak, t);
+  viewState.activeImpactBanner = {
+    tweakId: tweak.id,
+    title: isRu ? `Внимание: ${title}` : `Warning: ${title}`,
+    category: "risk",
+    appName: isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY BACKUP",
+    impactText: isRu
+      ? "Перед жестким твиком сделай быстрый снимок системы, чтобы не сломать винду."
+      : "Take a quick safety snapshot before applying system-level tweaks."
+  };
+  renderNotificationBannerDom();
+  startImpactBannerTimer(3000);
+}
+
+function showBackupNotificationBanner() {
+  clearImpactBannerTimer();
+  const isRu = lang() === "ru";
+  viewState.activeImpactBanner = {
+    isBackupPrompt: true,
+    category: "safe",
+    appName: isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY SNAPSHOT",
+    title: t("backupNotificationTitle") || (isRu ? "Снимок Системы" : "Safety Snapshot"),
+    impactText: t("backupNotificationMsg") || (isRu ? "Кликни здесь, чтобы задать имя снимка" : "Click here to set custom snapshot name")
+  };
+  renderNotificationBannerDom();
+  startImpactBannerTimer(3000);
+}
+
+function showAdminNotificationBanner() {
+  if (appState.isAdmin) {
+    viewState.activeImpactBanner = null;
+    document.querySelectorAll(".ios-banner-container").forEach((c) => c.remove());
+    return;
+  }
+  clearImpactBannerTimer();
+  const isRu = lang() === "ru";
+  viewState.activeImpactBanner = {
+    isAdminPrompt: true,
+    category: "admin",
+    appName: isRu ? "НУЖЕН АДМИН" : "ADMIN REQUIRED",
