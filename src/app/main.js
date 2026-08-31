@@ -647,4 +647,69 @@ async function switchLanguage(nextLang) {
   if (exitBtn) {
     exitBtn.setAttribute("title", t("exit"));
     const span = exitBtn.querySelector("span");
-    if (span) span.textContent = t("exit");
+    if (span) span.textContent = t("exit");
+  }
+  updateSidebarUpdateWidgetDom();
+
+  const page = pageDefs[activePage];
+  const title = document.querySelector(".page-header h1");
+  const subtitle = document.querySelector(".page-header p");
+  if (title) title.textContent = t(page.title);
+  if (subtitle) subtitle.textContent = t(page.subtitle);
+
+  const body = document.querySelector(".page-body");
+  if (body) {
+    body.className = `page-body page-${activePage}`;
+    body.innerHTML = renderPageBody(viewState, t);
+    const newScrollPanel = document.querySelector(".scroll-panel");
+    if (newScrollPanel) {
+      newScrollPanel.scrollTop = savedScrollTop;
+    } else {
+      body.scrollTop = savedScrollTop;
+    }
+  }
+
+  syncAllSliders(appState);
+  syncAllTemplateSliders(appState);
+  renderBackupModalDom();
+  renderApplyModalDom();
+  if (viewState.activeImpactBanner) {
+    if (appState.isAdmin && viewState.activeImpactBanner.isAdminPrompt) {
+      viewState.activeImpactBanner = null;
+      document.querySelectorAll(".ios-banner-container").forEach((c) => c.remove());
+    } else {
+      renderNotificationBannerDom();
+    }
+  }
+  syncNavIndicator();
+
+  if (workspace) {
+    workspace.classList.remove("lang-fade-out");
+    workspace.classList.add("lang-fade-in");
+    window.setTimeout(() => {
+      workspace.classList.remove("lang-fade-in");
+      isLanguageSwitching = false;
+    }, 220);
+  } else {
+    isLanguageSwitching = false;
+  }
+
+  await saveSettings();
+}
+
+function updateSidebarUpdateWidgetDom() {
+  const container = document.getElementById("sidebar-update-wrapper");
+  if (!container) return;
+  const temp = document.createElement("div");
+  temp.innerHTML = renderSidebarUpdateWidget(t, viewState);
+  const newEl = temp.firstElementChild;
+  if (newEl) {
+    container.className = newEl.className;
+    container.innerHTML = newEl.innerHTML;
+  }
+}
+
+let updatePollTimer = 0;
+
+async function checkForUpdates() {
+  try {
