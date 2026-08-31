@@ -517,4 +517,69 @@ function formatKeyLabel(event) {
     };
     base = specialMap[code] || event.key?.toUpperCase() || code;
   }
-
+
+  parts.push(base);
+  return parts.join(" + ");
+}
+
+async function syncKeybinds() {
+  try {
+    await invokeCommand("sync_keybinds", { keybinds: appState.keybinds || [] });
+  } catch (err) {
+    console.error("Failed to sync keybinds:", err);
+  }
+}
+
+
+function t(key) {
+  return translate(lang(), key);
+}
+
+function syncNavIndicator() {
+  const sidebar = document.querySelector(".sidebar");
+  const activeItem = document.querySelector(".nav-item.active");
+  if (!sidebar || !activeItem) return;
+  const indicatorHeight = Math.min(24, activeItem.offsetHeight);
+  const y = activeItem.offsetTop + (activeItem.offsetHeight - indicatorHeight) / 2;
+  sidebar.style.setProperty("--nav-indicator-y", `${Math.round(y)}px`);
+  sidebar.style.setProperty("--nav-indicator-height", `${indicatorHeight}px`);
+}
+
+function updateNavState() {
+  document.querySelectorAll(".nav-item").forEach((item) => {
+    item.classList.toggle("active", item.getAttribute("data-page") === activePage);
+  });
+  syncNavIndicator();
+}
+
+function updateMain() {
+  const page = pageDefs[activePage];
+  const title = document.querySelector(".page-header h1");
+  const subtitle = document.querySelector(".page-header p");
+  const body = document.querySelector(".page-body");
+  const mountContext = {
+    appState,
+    viewState,
+    showAdminBanner: showAdminNotificationBanner,
+    loadTweakStatuses
+  };
+  if (title && subtitle && body) {
+    title.textContent = t(page.title);
+    subtitle.textContent = t(page.subtitle);
+    body.className = `page-body page-${activePage}`;
+    body.innerHTML = renderPageBody(viewState, t);
+    router.mount(activePage, body, mountContext);
+  } else {
+    const main = document.querySelector(".main-panel");
+    if (main) {
+      main.outerHTML = renderMain(viewState, t);
+      const nextBody = document.querySelector(".page-body");
+      if (nextBody) router.mount(activePage, nextBody, mountContext);
+    }
+  }
+  syncAllSliders(appState, viewState);
+  updateNavState();
+  renderBackupModalDom();
+  renderApplyModalDom();
+  if (activePage === "tweaks" && !appState.isAdmin) {
+    showAdminNotificationBanner();
