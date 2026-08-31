@@ -582,4 +582,69 @@ function updateMain() {
   renderBackupModalDom();
   renderApplyModalDom();
   if (activePage === "tweaks" && !appState.isAdmin) {
-    showAdminNotificationBanner();
+    showAdminNotificationBanner();
+  }
+  window.requestAnimationFrame(syncNavIndicator);
+  scheduleTrimMemory(350);
+}
+
+let isLanguageSwitching = false;
+
+async function switchLanguage(nextLang) {
+  if (isLanguageSwitching || !nextLang || nextLang === appState.settings.language) {
+    return;
+  }
+  isLanguageSwitching = true;
+  viewState.languageDropdownOpen = false;
+
+  const workspace = document.querySelector(".workspace") || document.querySelector(".app-shell");
+  const scrollPanel = document.querySelector(".scroll-panel");
+  const pageBody = document.querySelector(".page-body");
+  const savedScrollTop = scrollPanel ? scrollPanel.scrollTop : (pageBody ? pageBody.scrollTop : 0);
+
+  document.querySelectorAll("[data-language]").forEach((btn) => {
+    btn.classList.toggle("active", btn.getAttribute("data-language") === nextLang);
+  });
+
+  if (workspace) {
+    workspace.classList.remove("lang-fade-in");
+    workspace.classList.add("lang-fade-out");
+  }
+
+  await new Promise((resolve) => window.setTimeout(resolve, 100));
+
+  appState.settings.language = nextLang;
+  document.documentElement.lang = nextLang;
+
+  const minBtn = document.querySelector('.window-btn[data-action="window-minimize"]');
+  if (minBtn) minBtn.title = t("minimize");
+  const closeBtn = document.querySelector('.window-btn[data-action="window-close"]');
+  if (closeBtn) closeBtn.title = t("close");
+
+  const navLabel = document.querySelector(".nav-label");
+  if (navLabel) navLabel.textContent = t("main");
+
+  const toggleBtn = document.querySelector(".sidebar-toggle-btn");
+  if (toggleBtn) {
+    const isCollapsed = Boolean(viewState?.sidebarCollapsed);
+    const toggleTitle = isCollapsed ? t("expandSidebar") : t("collapseSidebar");
+    toggleBtn.title = toggleTitle;
+    toggleBtn.setAttribute("aria-label", toggleTitle);
+  }
+
+  pageOrder.forEach((key) => {
+    const page = pageDefs[key];
+    const navItem = document.querySelector(`.nav-item[data-page="${key}"]`);
+    if (navItem && page) {
+      const label = t(page.nav);
+      navItem.setAttribute("title", label);
+      const span = navItem.querySelector("span");
+      if (span) span.textContent = label;
+    }
+  });
+
+  const exitBtn = document.querySelector(".exit-button");
+  if (exitBtn) {
+    exitBtn.setAttribute("title", t("exit"));
+    const span = exitBtn.querySelector("span");
+    if (span) span.textContent = t("exit");
