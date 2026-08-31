@@ -712,4 +712,69 @@ function updateSidebarUpdateWidgetDom() {
 let updatePollTimer = 0;
 
 async function checkForUpdates() {
-  try {
+  try {
+    const res = await invokeCommand("check_for_updates");
+    if (res && res.updateAvailable) {
+      viewState.updateStatus = "available";
+      viewState.latestVersion = res.latestVersion;
+      viewState.downloadUrl = res.downloadUrl;
+      viewState.assetSize = res.assetSize;
+      updateSidebarUpdateWidgetDom();
+
+      if (appState.settings.autoUpdate) {
+        startUpdateDownload();
+      }
+    }
+  } catch (err) {
+    console.warn("Check for updates failed:", err);
+  }
+}
+
+async function startUpdateDownload() {
+  if (viewState.updateStatus === "downloading") return;
+  viewState.updateStatus = "downloading";
+  viewState.updatePercent = 0;
+  updateSidebarUpdateWidgetDom();
+
+  try {
+    await invokeCommand("download_update", {
+      url: viewState.downloadUrl || null,
+      size: viewState.assetSize || null
+    });
+
+    if (updatePollTimer) window.clearInterval(updatePollTimer);
+    updatePollTimer = window.setInterval(async () => {
+      try {
+        const progress = await invokeCommand("get_update_progress");
+        if (!progress) return;
+
+        viewState.updatePercent = progress.percent || 0;
+
+        const pctEl = document.querySelector("#sidebar-update-wrapper .update-progress-pct");
+        if (pctEl) pctEl.textContent = `${progress.percent}%`;
+        const barFill = document.querySelector("#sidebar-update-wrapper .update-progress-bar-fill");
+        if (barFill) barFill.style.width = `${progress.percent}%`;
+
+        if (progress.status === "ready") {
+          window.clearInterval(updatePollTimer);
+          updatePollTimer = 0;
+          viewState.updateStatus = "ready";
+          viewState.updatePercent = 100;
+          updateSidebarUpdateWidgetDom();
+        } else if (progress.status === "error") {
+          window.clearInterval(updatePollTimer);
+          updatePollTimer = 0;
+          viewState.updateStatus = "error";
+          updateSidebarUpdateWidgetDom();
+        }
+      } catch (err) {
+        console.warn("Error polling update progress:", err);
+      }
+    }, 100);
+  } catch (err) {
+    console.error("Start download failed:", err);
+    viewState.updateStatus = "error";
+    updateSidebarUpdateWidgetDom();
+  }
+}
+
