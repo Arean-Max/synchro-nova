@@ -972,4 +972,69 @@ function saveNormalColorState() {
     saturation: Number(appState.color.saturation ?? 100),
     hue: Number(appState.color.hue ?? 0),
     contrast: Number(appState.color.contrast ?? 100),
-    gamma: Number(appState.color.gamma ?? 100)
+    gamma: Number(appState.color.gamma ?? 100)
+  };
+  try {
+    localStorage.setItem("synchro_normal_color", JSON.stringify(snapshot));
+  } catch (e) {}
+}
+
+function getSavedNormalColor() {
+  try {
+    const raw = localStorage.getItem("synchro_normal_color");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.saturation === "number") return parsed;
+    }
+  } catch (e) {}
+  return { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+}
+
+async function applyPreset(name) {
+  if (isTemplateActive(name, appState)) {
+    appState.color = {
+      ...appState.color,
+      saturation: 100,
+      hue: 0,
+      contrast: 100,
+      gamma: 100,
+      activeFilter: ""
+    };
+    saveNormalColorState();
+    updateColorPage();
+    await applyColor();
+    return;
+  }
+
+  const custom = appState.settings?.templateOverrides?.[name];
+  const preset = custom || defaultPresets[name];
+  if (!preset) return;
+  appState.color = {
+    ...appState.color,
+    saturation: preset.saturation,
+    hue: preset.hue,
+    contrast: preset.contrast,
+    gamma: preset.gamma,
+    activeFilter: ""
+  };
+  saveNormalColorState();
+  updateColorPage();
+  await applyColor();
+}
+
+function stepColorSelection(step) {
+  const now = performance.now();
+  if (now - carouselStepAt < 150) return false;
+  if (!stepColorGame(viewState, step)) return false;
+  carouselStepAt = now;
+  updateColorPage({ stableDrawer: true });
+  return true;
+}
+
+async function handleAction(action) {
+  switch (action) {
+    case "window-minimize":
+      return invokeCommand("minimize_window");
+    case "window-maximize":
+      return invokeCommand("toggle_window_maximize");
+    case "window-close":
