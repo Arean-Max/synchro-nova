@@ -842,4 +842,69 @@ function syncTweakTile(id) {
   const tile = Array.from(document.querySelectorAll("[data-tweak-id]")).find(
     (element) => element.getAttribute("data-tweak-id") === id && element.classList.contains("tweak-tile")
   );
-  if (!tile) {
+  if (!tile) {
+    updateMainKeepingScroll(".tweaks-page .scroll-panel");
+    return;
+  }
+  const isInstalled = Boolean(viewState.installedTweaks?.has(id));
+  const isPendingRevert = Boolean(viewState.pendingRevertTweaks?.has(id));
+  const installed = isInstalled && !isPendingRevert;
+  const selected = Boolean(viewState.selectedTweaks?.has(id));
+  tile.classList.toggle("installed", installed);
+  tile.classList.toggle("pending-revert", isPendingRevert);
+  tile.classList.toggle("selected", selected);
+  tile.classList.toggle("not-installed", !installed && !selected && !isPendingRevert);
+  tile.setAttribute("aria-pressed", (installed || selected || isPendingRevert) ? "true" : "false");
+  syncTweaksActionButtons();
+}
+
+async function applyColor() {
+  if (!appState.color?.activeFilter) {
+    saveNormalColorState();
+  }
+  const result = await invokeCommand("apply_color_settings", { color: appState.color });
+  if (result) mergeState(result);
+}
+
+function scheduleApplyColor() {
+  window.clearTimeout(applyTimer);
+  applyTimer = window.setTimeout(applyColor, 50);
+}
+
+
+async function loadBlackHoloStatus() {
+  try {
+    const status = await invokeCommand("get_black_holo_status");
+    if (status) {
+      viewState.blackHoloStatus = status;
+      appState.color.blackHolo = status.active ? 100 : 0;
+      updateBlackHoloDom(status.active, status);
+    }
+  } catch (err) {
+    console.warn("Failed to load black holo status:", err);
+  }
+}
+
+async function saveSettings() {
+  const result = await invokeCommand("update_app_settings", { settings: appState.settings });
+  if (result) mergeState(result);
+}
+
+async function loadLists() {
+  const [backups, configs] = await Promise.all([
+    invokeCommand("list_backups"),
+    invokeCommand("list_configs")
+  ]);
+
+  if (Array.isArray(backups)) {
+    viewState.backups = backups;
+    if (viewState.selectedBackup && !backups.some((item) => item.id === viewState.selectedBackup)) {
+      viewState.selectedBackup = "";
+    }
+  }
+
+  if (Array.isArray(configs)) {
+    viewState.configs = configs;
+    if (!configs.some((item) => item.id === viewState.selectedConfig)) {
+      viewState.selectedConfig = configs[0]?.id || "";
+    }
