@@ -777,4 +777,69 @@ async function startUpdateDownload() {
     updateSidebarUpdateWidgetDom();
   }
 }
-
+
+async function applyUpdateInstall() {
+  try {
+    await invokeCommand("install_update");
+  } catch (err) {
+    console.error("Apply update failed:", err);
+  }
+}
+
+function updateColorPage(options = {}) {
+  const isColorSurface = activePage === "color" || activePage === "gameColor";
+  const body = document.querySelector(activePage === "gameColor" ? ".page-gameColor" : ".page-color");
+  if (!body || !isColorSurface) {
+    updateMain();
+    return;
+  }
+  const app = document.getElementById("app");
+  if (options.stableDrawer && app) app.classList.add("stable-drawer");
+  body.innerHTML = activePage === "gameColor"
+    ? renderGameColorPage(appState, viewState, t)
+    : renderColorPage(appState, viewState, t);
+  syncAllSliders(appState, viewState);
+  if (viewState.editingTemplate && viewState.editingTemplateColor) {
+    syncAllTemplateSliders(viewState.editingTemplateColor);
+  }
+  if (options.stableDrawer && app) {
+    window.requestAnimationFrame(() => app.classList.remove("stable-drawer"));
+  }
+}
+
+function updateMainKeepingScroll(selector = ".scroll-panel") {
+  const panel = document.querySelector(selector);
+  const scrollTop = panel?.scrollTop || 0;
+  updateMain();
+  const nextPanel = document.querySelector(selector);
+  if (!nextPanel) return;
+  nextPanel.scrollTop = scrollTop;
+  window.requestAnimationFrame(() => {
+    nextPanel.scrollTop = scrollTop;
+  });
+}
+
+function syncTweaksActionButtons() {
+  const actionsEl = document.querySelector(".tweaks-actions");
+  if (!actionsEl) return;
+  const hasSelected = (viewState.selectedTweaks && viewState.selectedTweaks.size > 0) ||
+    (viewState.pendingRevertTweaks && viewState.pendingRevertTweaks.size > 0);
+  let applyBtn = actionsEl.querySelector("[data-action='apply-tweaks']");
+  if (hasSelected) {
+    if (!applyBtn) {
+      const applyLabel = viewState.applyingTweaks ? t("loading") : t("applySelected");
+      const btnHtml = button(applyLabel, "check", "primary", "apply-tweaks");
+      actionsEl.insertAdjacentHTML("afterbegin", btnHtml);
+    }
+  } else {
+    if (applyBtn) {
+      applyBtn.remove();
+    }
+  }
+}
+
+function syncTweakTile(id) {
+  const tile = Array.from(document.querySelectorAll("[data-tweak-id]")).find(
+    (element) => element.getAttribute("data-tweak-id") === id && element.classList.contains("tweak-tile")
+  );
+  if (!tile) {
