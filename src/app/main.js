@@ -907,4 +907,69 @@ async function loadLists() {
     viewState.configs = configs;
     if (!configs.some((item) => item.id === viewState.selectedConfig)) {
       viewState.selectedConfig = configs[0]?.id || "";
-    }
+    }
+  }
+}
+
+async function loadColorGames() {
+  const games = await invokeCommand("list_installed_games");
+  viewState.colorGames = Array.isArray(games) ? games : [];
+  viewState.colorGamesLoaded = true;
+  ensureColorGameSelection(viewState);
+  if (activePage === "gameColor") updateMain();
+}
+
+async function loadTweakStatuses() {
+  const statuses = await invokeCommand("get_tweak_statuses");
+  viewState.installedTweaks.clear();
+  if (!Array.isArray(statuses)) return;
+  statuses.forEach((item) => {
+    if (item?.installed && item.id) viewState.installedTweaks.add(item.id);
+  });
+}
+
+async function triggerScanDrivers() {
+  if (viewState.driversLoading) return;
+  viewState.driversLoading = true;
+  updateMain();
+  try {
+    const list = await invokeCommand("scan_drivers");
+    if (Array.isArray(list) && list.length) {
+      viewState.drivers = list;
+    }
+  } catch (err) {
+    console.error("Failed to scan drivers:", err);
+  } finally {
+    viewState.driversLoading = false;
+    updateMain();
+  }
+}
+
+function updateDriversPageContent() {
+  const pageBody = document.querySelector(".page-characteristics");
+  if (!pageBody) return;
+  const input = document.querySelector(".driver-search-input");
+  const selStart = input instanceof HTMLInputElement ? input.selectionStart : null;
+  const selEnd = input instanceof HTMLInputElement ? input.selectionEnd : null;
+  const isFocused = input === document.activeElement;
+
+  pageBody.innerHTML = renderPageBody(viewState, t);
+
+  if (isFocused) {
+    const newInput = document.querySelector(".driver-search-input");
+    if (newInput instanceof HTMLInputElement) {
+      newInput.focus();
+      if (selStart !== null && selEnd !== null) {
+        newInput.setSelectionRange(selStart, selEnd);
+      }
+    }
+  }
+}
+
+function saveNormalColorState() {
+  if (!appState?.color || appState.color.activeFilter) return;
+  const snapshot = {
+    saturation: Number(appState.color.saturation ?? 100),
+    hue: Number(appState.color.hue ?? 0),
+    contrast: Number(appState.color.contrast ?? 100),
+    gamma: Number(appState.color.gamma ?? 100)
