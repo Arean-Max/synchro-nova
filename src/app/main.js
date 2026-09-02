@@ -1102,4 +1102,69 @@ async function handleAction(action) {
       const game = selectedColorGame(viewState);
       if (game?.id && game.launchable) return invokeCommand("launch_installed_game", { id: game.id });
       return null;
-    }
+    }
+
+    case "save-color-template": {
+      const name = (viewState.colorTemplateName || "").trim() || "Default";
+      const configs = await invokeCommand("save_config", { name });
+      if (Array.isArray(configs)) {
+        viewState.configs = configs;
+        viewState.selectedConfig = configs[0]?.id || "";
+        viewState.colorTemplateName = "";
+        updateColorPage();
+      }
+      return null;
+    }
+
+    case "close-template-config": {
+      if (viewState.editingTemplate) {
+        if (!appState.settings.templateOverrides) appState.settings.templateOverrides = {};
+        const presetKey = viewState.editingTemplate;
+        const nameInput = document.getElementById("template-name-input");
+        const inputName = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : "";
+        const customName = inputName || (typeof viewState.editingTemplateName === "string" ? viewState.editingTemplateName.trim() : "");
+        const defaultPreset = defaultPresets[presetKey] || filterPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+        const currentOverride = appState.settings.templateOverrides[presetKey] || defaultPreset;
+        const colors = {
+          saturation: Number(viewState.editingTemplateColor?.saturation ?? currentOverride.saturation),
+          hue: Number(viewState.editingTemplateColor?.hue ?? currentOverride.hue),
+          contrast: Number(viewState.editingTemplateColor?.contrast ?? currentOverride.contrast),
+          gamma: Number(viewState.editingTemplateColor?.gamma ?? currentOverride.gamma)
+        };
+        appState.settings.templateOverrides[presetKey] = {
+          name: customName || appState.settings.templateOverrides[presetKey]?.name || undefined,
+          saturation: colors.saturation,
+          hue: colors.hue,
+          contrast: colors.contrast,
+          gamma: colors.gamma,
+          enabled: true
+        };
+        if (appState.color.activeFilter === presetKey) {
+          appState.color.saturation = colors.saturation;
+          appState.color.hue = colors.hue;
+          appState.color.contrast = colors.contrast;
+          appState.color.gamma = colors.gamma;
+          scheduleApplyColor();
+        }
+        saveSettings();
+        viewState.editingTemplate = null;
+        viewState.editingTemplateName = "";
+        viewState.editingTemplateColor = null;
+        updateColorPage();
+      }
+      return null;
+    }
+
+    case "reset-template-preset": {
+      const presetKey = viewState.editingTemplate;
+      if (presetKey) {
+        if (appState.settings?.templateOverrides) {
+          delete appState.settings.templateOverrides[presetKey];
+          saveSettings();
+        }
+        const presetLabels = {
+          balanced: t("balanced"),
+          vibrant: t("vibrant"),
+          soft: t("soft"),
+          night: t("night"),
+          rust_cold_tactical: t("rustColdTactical"),
