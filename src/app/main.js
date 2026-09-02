@@ -1232,4 +1232,69 @@ async function handleAction(action) {
       if (viewState.applyingTweaks) return null;
       viewState.applyingTweaks = true;
       viewState.applyModal = {
-        phase: "rollingBack",
+        phase: "rollingBack",
+        progress: 0,
+        statusText: t("rollingBackSubtitle"),
+        results: []
+      };
+      renderApplyModalDom();
+
+      let currentProgress = 0;
+      const progressInterval = setInterval(() => {
+        if (currentProgress < 85) {
+          currentProgress += Math.max(1, (88 - currentProgress) * 0.12);
+          updateApplyProgress(currentProgress);
+        }
+      }, 40);
+
+      try {
+        const restored = await invokeCommand("rollback_last_tweaks");
+        clearInterval(progressInterval);
+
+        await new Promise((resolve) => {
+          const finishInterval = setInterval(() => {
+            currentProgress += Math.max(3, (100 - currentProgress) * 0.4);
+            if (currentProgress >= 99.5) {
+              currentProgress = 100;
+              updateApplyProgress(100, t("rollbackSuccess"));
+              clearInterval(finishInterval);
+              setTimeout(resolve, 450);
+            } else {
+              updateApplyProgress(currentProgress);
+            }
+          }, 20);
+        });
+
+        if (restored) {
+          mergeState(restored);
+          await Promise.all([loadTweakStatuses(), loadLists()]);
+        }
+
+        viewState.applyModal = null;
+        renderApplyModalDom();
+        updateMain();
+        showToastBanner(t("rollbackSuccess"), t("rollbackSuccess"), "safe");
+      } catch (err) {
+        clearInterval(progressInterval);
+        viewState.applyModal = null;
+        renderApplyModalDom();
+        updateMain();
+      } finally {
+        viewState.applyingTweaks = false;
+      }
+      return null;
+    }
+
+    case "apply-tweaks": {
+      if (!appState.isAdmin) {
+        highlightAdminBanner();
+        return null;
+      }
+      if (viewState.applyingTweaks) return null;
+      const idsToApply = Array.from(viewState.selectedTweaks).filter(
+        (id) => !viewState.installedTweaks.has(id) || id === "clean-temp-junk"
+      );
+      const idsToRevert = Array.from(viewState.pendingRevertTweaks || []);
+      if (!idsToApply.length && !idsToRevert.length) {
+        showToastBanner(t("noSelection"), t("noSelection"), "safe");
+        return null;
