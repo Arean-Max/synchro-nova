@@ -1037,4 +1037,69 @@ async function handleAction(action) {
       return invokeCommand("minimize_window");
     case "window-maximize":
       return invokeCommand("toggle_window_maximize");
-    case "window-close":
+    case "window-close":
+      return invokeCommand("close_window");
+    case "exit-app":
+      return invokeCommand("exit_app");
+
+    case "restart-as-admin": {
+      try {
+        localStorage.setItem("synchro_pending_nav", "tweaks");
+      } catch {}
+      const banner = document.querySelector(".ios-banner");
+      if (banner) banner.style.pointerEvents = "none";
+      try {
+        const res = await invokeCommand("restart_as_admin");
+        if (res === null && !appState.isAdmin) {
+          if (banner) banner.style.pointerEvents = "auto";
+          if (activePage === "tweaks") {
+            showAdminNotificationBanner();
+          }
+        }
+        return res;
+      } catch (err) {
+        console.error("restart_as_admin failed or cancelled:", err);
+        if (banner) banner.style.pointerEvents = "auto";
+        if (!appState.isAdmin && activePage === "tweaks") {
+          showAdminNotificationBanner();
+        }
+        return null;
+      }
+    }
+
+    case "apply-color":
+      return applyColor();
+
+    case "toggle-sidebar": {
+      viewState.sidebarCollapsed = !viewState.sidebarCollapsed;
+      try {
+        localStorage.setItem("synchro_sidebar_collapsed", String(viewState.sidebarCollapsed));
+      } catch {}
+      const ws = document.querySelector(".workspace");
+      if (ws) {
+        ws.classList.toggle("sidebar-collapsed", viewState.sidebarCollapsed);
+        const toggleBtn = document.querySelector(".sidebar-toggle-btn");
+        if (toggleBtn) {
+          const title = viewState.sidebarCollapsed ? t("expandSidebar") : t("collapseSidebar");
+          toggleBtn.setAttribute("title", title);
+          toggleBtn.setAttribute("aria-label", title);
+        }
+        syncNavIndicator();
+        setTimeout(syncNavIndicator, 140);
+        setTimeout(syncNavIndicator, 280);
+      } else {
+        render();
+      }
+      return null;
+    }
+
+    case "close-color-game-panel":
+      viewState.colorGamePanelOpen = false;
+      updateColorPage({ stableDrawer: true });
+      return null;
+
+    case "launch-color-game": {
+      const game = selectedColorGame(viewState);
+      if (game?.id && game.launchable) return invokeCommand("launch_installed_game", { id: game.id });
+      return null;
+    }
