@@ -1167,4 +1167,69 @@ async function handleAction(action) {
           vibrant: t("vibrant"),
           soft: t("soft"),
           night: t("night"),
-          rust_cold_tactical: t("rustColdTactical"),
+          rust_cold_tactical: t("rustColdTactical"),
+          rust_midnight_neon: t("rustMidnightNeon"),
+          clear_sight: t("clearSight")
+        };
+        viewState.editingTemplateName = presetLabels[presetKey] || presetKey;
+        const defaultPreset = defaultPresets[presetKey] || filterPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+        viewState.editingTemplateColor = { ...defaultPreset };
+        if (appState.color.activeFilter === presetKey) {
+          appState.color.saturation = defaultPreset.saturation;
+          appState.color.hue = defaultPreset.hue;
+          appState.color.contrast = defaultPreset.contrast;
+          appState.color.gamma = defaultPreset.gamma;
+          scheduleApplyColor();
+        }
+        updateColorPage();
+        syncAllTemplateSliders(viewState.editingTemplateColor);
+      }
+      return null;
+    }
+
+    case "click-impact-banner": {
+      const banner = viewState.activeImpactBanner;
+      if (banner) {
+        const textToCopy = [banner.title, banner.impactText].filter(Boolean).join(": ");
+        if (textToCopy) {
+          copyTextToClipboard(textToCopy);
+          showPillToast(lang() === "ru" ? "Скопировано в буфер обмена" : "Copied to clipboard");
+        }
+      }
+      dismissNotificationBanner();
+      return null;
+    }
+
+    case "dismiss-impact-banner":
+      if (viewState.activeImpactBanner?.isAdminPrompt) return null;
+      dismissNotificationBanner();
+      return null;
+
+    case "dismiss-admin-prompt":
+      viewState.showAdminPrompt = false;
+      viewState.dismissedAdminPrompt = true;
+      return updateMain();
+
+    case "restart-explorer":
+      await invokeCommand("restart_explorer");
+      return null;
+
+    case "dismiss-tweak-results":
+      viewState.tweakResults = [];
+      return updateMain();
+
+    case "dismiss-apply-modal":
+      viewState.applyModal = null;
+      renderApplyModalDom();
+      updateMain();
+      return null;
+
+    case "rollback-from-apply-modal": {
+      if (!appState.isAdmin) {
+        highlightAdminBanner();
+        return null;
+      }
+      if (viewState.applyingTweaks) return null;
+      viewState.applyingTweaks = true;
+      viewState.applyModal = {
+        phase: "rollingBack",
