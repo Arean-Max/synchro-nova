@@ -1427,4 +1427,69 @@ async function handleAction(action) {
       const backups = await invokeCommand("create_backup", { name });
       if (Array.isArray(backups)) {
         viewState.backups = backups;
-        viewState.selectedBackup = backups[0]?.id || "";
+        viewState.selectedBackup = backups[0]?.id || "";
+        updateMain();
+      }
+      return null;
+    }
+
+    case "dismiss-backup-modal":
+      viewState.showBackupNameModal = false;
+      viewState.backupName = "";
+      updateMain();
+      return null;
+
+    case "restore-backup":
+      if (viewState.selectedBackup) {
+        const restored = await invokeCommand("restore_backup", { id: viewState.selectedBackup });
+        if (restored) {
+          mergeState(restored);
+          render();
+        }
+      }
+      return null;
+
+    case "delete-backup":
+      if (viewState.selectedBackup) {
+        const backups = await invokeCommand("delete_backup", { id: viewState.selectedBackup });
+        if (Array.isArray(backups)) {
+          viewState.backups = backups;
+          viewState.selectedBackup = "";
+          updateMain();
+        }
+      }
+      return null;
+
+    case "open-backups-folder":
+      return invokeCommand("open_storage_folder", { kind: "backups" });
+
+    case "save-config": {
+      const configs = await invokeCommand("save_config", { name: viewState.configName });
+      if (Array.isArray(configs)) {
+        viewState.configs = configs;
+        viewState.selectedConfig = configs[0]?.id || "";
+        viewState.configName = "";
+        updateMain();
+      }
+      return null;
+    }
+
+    case "load-config":
+      if (viewState.selectedConfig) {
+        const loaded = await invokeCommand("load_config", { id: viewState.selectedConfig });
+        if (loaded) {
+          mergeState(loaded);
+          render();
+          scheduleApplyColor();
+        }
+      }
+      return null;
+
+    case "apply-config":
+      if (viewState.selectedConfig) {
+        const next = await invokeCommand("apply_config", { id: viewState.selectedConfig });
+        if (next) {
+          mergeState(next);
+          render();
+        }
+      }
