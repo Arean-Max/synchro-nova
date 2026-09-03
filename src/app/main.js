@@ -1297,4 +1297,69 @@ async function handleAction(action) {
       const idsToRevert = Array.from(viewState.pendingRevertTweaks || []);
       if (!idsToApply.length && !idsToRevert.length) {
         showToastBanner(t("noSelection"), t("noSelection"), "safe");
-        return null;
+        return null;
+      }
+      viewState.applyingTweaks = true;
+      viewState.applyModal = {
+        phase: "loading",
+        progress: 0,
+        statusText: t("applyingTweaksSubtitle"),
+        results: []
+      };
+      renderApplyModalDom();
+
+      let currentProgress = 0;
+      const progressInterval = setInterval(() => {
+        if (currentProgress < 85) {
+          currentProgress += Math.max(0.5, (88 - currentProgress) * 0.08);
+          updateApplyProgress(currentProgress);
+        }
+      }, 45);
+
+      try {
+        const results = [];
+        if (idsToRevert.length > 0) {
+          const revertResults = await invokeCommand("revert_tweaks", { ids: idsToRevert });
+          if (Array.isArray(revertResults)) {
+            results.push(...revertResults);
+          }
+        }
+        if (idsToApply.length > 0) {
+          const applyResults = await invokeCommand("apply_tweaks", { ids: idsToApply });
+          if (Array.isArray(applyResults)) {
+            results.push(...applyResults);
+          }
+        }
+        clearInterval(progressInterval);
+
+        await new Promise((resolve) => {
+          const finishInterval = setInterval(() => {
+            currentProgress += Math.max(2, (100 - currentProgress) * 0.35);
+            if (currentProgress >= 99.5) {
+              currentProgress = 100;
+              updateApplyProgress(100, t("ready"));
+              clearInterval(finishInterval);
+              setTimeout(resolve, 360);
+            } else {
+              updateApplyProgress(currentProgress);
+            }
+          }, 25);
+        });
+
+        viewState.applyModal = {
+          phase: "complete",
+          progress: 100,
+          results
+        };
+        renderApplyModalDom();
+
+        if (results?.some((r) => r.status === "requiresAdmin") && !appState.isAdmin) {
+          viewState.showAdminPrompt = true;
+        }
+        viewState.selectedTweaks.clear();
+        viewState.pendingRevertTweaks.clear();
+        await Promise.all([loadTweakStatuses(), loadLists()]);
+        syncTweaksActionButtons();
+      } catch (err) {
+        clearInterval(progressInterval);
+        viewState.applyModal = {
