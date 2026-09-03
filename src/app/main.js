@@ -1362,4 +1362,69 @@ async function handleAction(action) {
         syncTweaksActionButtons();
       } catch (err) {
         clearInterval(progressInterval);
-        viewState.applyModal = {
+        viewState.applyModal = {
+          phase: "complete",
+          progress: 100,
+          results: [{ id: "error", status: "failed", message: String(err) }]
+        };
+        renderApplyModalDom();
+      } finally {
+        viewState.applyingTweaks = false;
+      }
+      return null;
+    }
+
+    case "rollback-tweaks": {
+      if (!appState.isAdmin) {
+        highlightAdminBanner();
+        return null;
+      }
+      return handleAction("rollback-from-apply-modal");
+    }
+
+    case "reset-color":
+      appState.color = cloneState(defaultState).color;
+      updateMain();
+      return applyColor();
+
+    case "refresh-characteristics":
+    case "scan-drivers":
+      return triggerScanDrivers();
+
+    case "open-windows-update-drivers":
+      try {
+        await invokeCommand("open_windows_driver_updates");
+      } catch (e) {
+        console.error(e);
+      }
+      return null;
+
+    case "toggle-all-drivers":
+      viewState.showAllDrivers = !viewState.showAllDrivers;
+      return updateMain();
+
+    case "create-backup":
+      showBackupNotificationBanner();
+      return null;
+
+    case "open-backup-name-modal":
+      clearImpactBannerTimer();
+      viewState.activeImpactBanner = null;
+      renderNotificationBannerDom();
+      viewState.showBackupNameModal = true;
+      updateMain();
+      return null;
+
+    case "confirm-create-backup": {
+      const input = document.getElementById("custom-backup-name-input");
+      const name = input?.value?.trim() || viewState.backupName?.trim() || "";
+      viewState.showBackupNameModal = false;
+      viewState.backupName = "";
+      clearImpactBannerTimer();
+      viewState.activeImpactBanner = null;
+      renderNotificationBannerDom();
+      updateMain();
+      const backups = await invokeCommand("create_backup", { name });
+      if (Array.isArray(backups)) {
+        viewState.backups = backups;
+        viewState.selectedBackup = backups[0]?.id || "";
