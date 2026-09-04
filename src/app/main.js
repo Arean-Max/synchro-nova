@@ -1557,4 +1557,69 @@ function handleInput(event) {
     return;
   }
 
-  if (input.getAttribute("data-action") === "input-driver-search") {
+  if (input.getAttribute("data-action") === "input-driver-search") {
+    viewState.driverSearch = input.value;
+    updateDriversPageContent();
+    return;
+  }
+
+  const field = input.getAttribute("data-field");
+  if (field && Object.hasOwn(viewState, field)) {
+    viewState[field] = input.value;
+  }
+}
+
+async function handleClick(event) {
+  const target = event.target instanceof Element ? event.target : null;
+  if (!target) return;
+
+  const valBadge = target.closest("[data-slider-value]");
+  if (valBadge && !valBadge.querySelector("input")) {
+    const field = valBadge.getAttribute("data-slider-value");
+    const def = sliderDefs[field];
+    if (def) {
+      event.preventDefault();
+      event.stopPropagation();
+      const curVal = Math.round(Number(appState.color[field] ?? 100));
+      valBadge.innerHTML = `<input class="slider-inline-input" type="number" min="${def.min}" max="${def.max}" step="${def.step}" value="${curVal}">`;
+      const numInput = valBadge.querySelector("input");
+      if (numInput) {
+        numInput.focus();
+        numInput.select();
+        let committed = false;
+        const commit = () => {
+          if (committed) return;
+          committed = true;
+          const raw = Number(numInput.value);
+          const finalVal = Number.isFinite(raw) ? Math.min(def.max, Math.max(def.min, raw)) : curVal;
+          appState.color[field] = finalVal;
+          valBadge.textContent = formatSliderValue(field, finalVal);
+          updateSliderDom(field, appState);
+          scheduleApplyColor();
+          saveSettings();
+        };
+        numInput.addEventListener("blur", commit, { once: true });
+        numInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            committed = true;
+            valBadge.textContent = formatSliderValue(field, curVal);
+          }
+        });
+        numInput.addEventListener("click", (e) => e.stopPropagation());
+      }
+      return;
+    }
+  }
+
+  const tplValBadge = target.closest("[data-template-slider-value]");
+  if (tplValBadge && !tplValBadge.querySelector("input")) {
+    const field = tplValBadge.getAttribute("data-template-slider-value");
+    const def = sliderDefs[field];
+    if (def && viewState.editingTemplateColor) {
+      event.preventDefault();
+      event.stopPropagation();
+      const curVal = Math.round(Number(viewState.editingTemplateColor[field] ?? 100));
