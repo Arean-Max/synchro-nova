@@ -1492,4 +1492,69 @@ async function handleAction(action) {
           mergeState(next);
           render();
         }
-      }
+      }
+      return null;
+
+    case "delete-config":
+      if (viewState.selectedConfig) {
+        const configs = await invokeCommand("delete_config", { id: viewState.selectedConfig });
+        if (Array.isArray(configs)) {
+          viewState.configs = configs;
+          viewState.selectedConfig = configs[0]?.id || "";
+          updateMain();
+        }
+      }
+      return null;
+
+    case "open-configs-folder":
+      return invokeCommand("open_storage_folder", { kind: "configs" });
+
+    default:
+      return null;
+  }
+}
+
+function handleInput(event) {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement)) return;
+
+  const templateColorField = input.getAttribute("data-template-color-field");
+  if (templateColorField && sliderDefs[templateColorField]) {
+    if (!viewState.editingTemplateColor) {
+      viewState.editingTemplateColor = { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+    }
+    viewState.editingTemplateColor[templateColorField] = Number(input.value);
+    updateTemplateSliderDom(templateColorField, viewState.editingTemplateColor);
+    return;
+  }
+
+  const colorField = input.getAttribute("data-color-field");
+  if (colorField && sliderDefs[colorField]) {
+    appState.color[colorField] = Number(input.value);
+    updateSliderDom(colorField, appState);
+    if (!appState.color.activeFilter) {
+      saveNormalColorState();
+    }
+    scheduleApplyColor();
+    return;
+  }
+
+  if (input.getAttribute("data-action") === "pick-accent-color") {
+    const color = input.value;
+    appState.settings.accentColor = color;
+    applyInterfaceAccent(color);
+    const pickerWrapper = document.querySelector(".accent-picker-wrapper");
+    let matchesPreset = false;
+    document.querySelectorAll(".accent-swatch").forEach((swatch) => {
+      const match = swatch.getAttribute("data-color")?.toLowerCase() === color.toLowerCase();
+      swatch.classList.toggle("active", match);
+      if (match) matchesPreset = true;
+    });
+    if (pickerWrapper) {
+      pickerWrapper.classList.toggle("active", !matchesPreset);
+    }
+    saveSettings();
+    return;
+  }
+
+  if (input.getAttribute("data-action") === "input-driver-search") {
