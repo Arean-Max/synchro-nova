@@ -1622,4 +1622,69 @@ async function handleClick(event) {
     if (def && viewState.editingTemplateColor) {
       event.preventDefault();
       event.stopPropagation();
-      const curVal = Math.round(Number(viewState.editingTemplateColor[field] ?? 100));
+      const curVal = Math.round(Number(viewState.editingTemplateColor[field] ?? 100));
+      tplValBadge.innerHTML = `<input class="slider-inline-input" type="number" min="${def.min}" max="${def.max}" step="${def.step}" value="${curVal}">`;
+      const numInput = tplValBadge.querySelector("input");
+      if (numInput) {
+        numInput.focus();
+        numInput.select();
+        let committed = false;
+        const commit = () => {
+          if (committed) return;
+          committed = true;
+          const raw = Number(numInput.value);
+          const finalVal = Number.isFinite(raw) ? Math.min(def.max, Math.max(def.min, raw)) : curVal;
+          viewState.editingTemplateColor[field] = finalVal;
+          tplValBadge.textContent = formatSliderValue(field, finalVal);
+          updateTemplateSliderDom(field, viewState.editingTemplateColor);
+        };
+        numInput.addEventListener("blur", commit, { once: true });
+        numInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            committed = true;
+            tplValBadge.textContent = formatSliderValue(field, curVal);
+          }
+        });
+        numInput.addEventListener("click", (e) => e.stopPropagation());
+      }
+      return;
+    }
+  }
+
+  const impactBannerClose = target.closest(".ios-banner-close");
+  if (impactBannerClose) {
+    event.preventDefault();
+    event.stopPropagation();
+    dismissNotificationBanner();
+    return;
+  }
+
+  const clickBanner = target.closest(".ios-banner");
+  if (clickBanner) {
+    event.preventDefault();
+    event.stopPropagation();
+    const banner = viewState.activeImpactBanner;
+    if (banner?.isAdminPrompt) {
+      await handleAction("restart-as-admin");
+      return;
+    }
+    if (banner?.isBackupPrompt) {
+      await handleAction("open-backup-name-modal");
+      return;
+    }
+    if (banner) {
+      const textToCopy = [banner.title, banner.impactText].filter(Boolean).join(": ");
+      if (textToCopy) {
+        copyTextToClipboard(textToCopy);
+        showPillToast(lang() === "ru" ? "Скопировано в буфер обмена" : "Copied to clipboard");
+      }
+    }
+    dismissNotificationBanner();
+    return;
+  }
+
+  const backdropDismiss = target.closest("[data-action='dismiss-backup-modal']");
