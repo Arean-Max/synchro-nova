@@ -1687,4 +1687,69 @@ async function handleClick(event) {
     return;
   }
 
-  const backdropDismiss = target.closest("[data-action='dismiss-backup-modal']");
+  const backdropDismiss = target.closest("[data-action='dismiss-backup-modal']");
+  if (backdropDismiss && !target.closest(".template-config-dialog") && !target.closest(".backup-minimal-dialog")) {
+    await handleAction("dismiss-backup-modal");
+    return;
+  }
+
+  if (target.id === "apply-modal-backdrop") {
+    await handleAction("dismiss-apply-modal");
+    return;
+  }
+
+  if (target.closest(".apply-modal-complete")) {
+    const actionBtn = target.closest("[data-action]");
+    if (actionBtn && actionBtn.closest(".apply-modal-complete")) {
+      const actionName = actionBtn.getAttribute("data-action");
+      if (actionName === "show-tweak-error") {
+        event.preventDefault();
+        event.stopPropagation();
+        const id = actionBtn.getAttribute("data-tweak-id");
+        const errorMsg = actionBtn.getAttribute("data-error-msg") || "";
+        showTweakErrorBanner(id, errorMsg);
+        return;
+      }
+      if (actionName === "show-tweak-impact") {
+        event.preventDefault();
+        event.stopPropagation();
+        const id = actionBtn.getAttribute("data-tweak-id");
+        if (id) showTweakImpactBanner(id);
+        return;
+      }
+      if (actionName) await handleAction(actionName);
+    }
+    return;
+  }
+
+  if (target.closest(".template-config-dialog")) {
+    const dialogAction = target.closest("[data-action]");
+    if (dialogAction && dialogAction.closest(".template-config-dialog")) {
+      const actionName = dialogAction.getAttribute("data-action");
+      if (actionName) await handleAction(actionName);
+    }
+    return;
+  }
+
+  const navItem = target.closest("[data-page]");
+  if (navItem) {
+    const nextPage = navItem.getAttribute("data-page");
+    if (!nextPage || !pageDefs[nextPage] || nextPage === activePage) return;
+    viewState.languageDropdownOpen = false;
+    viewState.openDropdownBindId = null;
+    if (nextPage !== "tweaks" && viewState.activeImpactBanner?.isAdminPrompt) {
+      dismissNotificationBanner(true);
+    }
+    router.navigate(nextPage, {
+      onNavigate: () => {
+        updateMain();
+      },
+      appState,
+      viewState,
+      showAdminBanner: showAdminNotificationBanner,
+      loadTweakStatuses
+    });
+    if (nextPage === "gameColor" && !viewState.colorGamesLoaded) {
+      loadColorGames();
+    } else if (nextPage === "tweaks") {
+      if (!appState.isAdmin) {
