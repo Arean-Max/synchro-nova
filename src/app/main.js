@@ -1947,4 +1947,69 @@ async function handleClick(event) {
       Number(appState?.color?.blackHolo || 0) > 0
     );
     const nextActive = !isCurrentlyActive;
-    const nextVal = nextActive ? 100 : 0;
+    const nextVal = nextActive ? 100 : 0;
+    appState.color.blackHolo = nextVal;
+
+    toggleBlackHolo.classList.toggle("active", nextActive);
+    toggleBlackHolo.setAttribute("aria-checked", String(nextActive));
+    toggleBlackHolo.setAttribute("aria-pressed", String(nextActive));
+    const sw = toggleBlackHolo.querySelector(".ios-switch");
+    if (sw) sw.classList.toggle("active", nextActive);
+
+    if (nextActive && Math.abs(Number(appState?.color?.hue || 0)) > 0.1) {
+      appState.color.hue = 0;
+      updateSliderDom("hue", appState);
+    }
+
+    try {
+      const status = await invokeCommand("toggle_hardware_black_holo", { enabled: nextActive });
+      if (status) {
+        viewState.blackHoloStatus = status;
+        appState.color.blackHolo = status.active ? 100 : 0;
+        updateBlackHoloDom(status.active, status);
+        const isRu = lang() === "ru";
+        if (status.error) {
+          showToastBanner(t("blackHolo"), status.error, "danger");
+        } else if (status.active) {
+          showToastBanner(
+            t("blackHolo"),
+            isRu
+              ? "Режим Black Holo включен"
+              : "Black Holo mode enabled",
+            "safe"
+          );
+        } else {
+          showToastBanner(
+            t("blackHolo"),
+            isRu ? "Черный Холик отключен" : "Black Holosight disabled",
+            "safe"
+          );
+        }
+      } else {
+        updateBlackHoloDom(nextVal > 0, viewState.blackHoloStatus);
+      }
+    } catch (err) {
+      console.error("Hardware black holo toggle error:", err);
+      showErrorToast(t("blackHolo"), err);
+      updateBlackHoloDom(nextVal > 0, viewState.blackHoloStatus);
+    }
+
+    scheduleApplyColor();
+    return;
+  }
+
+  const screenshotBtn = target.closest("[data-action='take-juicy-screenshot']");
+  if (screenshotBtn) {
+    try {
+      screenshotBtn.classList.add("taking");
+      const res = await invokeCommand("take_juicy_screenshot");
+      setTimeout(() => screenshotBtn.classList.remove("taking"), 600);
+      if (res?.success) {
+        showToastBanner(
+          t("screenshot"),
+          lang() === "ru"
+            ? "Сочный скриншот скопирован в буфер обмена (Ctrl+V)!"
+            : "Juicy screenshot copied to clipboard (Ctrl+V)!",
+          "safe"
+        );
+      } else if (res?.message) {
