@@ -1882,4 +1882,69 @@ async function handleClick(event) {
       viewState.editingTemplateName = custom?.name || filterNames[filterId] || filterId;
       viewState.editingTemplateColor = {
         saturation: custom?.saturation ?? defaultFilter.saturation,
-        hue: custom?.hue ?? defaultFilter.hue,
+        hue: custom?.hue ?? defaultFilter.hue,
+        contrast: custom?.contrast ?? defaultFilter.contrast,
+        gamma: custom?.gamma ?? defaultFilter.gamma
+      };
+      updateColorPage();
+      syncAllTemplateSliders(viewState.editingTemplateColor);
+    }
+    return;
+  }
+
+  const toggleFilter = target.closest("[data-action='toggle-color-filter']");
+  if (toggleFilter && !target.closest("[data-action='configure-filter']")) {
+    const filterId = toggleFilter.getAttribute("data-filter-id");
+    if (filterId) {
+      const isAlreadyActive = appState.color.activeFilter === filterId;
+      if (isAlreadyActive) {
+        appState.color.activeFilter = "";
+        const normal = getSavedNormalColor();
+        appState.color.saturation = normal.saturation;
+        appState.color.hue = normal.hue;
+        appState.color.contrast = normal.contrast;
+        appState.color.gamma = normal.gamma;
+      } else {
+        if (!appState.color.activeFilter) {
+          saveNormalColorState();
+        }
+        appState.color.activeFilter = filterId;
+        const custom = appState.settings?.templateOverrides?.[filterId];
+        const defaultFilter = filterPresets[filterId];
+        const cfg = custom || defaultFilter;
+        if (cfg) {
+          if (cfg.saturation !== undefined) appState.color.saturation = cfg.saturation;
+          if (cfg.contrast !== undefined) appState.color.contrast = cfg.contrast;
+          if (cfg.gamma !== undefined) appState.color.gamma = cfg.gamma;
+          if (cfg.hue !== undefined) appState.color.hue = cfg.hue;
+        }
+      }
+      updateColorPage();
+      await applyColor();
+      saveSettings();
+    }
+    return;
+  }
+
+  const disableFilter = target.closest("[data-action='disable-color-filter']");
+  if (disableFilter) {
+    appState.color.activeFilter = "";
+    const normal = getSavedNormalColor();
+    appState.color.saturation = normal.saturation;
+    appState.color.hue = normal.hue;
+    appState.color.contrast = normal.contrast;
+    appState.color.gamma = normal.gamma;
+    updateColorPage();
+    await applyColor();
+    saveSettings();
+    return;
+  }
+
+  const toggleBlackHolo = target.closest("[data-action='toggle-black-holo']");
+  if (toggleBlackHolo) {
+    const isCurrentlyActive = Boolean(
+      toggleBlackHolo.classList.contains("active") ||
+      Number(appState?.color?.blackHolo || 0) > 0
+    );
+    const nextActive = !isCurrentlyActive;
+    const nextVal = nextActive ? 100 : 0;
