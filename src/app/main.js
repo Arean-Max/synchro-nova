@@ -1817,4 +1817,69 @@ async function handleClick(event) {
     const nextLang = language.getAttribute("data-language");
     if (nextLang && nextLang !== appState.settings.language) {
       await switchLanguage(nextLang);
-    } else {
+    } else {
+      updateMain();
+    }
+    return;
+  }
+
+  const accentSwatch = target.closest("[data-action='set-accent-color']");
+  if (accentSwatch) {
+    const color = accentSwatch.getAttribute("data-color");
+    if (color) {
+      appState.settings.accentColor = color;
+      applyInterfaceAccent(color);
+      document.querySelectorAll(".accent-swatch").forEach((swatch) => {
+        swatch.classList.toggle("active", swatch.getAttribute("data-color")?.toLowerCase() === color.toLowerCase());
+      });
+      const pickerWrapper = document.querySelector(".accent-picker-wrapper");
+      if (pickerWrapper) pickerWrapper.classList.remove("active");
+      const colorInput = document.querySelector(".accent-color-input");
+      if (colorInput instanceof HTMLInputElement) colorInput.value = color;
+      await saveSettings();
+    }
+    return;
+  }
+
+  const previewModeBtn = target.closest("[data-action='set-color-preview-mode']");
+  if (previewModeBtn) {
+    const nextMode = previewModeBtn.getAttribute("data-mode") || "day";
+    viewState.colorPreviewMode = nextMode;
+    const img = document.getElementById("color-preview-image");
+    if (img instanceof HTMLImageElement) {
+      img.src = nextMode === "night" ? "./assets/night.png" : (nextMode === "holo" ? "./assets/blackholo.png" : "./assets/preview.png");
+    }
+    document.querySelectorAll(".preview-mode-btn[data-mode]").forEach((btn) => {
+      btn.classList.toggle("active", btn.getAttribute("data-mode") === nextMode);
+    });
+    return;
+  }
+
+  const fineTuningTabBtn = target.closest("[data-action='set-fine-tuning-tab']");
+  if (fineTuningTabBtn) {
+    const tab = fineTuningTabBtn.getAttribute("data-tab");
+    if (tab && viewState.fineTuningTab !== tab) {
+      viewState.fineTuningTab = tab;
+      updateColorPage();
+    }
+    return;
+  }
+
+  const configureFilter = target.closest("[data-action='configure-filter']");
+  if (configureFilter) {
+    event.preventDefault();
+    event.stopPropagation();
+    const filterId = configureFilter.getAttribute("data-filter");
+    if (filterId) {
+      viewState.editingTemplate = filterId;
+      const filterNames = {
+        rust_cold_tactical: t("rustColdTactical"),
+        rust_midnight_neon: t("rustMidnightNeon"),
+        clear_sight: t("clearSight")
+      };
+      const custom = appState.settings?.templateOverrides?.[filterId];
+      const defaultFilter = filterPresets[filterId] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+      viewState.editingTemplateName = custom?.name || filterNames[filterId] || filterId;
+      viewState.editingTemplateColor = {
+        saturation: custom?.saturation ?? defaultFilter.saturation,
+        hue: custom?.hue ?? defaultFilter.hue,
