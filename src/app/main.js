@@ -1752,4 +1752,69 @@ async function handleClick(event) {
     if (nextPage === "gameColor" && !viewState.colorGamesLoaded) {
       loadColorGames();
     } else if (nextPage === "tweaks") {
-      if (!appState.isAdmin) {
+      if (!appState.isAdmin) {
+        showAdminNotificationBanner();
+      }
+      if (!viewState.detectedApps.length) {
+        invokeCommand("detect_installed_apps").then((apps) => {
+          if (Array.isArray(apps)) {
+            viewState.detectedApps = apps;
+            if (activePage === "tweaks" && viewState.smartTipsOpen) updateMain();
+          }
+        });
+      }
+      if (viewState.installedTweaks.size === 0) {
+        loadTweakStatuses().then(updateMain);
+      }
+    } else if (nextPage === "characteristics") {
+      if (!viewState.drivers || !viewState.drivers.length) {
+        triggerScanDrivers();
+      }
+    } else if ((nextPage === "color" || nextPage === "gameColor" || nextPage === "backups" || nextPage === "configs" || nextPage === "storage") && (!viewState.configs.length || !viewState.backups.length)) {
+      loadLists().then(() => {
+        if (nextPage === "color" || nextPage === "gameColor") updateColorPage();
+        else updateMain();
+      });
+    }
+    return;
+  }
+
+  const setting = target.closest("[data-setting]");
+  if (setting) {
+    const key = setting.getAttribute("data-setting");
+    if (!Object.hasOwn(appState.settings, key)) return;
+    const nextVal = !appState.settings[key];
+    appState.settings[key] = nextVal;
+
+    setting.classList.toggle("active", nextVal);
+    setting.setAttribute("aria-pressed", nextVal ? "true" : "false");
+    setting.setAttribute("aria-checked", nextVal ? "true" : "false");
+    const sw = setting.querySelector(".ios-switch");
+    if (sw) sw.classList.toggle("active", nextVal);
+
+    saveSettings();
+
+    if (key === "applyInstantly" && appState.settings.applyInstantly) await applyColor();
+    if (key === "showOnRecordings") await applyColor();
+    if (key === "disableAnimations") {
+      document.body.classList.toggle("no-animations", Boolean(appState.settings.disableAnimations));
+    }
+    return;
+  }
+
+  const toggleLanguageDropdown = target.closest("[data-action='toggle-language-dropdown']");
+  if (toggleLanguageDropdown) {
+    event.preventDefault();
+    viewState.languageDropdownOpen = !viewState.languageDropdownOpen;
+    updateMain();
+    return;
+  }
+
+  const language = target.closest("[data-action='select-language']") || target.closest("[data-language]");
+  if (language) {
+    event.preventDefault();
+    viewState.languageDropdownOpen = false;
+    const nextLang = language.getAttribute("data-language");
+    if (nextLang && nextLang !== appState.settings.language) {
+      await switchLanguage(nextLang);
+    } else {
