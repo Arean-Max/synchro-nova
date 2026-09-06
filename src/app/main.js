@@ -2012,4 +2012,69 @@ async function handleClick(event) {
             : "Juicy screenshot copied to clipboard (Ctrl+V)!",
           "safe"
         );
-      } else if (res?.message) {
+      } else if (res?.message) {
+        showErrorToast(t("screenshot"), res.message);
+      }
+    } catch (err) {
+      console.error("Screenshot error:", err);
+      showErrorToast(t("screenshot"), err);
+    }
+    return;
+  }
+
+  const updateDownloadBtn = target.closest("[data-action='start-update-download']");
+  if (updateDownloadBtn) {
+    startUpdateDownload();
+    return;
+  }
+
+  const updateInstallBtn = target.closest("[data-action='apply-update-install']");
+  if (updateInstallBtn) {
+    applyUpdateInstall();
+    return;
+  }
+
+  const manualDownloadBtn = target.closest("[data-action='open-manual-download']");
+  if (manualDownloadBtn) {
+    invokeCommand("open_external_url", { url: "https://github.com/Arean-Max/synchro-nova/releases" });
+    return;
+  }
+
+  const scopeApplyBtn = target.closest(".scope-apply-btn");
+  if (scopeApplyBtn) {
+    scopeApplyBtn.classList.add("applied");
+    window.setTimeout(() => scopeApplyBtn.classList.remove("applied"), 1200);
+  }
+
+  const configureTemplate = target.closest("[data-action='configure-template']");
+  if (configureTemplate) {
+    event.preventDefault();
+    event.stopPropagation();
+    const presetKey = configureTemplate.getAttribute("data-preset");
+    if (presetKey) {
+      viewState.editingTemplate = presetKey;
+      const presetLabels = {
+        balanced: t("balanced"),
+        vibrant: t("vibrant"),
+        soft: t("soft"),
+        night: t("night")
+      };
+      const custom = appState.settings?.templateOverrides?.[presetKey];
+      const defaultPreset = defaultPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+      let templateDisplayName = custom?.name || presetLabels[presetKey] || presetKey;
+      if (templateDisplayName && standardTemplateNames.has(templateDisplayName)) {
+        templateDisplayName = presetLabels[presetKey] || presetKey;
+      }
+      viewState.editingTemplateName = templateDisplayName;
+      viewState.editingTemplateColor = {
+        saturation: custom?.saturation ?? defaultPreset.saturation,
+        hue: custom?.hue ?? defaultPreset.hue,
+        contrast: custom?.contrast ?? defaultPreset.contrast,
+        gamma: custom?.gamma ?? defaultPreset.gamma
+      };
+      updateColorPage();
+      syncAllTemplateSliders(viewState.editingTemplateColor);
+    }
+    return;
+  }
+
