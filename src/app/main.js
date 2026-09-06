@@ -2142,4 +2142,69 @@ async function handleClick(event) {
   }
 
   const openBackupModal = target.closest("[data-action='open-backup-name-modal']");
-  if (openBackupModal) {
+  if (openBackupModal) {
+    event.preventDefault();
+    await handleAction("open-backup-name-modal");
+    return;
+  }
+
+  if (!appState.isAdmin && (activePage === "tweaks" || target.closest(".tweaks-page"))) {
+    if (target.closest("[data-tweak-id]") || target.closest("[data-action='apply-tweaks']") || target.closest("[data-action='rollback-tweaks']") || target.closest(".tweaks-page.admin-locked")) {
+      event.preventDefault();
+      event.stopPropagation();
+      highlightAdminBanner();
+      return;
+    }
+  }
+
+  const tweak = target.closest(".tweak-tile[data-tweak-id]");
+  if (tweak) {
+    event.preventDefault();
+    const id = tweak.getAttribute("data-tweak-id");
+    if (!id) return;
+
+    const isInstalled = viewState.installedTweaks.has(id);
+    const isMaintenance = id === "clean-temp-junk";
+
+    if (isInstalled && !isMaintenance) {
+      if (viewState.pendingRevertTweaks.has(id)) {
+        viewState.pendingRevertTweaks.delete(id);
+      } else {
+        viewState.pendingRevertTweaks.add(id);
+      }
+      if (tweak instanceof HTMLElement) tweak.blur();
+      syncTweakTile(id);
+      return;
+    }
+
+    if (viewState.selectedTweaks.has(id)) {
+      viewState.selectedTweaks.delete(id);
+    } else {
+      viewState.selectedTweaks.add(id);
+      const tweakItem = allTweaks().find((item) => item.id === id);
+      if (tweakItem && tweakCategory(tweakItem) === "risk") {
+        showRiskWarningBanner(tweakItem);
+      }
+    }
+    if (tweak instanceof HTMLElement) tweak.blur();
+    syncTweakTile(id);
+    return;
+  }
+
+  const setDriverFilter = target.closest("[data-action='set-driver-filter']");
+  if (setDriverFilter) {
+    event.preventDefault();
+    const filter = setDriverFilter.getAttribute("data-filter") || "all";
+    viewState.driverFilter = filter;
+    updateMain();
+    return;
+  }
+
+  const openDriverUrl = target.closest("[data-action='open-driver-url']");
+  if (openDriverUrl) {
+    event.preventDefault();
+    event.stopPropagation();
+    const url = openDriverUrl.getAttribute("data-url");
+    if (url) {
+      try {
+        await invokeCommand("open_external_url", { url });
