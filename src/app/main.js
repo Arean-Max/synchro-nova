@@ -2077,4 +2077,69 @@ async function handleClick(event) {
     }
     return;
   }
-
+
+  const preset = target.closest("[data-preset]");
+  if (preset) {
+    applyPreset(preset.getAttribute("data-preset"));
+    return;
+  }
+
+  const deleteTemplate = target.closest("[data-action='delete-color-template']");
+  if (deleteTemplate) {
+    event.preventDefault();
+    event.stopPropagation();
+    const id = deleteTemplate.getAttribute("data-delete-config-id");
+    if (id) {
+      const configs = await invokeCommand("delete_config", { id });
+      if (Array.isArray(configs)) {
+        viewState.configs = configs;
+        if (viewState.selectedConfig === id) {
+          viewState.selectedConfig = configs[0]?.id || "";
+        }
+        updateColorPage();
+      }
+    }
+    return;
+  }
+
+  const colorTemplate = target.closest("[data-color-template-id]");
+  if (colorTemplate) {
+    const id = colorTemplate.getAttribute("data-color-template-id");
+    if (!id) return;
+    const loaded = await invokeCommand("load_config", { id });
+    if (loaded) {
+      mergeState(loaded);
+      updateColorPage();
+      scheduleApplyColor();
+    }
+    return;
+  }
+
+  const colorGame = target.closest("[data-game-id]");
+  if (colorGame) {
+    const id = colorGame.getAttribute("data-game-id");
+    if (id && selectColorGame(viewState, id, true)) updateColorPage();
+    return;
+  }
+
+  const tweakHelp = target.closest("[data-action='show-tweak-impact']");
+  if (tweakHelp) {
+    event.preventDefault();
+    event.stopPropagation();
+    const id = tweakHelp.getAttribute("data-tweak-id");
+    if (id) showTweakImpactBanner(id);
+    return;
+  }
+
+  const tweakError = target.closest("[data-action='show-tweak-error']");
+  if (tweakError) {
+    event.preventDefault();
+    event.stopPropagation();
+    const id = tweakError.getAttribute("data-tweak-id");
+    const errorMsg = tweakError.getAttribute("data-error-msg") || "";
+    showTweakErrorBanner(id, errorMsg);
+    return;
+  }
+
+  const openBackupModal = target.closest("[data-action='open-backup-name-modal']");
+  if (openBackupModal) {
