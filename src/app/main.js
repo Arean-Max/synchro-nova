@@ -2207,4 +2207,69 @@ async function handleClick(event) {
     const url = openDriverUrl.getAttribute("data-url");
     if (url) {
       try {
-        await invokeCommand("open_external_url", { url });
+        await invokeCommand("open_external_url", { url });
+      } catch (e) {
+        console.error("Failed to open driver URL:", e);
+      }
+    }
+    return;
+  }
+
+  const openExtUrl = target.closest("[data-action='open-external-url']");
+  if (openExtUrl) {
+    event.preventDefault();
+    event.stopPropagation();
+    const url = openExtUrl.getAttribute("data-url");
+    if (url) {
+      try {
+        await invokeCommand("open_external_url", { url });
+      } catch (e) {
+        console.error("Failed to open external URL:", e);
+      }
+    }
+    return;
+  }
+
+  const clearDriverSearch = target.closest("[data-action='clear-driver-search']");
+  if (clearDriverSearch) {
+    event.preventDefault();
+    viewState.driverSearch = "";
+    updateMain();
+    return;
+  }
+
+  const scanDriversBtn = target.closest("[data-action='scan-drivers']");
+  if (scanDriversBtn) {
+    event.preventDefault();
+    await triggerScanDrivers();
+    return;
+  }
+
+  const winUpdateBtn = target.closest("[data-action='open-windows-update-drivers']");
+  if (winUpdateBtn) {
+    event.preventDefault();
+    try {
+      await invokeCommand("open_windows_driver_updates");
+    } catch (e) {
+      console.error("Failed to open Windows Update:", e);
+    }
+    return;
+  }
+
+  const driverSearch = target.closest("[data-driver-search]");
+  if (driverSearch) {
+    const query = driverSearch.getAttribute("data-driver-search");
+    if (query) await invokeCommand("open_driver_search", { query });
+    return;
+  }
+
+  const addBind = target.closest("[data-action='add-bind']");
+  if (addBind) {
+    event.preventDefault();
+    const newId = `bind_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    if (!Array.isArray(appState.keybinds)) appState.keybinds = [];
+    appState.keybinds.push({
+      id: newId,
+      key: "",
+      modifiers: 0,
+      vk: 0,
