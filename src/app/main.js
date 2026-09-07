@@ -2467,4 +2467,69 @@ async function handleKeydown(event) {
     return;
   }
   if (activePage !== "gameColor") return;
-  const target = event.target;
+  const target = event.target;
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return;
+  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+    if (stepColorSelection(1)) {
+      event.preventDefault();
+    }
+    return;
+  }
+  if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+    if (stepColorSelection(-1)) {
+      event.preventDefault();
+    }
+    return;
+  }
+  if (event.key === "Enter") {
+    const game = selectedColorGame(viewState);
+    if (!game) return;
+    viewState.colorGamePanelOpen = true;
+    event.preventDefault();
+    updateColorPage();
+    return;
+  }
+  if (event.key === "Escape") {
+    if (viewState.colorGamePanelOpen) {
+      viewState.colorGamePanelOpen = false;
+      event.preventDefault();
+      updateColorPage();
+    }
+  }
+}
+
+function handlePointerDown(event) {
+  if (event.button !== 0) return;
+  const target = event.target instanceof Element ? event.target : null;
+  if (!target?.closest("[data-window-drag]")) return;
+  if (target.closest("button, input, textarea, select, a, [data-action], [data-page], [data-setting], [data-game-id], .window-controls")) return;
+  event.preventDefault();
+  invokeCommand("start_window_drag");
+}
+
+function handleImageError(event) {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement)) return;
+  if (image.classList.contains("color-preview-img")) return;
+  if (
+    image.classList.contains("game-card-image") ||
+    image.classList.contains("game-card-logo-image") ||
+    image.classList.contains("game-card-watermark") ||
+    image.classList.contains("game-title-watermark") ||
+    image.classList.contains("color-game-head-mark")
+  ) {
+    if (image.classList.contains("game-card-logo-image")) {
+      image.closest(".game-card")?.setAttribute("data-logo-loaded", "false");
+    }
+    image.remove();
+  }
+}
+
+function render() {
+  const app = document.getElementById("app");
+  document.documentElement.lang = lang();
+  applyInterfaceAccent(appState.settings.accentColor);
+  app.className = "app-shell";
+  app.innerHTML = renderShell(viewState, t);
+  syncAllSliders(appState, viewState);
+  updateNavState();
