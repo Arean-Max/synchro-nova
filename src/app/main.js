@@ -2337,4 +2337,69 @@ async function handleClick(event) {
       await syncKeybinds();
       updateMain();
     }
-    return;
+    return;
+  }
+
+  const deleteBind = target.closest("[data-action='delete-bind']");
+  if (deleteBind) {
+    event.preventDefault();
+    const bindId = deleteBind.getAttribute("data-bind-id");
+    if (bindId) {
+      appState.keybinds = (appState.keybinds || []).filter((b) => b.id !== bindId);
+      if (viewState.recordingBindId === bindId) viewState.recordingBindId = null;
+      if (viewState.openDropdownBindId === bindId) viewState.openDropdownBindId = null;
+      await syncKeybinds();
+      updateMain();
+    }
+    return;
+  }
+
+  if (viewState.recordingBindId && !target.closest("[data-action='record-bind']")) {
+    viewState.recordingBindId = null;
+    updateMain();
+  }
+
+  const backup = target.closest("[data-backup-id]");
+  if (backup) {
+    viewState.selectedBackup = backup.getAttribute("data-backup-id");
+    updateMain();
+    return;
+  }
+
+  const config = target.closest("[data-config-id]");
+  if (config) {
+    viewState.selectedConfig = config.getAttribute("data-config-id");
+    updateMain();
+    return;
+  }
+
+  const action = target.closest("[data-action]");
+  if (action) await handleAction(action.getAttribute("data-action"));
+}
+
+function handleWheel(event) {
+  const target = event.target instanceof Element ? event.target : null;
+  if (!target?.closest(".game-carousel")) return;
+  const step = event.deltaY > 0 || event.deltaX > 0 ? 1 : -1;
+  if (!stepColorSelection(step)) return;
+  event.preventDefault();
+}
+
+async function handleKeydown(event) {
+  if (viewState.recordingBindId) {
+    if (event.key === "Escape" && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      viewState.recordingBindId = null;
+      updateMain();
+      return;
+    }
+    if (["Control", "Shift", "Alt", "Meta"].includes(event.key)) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const bind = appState.keybinds?.find((b) => b.id === viewState.recordingBindId);
+    if (bind) {
+      let modifiers = 0;
+      if (event.altKey) modifiers |= 1;
+      if (event.ctrlKey) modifiers |= 2;
