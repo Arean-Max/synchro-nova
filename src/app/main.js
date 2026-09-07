@@ -2272,4 +2272,69 @@ async function handleClick(event) {
       id: newId,
       key: "",
       modifiers: 0,
-      vk: 0,
+      vk: 0,
+      action: "template:vibrant",
+      enabled: true
+    });
+    viewState.recordingBindId = newId;
+    await syncKeybinds();
+    updateMain();
+    return;
+  }
+
+  const toggleDropdown = target.closest("[data-action='toggle-bind-dropdown']");
+  if (toggleDropdown) {
+    event.preventDefault();
+    const bindId = toggleDropdown.getAttribute("data-bind-id");
+    viewState.openDropdownBindId = viewState.openDropdownBindId === bindId ? null : bindId;
+    updateMain();
+    return;
+  }
+
+  const selectAction = target.closest("[data-action='select-bind-action']");
+  if (selectAction) {
+    event.preventDefault();
+    const bindId = selectAction.getAttribute("data-bind-id");
+    const val = selectAction.getAttribute("data-value");
+    const bind = appState.keybinds?.find((b) => b.id === bindId);
+    if (bind && val) {
+      bind.action = val;
+      viewState.openDropdownBindId = null;
+      await syncKeybinds();
+      updateMain();
+    }
+    return;
+  }
+
+  if (viewState.openDropdownBindId && !target.closest(".bind-custom-dropdown")) {
+    viewState.openDropdownBindId = null;
+    updateMain();
+  }
+
+  if (viewState.languageDropdownOpen && !target.closest(".language-custom-dropdown")) {
+    viewState.languageDropdownOpen = false;
+    updateMain();
+  }
+
+  const recordBind = target.closest("[data-action='record-bind']");
+  if (recordBind) {
+    event.preventDefault();
+    const bindId = recordBind.getAttribute("data-bind-id");
+    if (bindId) {
+      viewState.recordingBindId = viewState.recordingBindId === bindId ? null : bindId;
+      updateMain();
+    }
+    return;
+  }
+
+  const toggleBind = target.closest("[data-action='toggle-bind']");
+  if (toggleBind) {
+    event.preventDefault();
+    const bindId = toggleBind.getAttribute("data-bind-id");
+    const bind = appState.keybinds?.find((b) => b.id === bindId);
+    if (bind) {
+      bind.enabled = !bind.enabled;
+      await syncKeybinds();
+      updateMain();
+    }
+    return;
