@@ -2402,4 +2402,69 @@ async function handleKeydown(event) {
     if (bind) {
       let modifiers = 0;
       if (event.altKey) modifiers |= 1;
-      if (event.ctrlKey) modifiers |= 2;
+      if (event.ctrlKey) modifiers |= 2;
+      if (event.shiftKey) modifiers |= 4;
+      if (event.metaKey) modifiers |= 8;
+      bind.modifiers = modifiers;
+      bind.vk = getWin32Vk(event);
+      bind.key = formatKeyLabel(event);
+    }
+    viewState.recordingBindId = null;
+    await syncKeybinds();
+    updateMain();
+    return;
+  }
+
+  if (viewState.openDropdownBindId && event.key === "Escape") {
+    event.preventDefault();
+    viewState.openDropdownBindId = null;
+    updateMain();
+    return;
+  }
+
+  if (viewState.languageDropdownOpen && event.key === "Escape") {
+    event.preventDefault();
+    viewState.languageDropdownOpen = false;
+    updateMain();
+    return;
+  }
+
+  if (viewState.applyModal && viewState.applyModal.phase === "complete") {
+    if (event.key === "Escape" || event.key === "Enter") {
+      event.preventDefault();
+      handleAction("dismiss-apply-modal");
+      return;
+    }
+  }
+  if (viewState.editingTemplate) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      handleAction("close-template-config");
+      return;
+    }
+    if (event.key === "Enter" && event.target?.getAttribute?.("data-field") === "editingTemplateName") {
+      event.preventDefault();
+      handleAction("close-template-config");
+      return;
+    }
+  }
+  if (viewState.showBackupNameModal) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      handleAction("dismiss-backup-modal");
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleAction("confirm-create-backup");
+      return;
+    }
+  }
+  if (viewState.activeImpactBanner && event.key === "Escape") {
+    if (viewState.activeImpactBanner.isAdminPrompt) return;
+    event.preventDefault();
+    dismissNotificationBanner();
+    return;
+  }
+  if (activePage !== "gameColor") return;
+  const target = event.target;
