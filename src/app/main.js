@@ -2597,4 +2597,69 @@ async function boot() {
 
   if (Array.isArray(appState.keybinds) && appState.keybinds.length) {
     syncKeybinds();
-  }
+  }
+  render();
+
+  Promise.all([holoPromise, loadLists(), loadColorGames()]).then(() => {
+    updateMainKeepingScroll();
+  });
+
+  if (appState.settings && appState.settings.autoUpdate) {
+    checkForUpdates();
+  }
+  loadTweakStatuses();
+  scheduleTrimMemory(600);
+  checkSecurityIncidents();
+  setInterval(checkSecurityIncidents, 15000);
+}
+
+document.addEventListener("input", handleInput);
+document.addEventListener("click", handleClick);
+document.addEventListener("pointerdown", handlePointerDown);
+document.addEventListener("error", handleImageError, true);
+document.addEventListener("wheel", handleWheel, { passive: false });
+document.addEventListener("keydown", handleKeydown);
+window.addEventListener("resize", syncNavIndicator);
+window.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    clearImpactBannerTimer();
+    scheduleTrimMemory(100);
+  } else {
+    scheduleTrimMemory(1000);
+  }
+});
+window.addEventListener("keydown", async (event) => {
+  if (event.key === "PrintScreen" || (event.ctrlKey && event.shiftKey && event.key?.toLowerCase() === "s")) {
+    try {
+      const res = await invokeCommand("take_juicy_screenshot");
+      if (res?.success) {
+        showToastBanner(
+          t("screenshot"),
+          lang() === "ru"
+            ? "Сочный скриншот скопирован в буфер обмена (Ctrl+V)!"
+            : "Juicy screenshot copied to clipboard (Ctrl+V)!",
+          "safe"
+        );
+      }
+    } catch (err) {
+      console.error("Screenshot hotkey failed:", err);
+    }
+  }
+});
+
+if (window.__TAURI__?.event?.listen) {
+  window.__TAURI__.event.listen("hotkey-triggered", (e) => {
+    const payload = e?.payload;
+    if (!payload) return;
+    const isRu = lang() === "ru";
+    if (payload.action === "trim_memory") {
+      showToastBanner(t("action_trim_memory"), t("ramPurgedToast") || (isRu ? "Оперативная память успешно очищена" : "RAM trimmed"), "safe");
+    } else if (payload.action === "toggle_black_holo") {
+      const active = Boolean(payload.active);
+      appState.color.blackHolo = active ? 100 : 0;
+      updateBlackHoloDom(active, viewState.blackHoloStatus);
+      showToastBanner(t("blackHolo"), active ? (isRu ? "Черный Холик активен" : "Black Holosight enabled") : (isRu ? "Черный Холик отключен" : "Black Holosight disabled"), "safe");
+    } else if (payload.color) {
+      appState.color = { ...appState.color, ...payload.color };
+      syncAllSliders(appState);
+      updateColorPage();
