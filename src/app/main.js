@@ -2532,4 +2532,69 @@ function render() {
   app.className = "app-shell";
   app.innerHTML = renderShell(viewState, t);
   syncAllSliders(appState, viewState);
-  updateNavState();
+  updateNavState();
+  renderBackupModalDom();
+  renderApplyModalDom();
+  if (activePage === "tweaks" && !appState.isAdmin) {
+    showAdminNotificationBanner();
+  }
+  window.requestAnimationFrame(syncNavIndicator);
+}
+
+async function checkSecurityIncidents() {
+  try {
+    const status = await invokeCommand("get_security_guard_status");
+    if (status && Array.isArray(status.recentIncidents) && status.recentIncidents.length > 0) {
+      const latest = status.recentIncidents[0];
+      const lastReported = Number(localStorage.getItem("synchro_last_sec_incident") || 0);
+      if (latest.timestamp > lastReported) {
+        localStorage.setItem("synchro_last_sec_incident", String(latest.timestamp));
+        const isRu = lang() === "ru";
+        showToastBanner(
+          isRu ? "Защита аккаунта Synchro Nova" : "Synchro Nova Security Shield",
+          isRu
+            ? `Заблокировано небезопасное обращение к ${latest.target}. Ваш игровой аккаунт находится в полной безопасности.`
+            : `Blocked unsafe access to ${latest.target}. Your gaming account is completely safe.`,
+          "safe"
+        );
+      }
+    }
+  } catch (e) {}
+}
+
+async function boot() {
+  const statePromise = invokeCommand("get_app_state");
+  const holoPromise = loadBlackHoloStatus();
+  try {
+    const savedCollapsed = localStorage.getItem("synchro_sidebar_collapsed");
+    if (savedCollapsed !== null) {
+      viewState.sidebarCollapsed = savedCollapsed === "true";
+    }
+  } catch {}
+  try {
+    localStorage.removeItem("synchro_pending_nav");
+  } catch {}
+  setActivePage("color");
+
+  const state = await statePromise;
+  if (state) mergeState(state);
+  if (!appState.color?.activeFilter) {
+    saveNormalColorState();
+  }
+
+  const shouldDisableAnim = Boolean(appState.settings?.disableAnimations);
+  document.body.classList.toggle("no-animations", shouldDisableAnim);
+
+  const shouldSkipSplash = Boolean(
+    appState.settings?.disableSplash ||
+    appState.settings?.disableAnimations ||
+    appState.settings?.startMinimized
+  );
+
+  if (!shouldSkipSplash) {
+    runIntroSplash();
+  }
+
+  if (Array.isArray(appState.keybinds) && appState.keybinds.length) {
+    syncKeybinds();
+  }
