@@ -2662,4 +2662,59 @@ if (window.__TAURI__?.event?.listen) {
     } else if (payload.color) {
       appState.color = { ...appState.color, ...payload.color };
       syncAllSliders(appState);
-      updateColorPage();
+      updateColorPage();
+      const label = payload.name ? `${t("templateAppliedToast") || (isRu ? "Применён шаблон" : "Template applied")}: ${payload.name}` : (isRu ? "Цвета обновлены" : "Colors updated");
+      showToastBanner(t("colorTitle"), label, "safe");
+    }
+    updateMain();
+  });
+
+  window.__TAURI__.event.listen("black-holo-toggled", (e) => {
+    const status = e?.payload;
+    if (!status) return;
+    viewState.blackHoloStatus = status;
+    const isAct = Boolean(status.active);
+    appState.color.blackHolo = isAct ? 100 : 0;
+    if (isAct && Math.abs(Number(appState?.color?.hue || 0)) > 0.1) {
+      appState.color.hue = 0;
+      updateSliderDom("hue", appState);
+    }
+    updateBlackHoloDom(isAct, status);
+    const isRu = lang() === "ru";
+    if (status.error) {
+      showToastBanner(t("blackHolo"), status.error, "danger");
+    } else if (isAct) {
+      showToastBanner(
+        t("blackHolo"),
+        isRu
+          ? "Режим Black Holo включен"
+          : "Black Holo mode enabled",
+        "safe"
+      );
+    } else {
+      showToastBanner(
+        t("blackHolo"),
+        isRu ? "Черный Холик отключен" : "Black Holosight disabled",
+        "safe"
+      );
+    }
+    scheduleApplyColor();
+  });
+}
+
+window.addEventListener("error", (event) => {
+  const msg = event.error?.message || event.message;
+  if (msg) {
+    showErrorToast(lang() === "ru" ? "Системная ошибка" : "System Error", msg);
+  }
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  const reason = event.reason;
+  const msg = reason?.message || (typeof reason === "string" ? reason : "");
+  if (msg && !msg.includes("canceled") && !msg.includes("aborted")) {
+    showErrorToast(lang() === "ru" ? "Ошибка выполнения" : "Execution Error", msg);
+  }
+});
+
+boot();
