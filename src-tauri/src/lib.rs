@@ -22,7 +22,6 @@ mod color;
 mod driver_info;
 mod games;
 mod live_metrics;
-mod security;
 mod settings;
 mod system_info;
 mod tweaks;
@@ -32,7 +31,6 @@ use browser::open_driver_search_url;
 use color::apply_color_transform;
 use games::InstalledGame;
 use live_metrics::{collect_live_metrics, CpuSample, LiveMetrics};
-use security::run_security_startup_checks;
 use settings::set_autostart;
 use system_info::collect_system_characteristics;
 use tweaks::{
@@ -107,7 +105,7 @@ impl Default for AppSettings {
             auto_backup_on_start: true,
             send_daily_ping: false,
             send_crash_telemetry: false,
-            accepted_agreement: false,
+            accepted_agreement: true,
             language: "en".to_string(),
         }
     }
@@ -227,7 +225,6 @@ struct RuntimeState {
     system_cache: Mutex<SystemCache>,
     cpu_sample: Mutex<Option<CpuSample>>,
     exiting: AtomicBool,
-    security_triggered: AtomicBool,
 }
 
 impl RuntimeState {
@@ -259,7 +256,6 @@ impl RuntimeState {
             system_cache: Mutex::new(SystemCache::default()),
             cpu_sample: Mutex::new(None),
             exiting: AtomicBool::new(false),
-            security_triggered: AtomicBool::new(false),
         })
     }
 
@@ -553,6 +549,7 @@ fn open_storage_folder(kind: String, state: State<'_, RuntimeState>) -> Result<(
 fn minimize_window(app: AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.minimize();
+        trim_process_memory();
     }
 }
 
@@ -585,6 +582,7 @@ fn close_window(app: AppHandle, state: State<'_, RuntimeState>) {
 
         if close_to_tray {
             let _ = window.hide();
+            trim_process_memory();
         } else {
             state.exiting.store(true, Ordering::SeqCst);
             app.exit(0);
@@ -1040,10 +1038,51 @@ fn wide_null(value: &str) -> Vec<u16> {
     value.encode_utf16().chain(std::iter::once(0)).collect()
 }
 
+#[cfg(target_os = "windows")]
+pub fn trim_process_memory() {
+    #[link(name = "Kernel32")]
+    unsafe extern "system" {
+        fn SetProcessWorkingSetSize(process: *mut c_void, min: usize, max: usize) -> i32;
+        fn GetCurrentProcess() -> *mut c_void;
+    }
+    unsafe {
+        SetProcessWorkingSetSize(GetCurrentProcess(), usize::MAX, usize::MAX);
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn trim_process_memory() {}
+
+#[cfg(target_os = "windows")]
+fn apply_process_hardening() {
+    const PROCESS_DEP_ENABLE: u32 = 0x0000_0001;
+    const BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE: u32 = 0x0000_0001;
+    const BASE_SEARCH_PATH_PERMANENT: u32 = 0x0000_8000;
+    const LOAD_LIBRARY_SEARCH_SYSTEM32: u32 = 0x0000_0800;
+
+    #[link(name = "Kernel32")]
+    unsafe extern "system" {
+        fn SetProcessDEPPolicy(flags: u32) -> i32;
+        fn SetSearchPathMode(flags: u32) -> i32;
+        fn SetDefaultDllDirectories(flags: u32) -> i32;
+    }
+
+    unsafe {
+        let _ = SetProcessDEPPolicy(PROCESS_DEP_ENABLE);
+        let _ = SetSearchPathMode(BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT);
+        let _ = SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn apply_process_hardening() {}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            apply_process_hardening();
+
             let runtime = RuntimeState::load(app.handle())?;
             let initial = runtime.snapshot()?;
             if initial.settings.auto_backup_on_start {
@@ -1069,7 +1108,7 @@ pub fn run() {
                 }
             }
 
-            run_security_startup_checks(app.handle().clone());
+            trim_process_memory();
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -1088,6 +1127,7 @@ pub fn run() {
                     if snapshot.settings.close_to_tray {
                         api.prevent_close();
                         let _ = window.hide();
+                        trim_process_memory();
                     }
                 }
             }
