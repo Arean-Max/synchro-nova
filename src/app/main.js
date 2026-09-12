@@ -1,15 +1,13 @@
-import { invokeCommand, nativeInvoke, nativeListen } from "./core/bridge.js";
+import { invokeCommand, nativeInvoke } from "./core/bridge.js";
 import {
   activePage,
   appState,
-  booting,
   cloneState,
   defaultState,
   lang,
   mergeState,
   pageDefs,
   setActivePage,
-  setBooting,
   sliderDefs,
   viewState
 } from "./core/state.js";
@@ -27,12 +25,10 @@ import {
 } from "./features/color/page.js";
 import { updateCharacteristicsLiveDom } from "./features/characteristics/page.js";
 import { allTweaks, isSafeTweak } from "./features/tweaks/catalog.js";
-import { bindSecurityEvents } from "./security/threat-overlay.js";
 import { icon } from "./ui/icons.js";
 import { renderMain, renderShell } from "./ui/layout.js";
 
 let applyTimer = 0;
-let introTimer = 0;
 let characteristicsTimer = 0;
 let characteristicsBusy = false;
 let carouselStepAt = 0;
@@ -245,13 +241,6 @@ async function handleAction(action) {
   if (action === "window-maximize") return invokeCommand("toggle_window_maximize");
   if (action === "window-close") return invokeCommand("close_window");
   if (action === "exit-app") return invokeCommand("exit_app");
-  if (action === "accept-agreement") {
-    appState.settings.acceptedAgreement = true;
-    await saveSettings();
-    viewState.agreementVisible = false;
-    return render();
-  }
-  if (action === "decline-agreement") return invokeCommand("exit_app");
   if (action === "restart-as-admin") return invokeCommand("restart_as_admin");
   if (action === "apply-color") return applyColor();
   if (action === "launch-color-game") {
@@ -389,13 +378,18 @@ async function handleClick(event) {
   if (navItem) {
     const nextPage = navItem.getAttribute("data-page");
     if (!nextPage || !pageDefs[nextPage] || nextPage === activePage) return;
-    if (booting) finishBoot();
     setActivePage(nextPage);
     updateMain();
     syncCharacteristicsMonitor();
-    if (nextPage === "characteristics") {
+    if (nextPage === "gameColor" && !viewState.colorGamesLoaded) {
+      loadColorGames();
+    } else if (nextPage === "tweaks" && viewState.installedTweaks.size === 0) {
+      loadTweakStatuses().then(updateMain);
+    } else if (nextPage === "characteristics") {
       if (!viewState.system) refreshCharacteristics();
       else refreshLiveCharacteristics();
+    } else if ((nextPage === "backups" || nextPage === "configs") && !viewState.backups.length && !viewState.configs.length) {
+      loadLists().then(updateMain);
     }
     return;
   }
@@ -552,46 +546,26 @@ function handleImageError(event) {
   }
 }
 
-function finishBoot() {
-  setBooting(false);
-  const app = document.getElementById("app");
-  app.classList.remove("app-booting");
-  const intro = app.querySelector(".intro-screen");
-  if (intro) intro.remove();
-}
-
 function render() {
   const app = document.getElementById("app");
   document.documentElement.lang = lang();
   syncPerformanceMode();
-  const showIntro = booting && !appState.settings.lowSpecMode;
-  const showAgreement = viewState.agreementVisible && !appState.settings.acceptedAgreement;
-  app.className = `app-shell${booting ? " app-booting" : ""}${appState.settings.lowSpecMode ? " app-low-spec" : ""}${showAgreement ? " app-agreement" : ""}`;
+  app.className = `app-shell${appState.settings.lowSpecMode ? " app-low-spec" : ""}`;
   app.innerHTML = renderShell(viewState, t);
   syncAllSliders(appState);
   updateNavState();
   window.requestAnimationFrame(syncNavIndicator);
-  window.clearTimeout(introTimer);
-  if (booting) introTimer = window.setTimeout(finishBoot, showIntro ? 2600 : 180);
   syncCharacteristicsMonitor();
 }
 
 async function boot() {
-  render();
   const state = await invokeCommand("get_app_state");
   if (state) mergeState(state);
-  viewState.agreementVisible = !appState.settings.acceptedAgreement;
-  if (viewState.agreementVisible) setBooting(false);
   syncPerformanceMode();
   render();
-  await loadColorGames();
-  await loadLists();
-  await loadTweakStatuses();
-  await refreshCharacteristics();
-  render();
+  loadColorGames();
 }
 
-bindSecurityEvents(nativeListen, t);
 document.addEventListener("input", handleInput);
 document.addEventListener("click", handleClick);
 document.addEventListener("pointerdown", handlePointerDown);

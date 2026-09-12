@@ -23,7 +23,8 @@
         "maximizable": true,
         "fullscreen": false,
         "decorations": false,
-        "devtools": false
+        "devtools": false,
+        "additionalBrowserArgs": "--renderer-process-limit=1 --disable-gpu-shader-disk-cache --disable-background-networking --disable-component-update --no-pings --disable-features=Translate,OptimizationHints,MediaRouter,CalculateNativeWinOcclusion,InterestFeedContentSuggestions --js-flags=--max-old-space-size=64"
       }
     ],
     "security": {
@@ -50,7 +51,7 @@
     "targets": ["nsis"],
     "windows": {
       "webviewInstallMode": {
-        "type": "offlineInstaller"
+        "type": "downloadBootstrapper"
       }
     }
   }
