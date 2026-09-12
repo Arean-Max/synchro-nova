@@ -1,0 +1,11 @@
+node_modules/
+src-tauri/target/
+dist/
+.tmp/
+.pnpm-store/
+*.log
+*.pdb
+*.tmp
+*.msi
+*.exe
+*.zip

@@ -1,0 +1,16 @@
+{
+  "name": "synchro",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Synchro System & Performance desktop application",
+  "type": "module",
+  "scripts": {
+    "serve": "node ./scripts/app-server.mjs",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "build:portable": "tauri build --no-bundle"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}
