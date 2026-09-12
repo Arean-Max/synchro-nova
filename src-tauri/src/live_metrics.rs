@@ -30,9 +30,9 @@ struct FileTime {
 
 pub(crate) fn collect_live_metrics(previous: &mut Option<CpuSample>) -> LiveMetrics {
     let memory = read_memory_info();
-    let vram = read_vram_info();
+    let (gpu_usage, dedicated_vram) = read_gpu_live_metrics();
+    let total_vram = read_display_vram_total();
     let cpu_usage = read_cpu_usage(previous);
-    let gpu_usage = read_gpu_usage();
     LiveMetrics {
         cpu_usage_percent: cpu_usage.to_string(),
         gpu_usage_percent: gpu_usage.to_string(),
@@ -42,9 +42,13 @@ pub(crate) fn collect_live_metrics(previous: &mut Option<CpuSample>) -> LiveMetr
             bytes_to_gb(memory.total_bytes.saturating_sub(memory.available_bytes))
         ),
         ram_used_percent: memory.used_percent().to_string(),
-        vram_total_gb: format!("{:.1}", bytes_to_gb(vram.total_bytes)),
-        vram_used_gb: format!("{:.1}", bytes_to_gb(vram.used_bytes)),
-        vram_used_percent: vram.used_percent().to_string(),
+        vram_total_gb: format!("{:.1}", bytes_to_gb(total_vram)),
+        vram_used_gb: format!("{:.1}", bytes_to_gb(dedicated_vram)),
+        vram_used_percent: if total_vram > 0 {
+            ((dedicated_vram as f64 / total_vram as f64) * 100.0).round() as u64
+        } else {
+            0
+        }.to_string(),
     }
 }
 
@@ -65,22 +69,6 @@ impl MemoryInfo {
     }
 }
 
-#[derive(Default)]
-struct VramInfo {
-    total_bytes: u64,
-    used_bytes: u64,
-}
-
-impl VramInfo {
-    fn used_percent(&self) -> u64 {
-        if self.total_bytes == 0 {
-            0
-        } else {
-            ((self.used_bytes as f64 / self.total_bytes as f64) * 100.0).round() as u64
-        }
-    }
-}
-
 fn bytes_to_gb(bytes: u64) -> f64 {
     bytes as f64 / 1024.0 / 1024.0 / 1024.0
 }
@@ -94,18 +82,10 @@ fn read_cpu_usage(previous: &mut Option<CpuSample>) -> u64 {
 
     let base = match previous.replace(current) {
         Some(value) => value,
-        None => {
-            std::thread::sleep(std::time::Duration::from_millis(110));
-            let next = match read_cpu_sample() {
-                Some(value) => value,
-                None => return 0,
-            };
-            *previous = Some(next);
-            current
-        }
+        None => return 0,
     };
 
-    cpu_percent(base, previous.unwrap_or(current))
+    cpu_percent(base, current)
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -207,108 +187,121 @@ fn read_memory_info() -> MemoryInfo {
 }
 
 #[cfg(target_os = "windows")]
-fn read_vram_info() -> VramInfo {
-    VramInfo {
-        total_bytes: read_display_vram_total(),
-        used_bytes: read_gpu_dedicated_usage_bytes(),
-    }
+#[cfg(not(target_os = "windows"))]
+fn read_gpu_live_metrics() -> (u64, u64) {
+    (0, 0)
 }
 
 #[cfg(not(target_os = "windows"))]
-fn read_vram_info() -> VramInfo {
-    VramInfo::default()
-}
-
-#[cfg(target_os = "windows")]
-fn read_gpu_usage() -> u64 {
-    pdh_sum_counter("\\GPU Engine(*)\\Utilization Percentage", true)
-        .round()
-        .clamp(0.0, 100.0) as u64
-}
-
-#[cfg(not(target_os = "windows"))]
-fn read_gpu_usage() -> u64 {
+fn read_display_vram_total() -> u64 {
     0
 }
 
 #[cfg(target_os = "windows")]
-fn read_gpu_dedicated_usage_bytes() -> u64 {
-    pdh_sum_counter("\\GPU Adapter Memory(*)\\Dedicated Usage", false)
-        .round()
-        .max(0.0) as u64
+struct PdhSession {
+    query: isize,
+    engine_counter: isize,
+    vram_counter: isize,
 }
 
 #[cfg(target_os = "windows")]
-fn pdh_sum_counter(path: &str, second_sample: bool) -> f64 {
-    type PdhQuery = isize;
-    type PdhCounter = isize;
+fn read_gpu_live_metrics() -> (u64, u64) {
+    use std::sync::Mutex;
+    static SESSION: Mutex<Option<PdhSession>> = Mutex::new(None);
 
-    #[repr(C)]
-    struct PdhFmtCounterValue {
-        c_status: u32,
-        _padding: u32,
-        double_value: f64,
+    const ERROR_SUCCESS: u32 = 0;
+
+    let mut guard = match SESSION.lock() {
+        Ok(g) => g,
+        Err(e) => e.into_inner(),
+    };
+
+    if guard.is_none() {
+        let mut query: isize = 0;
+        if unsafe { PdhOpenQueryW(std::ptr::null(), 0, &mut query) } == ERROR_SUCCESS && query != 0 {
+            let engine_path = wide_null("\\GPU Engine(*)\\Utilization Percentage");
+            let mut engine_counter: isize = 0;
+            let _ = unsafe { PdhAddEnglishCounterW(query, engine_path.as_ptr(), 0, &mut engine_counter) };
+
+            let vram_path = wide_null("\\GPU Adapter Memory(*)\\Dedicated Usage");
+            let mut vram_counter: isize = 0;
+            let _ = unsafe { PdhAddEnglishCounterW(query, vram_path.as_ptr(), 0, &mut vram_counter) };
+
+            let _ = unsafe { PdhCollectQueryData(query) };
+            *guard = Some(PdhSession {
+                query,
+                engine_counter,
+                vram_counter,
+            });
+            return (0, 0);
+        }
     }
 
-    #[repr(C)]
-    struct PdhFmtCounterValueItemW {
-        name: *const u16,
-        value: PdhFmtCounterValue,
+    if let Some(session) = guard.as_ref() {
+        let status = unsafe { PdhCollectQueryData(session.query) };
+        if status == ERROR_SUCCESS {
+            let gpu = read_pdh_counter_sum(session.engine_counter).round().clamp(0.0, 100.0) as u64;
+            let vram = read_pdh_counter_sum(session.vram_counter).round().max(0.0) as u64;
+            return (gpu, vram);
+        }
     }
 
-    #[link(name = "Pdh")]
-    unsafe extern "system" {
-        fn PdhOpenQueryW(data_source: *const u16, user_data: usize, query: *mut PdhQuery) -> u32;
-        fn PdhAddEnglishCounterW(
-            query: PdhQuery,
-            full_counter_path: *const u16,
-            user_data: usize,
-            counter: *mut PdhCounter,
-        ) -> u32;
-        fn PdhCollectQueryData(query: PdhQuery) -> u32;
-        fn PdhGetFormattedCounterArrayW(
-            counter: PdhCounter,
-            format: u32,
-            buffer_size: *mut u32,
-            item_count: *mut u32,
-            item_buffer: *mut PdhFmtCounterValueItemW,
-        ) -> u32;
-        fn PdhCloseQuery(query: PdhQuery) -> u32;
-    }
+    (0, 0)
+}
 
+#[cfg(target_os = "windows")]
+type PdhCounter = isize;
+
+#[cfg(target_os = "windows")]
+#[repr(C)]
+struct PdhFmtCounterValue {
+    c_status: u32,
+    _padding: u32,
+    double_value: f64,
+}
+
+#[cfg(target_os = "windows")]
+#[repr(C)]
+struct PdhFmtCounterValueItemW {
+    name: *const u16,
+    value: PdhFmtCounterValue,
+}
+
+#[cfg(target_os = "windows")]
+#[link(name = "Pdh")]
+unsafe extern "system" {
+    fn PdhOpenQueryW(data_source: *const u16, user_data: usize, query: *mut isize) -> u32;
+    fn PdhAddEnglishCounterW(
+        query: isize,
+        full_counter_path: *const u16,
+        user_data: usize,
+        counter: *mut PdhCounter,
+    ) -> u32;
+    fn PdhCollectQueryData(query: isize) -> u32;
+    fn PdhGetFormattedCounterArrayW(
+        counter: PdhCounter,
+        format: u32,
+        buffer_size: *mut u32,
+        item_count: *mut u32,
+        item_buffer: *mut PdhFmtCounterValueItemW,
+    ) -> u32;
+    #[allow(dead_code)]
+    fn PdhCloseQuery(query: isize) -> u32;
+}
+
+#[cfg(target_os = "windows")]
+fn read_pdh_counter_sum(counter: isize) -> f64 {
     const ERROR_SUCCESS: u32 = 0;
     const PDH_MORE_DATA: u32 = 0x8000_07D2;
     const PDH_FMT_DOUBLE: u32 = 0x0000_0200;
 
-    let mut query: PdhQuery = 0;
-    let open_status = unsafe { PdhOpenQueryW(std::ptr::null(), 0, &mut query) };
-    if open_status != ERROR_SUCCESS || query == 0 {
+    if counter == 0 {
         return 0.0;
-    }
-
-    let wide_path = wide_null(path);
-    let mut counter: PdhCounter = 0;
-    let add_status = unsafe { PdhAddEnglishCounterW(query, wide_path.as_ptr(), 0, &mut counter) };
-    if add_status != ERROR_SUCCESS || counter == 0 {
-        unsafe {
-            PdhCloseQuery(query);
-        }
-        return 0.0;
-    }
-
-    unsafe {
-        PdhCollectQueryData(query);
-    }
-    if second_sample {
-        std::thread::sleep(std::time::Duration::from_millis(120));
-        unsafe {
-            PdhCollectQueryData(query);
-        }
     }
 
     let mut buffer_size = 0u32;
     let mut item_count = 0u32;
-    let first_status = unsafe {
+    let first = unsafe {
         PdhGetFormattedCounterArrayW(
             counter,
             PDH_FMT_DOUBLE,
@@ -317,16 +310,13 @@ fn pdh_sum_counter(path: &str, second_sample: bool) -> f64 {
             std::ptr::null_mut(),
         )
     };
-    if first_status != PDH_MORE_DATA || buffer_size == 0 || item_count == 0 {
-        unsafe {
-            PdhCloseQuery(query);
-        }
+    if first != PDH_MORE_DATA || buffer_size == 0 || item_count == 0 {
         return 0.0;
     }
 
     let mut buffer = vec![0u8; buffer_size as usize];
     let items = buffer.as_mut_ptr() as *mut PdhFmtCounterValueItemW;
-    let second_status = unsafe {
+    let second = unsafe {
         PdhGetFormattedCounterArrayW(
             counter,
             PDH_FMT_DOUBLE,
@@ -336,7 +326,7 @@ fn pdh_sum_counter(path: &str, second_sample: bool) -> f64 {
         )
     };
 
-    let sum = if second_status == ERROR_SUCCESS {
+    if second == ERROR_SUCCESS {
         let values = unsafe { std::slice::from_raw_parts(items, item_count as usize) };
         values
             .iter()
@@ -345,16 +335,17 @@ fn pdh_sum_counter(path: &str, second_sample: bool) -> f64 {
             .sum()
     } else {
         0.0
-    };
-
-    unsafe {
-        PdhCloseQuery(query);
     }
-    sum
 }
 
 #[cfg(target_os = "windows")]
 fn read_display_vram_total() -> u64 {
+    static TOTAL_VRAM: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let cached = TOTAL_VRAM.load(std::sync::atomic::Ordering::Relaxed);
+    if cached > 0 {
+        return cached;
+    }
+
     #[repr(C)]
     struct DisplayDeviceW {
         cb: u32,
@@ -395,6 +386,10 @@ fn read_display_vram_total() -> u64 {
         if let Some(bytes) = registry_vram_bytes(&path) {
             best = best.max(bytes);
         }
+    }
+
+    if best > 0 {
+        TOTAL_VRAM.store(best, std::sync::atomic::Ordering::Relaxed);
     }
     best
 }
