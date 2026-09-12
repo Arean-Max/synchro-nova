@@ -1,7 +1,6 @@
-import { activePage, appState, booting, pageDefs, pageOrder } from "../core/state.js";
+import { activePage, appState, pageDefs, pageOrder } from "../core/state.js";
 import { renderCharacteristicsPage } from "../features/characteristics/page.js";
 import { renderColorPage, renderGameColorPage } from "../features/color/page.js";
-import { renderAgreementGate } from "../features/settings/agreement.js";
 import { renderSettingsPage } from "../features/settings/page.js";
 import { renderBackupsPage, renderConfigsPage } from "../features/storage/page.js";
 import { renderTweaksPage } from "../features/tweaks/page.js";
@@ -22,10 +21,6 @@ export function renderTitlebar(t) {
     "</div>",
     "</div>"
   ].join("");
-}
-
-export function renderIntro() {
-  return `<div class="intro-screen" aria-hidden="true"><div class="intro-word"><span>Synchro Nova</span><span class="intro-logo">${logo()}</span></div></div>`;
 }
 
 export function renderSidebar(t) {
@@ -68,7 +63,5 @@ export function renderMain(viewState, t) {
 }
 
 export function renderShell(viewState, t) {
-  const intro = booting && !appState.settings.lowSpecMode ? renderIntro() : "";
-  const agreement = viewState.agreementVisible && !appState.settings.acceptedAgreement ? renderAgreementGate(t) : "";
-  return `${intro}${renderTitlebar(t)}<div class="workspace">${renderSidebar(t)}${renderMain(viewState, t)}</div>${agreement}`;
+  return `${renderTitlebar(t)}<div class="workspace">${renderSidebar(t)}${renderMain(viewState, t)}</div>`;
 }

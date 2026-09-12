@@ -10,7 +10,7 @@ export const defaultState = {
     autoBackupOnStart: true,
     sendDailyPing: false,
     sendCrashTelemetry: false,
-    acceptedAgreement: false,
+    acceptedAgreement: true,
     language: "en"
   }
 };
@@ -29,7 +29,6 @@ export const viewState = {
   selectedConfig: "",
   backupName: "",
   configName: "",
-  agreementVisible: false,
   cpuHistory: [],
   showAllDrivers: false,
   selectedTweaks: new Set(),
@@ -58,7 +57,7 @@ export const pageDefs = {
 export const pageOrder = ["color", "gameColor", "tweaks", "characteristics", "backups", "configs", "settings"];
 
 export let activePage = "color";
-export let booting = true;
+export let booting = false;
 export let appState = cloneState(defaultState);
 
 export function setActivePage(page) {
