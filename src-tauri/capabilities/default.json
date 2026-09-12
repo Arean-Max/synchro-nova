@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Synchro desktop backend with private IPC commands and no plugin permissions.",
+  "windows": ["main"],
+  "permissions": []
+}

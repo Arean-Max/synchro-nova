@@ -1,0 +1,23 @@
+{
+  "name": "synchro",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Windows display calibration and system performance optimization utility",
+  "author": "Arean-Max",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Arean-Max/synchro-nova.git"
+  },
+  "homepage": "https://github.com/Arean-Max/synchro-nova",
+  "type": "module",
+  "scripts": {
+    "serve": "node ./scripts/app-server.mjs",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "build:portable": "tauri build --no-bundle"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}
