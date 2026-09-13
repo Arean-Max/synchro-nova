@@ -12,7 +12,7 @@ use std::{
 };
 use tauri::{
     menu::{Menu, MenuItem},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager, State, WindowEvent,
 };
 
@@ -26,7 +26,7 @@ mod settings;
 mod system_info;
 mod tweaks;
 
-use admin::restart_as_admin as restart_current_process_as_admin;
+use admin::{is_running_elevated, restart_as_admin as restart_current_process_as_admin};
 use browser::open_driver_search_url;
 use color::apply_color_transform;
 use games::InstalledGame;
@@ -125,6 +125,8 @@ impl AppSettings {
 pub struct PersistedState {
     color: ColorSettings,
     settings: AppSettings,
+    #[serde(default)]
+    is_admin: bool,
 }
 
 impl PersistedState {
@@ -260,10 +262,12 @@ impl RuntimeState {
     }
 
     fn snapshot(&self) -> Result<PersistedState, String> {
-        self.data
+        let mut state = self.data
             .lock()
             .map_err(|_| "Settings lock poisoned".to_string())
-            .map(|guard| guard.clone())
+            .map(|guard| guard.clone())?;
+        state.is_admin = is_running_elevated();
+        Ok(state)
     }
 
     fn save(&self, data: &PersistedState) -> Result<(), String> {
@@ -493,6 +497,7 @@ fn load_config(id: String, state: State<'_, RuntimeState>) -> Result<PersistedSt
     Ok(PersistedState {
         color: config.color,
         settings,
+        is_admin: current.is_admin,
     }
     .sanitized())
 }
@@ -511,6 +516,7 @@ fn apply_config(
     let snapshot = PersistedState {
         color: config.color,
         settings,
+        is_admin: current.is_admin,
     }
     .sanitized();
     apply_color_transform(&snapshot.color)?;
@@ -566,10 +572,8 @@ fn toggle_window_maximize(app: AppHandle) {
 }
 
 #[tauri::command]
-fn start_window_drag(app: AppHandle) {
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.start_dragging();
-    }
+fn start_window_drag(window: tauri::WebviewWindow) {
+    let _ = window.start_dragging();
 }
 
 #[tauri::command]
@@ -946,7 +950,7 @@ fn install_tray(app: &AppHandle) -> tauri::Result<()> {
 
     let mut tray = TrayIconBuilder::new()
         .menu(&menu)
-        .show_menu_on_left_click(true)
+        .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "show" => show_main_window(app),
             "exit" => {
@@ -956,15 +960,18 @@ fn install_tray(app: &AppHandle) -> tauri::Result<()> {
             }
             _ => {}
         })
-        .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click {
+        .on_tray_icon_event(|tray, event| match event {
+            TrayIconEvent::Click {
                 button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
                 ..
-            } = event
-            {
+            }
+            | TrayIconEvent::DoubleClick {
+                button: MouseButton::Left,
+                ..
+            } => {
                 show_main_window(tray.app_handle());
             }
+            _ => {}
         });
 
     if let Some(icon) = app.default_window_icon().cloned() {
@@ -977,6 +984,7 @@ fn install_tray(app: &AppHandle) -> tauri::Result<()> {
 
 fn show_main_window(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
     }
@@ -1105,6 +1113,9 @@ pub fn run() {
 
                 if initial.settings.start_minimized {
                     let _ = window.hide();
+                } else {
+                    let _ = window.show();
+                    let _ = window.set_focus();
                 }
             }
 
@@ -1162,4 +1173,60 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Synchro");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_state_sanitization() {
+        let state = PersistedState::default().sanitized();
+        assert_eq!(state.color.saturation, 100.0);
+        assert_eq!(state.color.contrast, 100.0);
+        assert_eq!(state.color.gamma, 100.0);
+        assert_eq!(state.color.hue, 0.0);
+        assert!(state.settings.apply_instantly);
+    }
+
+    #[test]
+    fn test_is_running_elevated_callable() {
+        let _elevated = admin::is_running_elevated();
+    }
+
+    #[test]
+    fn test_collect_system_characteristics() {
+        let chars = collect_system_characteristics();
+        assert!(!chars.cpu.is_empty());
+        assert!(!chars.os.is_empty());
+        assert!(!chars.architecture.is_empty());
+    }
+
+    #[test]
+    fn test_collect_live_metrics() {
+        let mut sample = None;
+        let metrics = collect_live_metrics(&mut sample);
+        assert!(!metrics.ram_available_gb.is_empty());
+        assert!(!metrics.ram_used_gb.is_empty());
+    }
+
+    #[test]
+    fn test_collect_tweak_statuses() {
+        let statuses = collect_tweak_statuses();
+        assert!(!statuses.is_empty());
+        assert!(statuses.iter().any(|s| s.id == "game-mode-on"));
+    }
+
+    #[test]
+    fn test_driver_search_query_cleaning() {
+        let clean = browser::open_driver_search_url("   ");
+        assert!(clean.is_err());
+    }
+
+    #[test]
+    fn test_safe_file_stem() {
+        assert_eq!(safe_file_stem("My Backup 2026!"), "my-backup-2026");
+        assert_eq!(safe_file_stem("---test---"), "test");
+        assert_eq!(safe_file_stem("   "), "item");
+    }
 }

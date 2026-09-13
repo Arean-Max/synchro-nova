@@ -415,6 +415,10 @@ fn game_preview_image(
     fallback: Option<String>,
     extra_roots: Vec<PathBuf>,
 ) -> Option<String> {
+    if fallback.is_some() {
+        return fallback;
+    }
+
     let mut roots = Vec::new();
     if let Some(path) = install_location {
         roots.push(path.to_path_buf());
@@ -422,7 +426,7 @@ fn game_preview_image(
     roots.extend(extra_roots);
     roots.extend(user_game_image_roots(name));
 
-    find_best_screenshot(&roots).or(fallback)
+    find_best_screenshot(&roots)
 }
 
 fn game_logo_image(
@@ -1094,6 +1098,13 @@ fn launch_target(target: &LaunchTarget) -> Result<(), String> {
 
 #[cfg(target_os = "windows")]
 fn open_url(url: &str) -> Result<(), String> {
+    let lower = url.to_lowercase();
+    if !lower.starts_with("steam://")
+        && !lower.starts_with("com.epicgames.launcher://")
+        && !lower.starts_with("riotclient://")
+    {
+        return Err("Blocked launch of untrusted game URL scheme".to_string());
+    }
     shell_execute("open", url, None, None, "Failed to launch game")
 }
 
@@ -1106,6 +1117,14 @@ fn open_url(_url: &str) -> Result<(), String> {
 fn open_executable(path: &Path, args: &[String], cwd: Option<&Path>) -> Result<(), String> {
     if !path.is_file() {
         return Err("Game executable is missing".to_string());
+    }
+    let ext = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or_default()
+        .to_lowercase();
+    if ext != "exe" {
+        return Err("Target file is not an executable".to_string());
     }
     let args = if args.is_empty() {
         None

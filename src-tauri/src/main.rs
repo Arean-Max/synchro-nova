@@ -156,13 +156,20 @@ mod webview_check {
             }
         }
 
-        let candidate_dirs = [
-            PathBuf::from("C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application"),
-            PathBuf::from("C:\\Program Files\\Microsoft\\EdgeWebView\\Application"),
-            std::env::var("LOCALAPPDATA")
-                .map(|p| PathBuf::from(p).join("Microsoft\\EdgeWebView\\Application"))
-                .unwrap_or_default(),
-        ];
+        let mut candidate_dirs = Vec::new();
+        if let Ok(prog_x86) = std::env::var("ProgramFiles(x86)") {
+            candidate_dirs.push(PathBuf::from(prog_x86).join("Microsoft\\EdgeWebView\\Application"));
+        }
+        if let Ok(prog) = std::env::var("ProgramFiles") {
+            candidate_dirs.push(PathBuf::from(prog).join("Microsoft\\EdgeWebView\\Application"));
+        }
+        if let Ok(local) = std::env::var("LOCALAPPDATA") {
+            candidate_dirs.push(PathBuf::from(local).join("Microsoft\\EdgeWebView\\Application"));
+        }
+        if let Ok(drive) = std::env::var("SystemDrive") {
+            candidate_dirs.push(PathBuf::from(format!("{drive}\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application")));
+            candidate_dirs.push(PathBuf::from(format!("{drive}\\Program Files\\Microsoft\\EdgeWebView\\Application")));
+        }
 
         for dir in candidate_dirs {
             if has_webview2_in_dir(&dir) {
@@ -208,16 +215,25 @@ mod webview_check {
             return true;
         }
 
-        let status = std::process::Command::new("powershell")
+        let ps_exe = std::env::var("SystemRoot")
+            .map(|root| PathBuf::from(root).join("System32\\WindowsPowerShell\\v1.0\\powershell.exe"))
+            .unwrap_or_else(|_| PathBuf::from("powershell.exe"));
+        let mut cmd = std::process::Command::new(ps_exe);
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x0800_0000);
+        }
+        let safe_url = url.replace('\'', "''");
+        let safe_dest = dest.to_string_lossy().replace('\'', "''");
+        let status = cmd
             .args([
                 "-NoProfile",
                 "-WindowStyle",
                 "Hidden",
                 "-Command",
                 &format!(
-                    "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{}', '{}')",
-                    url,
-                    dest.display()
+                    "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{safe_url}', '{safe_dest}')"
                 ),
             ])
             .status();

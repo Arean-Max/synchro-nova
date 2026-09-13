@@ -36,6 +36,10 @@ fn percent_encode(value: &str) -> String {
 
 #[cfg(target_os = "windows")]
 fn open_url(url: &str) -> Result<(), String> {
+    if !url.starts_with("https://") && !url.starts_with("http://") {
+        return Err("Invalid or insecure URL scheme".to_string());
+    }
+
     use std::ffi::c_void;
 
     #[link(name = "Shell32")]

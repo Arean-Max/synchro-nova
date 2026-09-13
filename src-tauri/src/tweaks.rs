@@ -12,8 +12,8 @@ pub struct TweakApplyResult {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TweakStatus {
-    id: String,
-    installed: bool,
+    pub id: String,
+    pub installed: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -930,8 +930,27 @@ fn run_command(program: &str, args: &[&str]) -> Result<(), String> {
     run_command_output(program, args).map(|_| ())
 }
 
+fn resolve_system_program(program: &str) -> std::path::PathBuf {
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(system_root) = std::env::var("SystemRoot") {
+            let system32 = std::path::PathBuf::from(system_root).join("System32");
+            let candidate = if program.ends_with(".exe") {
+                system32.join(program)
+            } else {
+                system32.join(format!("{program}.exe"))
+            };
+            if candidate.is_file() {
+                return candidate;
+            }
+        }
+    }
+    std::path::PathBuf::from(program)
+}
+
 fn run_command_output(program: &str, args: &[&str]) -> Result<Output, String> {
-    let mut command = Command::new(program);
+    let resolved = resolve_system_program(program);
+    let mut command = Command::new(&resolved);
     command.args(args);
     hide_console(&mut command);
     let output = command

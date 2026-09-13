@@ -347,6 +347,11 @@ fn read_gpu_names() -> Vec<String> {
             }
         }
 
+        const DISPLAY_DEVICE_MIRRORING_DRIVER: u32 = 0x0000_0008;
+        if device.state_flags & DISPLAY_DEVICE_MIRRORING_DRIVER != 0 {
+            continue;
+        }
+
         let name = crate::utf16z_to_string(&device.device_string);
         if !name.is_empty() && !names.iter().any(|existing| existing == &name) {
             names.push(name);

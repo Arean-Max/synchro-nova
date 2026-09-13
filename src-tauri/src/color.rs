@@ -4,7 +4,7 @@ use std::{ffi::c_void, sync::OnceLock};
 #[cfg(target_os = "windows")]
 pub(crate) fn apply_color_transform(color: &ColorSettings) -> Result<(), String> {
     if !color.enabled {
-        return Ok(());
+        return reset_color_transform();
     }
 
     apply_magnification_color(color)?;
@@ -16,6 +16,35 @@ pub(crate) fn apply_color_transform(color: &ColorSettings) -> Result<(), String>
 pub(crate) fn apply_color_transform(_color: &ColorSettings) -> Result<(), String> {
     Ok(())
 }
+
+#[cfg(target_os = "windows")]
+pub(crate) fn reset_color_transform() -> Result<(), String> {
+    #[repr(C)]
+    struct MagColorEffect {
+        transform: [f32; 25],
+    }
+
+    #[link(name = "Magnification")]
+    unsafe extern "system" {
+        fn MagSetFullscreenColorEffect(effect: *const MagColorEffect) -> i32;
+    }
+
+    let effect = MagColorEffect {
+        transform: identity_matrix(),
+    };
+
+    unsafe {
+        let _ = MagSetFullscreenColorEffect(&effect);
+    }
+    let _ = apply_gamma_ramp(100.0);
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub(crate) fn reset_color_transform() -> Result<(), String> {
+    Ok(())
+}
+
 
 #[cfg(target_os = "windows")]
 fn apply_magnification_color(color: &ColorSettings) -> Result<(), String> {
