@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    ffi::c_void,
     fs::{self, OpenOptions},
     io::Write,
     path::{Path, PathBuf},
@@ -25,6 +24,7 @@ mod live_metrics;
 mod settings;
 mod system_info;
 mod tweaks;
+pub mod ffi;
 
 use admin::{is_running_elevated, restart_as_admin as restart_current_process_as_admin};
 use browser::open_driver_search_url;
@@ -1001,39 +1001,11 @@ fn utf16z_to_string(raw: &[u16]) -> String {
 
 #[cfg(target_os = "windows")]
 fn open_folder(path: &Path) -> Result<(), String> {
-    #[link(name = "Shell32")]
-    unsafe extern "system" {
-        fn ShellExecuteW(
-            hwnd: *mut c_void,
-            operation: *const u16,
-            file: *const u16,
-            parameters: *const u16,
-            directory: *const u16,
-            show_cmd: i32,
-        ) -> isize;
-    }
-
     let path = path
         .canonicalize()
         .map_err(|error| format!("Failed to resolve folder: {error}"))?;
-    let operation = wide_null("open");
-    let file = wide_null(&path.to_string_lossy());
-    let result = unsafe {
-        ShellExecuteW(
-            std::ptr::null_mut(),
-            operation.as_ptr(),
-            file.as_ptr(),
-            std::ptr::null(),
-            std::ptr::null(),
-            1,
-        )
-    };
-
-    if result <= 32 {
-        Err("Failed to open folder".to_string())
-    } else {
-        Ok(())
-    }
+    ffi::open_path_or_url(&path.to_string_lossy())
+        .map_err(|_| "Failed to open folder".to_string())
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -1041,49 +1013,13 @@ fn open_folder(_path: &Path) -> Result<(), String> {
     Ok(())
 }
 
-#[cfg(target_os = "windows")]
-fn wide_null(value: &str) -> Vec<u16> {
-    value.encode_utf16().chain(std::iter::once(0)).collect()
-}
-
-#[cfg(target_os = "windows")]
 pub fn trim_process_memory() {
-    #[link(name = "Kernel32")]
-    unsafe extern "system" {
-        fn SetProcessWorkingSetSize(process: *mut c_void, min: usize, max: usize) -> i32;
-        fn GetCurrentProcess() -> *mut c_void;
-    }
-    unsafe {
-        SetProcessWorkingSetSize(GetCurrentProcess(), usize::MAX, usize::MAX);
-    }
+    ffi::trim_working_set();
 }
 
-#[cfg(not(target_os = "windows"))]
-pub fn trim_process_memory() {}
-
-#[cfg(target_os = "windows")]
 fn apply_process_hardening() {
-    const PROCESS_DEP_ENABLE: u32 = 0x0000_0001;
-    const BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE: u32 = 0x0000_0001;
-    const BASE_SEARCH_PATH_PERMANENT: u32 = 0x0000_8000;
-    const LOAD_LIBRARY_SEARCH_SYSTEM32: u32 = 0x0000_0800;
-
-    #[link(name = "Kernel32")]
-    unsafe extern "system" {
-        fn SetProcessDEPPolicy(flags: u32) -> i32;
-        fn SetSearchPathMode(flags: u32) -> i32;
-        fn SetDefaultDllDirectories(flags: u32) -> i32;
-    }
-
-    unsafe {
-        let _ = SetProcessDEPPolicy(PROCESS_DEP_ENABLE);
-        let _ = SetSearchPathMode(BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT);
-        let _ = SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
-    }
+    ffi::apply_process_hardening();
 }
-
-#[cfg(not(target_os = "windows"))]
-fn apply_process_hardening() {}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
