@@ -90,7 +90,7 @@ Ensure you have the following installed on your Windows machine:
 Clone the repository and install frontend dependencies:
 
 ```bash
-git clone https://github.com/sotoykor-source/synchro-nova.git
+git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
 ```

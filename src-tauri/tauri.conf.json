@@ -23,7 +23,7 @@
         "maximizable": true,
         "fullscreen": false,
         "decorations": false,
-        "devtools": true,
+        "devtools": false,
         "additionalBrowserArgs": "--renderer-process-limit=1 --disable-gpu-shader-disk-cache --disable-background-networking --disable-component-update --no-pings --disable-features=Translate,OptimizationHints,MediaRouter,CalculateNativeWinOcclusion,InterestFeedContentSuggestions --js-flags=--max-old-space-size=64"
       }
     ],
@@ -34,11 +34,8 @@
         "enable": true,
         "scope": {
           "allow": [
-            "**/*.jpg",
-            "**/*.jpeg",
-            "**/*.png",
-            "**/*.webp",
-            "**/*.ico"
+            "$APPDATA/**",
+            "$RESOURCE/**"
           ]
         }
       }
