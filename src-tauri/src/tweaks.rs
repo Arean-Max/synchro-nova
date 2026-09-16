@@ -4,9 +4,9 @@ use std::process::{Command, Output};
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TweakApplyResult {
-    id: String,
-    status: String,
-    message: String,
+    pub id: String,
+    pub status: String,
+    pub message: String,
 }
 
 #[derive(Debug, Clone, Serialize)]

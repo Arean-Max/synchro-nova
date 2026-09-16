@@ -80,17 +80,14 @@ impl ColorSettings {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct AppSettings {
-    apply_instantly: bool,
-    save_color_correction: bool,
-    autostart_windows: bool,
-    close_to_tray: bool,
-    start_minimized: bool,
-    low_spec_mode: bool,
-    auto_backup_on_start: bool,
-    send_daily_ping: bool,
-    send_crash_telemetry: bool,
-    accepted_agreement: bool,
-    language: String,
+    pub apply_instantly: bool,
+    pub save_color_correction: bool,
+    pub autostart_windows: bool,
+    pub close_to_tray: bool,
+    pub start_minimized: bool,
+    pub auto_backup_on_start: bool,
+    pub accepted_agreement: bool,
+    pub language: String,
 }
 
 impl Default for AppSettings {
@@ -101,10 +98,7 @@ impl Default for AppSettings {
             autostart_windows: false,
             close_to_tray: true,
             start_minimized: false,
-            low_spec_mode: false,
             auto_backup_on_start: true,
-            send_daily_ping: false,
-            send_crash_telemetry: false,
             accepted_agreement: true,
             language: "en".to_string(),
         }
@@ -220,6 +214,7 @@ struct SystemCache {
 }
 
 struct RuntimeState {
+    app_dir: PathBuf,
     settings_path: PathBuf,
     backups_dir: PathBuf,
     configs_dir: PathBuf,
@@ -251,6 +246,7 @@ impl RuntimeState {
         .sanitized();
 
         Ok(Self {
+            app_dir,
             settings_path,
             backups_dir,
             configs_dir,
@@ -408,7 +404,48 @@ fn apply_tweaks(
             state.snapshot()?,
         );
     }
-    Ok(apply_selected_tweaks(ids))
+    let results = apply_selected_tweaks(ids);
+    log_tweaks_audit(&state.app_dir, &results);
+    trim_process_memory();
+    Ok(results)
+}
+
+fn log_tweaks_audit(app_dir: &Path, results: &[TweakApplyResult]) {
+    let log_path = app_dir.join("tweaks_audit.log");
+    let now = match SystemTime::now().duration_since(UNIX_EPOCH) {
+        Ok(d) => d.as_secs(),
+        Err(_) => 0,
+    };
+    let mut file = match OpenOptions::new().create(true).append(true).open(&log_path) {
+        Ok(f) => f,
+        Err(_) => return,
+    };
+
+    if let Ok(meta) = file.metadata() {
+        if meta.len() > 512 * 1024 {
+            drop(file);
+            let _ = fs::rename(&log_path, app_dir.join("tweaks_audit.old.log"));
+            file = match OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open(&log_path)
+            {
+                Ok(f) => f,
+                Err(_) => return,
+            };
+        }
+    }
+
+    for result in results {
+        let line = format!(
+            "[{now}] id=\"{}\" status=\"{}\" message=\"{}\"\n",
+            result.id.replace('"', "\\\""),
+            result.status.replace('"', "\\\""),
+            result.message.replace('"', "\\\""),
+        );
+        let _ = file.write_all(line.as_bytes());
+    }
 }
 
 #[tauri::command]
@@ -855,6 +892,15 @@ fn file_timestamp(path: &Path) -> u64 {
         .unwrap_or_else(unix_now)
 }
 
+fn is_reserved_windows_name(name: &str) -> bool {
+    const RESERVED: &[&str] = &[
+        "con", "prn", "aux", "nul", "com1", "com2", "com3", "com4", "com5", "com6", "com7",
+        "com8", "com9", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8",
+        "lpt9",
+    ];
+    RESERVED.contains(&name)
+}
+
 fn safe_file_stem(input: &str) -> String {
     let mut output = String::new();
     for ch in input.chars() {
@@ -868,7 +914,7 @@ fn safe_file_stem(input: &str) -> String {
         output = output.replace("--", "-");
     }
     let output = output.trim_matches('-').to_string();
-    if output.is_empty() {
+    if output.is_empty() || is_reserved_windows_name(&output) {
         "item".to_string()
     } else {
         output
@@ -1164,5 +1210,71 @@ mod tests {
         assert_eq!(safe_file_stem("My Backup 2026!"), "my-backup-2026");
         assert_eq!(safe_file_stem("---test---"), "test");
         assert_eq!(safe_file_stem("   "), "item");
+    }
+
+    #[test]
+    fn test_safe_file_stem_windows_reserved() {
+        assert_eq!(safe_file_stem("CON"), "item");
+        assert_eq!(safe_file_stem("aux"), "item");
+        assert_eq!(safe_file_stem("NUL"), "item");
+        assert_eq!(safe_file_stem("COM1"), "item");
+        assert_eq!(safe_file_stem("LPT9"), "item");
+    }
+
+    #[test]
+    fn test_color_clamping_and_sanitization() {
+        let raw = ColorSettings {
+            enabled: true,
+            saturation: f32::NAN,
+            contrast: 999.0,
+            gamma: -50.0,
+            hue: f32::INFINITY,
+        };
+        let sanitized = raw.sanitized();
+        assert_eq!(sanitized.saturation, 100.0); // fallback for NaN
+        assert_eq!(sanitized.contrast, 150.0);   // clamped max (50..150)
+        assert_eq!(sanitized.gamma, 50.0);       // clamped min
+        assert_eq!(sanitized.hue, 0.0);          // fallback for Inf
+    }
+
+    #[test]
+    fn test_app_settings_serde_and_sanitization() {
+        let json = r#"{"applyInstantly":false,"lowSpecMode":true,"sendCrashTelemetry":true,"language":"fr"}"#;
+        let parsed: AppSettings = serde_json::from_str(json).expect("deserialize AppSettings");
+        let sanitized = parsed.sanitized();
+        assert!(!sanitized.apply_instantly);
+        assert_eq!(sanitized.language, "en"); // "fr" sanitized to "en"
+    }
+
+    #[test]
+    fn test_tweak_audit_logging() {
+        let temp_dir = std::env::temp_dir().join(format!("synchro_test_{}", std::process::id()));
+        let _ = fs::create_dir_all(&temp_dir);
+        let results = vec![
+            TweakApplyResult {
+                id: "test-tweak-1".to_string(),
+                status: "applied".to_string(),
+                message: "Tweak applied successfully".to_string(),
+            },
+            TweakApplyResult {
+                id: "test-tweak-2".to_string(),
+                status: "skipped".to_string(),
+                message: "Already up to date".to_string(),
+            },
+        ];
+        log_tweaks_audit(&temp_dir, &results);
+        let log_file = temp_dir.join("tweaks_audit.log");
+        assert!(log_file.exists());
+        let content = fs::read_to_string(&log_file).expect("read audit log");
+        assert!(content.contains("test-tweak-1"));
+        assert!(content.contains("applied"));
+        assert!(content.contains("test-tweak-2"));
+        assert!(content.contains("skipped"));
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_trim_process_memory() {
+        trim_process_memory();
     }
 }
