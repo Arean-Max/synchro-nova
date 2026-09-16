@@ -2,10 +2,7 @@
 
 #[cfg(target_os = "windows")]
 mod webview_check {
-    use std::{
-        ffi::c_void,
-        path::{Path, PathBuf},
-    };
+    use std::path::{Path, PathBuf};
     use winreg::{
         enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE},
         RegKey,
@@ -13,116 +10,49 @@ mod webview_check {
 
     const WEBVIEW_BOOTSTRAPPER_URL: &str = "https://go.microsoft.com/fwlink/p/?LinkId=2124703";
 
-    #[link(name = "User32")]
-    unsafe extern "system" {
-        fn MessageBoxW(
-            hwnd: *mut c_void,
-            text: *const u16,
-            caption: *const u16,
-            utype: u32,
-        ) -> i32;
-    }
-
-    #[link(name = "Shell32")]
-    unsafe extern "system" {
-        fn ShellExecuteW(
-            hwnd: *mut c_void,
-            operation: *const u16,
-            file: *const u16,
-            parameters: *const u16,
-            directory: *const u16,
-            show_cmd: i32,
-        ) -> isize;
-    }
-
-    #[link(name = "urlmon")]
-    unsafe extern "system" {
-        fn URLDownloadToFileW(
-            p_caller: *mut c_void,
-            sz_url: *const u16,
-            sz_file_name: *const u16,
-            dw_reserved: u32,
-            lpfn_cb: *mut c_void,
-        ) -> i32;
-    }
-
-    const MB_OKCANCEL: u32 = 0x0000_0001;
-    const MB_ICONWARNING: u32 = 0x0000_0030;
-    const MB_ICONINFORMATION: u32 = 0x0000_0040;
-    const MB_SETFOREGROUND: u32 = 0x0001_0000;
-    const MB_TOPMOST: u32 = 0x0004_0000;
-    const IDOK: i32 = 1;
-    const SW_SHOWNORMAL: i32 = 1;
-
-    fn wide_null(value: &str) -> Vec<u16> {
-        value.encode_utf16().chain(std::iter::once(0)).collect()
-    }
+    use synchro_lib::ffi::{
+        download_url_to_file, open_path_or_url, show_message_box, IDOK, MB_ICONINFORMATION,
+        MB_ICONWARNING, MB_OKCANCEL, MB_SETFOREGROUND, MB_TOPMOST,
+    };
 
     pub fn ensure_webview2_available() {
         if is_webview2_installed() {
             return;
         }
 
-        let title = wide_null("Synchro Nova — WebView2 Runtime");
-        let prompt = wide_null(
-            "Microsoft Edge WebView2 Runtime не найден на вашем компьютере.\n\n\
+        let title = "Synchro Nova — WebView2 Runtime";
+        let prompt = "Microsoft Edge WebView2 Runtime не найден на вашем компьютере.\n\n\
             Для работы Synchro Nova требуется этот компонент.\n\n\
-            Нажмите «ОК», чтобы скачать и установить его автоматически, или «Отмена» для выхода."
-        );
+            Нажмите «ОК», чтобы скачать и установить его автоматически, или «Отмена» для выхода.";
 
-        let choice = unsafe {
-            MessageBoxW(
-                std::ptr::null_mut(),
-                prompt.as_ptr(),
-                title.as_ptr(),
-                MB_OKCANCEL | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST,
-            )
-        };
+        let choice = show_message_box(
+            title,
+            prompt,
+            MB_OKCANCEL | MB_ICONWARNING | MB_SETFOREGROUND | MB_TOPMOST,
+        );
 
         if choice == IDOK {
             let temp_installer = std::env::temp_dir().join("MicrosoftEdgeWebview2Setup.exe");
             let downloaded = download_file(WEBVIEW_BOOTSTRAPPER_URL, &temp_installer);
 
             if downloaded && temp_installer.exists() {
-                let op = wide_null("open");
-                let file = wide_null(&temp_installer.to_string_lossy());
+                let _ = open_path_or_url(&temp_installer.to_string_lossy());
 
-                unsafe {
-                    ShellExecuteW(
-                        std::ptr::null_mut(),
-                        op.as_ptr(),
-                        file.as_ptr(),
-                        std::ptr::null(),
-                        std::ptr::null(),
-                        SW_SHOWNORMAL,
-                    );
-                }
-
-                let notice = wide_null(
-                    "Установщик WebView2 запущен.\n\n\
-                    После завершения установки перезапустите Synchro Nova."
+                let notice = "Установщик WebView2 запущен.\n\n\
+                    После завершения установки перезапустите Synchro Nova.";
+                show_message_box(
+                    title,
+                    notice,
+                    MB_ICONINFORMATION | MB_SETFOREGROUND,
                 );
-                unsafe {
-                    MessageBoxW(
-                        std::ptr::null_mut(),
-                        notice.as_ptr(),
-                        title.as_ptr(),
-                        MB_ICONINFORMATION | MB_SETFOREGROUND,
-                    );
-                }
             } else {
-                let err_msg = wide_null(
-                    "Не удалось автоматически загрузить установщик.\n\n\
-                    Пожалуйста, скачайте Microsoft Edge WebView2 Runtime вручную с официального сайта Microsoft."
+                let err_msg = "Не удалось автоматически загрузить установщик.\n\n\
+                    Пожалуйста, скачайте Microsoft Edge WebView2 Runtime вручную с официального сайта Microsoft.";
+                show_message_box(
+                    title,
+                    err_msg,
+                    MB_ICONWARNING | MB_SETFOREGROUND,
                 );
-                unsafe {
-                    MessageBoxW(
-                        std::ptr::null_mut(),
-                        err_msg.as_ptr(),
-                        title.as_ptr(),
-                        MB_ICONWARNING | MB_SETFOREGROUND,
-                    );
-                }
             }
         }
 
@@ -198,20 +128,7 @@ mod webview_check {
     }
 
     fn download_file(url: &str, dest: &Path) -> bool {
-        let wide_url = wide_null(url);
-        let wide_dest = wide_null(&dest.to_string_lossy());
-
-        let res = unsafe {
-            URLDownloadToFileW(
-                std::ptr::null_mut(),
-                wide_url.as_ptr(),
-                wide_dest.as_ptr(),
-                0,
-                std::ptr::null_mut(),
-            )
-        };
-
-        if res == 0 && dest.exists() {
+        if download_url_to_file(url, dest).is_ok() && dest.exists() {
             return true;
         }
 

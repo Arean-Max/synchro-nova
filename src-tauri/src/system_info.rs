@@ -144,45 +144,13 @@ impl MemoryInfo {
 
 #[cfg(target_os = "windows")]
 fn read_memory_info() -> MemoryInfo {
-    #[repr(C)]
-    struct MemoryStatusEx {
-        dw_length: u32,
-        dw_memory_load: u32,
-        ull_total_phys: u64,
-        ull_avail_phys: u64,
-        ull_total_page_file: u64,
-        ull_avail_page_file: u64,
-        ull_total_virtual: u64,
-        ull_avail_virtual: u64,
-        ull_avail_extended_virtual: u64,
-    }
-
-    #[link(name = "Kernel32")]
-    unsafe extern "system" {
-        fn GlobalMemoryStatusEx(buffer: *mut MemoryStatusEx) -> i32;
-    }
-
-    let mut status = MemoryStatusEx {
-        dw_length: std::mem::size_of::<MemoryStatusEx>() as u32,
-        dw_memory_load: 0,
-        ull_total_phys: 0,
-        ull_avail_phys: 0,
-        ull_total_page_file: 0,
-        ull_avail_page_file: 0,
-        ull_total_virtual: 0,
-        ull_avail_virtual: 0,
-        ull_avail_extended_virtual: 0,
-    };
-
-    unsafe {
-        if GlobalMemoryStatusEx(&mut status) == 0 {
-            MemoryInfo::default()
-        } else {
-            MemoryInfo {
-                total_bytes: status.ull_total_phys,
-                available_bytes: status.ull_avail_phys,
-            }
+    if let Some(status) = crate::ffi::read_memory_status_ex() {
+        MemoryInfo {
+            total_bytes: status.ull_total_phys,
+            available_bytes: status.ull_avail_phys,
         }
+    } else {
+        MemoryInfo::default()
     }
 }
 
@@ -201,94 +169,10 @@ struct DisplayInfo {
 
 #[cfg(target_os = "windows")]
 fn read_display_info() -> DisplayInfo {
-    #[repr(C)]
-    #[derive(Clone, Copy)]
-    struct PointL {
-        x: i32,
-        y: i32,
-    }
-
-    #[repr(C)]
-    struct DevModeW {
-        dm_device_name: [u16; 32],
-        dm_spec_version: u16,
-        dm_driver_version: u16,
-        dm_size: u16,
-        dm_driver_extra: u16,
-        dm_fields: u32,
-        dm_position: PointL,
-        dm_display_orientation: u32,
-        dm_display_fixed_output: u32,
-        dm_color: i16,
-        dm_duplex: i16,
-        dm_y_resolution: i16,
-        dm_tt_option: i16,
-        dm_collate: i16,
-        dm_form_name: [u16; 32],
-        dm_log_pixels: u16,
-        dm_bits_per_pel: u32,
-        dm_pels_width: u32,
-        dm_pels_height: u32,
-        dm_display_flags: u32,
-        dm_display_frequency: u32,
-        dm_icm_method: u32,
-        dm_icm_intent: u32,
-        dm_media_type: u32,
-        dm_dither_type: u32,
-        dm_reserved1: u32,
-        dm_reserved2: u32,
-        dm_panning_width: u32,
-        dm_panning_height: u32,
-    }
-
-    #[link(name = "User32")]
-    unsafe extern "system" {
-        fn EnumDisplaySettingsW(
-            device_name: *const u16,
-            mode_num: u32,
-            dev_mode: *mut DevModeW,
-        ) -> i32;
-        fn GetSystemMetrics(index: i32) -> i32;
-    }
-
-    const ENUM_CURRENT_SETTINGS: u32 = 0xFFFF_FFFF;
-    const SM_CXSCREEN: i32 = 0;
-    const SM_CYSCREEN: i32 = 1;
-
-    let mut mode = DevModeW {
-        dm_device_name: [0; 32],
-        dm_spec_version: 0,
-        dm_driver_version: 0,
-        dm_size: std::mem::size_of::<DevModeW>() as u16,
-        dm_driver_extra: 0,
-        dm_fields: 0,
-        dm_position: PointL { x: 0, y: 0 },
-        dm_display_orientation: 0,
-        dm_display_fixed_output: 0,
-        dm_color: 0,
-        dm_duplex: 0,
-        dm_y_resolution: 0,
-        dm_tt_option: 0,
-        dm_collate: 0,
-        dm_form_name: [0; 32],
-        dm_log_pixels: 0,
-        dm_bits_per_pel: 0,
-        dm_pels_width: 0,
-        dm_pels_height: 0,
-        dm_display_flags: 0,
-        dm_display_frequency: 0,
-        dm_icm_method: 0,
-        dm_icm_intent: 0,
-        dm_media_type: 0,
-        dm_dither_type: 0,
-        dm_reserved1: 0,
-        dm_reserved2: 0,
-        dm_panning_width: 0,
-        dm_panning_height: 0,
-    };
+    let mut mode = crate::ffi::DevModeW::default();
 
     unsafe {
-        if EnumDisplaySettingsW(std::ptr::null(), ENUM_CURRENT_SETTINGS, &mut mode) != 0 {
+        if crate::ffi::winapi::EnumDisplaySettingsW(std::ptr::null(), crate::ffi::ENUM_CURRENT_SETTINGS, &mut mode) != 0 {
             return DisplayInfo {
                 resolution: format!("{} x {}", mode.dm_pels_width, mode.dm_pels_height),
                 refresh_rate: format!("{} Hz", mode.dm_display_frequency),
@@ -297,8 +181,8 @@ fn read_display_info() -> DisplayInfo {
             };
         }
 
-        let width = GetSystemMetrics(SM_CXSCREEN);
-        let height = GetSystemMetrics(SM_CYSCREEN);
+        let width = crate::ffi::winapi::GetSystemMetrics(crate::ffi::SM_CXSCREEN);
+        let height = crate::ffi::winapi::GetSystemMetrics(crate::ffi::SM_CYSCREEN);
         DisplayInfo {
             resolution: format!("{width} x {height}"),
             refresh_rate: "Unknown".to_string(),
@@ -310,39 +194,12 @@ fn read_display_info() -> DisplayInfo {
 
 #[cfg(target_os = "windows")]
 fn read_gpu_names() -> Vec<String> {
-    #[repr(C)]
-    struct DisplayDeviceW {
-        cb: u32,
-        device_name: [u16; 32],
-        device_string: [u16; 128],
-        state_flags: u32,
-        device_id: [u16; 128],
-        device_key: [u16; 128],
-    }
-
-    #[link(name = "User32")]
-    unsafe extern "system" {
-        fn EnumDisplayDevicesW(
-            device_name: *const u16,
-            dev_num: u32,
-            display_device: *mut DisplayDeviceW,
-            flags: u32,
-        ) -> i32;
-    }
-
     let mut names = Vec::new();
     for index in 0..16 {
-        let mut device = DisplayDeviceW {
-            cb: std::mem::size_of::<DisplayDeviceW>() as u32,
-            device_name: [0; 32],
-            device_string: [0; 128],
-            state_flags: 0,
-            device_id: [0; 128],
-            device_key: [0; 128],
-        };
+        let mut device = crate::ffi::DisplayDeviceW::default();
 
         unsafe {
-            if EnumDisplayDevicesW(std::ptr::null(), index, &mut device, 0) == 0 {
+            if crate::ffi::winapi::EnumDisplayDevicesW(std::ptr::null(), index, &mut device, 0) == 0 {
                 break;
             }
         }

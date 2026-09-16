@@ -20,14 +20,6 @@ pub(crate) struct CpuSample {
     user: u64,
 }
 
-#[cfg(target_os = "windows")]
-#[repr(C)]
-#[derive(Clone, Copy)]
-struct FileTime {
-    low: u32,
-    high: u32,
-}
-
 pub(crate) fn collect_live_metrics(previous: &mut Option<CpuSample>) -> LiveMetrics {
     let memory = read_memory_info();
     let (gpu_usage, dedicated_vram) = read_gpu_live_metrics();
@@ -109,22 +101,7 @@ fn cpu_percent(previous: CpuSample, current: CpuSample) -> u64 {
 
 #[cfg(target_os = "windows")]
 fn read_cpu_sample() -> Option<CpuSample> {
-    #[link(name = "Kernel32")]
-    unsafe extern "system" {
-        fn GetSystemTimes(
-            idle_time: *mut FileTime,
-            kernel_time: *mut FileTime,
-            user_time: *mut FileTime,
-        ) -> i32;
-    }
-
-    let mut idle = FileTime { low: 0, high: 0 };
-    let mut kernel = FileTime { low: 0, high: 0 };
-    let mut user = FileTime { low: 0, high: 0 };
-    let ok = unsafe { GetSystemTimes(&mut idle, &mut kernel, &mut user) != 0 };
-    if !ok {
-        return None;
-    }
+    let (idle, kernel, user) = crate::ffi::read_system_times()?;
     Some(CpuSample {
         idle: filetime_to_u64(idle),
         kernel: filetime_to_u64(kernel),
@@ -133,51 +110,19 @@ fn read_cpu_sample() -> Option<CpuSample> {
 }
 
 #[cfg(target_os = "windows")]
-fn filetime_to_u64(value: FileTime) -> u64 {
+fn filetime_to_u64(value: crate::ffi::FileTime) -> u64 {
     ((value.high as u64) << 32) | value.low as u64
 }
 
 #[cfg(target_os = "windows")]
 fn read_memory_info() -> MemoryInfo {
-    #[repr(C)]
-    struct MemoryStatusEx {
-        dw_length: u32,
-        dw_memory_load: u32,
-        ull_total_phys: u64,
-        ull_avail_phys: u64,
-        ull_total_page_file: u64,
-        ull_avail_page_file: u64,
-        ull_total_virtual: u64,
-        ull_avail_virtual: u64,
-        ull_avail_extended_virtual: u64,
-    }
-
-    #[link(name = "Kernel32")]
-    unsafe extern "system" {
-        fn GlobalMemoryStatusEx(buffer: *mut MemoryStatusEx) -> i32;
-    }
-
-    let mut status = MemoryStatusEx {
-        dw_length: std::mem::size_of::<MemoryStatusEx>() as u32,
-        dw_memory_load: 0,
-        ull_total_phys: 0,
-        ull_avail_phys: 0,
-        ull_total_page_file: 0,
-        ull_avail_page_file: 0,
-        ull_total_virtual: 0,
-        ull_avail_virtual: 0,
-        ull_avail_extended_virtual: 0,
-    };
-
-    unsafe {
-        if GlobalMemoryStatusEx(&mut status) == 0 {
-            MemoryInfo::default()
-        } else {
-            MemoryInfo {
-                total_bytes: status.ull_total_phys,
-                available_bytes: status.ull_avail_phys,
-            }
+    if let Some(status) = crate::ffi::read_memory_status_ex() {
+        MemoryInfo {
+            total_bytes: status.ull_total_phys,
+            available_bytes: status.ull_avail_phys,
         }
+    } else {
+        MemoryInfo::default()
     }
 }
 
@@ -186,7 +131,6 @@ fn read_memory_info() -> MemoryInfo {
     MemoryInfo::default()
 }
 
-#[cfg(target_os = "windows")]
 #[cfg(not(target_os = "windows"))]
 fn read_gpu_live_metrics() -> (u64, u64) {
     (0, 0)

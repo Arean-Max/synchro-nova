@@ -1,7 +1,6 @@
 use crate::DriverInfo;
 use std::{
     collections::HashSet,
-    ffi::c_void,
     path::{Path, PathBuf},
 };
 
@@ -28,37 +27,12 @@ pub(crate) fn collect_drivers() -> Vec<DriverInfo> {
 
 #[cfg(target_os = "windows")]
 fn collect_display_drivers(drivers: &mut Vec<DriverInfo>, seen: &mut HashSet<String>) {
-    #[repr(C)]
-    struct DisplayDeviceW {
-        cb: u32,
-        device_name: [u16; 32],
-        device_string: [u16; 128],
-        state_flags: u32,
-        device_id: [u16; 128],
-        device_key: [u16; 128],
-    }
-
-    #[link(name = "User32")]
-    unsafe extern "system" {
-        fn EnumDisplayDevicesW(
-            device_name: *const u16,
-            dev_num: u32,
-            display_device: *mut DisplayDeviceW,
-            flags: u32,
-        ) -> i32;
-    }
-
     for index in 0..16 {
-        let mut device = DisplayDeviceW {
-            cb: std::mem::size_of::<DisplayDeviceW>() as u32,
-            device_name: [0; 32],
-            device_string: [0; 128],
-            state_flags: 0,
-            device_id: [0; 128],
-            device_key: [0; 128],
-        };
+        let mut device = crate::ffi::DisplayDeviceW::default();
 
-        let ok = unsafe { EnumDisplayDevicesW(std::ptr::null(), index, &mut device, 0) != 0 };
+        let ok = unsafe {
+            crate::ffi::winapi::EnumDisplayDevicesW(std::ptr::null(), index, &mut device, 0) != 0
+        };
         if !ok {
             break;
         }
@@ -349,54 +323,20 @@ fn expand_driver_path(value: &str) -> Option<PathBuf> {
 
 #[cfg(target_os = "windows")]
 fn file_version(path: &Path) -> Result<String, String> {
-    #[repr(C)]
-    struct VsFixedFileInfo {
-        dw_signature: u32,
-        dw_struc_version: u32,
-        dw_file_version_ms: u32,
-        dw_file_version_ls: u32,
-        dw_product_version_ms: u32,
-        dw_product_version_ls: u32,
-        dw_file_flags_mask: u32,
-        dw_file_flags: u32,
-        dw_file_os: u32,
-        dw_file_type: u32,
-        dw_file_subtype: u32,
-        dw_file_date_ms: u32,
-        dw_file_date_ls: u32,
-    }
-
-    #[link(name = "Version")]
-    unsafe extern "system" {
-        fn GetFileVersionInfoSizeW(file_name: *const u16, handle: *mut u32) -> u32;
-        fn GetFileVersionInfoW(
-            file_name: *const u16,
-            handle: u32,
-            len: u32,
-            data: *mut c_void,
-        ) -> i32;
-        fn VerQueryValueW(
-            block: *const c_void,
-            sub_block: *const u16,
-            buffer: *mut *mut c_void,
-            len: *mut u32,
-        ) -> i32;
-    }
-
-    let file = wide_null(&path.to_string_lossy());
+    let file = crate::ffi::wide_null(&path.to_string_lossy());
     let mut handle = 0;
-    let size = unsafe { GetFileVersionInfoSizeW(file.as_ptr(), &mut handle) };
+    let size = unsafe { crate::ffi::winapi::GetFileVersionInfoSizeW(file.as_ptr(), &mut handle) };
     if size == 0 {
         return Err("No version info".to_string());
     }
 
     let mut data = vec![0_u8; size as usize];
     let ok = unsafe {
-        GetFileVersionInfoW(
+        crate::ffi::winapi::GetFileVersionInfoW(
             file.as_ptr(),
             handle,
             size,
-            data.as_mut_ptr() as *mut c_void,
+            data.as_mut_ptr() as *mut std::ffi::c_void,
         ) != 0
     };
     if !ok {
@@ -405,10 +345,10 @@ fn file_version(path: &Path) -> Result<String, String> {
 
     let mut buffer = std::ptr::null_mut();
     let mut len = 0;
-    let root = wide_null("\\");
+    let root = crate::ffi::wide_null("\\");
     let ok = unsafe {
-        VerQueryValueW(
-            data.as_ptr() as *const c_void,
+        crate::ffi::winapi::VerQueryValueW(
+            data.as_ptr() as *const std::ffi::c_void,
             root.as_ptr(),
             &mut buffer,
             &mut len,
@@ -418,7 +358,7 @@ fn file_version(path: &Path) -> Result<String, String> {
         return Err("Version query failed".to_string());
     }
 
-    let info = unsafe { &*(buffer as *const VsFixedFileInfo) };
+    let info = unsafe { &*(buffer as *const crate::ffi::VsFixedFileInfo) };
     if info.dw_signature != 0xFEEF04BD {
         return Err("Invalid version block".to_string());
     }
@@ -430,9 +370,4 @@ fn file_version(path: &Path) -> Result<String, String> {
         (info.dw_file_version_ls >> 16) & 0xffff,
         info.dw_file_version_ls & 0xffff
     ))
-}
-
-#[cfg(target_os = "windows")]
-fn wide_null(value: &str) -> Vec<u16> {
-    value.encode_utf16().chain(std::iter::once(0)).collect()
 }

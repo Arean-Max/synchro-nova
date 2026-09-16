@@ -357,11 +357,10 @@ fn read_steam_libraries(steam_root: &Path) -> Vec<PathBuf> {
     raw.lines()
         .filter_map(|line| {
             let values = quoted_values(line);
-            if values.len() >= 2 && values[0] == "path" {
-                Some(PathBuf::from(&values[1]))
-            } else if values.len() >= 2
-                && values[0].chars().all(|ch| ch.is_ascii_digit())
-                && looks_like_path(&values[1])
+            if values.len() >= 2
+                && (values[0] == "path"
+                    || (values[0].chars().all(|ch| ch.is_ascii_digit())
+                        && looks_like_path(&values[1])))
             {
                 Some(PathBuf::from(&values[1]))
             } else {
@@ -1153,26 +1152,12 @@ fn shell_execute(
     directory: Option<&str>,
     error_message: &str,
 ) -> Result<(), String> {
-    use std::ffi::c_void;
-
-    #[link(name = "Shell32")]
-    unsafe extern "system" {
-        fn ShellExecuteW(
-            hwnd: *mut c_void,
-            operation: *const u16,
-            file: *const u16,
-            parameters: *const u16,
-            directory: *const u16,
-            show_cmd: i32,
-        ) -> isize;
-    }
-
-    let operation = wide_null(operation);
-    let file = wide_null(file);
-    let parameters = parameters.map(wide_null);
-    let directory = directory.map(wide_null);
+    let operation = crate::ffi::wide_null(operation);
+    let file = crate::ffi::wide_null(file);
+    let parameters = parameters.map(crate::ffi::wide_null);
+    let directory = directory.map(crate::ffi::wide_null);
     let result = unsafe {
-        ShellExecuteW(
+        crate::ffi::winapi::ShellExecuteW(
             std::ptr::null_mut(),
             operation.as_ptr(),
             file.as_ptr(),
@@ -1206,9 +1191,4 @@ fn join_command_args(args: &[String]) -> String {
         })
         .collect::<Vec<_>>()
         .join(" ")
-}
-
-#[cfg(target_os = "windows")]
-fn wide_null(value: &str) -> Vec<u16> {
-    value.encode_utf16().chain(std::iter::once(0)).collect()
 }

@@ -1,5 +1,5 @@
 use crate::ColorSettings;
-use std::{ffi::c_void, sync::OnceLock};
+use std::sync::OnceLock;
 
 #[cfg(target_os = "windows")]
 pub(crate) fn apply_color_transform(color: &ColorSettings) -> Result<(), String> {
@@ -19,22 +19,12 @@ pub(crate) fn apply_color_transform(_color: &ColorSettings) -> Result<(), String
 
 #[cfg(target_os = "windows")]
 pub(crate) fn reset_color_transform() -> Result<(), String> {
-    #[repr(C)]
-    struct MagColorEffect {
-        transform: [f32; 25],
-    }
-
-    #[link(name = "Magnification")]
-    unsafe extern "system" {
-        fn MagSetFullscreenColorEffect(effect: *const MagColorEffect) -> i32;
-    }
-
-    let effect = MagColorEffect {
+    let effect = crate::ffi::MagColorEffect {
         transform: identity_matrix(),
     };
 
     unsafe {
-        let _ = MagSetFullscreenColorEffect(&effect);
+        let _ = crate::ffi::winapi::MagSetFullscreenColorEffect(&effect);
     }
     let _ = apply_gamma_ramp(100.0);
     Ok(())
@@ -45,28 +35,16 @@ pub(crate) fn reset_color_transform() -> Result<(), String> {
     Ok(())
 }
 
-
 #[cfg(target_os = "windows")]
 fn apply_magnification_color(color: &ColorSettings) -> Result<(), String> {
-    #[repr(C)]
-    struct MagColorEffect {
-        transform: [f32; 25],
-    }
-
-    #[link(name = "Magnification")]
-    unsafe extern "system" {
-        fn MagInitialize() -> i32;
-        fn MagSetFullscreenColorEffect(effect: *const MagColorEffect) -> i32;
-    }
-
     let matrix = build_color_matrix(color);
-    let effect = MagColorEffect { transform: matrix };
+    let effect = crate::ffi::MagColorEffect { transform: matrix };
 
     static MAGNIFICATION_READY: OnceLock<Result<(), String>> = OnceLock::new();
 
     MAGNIFICATION_READY
         .get_or_init(|| unsafe {
-            if MagInitialize() == 0 {
+            if crate::ffi::winapi::MagInitialize() == 0 {
                 Err("Windows Magnification API initialization failed".to_string())
             } else {
                 Ok(())
@@ -75,7 +53,7 @@ fn apply_magnification_color(color: &ColorSettings) -> Result<(), String> {
         .clone()?;
 
     unsafe {
-        if MagSetFullscreenColorEffect(&effect) == 0 {
+        if crate::ffi::winapi::MagSetFullscreenColorEffect(&effect) == 0 {
             return Err("Windows Magnification API color effect failed".to_string());
         }
     }
@@ -85,31 +63,9 @@ fn apply_magnification_color(color: &ColorSettings) -> Result<(), String> {
 
 #[cfg(target_os = "windows")]
 fn apply_gamma_ramp(gamma_percent: f32) -> Result<(), String> {
-    #[repr(C)]
-    struct GammaRamp {
-        red: [u16; 256],
-        green: [u16; 256],
-        blue: [u16; 256],
-    }
-
-    #[link(name = "User32")]
-    unsafe extern "system" {
-        fn GetDC(hwnd: *mut c_void) -> *mut c_void;
-        fn ReleaseDC(hwnd: *mut c_void, hdc: *mut c_void) -> i32;
-    }
-
-    #[link(name = "Gdi32")]
-    unsafe extern "system" {
-        fn SetDeviceGammaRamp(hdc: *mut c_void, ramp: *const GammaRamp) -> i32;
-    }
-
     let gamma = (gamma_percent / 100.0).clamp(0.5, 1.5);
     let exponent = 1.0 / gamma;
-    let mut ramp = GammaRamp {
-        red: [0; 256],
-        green: [0; 256],
-        blue: [0; 256],
-    };
+    let mut ramp = crate::ffi::GammaRamp::default();
 
     for index in 0..256 {
         let normalized = index as f32 / 255.0;
@@ -120,13 +76,13 @@ fn apply_gamma_ramp(gamma_percent: f32) -> Result<(), String> {
     }
 
     unsafe {
-        let hdc = GetDC(std::ptr::null_mut());
+        let hdc = crate::ffi::winapi::GetDC(std::ptr::null_mut());
         if hdc.is_null() {
             return Err("Failed to acquire display device context".to_string());
         }
 
-        let result = SetDeviceGammaRamp(hdc, &ramp);
-        let _ = ReleaseDC(std::ptr::null_mut(), hdc);
+        let result = crate::ffi::winapi::SetDeviceGammaRamp(hdc, &ramp);
+        let _ = crate::ffi::winapi::ReleaseDC(std::ptr::null_mut(), hdc);
 
         if result == 0 {
             return Err("Display driver rejected gamma ramp".to_string());
