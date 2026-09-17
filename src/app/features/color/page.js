@@ -272,11 +272,11 @@ function renderColorSettingsPanel(appState, viewState, t) {
   const gameHeader = [
     `<div class="color-game-head"${headStyle}>`,
     headMark,
-    "<div>",
-    `<span>${t("selectedGame")}</span>`,
-    `<strong>${safeValue(selected?.name)}</strong>`,
+    '<div class="color-game-head-info">',
+    `<span class="color-game-head-label">${t("selectedGame")}</span>`,
+    `<strong class="color-game-head-title">${safeValue(selected?.name)}</strong>`,
     "</div>",
-    `<div class="actions">${launch}</div>`,
+    `<div class="color-game-head-actions">${launch}</div>`,
     "</div>"
   ].join("");
 

@@ -21,6 +21,26 @@
 
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
 }
 
 html,
@@ -975,9 +995,9 @@ button.check-row {
   right: 0;
   bottom: 0;
   z-index: 9;
-  width: min(470px, 42vw);
-  min-width: 390px;
-  padding: 14px;
+  width: min(500px, 45vw);
+  min-width: 420px;
+  padding: 16px;
   border-left: 1px solid rgba(255, 255, 255, 0.1);
   background:
     linear-gradient(180deg, rgba(31, 31, 31, 0.96), rgba(18, 18, 20, 0.98)),
@@ -992,9 +1012,10 @@ button.check-row {
   gap: 14px;
   height: 100%;
   min-height: 0;
-  padding-right: 4px;
+  padding-right: 6px;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
 }
 
 .color-game-panel > .stack,
@@ -1007,9 +1028,9 @@ button.check-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  min-height: 70px;
-  padding: 14px 16px;
+  gap: 14px;
+  min-height: 72px;
+  padding: 12px 16px;
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   background: var(--bg-card);
@@ -1019,15 +1040,15 @@ button.check-row {
 
 .color-game-head-mark {
   position: absolute;
-  right: 92px;
+  right: 130px;
   top: 50%;
   z-index: 0;
   color: color-mix(in srgb, var(--game-accent) 32%, transparent);
-  font-size: 54px;
+  font-size: 48px;
   font-weight: 900;
   letter-spacing: 0.02em;
   line-height: 0.88;
-  opacity: 0.14;
+  opacity: 0.12;
   text-align: right;
   text-transform: uppercase;
   transform: translateY(-50%);
@@ -1036,12 +1057,13 @@ button.check-row {
 
 .color-game-head-mark.image {
   left: auto;
-  right: 16px;
-  width: min(230px, 52%);
-  max-height: 58px;
+  right: 120px;
+  width: min(200px, 45%);
+  max-height: 52px;
   object-fit: contain;
-  opacity: 0.13;
+  opacity: 0.10;
   filter: grayscale(1) brightness(1.9) contrast(1.25);
+  pointer-events: none;
 }
 
 .color-game-head > div {
@@ -1130,25 +1152,53 @@ button.check-row {
   }
 }
 
-.color-game-head div:first-child {
-  display: grid;
-  gap: 4px;
+.color-game-head-info {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
-.color-game-head span {
+.color-game-head-label {
+  display: block;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
 }
 
-.color-game-head strong {
+.color-game-head-title {
+  display: block;
   min-width: 0;
   overflow: hidden;
   color: var(--text-primary);
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 760;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.3;
+}
+
+.color-game-head-actions {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.color-game-head-actions .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .btn:disabled {
