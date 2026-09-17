@@ -1063,6 +1063,11 @@ pub fn trim_process_memory() {
     ffi::trim_working_set();
 }
 
+#[tauri::command]
+fn trim_memory() {
+    trim_process_memory();
+}
+
 fn apply_process_hardening() {
     ffi::apply_process_hardening();
 }
@@ -1093,7 +1098,6 @@ pub fn run() {
                 let _ = window.set_resizable(true);
                 let _ = window.set_maximizable(true);
                 let _ = window.center();
-
                 if initial.settings.start_minimized {
                     let _ = window.hide();
                 } else {
@@ -1104,10 +1108,20 @@ pub fn run() {
 
             trim_process_memory();
 
-            // Post-boot delayed working-set trim to reclaim initial WebView2 bootstrapping memory
+            // Post-boot delayed working-set trims to reclaim initial WebView2 bootstrapping memory
             std::thread::spawn(|| {
+                std::thread::sleep(Duration::from_millis(1500));
+                trim_process_memory();
                 std::thread::sleep(Duration::from_millis(2500));
                 trim_process_memory();
+            });
+
+            // Gentle open-state memory trimmer: keeps WebView2 RAM rock-bottom while menu is open
+            std::thread::spawn(|| {
+                loop {
+                    std::thread::sleep(Duration::from_secs(12));
+                    trim_process_memory();
+                }
             });
 
             Ok(())
@@ -1118,6 +1132,12 @@ pub fn run() {
             }
 
             match event {
+                WindowEvent::Focused(true) => {
+                    std::thread::spawn(|| {
+                        std::thread::sleep(Duration::from_millis(500));
+                        trim_process_memory();
+                    });
+                }
                 WindowEvent::Focused(false) => {
                     trim_process_memory();
                 }
@@ -1165,7 +1185,8 @@ pub fn run() {
             start_window_drag,
             close_window,
             exit_app,
-            restart_as_admin
+            restart_as_admin,
+            trim_memory
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Synchro");

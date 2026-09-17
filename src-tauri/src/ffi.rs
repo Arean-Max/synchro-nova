@@ -143,6 +143,29 @@ pub struct VsFixedFileInfo {
     pub dw_file_date_ls: u32,
 }
 
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct ProcessEntry32W {
+    pub dw_size: u32,
+    pub cnt_usage: u32,
+    pub th32_process_id: u32,
+    pub th32_default_heap_id: usize,
+    pub th32_module_id: u32,
+    pub cnt_threads: u32,
+    pub th32_parent_process_id: u32,
+    pub pc_pri_class_base: i32,
+    pub dw_flags: u32,
+    pub sz_exe_file: [u16; 260],
+}
+
+impl Default for ProcessEntry32W {
+    fn default() -> Self {
+        let mut entry: Self = unsafe { std::mem::zeroed() };
+        entry.dw_size = std::mem::size_of::<Self>() as u32;
+        entry
+    }
+}
+
 pub const MB_OKCANCEL: u32 = 0x0000_0001;
 pub const MB_ICONWARNING: u32 = 0x0000_0030;
 pub const MB_ICONINFORMATION: u32 = 0x0000_0040;
@@ -153,6 +176,7 @@ pub const SW_SHOWNORMAL: i32 = 1;
 pub const ENUM_CURRENT_SETTINGS: u32 = 0xFFFF_FFFF;
 pub const SM_CXSCREEN: i32 = 0;
 pub const SM_CYSCREEN: i32 = 1;
+pub const TH32CS_SNAPPROCESS: u32 = 0x0000_0002;
 
 #[cfg(target_os = "windows")]
 pub mod winapi {
@@ -183,6 +207,9 @@ pub mod winapi {
             kernel_time: *mut FileTime,
             user_time: *mut FileTime,
         ) -> i32;
+        pub fn CreateToolhelp32Snapshot(flags: u32, process_id: u32) -> *mut c_void;
+        pub fn Process32FirstW(snapshot: *mut c_void, entry: *mut ProcessEntry32W) -> i32;
+        pub fn Process32NextW(snapshot: *mut c_void, entry: *mut ProcessEntry32W) -> i32;
     }
 
     #[link(name = "Shell32")]
@@ -303,41 +330,62 @@ pub fn init_process_tree_job() {}
 #[cfg(target_os = "windows")]
 pub fn trim_working_set() {
     unsafe {
+        // 1. Trim the main application process
         let _ = winapi::SetProcessWorkingSetSize(winapi::GetCurrentProcess(), usize::MAX, usize::MAX);
 
-        // Safely trim child WebView2 processes strictly within our own Job Object.
-        // Performs ZERO system snapshotting, ZERO process scanning, and does NOT touch any external or game processes.
-        if let Some(Some(job_ptr)) = PROCESS_JOB.get() {
-            let job = *job_ptr as *mut c_void;
-            #[repr(C)]
-            struct JobPids {
-                assigned: u32,
-                count: u32,
-                pids: [usize; 64],
+        // 2. Discover direct child and descendant WebView2 processes strictly rooted at this process
+        let my_pid = winapi::GetCurrentProcessId();
+        let snapshot = winapi::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if snapshot.is_null() || snapshot as isize == -1 {
+            return;
+        }
+
+        let mut entry = ProcessEntry32W::default();
+        let mut all_entries = Vec::with_capacity(128);
+
+        if winapi::Process32FirstW(snapshot, &mut entry) != 0 {
+            loop {
+                all_entries.push((
+                    entry.th32_process_id,
+                    entry.th32_parent_process_id,
+                    entry.sz_exe_file,
+                ));
+                if winapi::Process32NextW(snapshot, &mut entry) == 0 {
+                    break;
+                }
             }
-            let mut list: JobPids = std::mem::zeroed();
-            let mut returned = 0u32;
-            const JOB_OBJECT_BASIC_PROCESS_ID_LIST: i32 = 3;
-            if winapi::QueryInformationJobObject(
-                job,
-                JOB_OBJECT_BASIC_PROCESS_ID_LIST,
-                &mut list as *mut _ as *mut c_void,
-                std::mem::size_of::<JobPids>() as u32,
-                &mut returned,
-            ) != 0 {
-                let current_pid = winapi::GetCurrentProcessId() as usize;
-                let count = (list.count as usize).min(64);
-                const PROCESS_SET_QUOTA: u32 = 0x0100;
-                for i in 0..count {
-                    let pid = list.pids[i];
-                    if pid != 0 && pid != current_pid {
-                        let handle = winapi::OpenProcess(PROCESS_SET_QUOTA, 0, pid as u32);
-                        if !handle.is_null() && handle as isize != -1 {
-                            let _ = winapi::SetProcessWorkingSetSize(handle, usize::MAX, usize::MAX);
-                            winapi::CloseHandle(handle);
-                        }
+        }
+        winapi::CloseHandle(snapshot);
+
+        // Track process IDs belonging strictly to synchro's process hierarchy
+        let mut tree_pids = Vec::with_capacity(8);
+        tree_pids.push(my_pid);
+
+        let mut webview_pids = Vec::with_capacity(8);
+        let mut added = true;
+
+        while added {
+            added = false;
+            for (pid, parent_pid, exe_name) in &all_entries {
+                if *pid != my_pid && !tree_pids.contains(pid) && tree_pids.contains(parent_pid) {
+                    let len = exe_name.iter().position(|&c| c == 0).unwrap_or(exe_name.len());
+                    let name = String::from_utf16_lossy(&exe_name[..len]);
+                    if name.eq_ignore_ascii_case("msedgewebview2.exe") {
+                        tree_pids.push(*pid);
+                        webview_pids.push(*pid);
+                        added = true;
                     }
                 }
+            }
+        }
+
+        // 3. Trim working sets for the discovered WebView2 child processes
+        const PROCESS_SET_QUOTA: u32 = 0x0100;
+        for pid in webview_pids {
+            let handle = winapi::OpenProcess(PROCESS_SET_QUOTA, 0, pid);
+            if !handle.is_null() && handle as isize != -1 {
+                let _ = winapi::SetProcessWorkingSetSize(handle, usize::MAX, usize::MAX);
+                winapi::CloseHandle(handle);
             }
         }
     }

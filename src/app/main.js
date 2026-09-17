@@ -32,6 +32,14 @@ let applyTimer = 0;
 let characteristicsTimer = 0;
 let characteristicsBusy = false;
 let carouselStepAt = 0;
+let trimTimer = 0;
+
+function scheduleTrimMemory(delay = 400) {
+  window.clearTimeout(trimTimer);
+  trimTimer = window.setTimeout(() => {
+    invokeCommand("trim_memory");
+  }, delay);
+}
 
 function t(key) {
   return translate(lang(), key);
@@ -71,6 +79,7 @@ function updateMain() {
   syncAllSliders(appState);
   updateNavState();
   window.requestAnimationFrame(syncNavIndicator);
+  scheduleTrimMemory(350);
 }
 
 function updateColorPage(options = {}) {
@@ -566,6 +575,7 @@ async function boot() {
   if (state) mergeState(state);
   render();
   loadColorGames();
+  scheduleTrimMemory(1200);
 }
 
 document.addEventListener("input", handleInput);
