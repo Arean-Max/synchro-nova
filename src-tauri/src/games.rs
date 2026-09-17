@@ -7,10 +7,10 @@ use std::{
 };
 
 const MAX_GAMES: usize = 180;
-const MAX_IMAGE_SCAN_DEPTH: usize = 5;
-const MAX_IMAGE_SCAN_ENTRIES: usize = 3_200;
-const MAX_LOGO_SCAN_DEPTH: usize = 4;
-const MAX_LOGO_SCAN_ENTRIES: usize = 1_800;
+const MAX_IMAGE_SCAN_DEPTH: usize = 2;
+const MAX_IMAGE_SCAN_ENTRIES: usize = 150;
+const MAX_LOGO_SCAN_DEPTH: usize = 2;
+const MAX_LOGO_SCAN_ENTRIES: usize = 150;
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]

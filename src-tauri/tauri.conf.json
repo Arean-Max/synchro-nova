@@ -24,7 +24,7 @@
         "fullscreen": false,
         "decorations": false,
         "devtools": false,
-        "additionalBrowserArgs": "--renderer-process-limit=1 --disable-gpu-shader-disk-cache --disk-cache-size=1 --media-cache-size=1 --disable-background-networking --disable-component-update --no-pings --disable-sync --disable-domain-reliability --disable-client-side-phishing-detection --safebrowsing-disable-auto-update --disable-default-apps --disable-extensions --disable-breakpad --no-crash-upload --disable-speech-api --disable-speech-synthesis-api --disable-features=Translate,OptimizationHints,MediaRouter,CalculateNativeWinOcclusion,InterestFeedContentSuggestions,AutofillServerCommunication,CertificateTransparencyComponentUpdater,SpeechSynthesis,BackgroundFetch,SafeBrowsing --js-flags=--max-old-space-size=32"
+        "additionalBrowserArgs": "--renderer-process-limit=1 --enable-low-end-device-mode --force-gpu-mem-available-mb=16 --disable-gpu-shader-disk-cache --disk-cache-size=1 --media-cache-size=1 --disable-background-networking --disable-component-update --no-pings --disable-sync --disable-domain-reliability --disable-client-side-phishing-detection --safebrowsing-disable-auto-update --disable-default-apps --disable-extensions --disable-breakpad --no-crash-upload --disable-speech-api --disable-speech-synthesis-api --disable-features=Translate,OptimizationHints,MediaRouter,CalculateNativeWinOcclusion,InterestFeedContentSuggestions,AutofillServerCommunication,CertificateTransparencyComponentUpdater,SpeechSynthesis,BackgroundFetch,SafeBrowsing --js-flags=--max-old-space-size=32"
       }
     ],
     "security": {

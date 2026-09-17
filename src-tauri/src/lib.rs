@@ -1072,6 +1072,7 @@ pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
             apply_process_hardening();
+            ffi::init_process_tree_job();
 
             let runtime = RuntimeState::load(app.handle())?;
             let initial = runtime.snapshot()?;

@@ -207,7 +207,7 @@ async function refreshCharacteristics() {
 }
 
 async function refreshLiveCharacteristics() {
-  if (activePage !== "characteristics" || characteristicsBusy) return;
+  if (activePage !== "characteristics" || characteristicsBusy || document.hidden) return;
   characteristicsBusy = true;
   const info = await invokeCommand("get_system_live_metrics");
   characteristicsBusy = false;
@@ -217,8 +217,8 @@ async function refreshLiveCharacteristics() {
 function syncCharacteristicsMonitor() {
   window.clearInterval(characteristicsTimer);
   characteristicsTimer = 0;
-  if (activePage !== "characteristics") return;
-  characteristicsTimer = window.setInterval(refreshLiveCharacteristics, 1200);
+  if (activePage !== "characteristics" || document.hidden) return;
+  characteristicsTimer = window.setInterval(refreshLiveCharacteristics, 2000);
 }
 
 function applyPreset(name) {

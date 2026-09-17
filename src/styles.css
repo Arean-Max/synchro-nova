@@ -740,7 +740,6 @@ button.check-row {
     #1a1a1d;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   cursor: default;
-  will-change: transform, opacity, filter;
   transition:
     transform 340ms cubic-bezier(0.16, 1, 0.3, 1),
     opacity 260ms ease,
@@ -1055,7 +1054,7 @@ button.check-row {
 }
 
 .app-shell:not(.app-low-spec) .game-card[data-offset="0"] .game-card-watermark {
-  animation: game-watermark-drift 4400ms ease-in-out infinite;
+  animation: none;
 }
 
 .app-shell:not(.app-low-spec) .game-carousel-title strong {

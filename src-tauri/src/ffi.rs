@@ -161,6 +161,17 @@ pub mod winapi {
     #[link(name = "Kernel32")]
     unsafe extern "system" {
         pub fn GetCurrentProcess() -> *mut c_void;
+        pub fn GetCurrentProcessId() -> u32;
+        pub fn OpenProcess(desired_access: u32, inherit_handle: i32, process_id: u32) -> *mut c_void;
+        pub fn CreateJobObjectW(job_attributes: *mut c_void, name: *const u16) -> *mut c_void;
+        pub fn AssignProcessToJobObject(job: *mut c_void, process: *mut c_void) -> i32;
+        pub fn QueryInformationJobObject(
+            job: *mut c_void,
+            info_class: i32,
+            job_info: *mut c_void,
+            job_info_length: u32,
+            return_length: *mut u32,
+        ) -> i32;
         pub fn CloseHandle(handle: *mut c_void) -> i32;
         pub fn SetProcessWorkingSetSize(process: *mut c_void, min: usize, max: usize) -> i32;
         pub fn SetProcessDEPPolicy(flags: u32) -> i32;
@@ -267,9 +278,68 @@ pub mod winapi {
 }
 
 #[cfg(target_os = "windows")]
+static PROCESS_JOB: std::sync::OnceLock<Option<usize>> = std::sync::OnceLock::new();
+
+#[cfg(target_os = "windows")]
+pub fn init_process_tree_job() {
+    PROCESS_JOB.get_or_init(|| {
+        unsafe {
+            let job = winapi::CreateJobObjectW(std::ptr::null_mut(), std::ptr::null());
+            if job.is_null() || job as isize == -1 {
+                return None;
+            }
+            if winapi::AssignProcessToJobObject(job, winapi::GetCurrentProcess()) == 0 {
+                winapi::CloseHandle(job);
+                return None;
+            }
+            Some(job as usize)
+        }
+    });
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn init_process_tree_job() {}
+
+#[cfg(target_os = "windows")]
 pub fn trim_working_set() {
     unsafe {
         let _ = winapi::SetProcessWorkingSetSize(winapi::GetCurrentProcess(), usize::MAX, usize::MAX);
+
+        // Safely trim child WebView2 processes strictly within our own Job Object.
+        // Performs ZERO system snapshotting, ZERO process scanning, and does NOT touch any external or game processes.
+        if let Some(Some(job_ptr)) = PROCESS_JOB.get() {
+            let job = *job_ptr as *mut c_void;
+            #[repr(C)]
+            struct JobPids {
+                assigned: u32,
+                count: u32,
+                pids: [usize; 64],
+            }
+            let mut list: JobPids = std::mem::zeroed();
+            let mut returned = 0u32;
+            const JOB_OBJECT_BASIC_PROCESS_ID_LIST: i32 = 3;
+            if winapi::QueryInformationJobObject(
+                job,
+                JOB_OBJECT_BASIC_PROCESS_ID_LIST,
+                &mut list as *mut _ as *mut c_void,
+                std::mem::size_of::<JobPids>() as u32,
+                &mut returned,
+            ) != 0 {
+                let current_pid = winapi::GetCurrentProcessId() as usize;
+                let count = (list.count as usize).min(64);
+                const PROCESS_SET_QUOTA: u32 = 0x0100;
+                for i in 0..count {
+                    let pid = list.pids[i];
+                    if pid != 0 && pid != current_pid {
+                        let handle = winapi::OpenProcess(PROCESS_SET_QUOTA, 0, pid as u32);
+                        if !handle.is_null() && handle as isize != -1 {
+                            let _ = winapi::SetProcessWorkingSetSize(handle, usize::MAX, usize::MAX);
+                            winapi::CloseHandle(handle);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
