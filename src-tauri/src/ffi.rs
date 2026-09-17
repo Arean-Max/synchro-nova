@@ -281,14 +281,12 @@ pub fn apply_process_hardening() {
     const PROCESS_DEP_ENABLE: u32 = 0x0000_0001;
     const BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE: u32 = 0x0000_0001;
     const BASE_SEARCH_PATH_PERMANENT: u32 = 0x0000_8000;
-    const LOAD_LIBRARY_SEARCH_SYSTEM32: u32 = 0x0000_0800;
 
     unsafe {
         let _ = winapi::SetProcessDEPPolicy(PROCESS_DEP_ENABLE);
         let _ = winapi::SetSearchPathMode(
             BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT,
         );
-        let _ = winapi::SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
     }
 }
 
