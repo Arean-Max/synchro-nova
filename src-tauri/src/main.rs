@@ -271,8 +271,9 @@ mod tests {
     fn test_prerequisites_checkers_run() {
         #[cfg(target_os = "windows")]
         {
-            let _wb = super::prerequisites_check::is_webview2_installed();
-            let _vc = super::prerequisites_check::is_vc_redist_installed();
+            let wb = super::prerequisites_check::is_webview2_installed();
+            let vc = super::prerequisites_check::is_vc_redist_installed();
+            println!("CHECKERS: webview2={}, vc_redist={}", wb, vc);
         }
     }
 }
