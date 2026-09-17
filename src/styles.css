@@ -1026,6 +1026,7 @@ button.check-row {
 }
 
 .game-card[data-has-image="true"] .game-card-logo,
+.game-card[data-has-image="true"] .game-card-logo-image,
 .game-card[data-has-image="true"] .game-card-watermark {
   display: none !important;
 }

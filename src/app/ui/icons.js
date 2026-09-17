@@ -17,6 +17,13 @@ const iconPaths = {
   chevronDown: ['<path d="m6 9 6 6 6-6"></path>'],
   chevronRight: ['<path d="m9 18 6-6-6-6"></path>'],
   filter: ['<path d="M22 3H2l8 9.5V20l4-2v-5.5z"></path>'],
+  gamepad: [
+    '<line x1="6" y1="12" x2="10" y2="12"></line>',
+    '<line x1="8" y1="10" x2="8" y2="14"></line>',
+    '<line x1="15" y1="13" x2="15.01" y2="13"></line>',
+    '<line x1="18" y1="11" x2="18.01" y2="11"></line>',
+    '<rect x="2" y="6" width="20" height="12" rx="2"></rect>'
+  ],
   video: ['<path d="M15 10l4.5-3v10L15 14z"></path>', '<rect x="3" y="6" width="12" height="12" rx="2"></rect>'],
   cpu: ['<rect x="8" y="8" width="8" height="8" rx="1"></rect>', '<path d="M4 10h4"></path>', '<path d="M4 14h4"></path>', '<path d="M16 10h4"></path>', '<path d="M16 14h4"></path>', '<path d="M10 4v4"></path>', '<path d="M14 4v4"></path>', '<path d="M10 16v4"></path>', '<path d="M14 16v4"></path>'],
   bluetooth: ['<path d="m7 7 10 10-5 4V3l5 4L7 17"></path>'],

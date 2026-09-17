@@ -45,7 +45,7 @@ export const sliderDefs = {
 
 export const pageDefs = {
   color: { title: "colorTitle", subtitle: "colorSubtitle", nav: "colorTitle", icon: "layers" },
-  gameColor: { title: "gameProfilesTitle", subtitle: "gameProfilesSubtitle", nav: "gameProfilesTitle", icon: "video" },
+  gameColor: { title: "gameProfilesTitle", subtitle: "gameProfilesSubtitle", nav: "gameProfilesTitle", icon: "gamepad" },
   tweaks: { title: "tweaksTitle", subtitle: "tweaksSubtitle", nav: "tweaksTitle", icon: "fileText" },
   characteristics: { title: "characteristicsTitle", subtitle: "characteristicsSubtitle", nav: "characteristicsTitle", icon: "monitor" },
   backups: { title: "backupsTitle", subtitle: "backupsSubtitle", nav: "backupsTitle", icon: "archive" },
