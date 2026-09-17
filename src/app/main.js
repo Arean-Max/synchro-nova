@@ -232,10 +232,10 @@ function syncCharacteristicsMonitor() {
 
 function applyPreset(name) {
   const presets = {
-    balanced: { saturation: 100, hue: 0, contrast: 100, gamma: 100, enabled: true },
-    vibrant: { saturation: 130, hue: 0, contrast: 108, gamma: 104, enabled: true },
-    soft: { saturation: 90, hue: 0, contrast: 96, gamma: 102, enabled: true },
-    night: { saturation: 85, hue: -10, contrast: 94, gamma: 92, enabled: true }
+    balanced: { saturation: 160, hue: -5, contrast: 97, gamma: 118, enabled: true },
+    vibrant: { saturation: 200, hue: -5, contrast: 95, gamma: 105, enabled: true },
+    soft: { saturation: 150, hue: -5, contrast: 85, gamma: 115, enabled: true },
+    night: { saturation: 120, hue: -5, contrast: 90, gamma: 150, enabled: true }
   };
   appState.color = { ...appState.color, ...presets[name] };
   updateColorPage();

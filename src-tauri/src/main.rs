@@ -260,13 +260,29 @@ mod prerequisites_check {
 
 fn main() {
     #[cfg(target_os = "windows")]
-    prerequisites_check::ensure_runtime_prerequisites();
+    {
+        const MUTEX_NAME: &str = "Local\\SynchroNovaSingleInstanceMutex";
+        const WINDOW_TITLE: &str = "Synchro Nova";
+        if !synchro_lib::ffi::ensure_single_instance(MUTEX_NAME, WINDOW_TITLE) {
+            std::process::exit(0);
+        }
+        prerequisites_check::ensure_runtime_prerequisites();
+    }
 
     synchro_lib::run();
 }
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn test_single_instance_checker() {
+        #[cfg(target_os = "windows")]
+        {
+            let res = synchro_lib::ffi::ensure_single_instance("Local\\SynchroNovaTestMutex", "Synchro Nova Test");
+            assert!(res);
+        }
+    }
+
     #[test]
     fn test_prerequisites_checkers_run() {
         #[cfg(target_os = "windows")]

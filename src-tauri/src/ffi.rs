@@ -177,6 +177,8 @@ pub const ENUM_CURRENT_SETTINGS: u32 = 0xFFFF_FFFF;
 pub const SM_CXSCREEN: i32 = 0;
 pub const SM_CYSCREEN: i32 = 1;
 pub const TH32CS_SNAPPROCESS: u32 = 0x0000_0002;
+pub const ERROR_ALREADY_EXISTS: u32 = 183;
+pub const SW_RESTORE: i32 = 9;
 
 #[cfg(target_os = "windows")]
 pub mod winapi {
@@ -187,6 +189,12 @@ pub mod winapi {
         pub fn GetCurrentProcess() -> *mut c_void;
         pub fn GetCurrentProcessId() -> u32;
         pub fn OpenProcess(desired_access: u32, inherit_handle: i32, process_id: u32) -> *mut c_void;
+        pub fn CreateMutexW(
+            mutex_attributes: *mut c_void,
+            initial_owner: i32,
+            name: *const u16,
+        ) -> *mut c_void;
+        pub fn GetLastError() -> u32;
         pub fn CreateJobObjectW(job_attributes: *mut c_void, name: *const u16) -> *mut c_void;
         pub fn AssignProcessToJobObject(job: *mut c_void, process: *mut c_void) -> i32;
         pub fn QueryInformationJobObject(
@@ -239,6 +247,9 @@ pub mod winapi {
             caption: *const u16,
             utype: u32,
         ) -> i32;
+        pub fn FindWindowW(class_name: *const u16, window_name: *const u16) -> *mut c_void;
+        pub fn ShowWindow(hwnd: *mut c_void, cmd_show: i32) -> i32;
+        pub fn SetForegroundWindow(hwnd: *mut c_void) -> i32;
         pub fn EnumDisplayDevicesW(
             device_name: *const u16,
             dev_num: u32,
@@ -605,3 +616,47 @@ pub fn read_system_times() -> Option<(FileTime, FileTime, FileTime)> {
 pub fn read_system_times() -> Option<(FileTime, FileTime, FileTime)> {
     None
 }
+
+#[cfg(target_os = "windows")]
+static SINGLE_INSTANCE_MUTEX_HANDLE: std::sync::atomic::AtomicPtr<c_void> =
+    std::sync::atomic::AtomicPtr::new(std::ptr::null_mut());
+
+#[cfg(target_os = "windows")]
+pub fn ensure_single_instance(mutex_name: &str, window_title: &str) -> bool {
+    let name_w = wide_null(mutex_name);
+    let handle = unsafe {
+        winapi::CreateMutexW(std::ptr::null_mut(), 1, name_w.as_ptr())
+    };
+
+    if handle.is_null() {
+        return true;
+    }
+
+    let last_err = unsafe { winapi::GetLastError() };
+    if last_err == ERROR_ALREADY_EXISTS {
+        unsafe {
+            winapi::CloseHandle(handle);
+        }
+
+        let title_w = wide_null(window_title);
+        let hwnd = unsafe {
+            winapi::FindWindowW(std::ptr::null(), title_w.as_ptr())
+        };
+        if !hwnd.is_null() {
+            unsafe {
+                winapi::ShowWindow(hwnd, SW_RESTORE);
+                winapi::SetForegroundWindow(hwnd);
+            }
+        }
+        return false;
+    }
+
+    SINGLE_INSTANCE_MUTEX_HANDLE.store(handle, std::sync::atomic::Ordering::SeqCst);
+    true
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn ensure_single_instance(_mutex_name: &str, _window_title: &str) -> bool {
+    true
+}
+
