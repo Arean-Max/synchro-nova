@@ -235,6 +235,11 @@ unsafe extern "system" {
 
 #[cfg(target_os = "windows")]
 fn read_pdh_counter_sum(counter: isize) -> f64 {
+    use std::cell::RefCell;
+    thread_local! {
+        static PDH_BUFFER: RefCell<Vec<u8>> = RefCell::new(Vec::with_capacity(4096));
+    }
+
     const ERROR_SUCCESS: u32 = 0;
     const PDH_MORE_DATA: u32 = 0x8000_07D2;
     const PDH_FMT_DOUBLE: u32 = 0x0000_0200;
@@ -258,28 +263,34 @@ fn read_pdh_counter_sum(counter: isize) -> f64 {
         return 0.0;
     }
 
-    let mut buffer = vec![0u8; buffer_size as usize];
-    let items = buffer.as_mut_ptr() as *mut PdhFmtCounterValueItemW;
-    let second = unsafe {
-        PdhGetFormattedCounterArrayW(
-            counter,
-            PDH_FMT_DOUBLE,
-            &mut buffer_size,
-            &mut item_count,
-            items,
-        )
-    };
+    PDH_BUFFER.with(|buf_cell| {
+        let mut buffer = buf_cell.borrow_mut();
+        let needed = buffer_size as usize;
+        if buffer.len() < needed {
+            buffer.resize(needed, 0);
+        }
+        let items = buffer.as_mut_ptr() as *mut PdhFmtCounterValueItemW;
+        let second = unsafe {
+            PdhGetFormattedCounterArrayW(
+                counter,
+                PDH_FMT_DOUBLE,
+                &mut buffer_size,
+                &mut item_count,
+                items,
+            )
+        };
 
-    if second == ERROR_SUCCESS {
-        let values = unsafe { std::slice::from_raw_parts(items, item_count as usize) };
-        values
-            .iter()
-            .filter(|item| item.value.c_status == ERROR_SUCCESS)
-            .map(|item| item.value.double_value.max(0.0))
-            .sum()
-    } else {
-        0.0
-    }
+        if second == ERROR_SUCCESS {
+            let values = unsafe { std::slice::from_raw_parts(items, item_count as usize) };
+            values
+                .iter()
+                .filter(|item| item.value.c_status == ERROR_SUCCESS)
+                .map(|item| item.value.double_value.max(0.0))
+                .sum()
+        } else {
+            0.0
+        }
+    })
 }
 
 #[cfg(target_os = "windows")]

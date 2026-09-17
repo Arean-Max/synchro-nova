@@ -4,6 +4,8 @@ use std::{
     collections::HashSet,
     fs,
     path::{Path, PathBuf},
+    sync::Mutex,
+    time::{Duration, Instant},
 };
 
 const MAX_GAMES: usize = 180;
@@ -63,13 +65,30 @@ pub(crate) fn launch_installed_game(id: &str) -> Result<(), String> {
     launch_target(&entry.launch)
 }
 
+static GAME_CACHE: Mutex<(Vec<GameEntry>, Option<Instant>)> = Mutex::new((Vec::new(), None));
+const GAME_CACHE_TTL: Duration = Duration::from_secs(60);
+
 fn collect_game_entries() -> Vec<GameEntry> {
+    if let Ok(guard) = GAME_CACHE.lock() {
+        if let Some(updated_at) = guard.1 {
+            if updated_at.elapsed() < GAME_CACHE_TTL && !guard.0.is_empty() {
+                return guard.0.clone();
+            }
+        }
+    }
+
     let mut entries = Vec::new();
     entries.extend(steam_games());
     entries.extend(epic_games());
     entries.extend(riot_games());
     entries.extend(registry_launcher_games());
-    dedupe_entries(entries)
+    let deduped = dedupe_entries(entries);
+
+    if let Ok(mut guard) = GAME_CACHE.lock() {
+        *guard = (deduped.clone(), Some(Instant::now()));
+    }
+
+    deduped
 }
 
 fn dedupe_entries(entries: Vec<GameEntry>) -> Vec<GameEntry> {

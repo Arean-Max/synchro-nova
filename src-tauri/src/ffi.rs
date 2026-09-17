@@ -210,6 +210,13 @@ pub mod winapi {
         pub fn CreateToolhelp32Snapshot(flags: u32, process_id: u32) -> *mut c_void;
         pub fn Process32FirstW(snapshot: *mut c_void, entry: *mut ProcessEntry32W) -> i32;
         pub fn Process32NextW(snapshot: *mut c_void, entry: *mut ProcessEntry32W) -> i32;
+        pub fn GetProcessHeap() -> *mut c_void;
+        pub fn HeapSetInformation(
+            heap_handle: *mut c_void,
+            heap_information_class: i32,
+            heap_information: *mut c_void,
+            heap_information_length: usize,
+        ) -> i32;
     }
 
     #[link(name = "Shell32")]
@@ -399,12 +406,31 @@ pub fn apply_process_hardening() {
     const PROCESS_DEP_ENABLE: u32 = 0x0000_0001;
     const BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE: u32 = 0x0000_0001;
     const BASE_SEARCH_PATH_PERMANENT: u32 = 0x0000_8000;
+    const LOAD_LIBRARY_SEARCH_SYSTEM32: u32 = 0x0000_0800;
+    const HEAP_ENABLE_TERMINATION_ON_CORRUPTION: i32 = 1;
 
     unsafe {
+        // 1. Enforce Data Execution Prevention (DEP)
         let _ = winapi::SetProcessDEPPolicy(PROCESS_DEP_ENABLE);
+
+        // 2. Enforce Safe Search Mode permanently (blocks DLL search in current working directory)
         let _ = winapi::SetSearchPathMode(
             BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT,
         );
+
+        // 3. Restrict default DLL search directories to %SystemRoot%\System32 to prevent DLL hijacking
+        let _ = winapi::SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+
+        // 4. Terminate process immediately if heap corruption occurs (blocks heap exploitation)
+        let heap = winapi::GetProcessHeap();
+        if !heap.is_null() {
+            let _ = winapi::HeapSetInformation(
+                heap,
+                HEAP_ENABLE_TERMINATION_ON_CORRUPTION,
+                std::ptr::null_mut(),
+                0,
+            );
+        }
     }
 }
 

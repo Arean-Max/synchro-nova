@@ -296,6 +296,21 @@ async function handleAction(action) {
     viewState.applyingTweaks = false;
     return updateMain();
   }
+  if (action === "rollback-tweaks") {
+    if (viewState.applyingTweaks) return null;
+    viewState.applyingTweaks = true;
+    updateMain();
+    const restored = await invokeCommand("rollback_last_tweaks");
+    if (restored) {
+      mergeState(restored);
+      await loadTweakStatuses();
+      viewState.tweakResults = [{ id: "rollback", status: "applied", message: t("rollbackSuccess") }];
+    } else {
+      viewState.tweakResults = [{ id: "rollback", status: "skipped", message: t("noRollbackFound") }];
+    }
+    viewState.applyingTweaks = false;
+    return updateMain();
+  }
   if (action === "reset-color") {
     appState.color = cloneState(defaultState).color;
     updateMain();

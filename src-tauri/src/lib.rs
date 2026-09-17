@@ -392,22 +392,64 @@ fn launch_installed_game(id: String) -> Result<(), String> {
     games::launch_installed_game(&id)
 }
 
+fn prune_safety_backups(dir: &Path) {
+    if let Ok(entries) = read_backup_entries(dir) {
+        let safety_entries: Vec<_> = entries
+            .into_iter()
+            .filter(|e| {
+                e.name.starts_with("Safety backup")
+                    || e.name.starts_with("Startup backup")
+                    || e.name.starts_with("Before tweaks")
+            })
+            .collect();
+        if safety_entries.len() > 10 {
+            for old in &safety_entries[10..] {
+                if let Ok(path) = checked_child_json_path(dir, &old.id) {
+                    let _ = fs::remove_file(path);
+                }
+            }
+        }
+    }
+}
+
 #[tauri::command]
 fn apply_tweaks(
     ids: Vec<String>,
     state: State<'_, RuntimeState>,
 ) -> Result<Vec<TweakApplyResult>, String> {
     if !ids.is_empty() {
+        let timestamp = unix_now();
         let _ = create_backup_file(
             &state.backups_dir,
-            "Before tweaks".to_string(),
+            format!("Safety backup {}", short_date(timestamp)),
             state.snapshot()?,
         );
+        prune_safety_backups(&state.backups_dir);
     }
     let results = apply_selected_tweaks(ids);
     log_tweaks_audit(&state.app_dir, &results);
     trim_process_memory();
     Ok(results)
+}
+
+#[tauri::command]
+fn rollback_last_tweaks(
+    app: AppHandle,
+    state: State<'_, RuntimeState>,
+) -> Result<PersistedState, String> {
+    let entries = read_backup_entries(&state.backups_dir)?;
+    let latest = entries
+        .iter()
+        .find(|e| {
+            e.name.starts_with("Safety backup")
+                || e.name.starts_with("Startup backup")
+                || e.name.starts_with("Before tweaks")
+        })
+        .or_else(|| entries.first())
+        .ok_or_else(|| "No safety backup available to restore".to_string())?;
+
+    let restored = restore_backup(app, latest.id.clone(), state)?;
+    Ok(restored)
 }
 
 fn log_tweaks_audit(app_dir: &Path, results: &[TweakApplyResult]) {
@@ -1186,7 +1228,8 @@ pub fn run() {
             close_window,
             exit_app,
             restart_as_admin,
-            trim_memory
+            trim_memory,
+            rollback_last_tweaks
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Synchro");
@@ -1311,5 +1354,26 @@ mod tests {
     #[test]
     fn test_trim_process_memory() {
         trim_process_memory();
+    }
+
+    #[test]
+    fn test_prune_safety_backups() {
+        let temp_dir = std::env::temp_dir().join(format!("synchro_prune_test_{}", std::process::id()));
+        let _ = fs::create_dir_all(&temp_dir);
+        let snapshot = PersistedState::default();
+        for i in 0..14 {
+            let _ = create_backup_file(
+                &temp_dir,
+                format!("Safety backup {i}"),
+                snapshot.clone(),
+            );
+        }
+        let entries = read_backup_entries(&temp_dir).unwrap();
+        assert_eq!(entries.len(), 14);
+
+        prune_safety_backups(&temp_dir);
+        let remaining = read_backup_entries(&temp_dir).unwrap();
+        assert_eq!(remaining.len(), 10);
+        let _ = fs::remove_dir_all(&temp_dir);
     }
 }

@@ -54,5 +54,5 @@ function tweakResults(viewState, t) {
 export function renderTweaksPage(viewState, t) {
   const groups = tweakCatalog.map((group) => tweakGroup(group, viewState, t)).join("");
   const applyLabel = viewState.applyingTweaks ? t("loading") : t("applySelected");
-  return `<div class="tweaks-page"><div class="scroll-panel">${tweakResults(viewState, t)}${groups}</div><div class="actions tweaks-actions">${button(applyLabel, "check", "primary", "apply-tweaks")}${button(t("selectSafe"), "settings", "outline", "select-safe-tweaks")}${button(t("createBackup"), "save", "outline", "create-backup")}${button(t("runAsAdmin"), "shield", "outline", "restart-as-admin")}</div></div>`;
+  return `<div class="tweaks-page"><div class="scroll-panel">${tweakResults(viewState, t)}${groups}</div><div class="actions tweaks-actions">${button(applyLabel, "check", "primary", "apply-tweaks")}${button(t("rollbackTweaks"), "history", "outline", "rollback-tweaks")}${button(t("selectSafe"), "settings", "outline", "select-safe-tweaks")}${button(t("createBackup"), "save", "outline", "create-backup")}${button(t("runAsAdmin"), "shield", "outline", "restart-as-admin")}</div></div>`;
 }

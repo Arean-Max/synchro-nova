@@ -304,7 +304,35 @@ fn restore_registry_value(_entry: &TweakRegistrySnapshot) -> Result<(), String> 
     Ok(())
 }
 
+fn is_admin_tweak(id: &str) -> bool {
+    matches!(
+        id,
+        "disable-gamedvr"
+            | "mmcss-games-priority"
+            | "system-responsiveness-10"
+            | "hags-on"
+            | "mpo-disable"
+            | "activity-history-off"
+            | "delivery-optimization-lan"
+            | "trim-enable"
+            | "ntfs-last-access-off"
+            | "hibernate-off"
+            | "rss-on"
+            | "rsc-off"
+            | "ecn-off"
+            | "winsock-reset"
+            | "network-throttle-off"
+            | "restore-point-first"
+    )
+}
+
 fn apply_one(id: &str) -> TweakApplyResult {
+    if is_admin_tweak(id) && !crate::admin::is_running_elevated() {
+        return failed(
+            id,
+            "Requires administrator privileges; restart Synchro as administrator to apply this tweak",
+        );
+    }
     match id {
         "game-mode-on" => apply_game_mode(id),
         "disable-gamedvr" => apply_disable_gamedvr(id),
