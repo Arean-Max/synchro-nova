@@ -2,7 +2,14 @@
   "name": "synchro",
   "version": "0.1.0",
   "private": true,
-  "description": "Synchro System & Performance desktop application",
+  "description": "Windows display calibration and system performance optimization utility",
+  "author": "Arean-Max",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Arean-Max/synchro-nova.git"
+  },
+  "homepage": "https://github.com/Arean-Max/synchro-nova",
   "type": "module",
   "scripts": {
     "serve": "node ./scripts/app-server.mjs",

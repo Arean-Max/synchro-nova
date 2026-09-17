@@ -1,10 +1,11 @@
 [package]
 name = "synchro"
 version = "0.1.0"
-description = "Synchro System & Performance"
-authors = ["Synchro"]
-license = ""
-repository = ""
+description = "Windows display calibration and system performance optimization utility"
+authors = ["Arean-Max"]
+license = "MIT"
+repository = "https://github.com/Arean-Max/synchro-nova"
+homepage = "https://github.com/Arean-Max/synchro-nova"
 edition = "2021"
 rust-version = "1.77.2"
 
