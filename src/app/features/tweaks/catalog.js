@@ -47,7 +47,7 @@ export const tweakCatalog = [
       { id: "startup-delay-off", title: "Startup delay off", description: "Removes Explorer's startup app launch delay for the current user.", badges: ["SAFE"], note: "Many startup apps can open at once after sign-in." },
       { id: "menu-show-delay-low", title: "Fast desktop menus", description: "Reduces classic desktop menu delay to make shell interactions feel sharper.", badges: ["SAFE"], note: "Classic menus may feel too sensitive on touchpads." },
       { id: "timer-resolution-guard", title: "Timer resolution guard", description: "Avoids forcing global timer resolution outside active game sessions.", badges: ["SAFE", "VERIFIED"] },
-      { id: "animations-reduced", title: "Reduce UI animation cost", description: "Pairs with low-spec mode to reduce desktop animation overhead.", badges: ["SAFE"] },
+      { id: "animations-reduced", title: "Reduce UI animation cost", description: "Reduces desktop animation overhead for maximum responsiveness.", badges: ["SAFE"] },
       { id: "focus-assist-game", title: "Focus Assist game profile", description: "Suppresses notification spikes while a game is active.", badges: ["SAFE"] },
       { id: "bluetooth-power-save-off", title: "Bluetooth power save off", description: "Keeps Bluetooth input devices from sleeping during desktop play sessions.", badges: ["ADMIN", "ADVANCED", "EXPERIMENTAL"] }
     ]

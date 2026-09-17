@@ -347,18 +347,14 @@ button {
   height: 100%;
   padding: 34px 38px 24px;
   overflow: hidden;
-  animation: pageReveal 190ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-@keyframes pageReveal {
-  0% {
-    opacity: 0.74;
-    transform: translateY(8px);
+@keyframes pageFadeIn {
+  from {
+    opacity: 0.88;
   }
-
-  100% {
+  to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -387,6 +383,12 @@ button {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  scrollbar-gutter: stable;
+  animation: pageFadeIn 110ms ease-out;
+}
+
+.scroll-panel {
+  scrollbar-gutter: stable;
 }
 
 .two-column {
@@ -1764,11 +1766,47 @@ button.check-row {
 
 .settings-page {
   display: grid;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 20px;
   height: 100%;
-  max-width: 860px;
+  width: 100%;
   padding-right: 6px;
   overflow-y: auto;
+  align-items: start;
+}
+
+.settings-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+}
+
+.settings-info-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.settings-info-row:first-child {
+  padding-top: 0;
+}
+
+.settings-info-row span {
+  color: var(--text-secondary);
+}
+
+.settings-info-row strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.settings-storage-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
 }
 
 .form-label {

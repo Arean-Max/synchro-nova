@@ -6,13 +6,11 @@ export const defaultState = {
     autostartWindows: false,
     closeToTray: true,
     startMinimized: false,
-    lowSpecMode: false,
     autoBackupOnStart: true,
-    sendDailyPing: false,
-    sendCrashTelemetry: false,
     acceptedAgreement: true,
     language: "en"
-  }
+  },
+  isAdmin: false
 };
 
 export const viewState = {
@@ -79,7 +77,8 @@ export function lang() {
 export function mergeState(state) {
   appState = {
     color: { ...defaultState.color, ...(state?.color || {}) },
-    settings: { ...defaultState.settings, ...(state?.settings || {}) }
+    settings: { ...defaultState.settings, ...(state?.settings || {}) },
+    isAdmin: Boolean(state?.isAdmin ?? state?.is_admin ?? defaultState.isAdmin)
   };
   document.documentElement.lang = lang();
   return appState;

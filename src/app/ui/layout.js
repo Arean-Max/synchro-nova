@@ -53,7 +53,7 @@ export function renderPageBody(viewState, t) {
   if (activePage === "characteristics") return renderCharacteristicsPage(viewState, t);
   if (activePage === "backups") return renderBackupsPage(viewState, t);
   if (activePage === "configs") return renderConfigsPage(viewState, t);
-  if (activePage === "settings") return renderSettingsPage(appState, t);
+  if (activePage === "settings") return renderSettingsPage(appState, viewState, t);
   return renderColorPage(appState, viewState, t);
 }
 

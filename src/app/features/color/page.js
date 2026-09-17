@@ -72,11 +72,12 @@ export function formatSliderValue(field, value) {
   return `${Math.round(value)}${def.suffix}`;
 }
 
-function slider(field, appState) {
+function slider(field, appState, t) {
   const def = sliderDefs[field];
+  const label = t ? t(field) : def.label;
   const value = Number(appState.color[field]);
   const zero = def.zero ? '<span class="zero-mark"></span>' : "";
-  return `<div class="slider-row" data-slider-row="${field}"><div class="slider-meta"><span>${def.label}</span><span data-slider-value="${field}">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${sliderPercent(field, value)}%"><span class="slider-fill"></span>${zero}<span class="slider-thumb"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-color-field="${field}" aria-label="${def.label}"></div></div>`;
+  return `<div class="slider-row" data-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span data-slider-value="${field}">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${sliderPercent(field, value)}%"><span class="slider-fill"></span>${zero}<span class="slider-thumb"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
 }
 
 function hashString(value) {
@@ -245,7 +246,7 @@ function renderTemplates(viewState, t) {
 }
 
 function renderColorSettingsPanel(appState, viewState, t) {
-  const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState)).join("");
+  const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState, t)).join("");
   const options =
     checkbox(t("applyInstantly"), appState.settings.applyInstantly, "applyInstantly") +
     checkbox(t("saveColorCorrection"), appState.settings.saveColorCorrection, "saveColorCorrection");
@@ -285,7 +286,7 @@ function renderColorSettingsPanel(appState, viewState, t) {
 }
 
 export function renderColorPage(appState, viewState, t) {
-  const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState)).join("");
+  const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState, t)).join("");
   const options =
     checkbox(t("applyInstantly"), appState.settings.applyInstantly, "applyInstantly") +
     checkbox(t("saveColorCorrection"), appState.settings.saveColorCorrection, "saveColorCorrection");

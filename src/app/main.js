@@ -26,7 +26,7 @@ import {
 import { updateCharacteristicsLiveDom } from "./features/characteristics/page.js";
 import { allTweaks, isSafeTweak } from "./features/tweaks/catalog.js";
 import { icon } from "./ui/icons.js";
-import { renderMain, renderShell } from "./ui/layout.js";
+import { renderMain, renderShell, renderPageBody } from "./ui/layout.js";
 
 let applyTimer = 0;
 let characteristicsTimer = 0;
@@ -55,8 +55,19 @@ function updateNavState() {
 }
 
 function updateMain() {
-  const main = document.querySelector(".main-panel");
-  if (main) main.outerHTML = renderMain(viewState, t);
+  const page = pageDefs[activePage];
+  const title = document.querySelector(".page-header h1");
+  const subtitle = document.querySelector(".page-header p");
+  const body = document.querySelector(".page-body");
+  if (title && subtitle && body) {
+    title.textContent = t(page.title);
+    subtitle.textContent = t(page.subtitle);
+    body.className = `page-body page-${activePage}`;
+    body.innerHTML = renderPageBody(viewState, t);
+  } else {
+    const main = document.querySelector(".main-panel");
+    if (main) main.outerHTML = renderMain(viewState, t);
+  }
   syncAllSliders(appState);
   updateNavState();
   window.requestAnimationFrame(syncNavIndicator);
@@ -113,10 +124,6 @@ function syncTweakTile(id) {
   }
 }
 
-function syncPerformanceMode() {
-  document.documentElement.classList.toggle("low-spec-mode", Boolean(appState.settings.lowSpecMode));
-}
-
 async function applyColor() {
   const result = await invokeCommand("apply_color_settings", { color: appState.color });
   if (result) mergeState(result);
@@ -125,7 +132,7 @@ async function applyColor() {
 function scheduleApplyColor() {
   if (!appState.settings.applyInstantly) return;
   window.clearTimeout(applyTimer);
-  applyTimer = window.setTimeout(applyColor, appState.settings.lowSpecMode ? 180 : 90);
+  applyTimer = window.setTimeout(applyColor, 80);
 }
 
 async function saveSettings() {
@@ -211,8 +218,7 @@ function syncCharacteristicsMonitor() {
   window.clearInterval(characteristicsTimer);
   characteristicsTimer = 0;
   if (activePage !== "characteristics") return;
-  const delay = appState.settings.lowSpecMode ? 2600 : 1200;
-  characteristicsTimer = window.setInterval(refreshLiveCharacteristics, delay);
+  characteristicsTimer = window.setInterval(refreshLiveCharacteristics, 1200);
 }
 
 function applyPreset(name) {
@@ -229,7 +235,7 @@ function applyPreset(name) {
 
 function stepColorSelection(step) {
   const now = performance.now();
-  if (!appState.settings.lowSpecMode && now - carouselStepAt < 170) return false;
+  if (now - carouselStepAt < 150) return false;
   if (!stepColorGame(viewState, step)) return false;
   carouselStepAt = now;
   updateColorPage({ stableDrawer: true });
@@ -327,7 +333,6 @@ async function handleAction(action) {
     const loaded = await invokeCommand("load_config", { id: viewState.selectedConfig });
     if (loaded) {
       mergeState(loaded);
-      syncPerformanceMode();
       syncCharacteristicsMonitor();
       render();
       scheduleApplyColor();
@@ -400,7 +405,6 @@ async function handleClick(event) {
     if (!Object.hasOwn(appState.settings, key)) return;
     appState.settings[key] = !appState.settings[key];
     await saveSettings();
-    syncPerformanceMode();
     syncCharacteristicsMonitor();
     updateMain();
     if (key === "applyInstantly" && appState.settings.applyInstantly) await applyColor();
@@ -549,8 +553,7 @@ function handleImageError(event) {
 function render() {
   const app = document.getElementById("app");
   document.documentElement.lang = lang();
-  syncPerformanceMode();
-  app.className = `app-shell${appState.settings.lowSpecMode ? " app-low-spec" : ""}`;
+  app.className = "app-shell";
   app.innerHTML = renderShell(viewState, t);
   syncAllSliders(appState);
   updateNavState();
@@ -561,7 +564,6 @@ function render() {
 async function boot() {
   const state = await invokeCommand("get_app_state");
   if (state) mergeState(state);
-  syncPerformanceMode();
   render();
   loadColorGames();
 }
