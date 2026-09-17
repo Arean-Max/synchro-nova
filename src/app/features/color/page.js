@@ -108,8 +108,12 @@ function gameLogoText(name) {
 
 function gameImageSrc(game) {
   const imagePath = game?.imagePath;
+  if (!imagePath) return "";
+  if (imagePath.startsWith("data:") || imagePath.startsWith("http:") || imagePath.startsWith("https:")) {
+    return imagePath;
+  }
   const convertFileSrc = window.__TAURI__?.core?.convertFileSrc || window.__TAURI__?.tauri?.convertFileSrc;
-  if (!imagePath || !convertFileSrc) return "";
+  if (!convertFileSrc) return "";
   try {
     return convertFileSrc(imagePath);
   } catch {
@@ -119,6 +123,10 @@ function gameImageSrc(game) {
 
 function gameLogoSrc(game) {
   const logoPath = game?.logoPath;
+  if (!logoPath) return "";
+  if (logoPath.startsWith("data:") || logoPath.startsWith("http:") || logoPath.startsWith("https:")) {
+    return logoPath;
+  }
   const convertFileSrc = window.__TAURI__?.core?.convertFileSrc || window.__TAURI__?.tauri?.convertFileSrc;
   if (!logoPath || !convertFileSrc) return "";
   try {
@@ -138,12 +146,12 @@ function relativeGameOffset(index, selectedIndex, total) {
 function renderGameCard(game, offset, active) {
   const imageSrc = gameImageSrc(game);
   const logoSrc = gameLogoSrc(game);
-  const image = imageSrc ? `<img class="game-card-image" src="${escapeAttr(imageSrc)}" alt="">` : "";
+  const image = imageSrc ? `<img class="game-card-image" src="${escapeAttr(imageSrc)}" alt="" onerror="this.style.display='none'">` : "";
   const source = game.source ? `<span class="game-card-source">${escapeHtml(game.source)}</span>` : "";
   const logo = gameLogoText(game.name);
-  const logoImage = logoSrc ? `<img class="game-card-logo-image" src="${escapeAttr(logoSrc)}" alt="">` : "";
+  const logoImage = logoSrc ? `<img class="game-card-logo-image" src="${escapeAttr(logoSrc)}" alt="" onerror="this.style.display='none'">` : "";
   const watermark = logoSrc
-    ? `<img class="game-card-watermark image" src="${escapeAttr(logoSrc)}" alt="" aria-hidden="true">`
+    ? `<img class="game-card-watermark image" src="${escapeAttr(logoSrc)}" alt="" aria-hidden="true" onerror="this.style.display='none'">`
     : `<span class="game-card-watermark" aria-hidden="true">${logo}</span>`;
   return [
     `<button class="game-card" type="button" data-game-id="${escapeAttr(game.id)}" data-offset="${offset}" data-logo-loaded="${logoSrc ? "true" : "false"}" aria-current="${active ? "true" : "false"}" style="--game-accent:${gameAccent(game)}">`,

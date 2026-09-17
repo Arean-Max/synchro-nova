@@ -208,7 +208,21 @@ fn epic_games() -> Vec<GameEntry> {
         let namespace = json_string(&json, "CatalogNamespace");
         let catalog_item = json_string(&json, "CatalogItemId");
         let preview = game_preview_image(&name, install_location.as_deref(), None, Vec::new());
-        let logo = game_logo_image(&name, install_location.as_deref(), Vec::new());
+        let epic_icon = install_location.as_ref().and_then(|root| {
+            let direct_candidates = [
+                root.join("icon.ico"),
+                root.join("icon.png"),
+                root.join("logo.png"),
+                root.join(format!("{}.ico", clean_game_name(&name))),
+            ];
+            for cand in direct_candidates {
+                if cand.is_file() {
+                    return Some(cand.to_string_lossy().into_owned());
+                }
+            }
+            None
+        });
+        let logo = epic_icon.or_else(|| game_logo_image(&name, install_location.as_deref(), Vec::new()));
         let launch = if let (Some(namespace), Some(catalog_item)) = (namespace, catalog_item) {
             LaunchTarget::Url(format!(
                 "com.epicgames.launcher://apps/{namespace}%3A{catalog_item}%3A{app_name}?action=launch&silent=true"
@@ -654,42 +668,104 @@ fn steam_screenshot_roots(steam_root: &Path, app_id: &str) -> Vec<PathBuf> {
 
 fn steam_library_image_path(steam_root: &Path, app_id: &str) -> Option<String> {
     let cache = steam_root.join("appcache").join("librarycache");
+    let app_dir = cache.join(app_id);
+
     let candidates = [
+        app_dir.join("library_600x900.jpg"),
+        app_dir.join("library_600x900.png"),
         cache.join(format!("{app_id}_library_600x900.jpg")),
         cache.join(format!("{app_id}_library_600x900.png")),
+        app_dir.join("library_capsule.jpg"),
+        app_dir.join("library_hero.jpg"),
+        app_dir.join("library_header.jpg"),
+        app_dir.join("header.jpg"),
         cache.join(format!("{app_id}_header.jpg")),
         cache.join(format!("{app_id}_header.png")),
-        cache.join(app_id).join("library_600x900.jpg"),
-        cache.join(app_id).join("library_600x900.png"),
-        cache.join(app_id).join("header.jpg"),
-        cache.join(app_id).join("header.png"),
     ];
 
-    candidates
-        .into_iter()
-        .find(|path| path.is_file())
-        .map(|path| path.to_string_lossy().into_owned())
+    for path in candidates {
+        if path.is_file() {
+            return Some(path.to_string_lossy().into_owned());
+        }
+    }
+
+    if app_dir.is_dir() {
+        if let Ok(entries) = fs::read_dir(&app_dir) {
+            for entry in entries.flatten() {
+                let p = entry.path();
+                if p.is_dir() {
+                    let sub_candidates = [
+                        p.join("library_600x900.jpg"),
+                        p.join("library_capsule.jpg"),
+                        p.join("library_header.jpg"),
+                        p.join("library_hero.jpg"),
+                        p.join("header.jpg"),
+                    ];
+                    for sub in sub_candidates {
+                        if sub.is_file() {
+                            return Some(sub.to_string_lossy().into_owned());
+                        }
+                    }
+                } else if p.is_file() && is_image_file(&p) {
+                    let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or_default().to_lowercase();
+                    if stem.contains("library") || stem.contains("header") || stem.contains("capsule") {
+                        return Some(p.to_string_lossy().into_owned());
+                    }
+                }
+            }
+        }
+    }
+
+    None
 }
 
 fn steam_library_logo_path(steam_root: &Path, app_id: &str) -> Option<String> {
     let cache = steam_root.join("appcache").join("librarycache");
+    let app_dir = cache.join(app_id);
+
     let candidates = [
+        app_dir.join("logo.png"),
+        app_dir.join("logo.webp"),
+        app_dir.join("logo.jpg"),
         cache.join(format!("{app_id}_logo.png")),
-        cache.join(format!("{app_id}_logo.jpg")),
         cache.join(format!("{app_id}_logo.webp")),
+        cache.join(format!("{app_id}_logo.jpg")),
+        app_dir.join("icon.png"),
+        app_dir.join("icon.jpg"),
+        app_dir.join("icon.ico"),
         cache.join(format!("{app_id}_icon.png")),
         cache.join(format!("{app_id}_icon.jpg")),
-        cache.join(app_id).join("logo.png"),
-        cache.join(app_id).join("logo.jpg"),
-        cache.join(app_id).join("logo.webp"),
-        cache.join(app_id).join("icon.png"),
-        cache.join(app_id).join("icon.jpg"),
     ];
 
-    candidates
-        .into_iter()
-        .find(|path| path.is_file())
-        .map(|path| path.to_string_lossy().into_owned())
+    for path in candidates {
+        if path.is_file() {
+            return Some(path.to_string_lossy().into_owned());
+        }
+    }
+
+    if app_dir.is_dir() {
+        if let Ok(entries) = fs::read_dir(&app_dir) {
+            for entry in entries.flatten() {
+                let p = entry.path();
+                if p.is_dir() {
+                    let sub_candidates = [
+                        p.join("logo.png"),
+                        p.join("logo.webp"),
+                        p.join("logo.jpg"),
+                        p.join("icon.png"),
+                        p.join("icon.ico"),
+                    ];
+                    for sub in sub_candidates {
+                        if sub.is_file() {
+                            return Some(sub.to_string_lossy().into_owned());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    None
 }
 
 fn read_json_value(path: &Path) -> Option<Value> {
@@ -861,10 +937,16 @@ fn registry_launcher_games() -> Vec<GameEntry> {
             let install_location = reg_string(&key, "InstallLocation").map(PathBuf::from);
             let display_icon = reg_string(&key, "DisplayIcon").and_then(|value| display_icon_path(&value));
             let launch_path = display_icon
+                .as_ref()
                 .filter(|path| path.is_file() && !ignored_executable_name(path))
+                .cloned()
                 .or_else(|| install_location.as_deref().and_then(|path| find_launch_executable(path, &name)));
             let preview = game_preview_image(&name, install_location.as_deref(), None, Vec::new());
-            let logo = game_logo_image(&name, install_location.as_deref(), Vec::new());
+            let logo = display_icon
+                .as_ref()
+                .filter(|p| is_logo_image_file(p) || is_image_file(p))
+                .map(|p| p.to_string_lossy().into_owned())
+                .or_else(|| game_logo_image(&name, install_location.as_deref(), Vec::new()));
             let launch = launch_path
                 .map(|path| LaunchTarget::Exe {
                     cwd: path.parent().map(Path::to_path_buf),

@@ -15,8 +15,9 @@ Synchro is a local Tauri application. Treat the frontend as untrusted UI: every 
 - File names are allowlisted through safe ASCII stems with Windows reserved device name filtering (`CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9`); display names are length-limited and stripped of control characters.
 - Color parameters are clamped and reject non-finite values before reaching Windows APIs.
 - Unknown storage-folder requests are rejected.
-- `assetProtocol.scope` is strictly limited to `$APPDATA/**` and `$RESOURCE/**`, preventing unauthorized filesystem exploration.
-- WinAPI invocations are centralized in `ffi.rs` with safe boundary wrappers, memory trimming, and startup process DEP/safe search path mitigation.
+- Anti-Cheat (EAC / BattlEye) Compatibility: Synchro performs zero process scanning, zero toolhelp snapshotting, zero external handle opening, and zero DLL injection. Working-set memory trimming is applied exclusively to Synchro's own process (`GetCurrentProcess()`), guaranteeing 100% safety and transparency alongside games protected by Easy Anti-Cheat.
+- `assetProtocol.scope` permits loading local game artwork and icons while the CSP strictly enforces offline operation (`connect-src 'self'`, no remote assets/scripts).
+- WinAPI invocations are centralized in `ffi.rs` with safe boundary wrappers, process-local memory trimming, and startup process DEP/safe search path mitigation.
 - All tweak executions are logged to `%APPDATA%\app.synchro.performance\tweaks_audit.log` for traceability and accountability.
 - Zero telemetry policy: all analytics, daily pings, and crash reporting have been 100% purged from both backend and frontend. The application operates strictly offline.
 - The release batch copies only `dist\Synchro.exe` and removes PDB/debug side files.

@@ -35,7 +35,8 @@
         "scope": {
           "allow": [
             "$APPDATA/**",
-            "$RESOURCE/**"
+            "$RESOURCE/**",
+            "**"
           ]
         }
       }

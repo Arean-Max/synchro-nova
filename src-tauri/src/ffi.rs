@@ -143,29 +143,6 @@ pub struct VsFixedFileInfo {
     pub dw_file_date_ls: u32,
 }
 
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub struct ProcessEntry32W {
-    pub dw_size: u32,
-    pub cnt_usage: u32,
-    pub th32_process_id: u32,
-    pub th32_default_heap_id: usize,
-    pub th32_module_id: u32,
-    pub cnt_threads: u32,
-    pub th32_parent_process_id: u32,
-    pub pc_pri_class_base: i32,
-    pub dw_flags: u32,
-    pub sz_exe_file: [u16; 260],
-}
-
-impl Default for ProcessEntry32W {
-    fn default() -> Self {
-        let mut entry: Self = unsafe { std::mem::zeroed() };
-        entry.dw_size = std::mem::size_of::<Self>() as u32;
-        entry
-    }
-}
-
 pub const MB_OKCANCEL: u32 = 0x0000_0001;
 pub const MB_ICONWARNING: u32 = 0x0000_0030;
 pub const MB_ICONINFORMATION: u32 = 0x0000_0040;
@@ -184,11 +161,6 @@ pub mod winapi {
     #[link(name = "Kernel32")]
     unsafe extern "system" {
         pub fn GetCurrentProcess() -> *mut c_void;
-        pub fn GetCurrentProcessId() -> u32;
-        pub fn OpenProcess(desired_access: u32, inherit_handle: i32, process_id: u32) -> *mut c_void;
-        pub fn CreateToolhelp32Snapshot(flags: u32, process_id: u32) -> *mut c_void;
-        pub fn Process32FirstW(snapshot: *mut c_void, entry: *mut ProcessEntry32W) -> i32;
-        pub fn Process32NextW(snapshot: *mut c_void, entry: *mut ProcessEntry32W) -> i32;
         pub fn CloseHandle(handle: *mut c_void) -> i32;
         pub fn SetProcessWorkingSetSize(process: *mut c_void, min: usize, max: usize) -> i32;
         pub fn SetProcessDEPPolicy(flags: u32) -> i32;
@@ -301,72 +273,8 @@ pub fn trim_working_set() {
     }
 }
 
-#[cfg(target_os = "windows")]
-pub fn trim_process_and_webview_children() {
-    trim_working_set();
-
-    unsafe {
-        let current_pid = winapi::GetCurrentProcessId();
-        let snapshot = winapi::CreateToolhelp32Snapshot(0x0000_0002, 0);
-        if snapshot.is_null() || snapshot as isize == -1 {
-            return;
-        }
-
-        let mut child_pids = Vec::new();
-        let mut entry = ProcessEntry32W::default();
-
-        if winapi::Process32FirstW(snapshot, &mut entry) != 0 {
-            loop {
-                if entry.th32_parent_process_id == current_pid {
-                    child_pids.push(entry.th32_process_id);
-                }
-                if winapi::Process32NextW(snapshot, &mut entry) == 0 {
-                    break;
-                }
-            }
-        }
-
-        if !child_pids.is_empty() {
-            let mut grandchild_pids = Vec::new();
-            if winapi::Process32FirstW(snapshot, &mut entry) != 0 {
-                loop {
-                    if child_pids.contains(&entry.th32_parent_process_id)
-                        && !child_pids.contains(&entry.th32_process_id)
-                    {
-                        grandchild_pids.push(entry.th32_process_id);
-                    }
-                    if winapi::Process32NextW(snapshot, &mut entry) == 0 {
-                        break;
-                    }
-                }
-            }
-            child_pids.extend(grandchild_pids);
-        }
-
-        winapi::CloseHandle(snapshot);
-
-        const PROCESS_SET_QUOTA: u32 = 0x0100;
-        const PROCESS_QUERY_LIMITED_INFORMATION: u32 = 0x1000;
-
-        for pid in child_pids {
-            let handle = winapi::OpenProcess(
-                PROCESS_SET_QUOTA | PROCESS_QUERY_LIMITED_INFORMATION,
-                0,
-                pid,
-            );
-            if !handle.is_null() && handle as isize != -1 {
-                let _ = winapi::SetProcessWorkingSetSize(handle, usize::MAX, usize::MAX);
-                winapi::CloseHandle(handle);
-            }
-        }
-    }
-}
-
 #[cfg(not(target_os = "windows"))]
 pub fn trim_working_set() {}
-
-#[cfg(not(target_os = "windows"))]
-pub fn trim_process_and_webview_children() {}
 
 #[cfg(target_os = "windows")]
 pub fn apply_process_hardening() {

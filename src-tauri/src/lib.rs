@@ -1060,7 +1060,7 @@ fn open_folder(_path: &Path) -> Result<(), String> {
 }
 
 pub fn trim_process_memory() {
-    ffi::trim_process_and_webview_children();
+    ffi::trim_working_set();
 }
 
 fn apply_process_hardening() {
@@ -1107,14 +1107,6 @@ pub fn run() {
             std::thread::spawn(|| {
                 std::thread::sleep(Duration::from_millis(2500));
                 trim_process_memory();
-            });
-
-            // Periodic background idle trim every 45 seconds
-            std::thread::spawn(|| {
-                loop {
-                    std::thread::sleep(Duration::from_secs(45));
-                    trim_process_memory();
-                }
             });
 
             Ok(())
