@@ -37,7 +37,12 @@ Anyone can inspect the exact commit hash, build logs, and environment used to cr
 ## 3. Code Signing (Authenticode)
 
 ### SmartScreen & Unknown Publisher
-Windows SmartScreen displays an "Unknown Publisher" warning on binaries that are not signed with a recognized Authenticode certificate (EV or OV). For open-source projects without commercial code signing certificates ($300–$500/year), this is a common occurrence.
+Windows SmartScreen displays an "Unknown Publisher" warning on binaries that are not yet signed with an established Authenticode certificate (EV or OV). For newly released open-source software, this is standard behavior until reputation accumulates or code signing is configured.
+
+### SignPath Foundation (Open-Source Authenticode Roadmap)
+To provide free, verifiable Authenticode signatures for open-source releases without commercial certificate overhead ($400+/year), Synchro Nova's build pipeline is designed for integration with the [SignPath Foundation](https://signpath.org):
+1. **Prerequisites fulfilled**: OSI-approved MIT license, public source code, fully reproducible and automated GitHub Actions CI/CD.
+2. **Integration plan**: Following initial public releases (`v0.1.0+`), an application will be submitted to SignPath Foundation to enable cryptographic commit-bound signing via the `signpath/github-action` in `release.yml`.
 
 ### Signing Builds with a Custom / Organizational Certificate
 If you maintain a local CA or have an Authenticode certificate, you can sign the output binary using Microsoft `signtool.exe`:
