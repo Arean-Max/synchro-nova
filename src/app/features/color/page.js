@@ -270,13 +270,11 @@ function renderTemplates(viewState, t) {
 
 function renderColorSettingsPanel(appState, viewState, t) {
   const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState, t)).join("");
-  const options =
-    checkbox(t("applyInstantly"), appState.settings.applyInstantly, "applyInstantly") +
-    checkbox(t("saveColorCorrection"), appState.settings.saveColorCorrection, "saveColorCorrection");
   const selected = selectedColorGame(viewState);
   const launch = selected?.launchable
     ? button(t("launchGame"), "play", "primary", "launch-color-game")
     : `<button class="btn btn-outline" type="button" disabled>${icon("play")}<span>${t("launchUnavailable")}</span></button>`;
+  const closeBtn = `<button class="color-drawer-close" type="button" data-action="close-color-game-panel" title="${escapeAttr(t("close") || "Close")}" aria-label="${escapeAttr(t("close") || "Close")}">${icon("x")}</button>`;
   const headStyle = selected ? ` style="--game-accent:${gameAccent(selected)}"` : "";
   const headLogoSrc = gameLogoSrc(selected);
   const headMark = selected
@@ -291,7 +289,7 @@ function renderColorSettingsPanel(appState, viewState, t) {
     `<span class="color-game-head-label">${t("selectedGame")}</span>`,
     `<strong class="color-game-head-title">${safeValue(selected?.name)}</strong>`,
     "</div>",
-    `<div class="color-game-head-actions">${launch}</div>`,
+    `<div class="color-game-head-actions">${launch}${closeBtn}</div>`,
     "</div>"
   ].join("");
 
@@ -300,28 +298,21 @@ function renderColorSettingsPanel(appState, viewState, t) {
     '<div class="stack">',
     gameHeader,
     card(t("controls"), controls),
-    card(t("statusOptions"), options),
-    `<div class="actions">${button(t("apply"), "check", "primary", "apply-color")}${button(t("reset"), "rotate", "outline", "reset-color")}</div>`,
+    `<div class="actions color-actions-single">${button(t("reset"), "rotate", "outline", "reset-color")}</div>`,
     "</div>",
-    card(t("templates"), renderTemplates(viewState, t), "color-templates-card"),
     "</div>"
   ].join("");
 }
 
 export function renderColorPage(appState, viewState, t) {
   const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState, t)).join("");
-  const options =
-    checkbox(t("applyInstantly"), appState.settings.applyInstantly, "applyInstantly") +
-    checkbox(t("saveColorCorrection"), appState.settings.saveColorCorrection, "saveColorCorrection");
   return [
     '<div class="global-color-page">',
-    '<div class="global-color-grid">',
+    '<div class="global-color-grid global-color-grid-compact">',
     '<div class="stack">',
     card(t("controls"), controls),
-    card(t("statusOptions"), options),
-    `<div class="actions">${button(t("apply"), "check", "primary", "apply-color")}${button(t("reset"), "rotate", "outline", "reset-color")}</div>`,
+    `<div class="actions color-actions-single">${button(t("reset"), "rotate", "outline", "reset-color")}</div>`,
     "</div>",
-    card(t("templates"), renderTemplates(viewState, t), "color-templates-card"),
     "</div>",
     "</div>"
   ].join("");

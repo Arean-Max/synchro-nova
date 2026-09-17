@@ -32,7 +32,8 @@ export const viewState = {
   selectedTweaks: new Set(),
   installedTweaks: new Set(),
   tweakResults: [],
-  applyingTweaks: false
+  applyingTweaks: false,
+  sidebarCollapsed: false
 };
 
 export const sliderDefs = {

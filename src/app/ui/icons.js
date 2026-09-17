@@ -27,7 +27,8 @@ const iconPaths = {
   mouse: ['<rect x="7" y="3" width="10" height="18" rx="5"></rect>', '<path d="M12 7v4"></path>', '<path d="M12 3v4"></path>'],
   minus: ['<path d="M5 12h14"></path>'],
   square: ['<rect x="6" y="6" width="12" height="12" rx="1"></rect>'],
-  x: ['<path d="M18 6 6 18"></path>', '<path d="m6 6 12 12"></path>']
+  x: ['<path d="M18 6 6 18"></path>', '<path d="m6 6 12 12"></path>'],
+  sidebar: ['<rect x="3" y="3" width="18" height="18" rx="2"></rect>', '<path d="M9 3v18"></path>']
 };
 
 export function icon(name, extraClass) {

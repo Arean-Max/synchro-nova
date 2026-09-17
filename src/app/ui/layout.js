@@ -1,11 +1,11 @@
 import { activePage, appState, pageDefs, pageOrder } from "../core/state.js";
+import { escapeHtml } from "../core/html.js";
 import { renderCharacteristicsPage } from "../features/characteristics/page.js";
 import { renderColorPage, renderGameColorPage } from "../features/color/page.js";
 import { renderSettingsPage } from "../features/settings/page.js";
 import { renderBackupsPage, renderConfigsPage } from "../features/storage/page.js";
 import { renderTweaksPage } from "../features/tweaks/page.js";
-import { logo } from "./icons.js";
-import { icon } from "./icons.js";
+import { logo, icon } from "./icons.js";
 
 export function renderTitlebar(t) {
   return [
@@ -23,12 +23,13 @@ export function renderTitlebar(t) {
   ].join("");
 }
 
-export function renderSidebar(t) {
+export function renderSidebar(t, viewState) {
   const nav = pageOrder
     .map((key) => {
       const page = pageDefs[key];
       const active = key === activePage ? "active" : "";
-      return `<button class="nav-item ${active}" type="button" data-page="${key}">${icon(page.icon)}<span>${t(page.nav)}</span></button>`;
+      const label = t(page.nav);
+      return `<button class="nav-item ${active}" type="button" data-page="${key}" title="${escapeHtml(label)}">${icon(page.icon)}<span>${escapeHtml(label)}</span></button>`;
     })
     .join("");
 
@@ -36,12 +37,16 @@ export function renderSidebar(t) {
     '<aside class="sidebar">',
     '<div class="brand" data-window-drag data-tauri-drag-region>',
     logo("lockup"),
+    logo("mark"),
     "</div>",
     '<span class="nav-indicator" aria-hidden="true"></span>',
-    `<div class="nav-label">${t("main")}</div>`,
+    '<div class="nav-section-head">',
+    `<span class="nav-label">${t("main")}</span>`,
+    `<button class="sidebar-toggle-btn" type="button" data-action="toggle-sidebar" title="${escapeHtml(t("main"))}" aria-label="${escapeHtml(t("main"))}">${icon("sidebar")}</button>`,
+    "</div>",
     `<nav class="nav-list">${nav}</nav>`,
     '<div class="sidebar-spacer"></div>',
-    `<button class="exit-button" type="button" data-action="exit-app">${icon("logOut")}<span>${t("exit")}</span></button>`,
+    `<button class="exit-button" type="button" data-action="exit-app" title="${escapeHtml(t("exit"))}">${icon("logOut")}<span>${t("exit")}</span></button>`,
     "</aside>"
   ].join("");
 }
@@ -63,5 +68,6 @@ export function renderMain(viewState, t) {
 }
 
 export function renderShell(viewState, t) {
-  return `${renderTitlebar(t)}<div class="workspace">${renderSidebar(t)}${renderMain(viewState, t)}</div>`;
+  const collapsed = viewState?.sidebarCollapsed ? " sidebar-collapsed" : "";
+  return `${renderTitlebar(t)}<div class="workspace${collapsed}">${renderSidebar(t, viewState)}${renderMain(viewState, t)}</div>`;
 }

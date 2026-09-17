@@ -139,9 +139,8 @@ async function applyColor() {
 }
 
 function scheduleApplyColor() {
-  if (!appState.settings.applyInstantly) return;
   window.clearTimeout(applyTimer);
-  applyTimer = window.setTimeout(applyColor, 80);
+  applyTimer = window.setTimeout(applyColor, 50);
 }
 
 async function saveSettings() {
@@ -258,6 +257,21 @@ async function handleAction(action) {
   if (action === "exit-app") return invokeCommand("exit_app");
   if (action === "restart-as-admin") return invokeCommand("restart_as_admin");
   if (action === "apply-color") return applyColor();
+  if (action === "toggle-sidebar") {
+    viewState.sidebarCollapsed = !viewState.sidebarCollapsed;
+    const ws = document.querySelector(".workspace");
+    if (ws) {
+      ws.classList.toggle("sidebar-collapsed", viewState.sidebarCollapsed);
+    } else {
+      renderApp();
+    }
+    return null;
+  }
+  if (action === "close-color-game-panel") {
+    viewState.colorGamePanelOpen = false;
+    updateColorPage({ stableDrawer: true });
+    return null;
+  }
   if (action === "launch-color-game") {
     const game = selectedColorGame(viewState);
     if (game?.id && game.launchable) return invokeCommand("launch_installed_game", { id: game.id });
