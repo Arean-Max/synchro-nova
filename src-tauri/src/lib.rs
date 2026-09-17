@@ -1060,7 +1060,7 @@ fn open_folder(_path: &Path) -> Result<(), String> {
 }
 
 pub fn trim_process_memory() {
-    ffi::trim_working_set();
+    ffi::trim_process_and_webview_children();
 }
 
 fn apply_process_hardening() {
@@ -1102,6 +1102,21 @@ pub fn run() {
             }
 
             trim_process_memory();
+
+            // Post-boot delayed working-set trim to reclaim initial WebView2 bootstrapping memory
+            std::thread::spawn(|| {
+                std::thread::sleep(Duration::from_millis(2500));
+                trim_process_memory();
+            });
+
+            // Periodic background idle trim every 45 seconds
+            std::thread::spawn(|| {
+                loop {
+                    std::thread::sleep(Duration::from_secs(45));
+                    trim_process_memory();
+                }
+            });
+
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -1109,20 +1124,26 @@ pub fn run() {
                 return;
             }
 
-            if let WindowEvent::CloseRequested { api, .. } = event {
-                let app = window.app_handle();
-                let state = app.state::<RuntimeState>();
-                if state.exiting.load(Ordering::SeqCst) {
-                    return;
+            match event {
+                WindowEvent::Focused(false) => {
+                    trim_process_memory();
                 }
+                WindowEvent::CloseRequested { api, .. } => {
+                    let app = window.app_handle();
+                    let state = app.state::<RuntimeState>();
+                    if state.exiting.load(Ordering::SeqCst) {
+                        return;
+                    }
 
-                if let Ok(snapshot) = state.snapshot() {
-                    if snapshot.settings.close_to_tray {
-                        api.prevent_close();
-                        let _ = window.hide();
-                        trim_process_memory();
+                    if let Ok(snapshot) = state.snapshot() {
+                        if snapshot.settings.close_to_tray {
+                            api.prevent_close();
+                            let _ = window.hide();
+                            trim_process_memory();
+                        }
                     }
                 }
+                _ => {}
             }
         })
         .invoke_handler(tauri::generate_handler![
