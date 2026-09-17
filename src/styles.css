@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   --bg-sidebar: #131313;
   --bg-main: #141414;
   --bg-card: #1F1F1F;
@@ -45,6 +46,7 @@
 
 html,
 body {
+  color-scheme: dark;
   width: 100%;
   height: 100%;
   margin: 0;
@@ -881,6 +883,11 @@ button.check-row {
   text-shadow: 0 12px 30px rgba(0, 0, 0, 0.56);
 }
 
+.game-card[data-has-image="true"] .game-card-logo,
+.game-card[data-has-image="true"] .game-card-watermark {
+  display: none !important;
+}
+
 .game-card[data-logo-loaded="true"] .game-card-logo {
   opacity: 0;
 }
@@ -1016,6 +1023,25 @@ button.check-row {
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+.color-game-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.color-game-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.color-game-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+}
+
+.color-game-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .color-game-panel > .stack,

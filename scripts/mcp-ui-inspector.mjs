@@ -79,6 +79,30 @@ function inspectCssRules(cssContent) {
     }
   }
 
+  // 5. Check for color-scheme: dark on :root / html
+  if (!/color-scheme\s*:\s*dark/i.test(cssContent)) {
+    issues.push({
+      type: 'MISSING_DARK_COLOR_SCHEME',
+      severity: 'HIGH',
+      file: 'src/styles.css',
+      line: 1,
+      snippet: ':root missing color-scheme: dark',
+      message: ':root and html must declare "color-scheme: dark" to prevent WebView2 native Windows Fluent scrollbars and controls from defaulting to light theme.'
+    });
+  }
+
+  // 6. Check for card image overlay suppression
+  if (!/\.game-card\[data-has-image="true"\]\s*\.game-card-logo/i.test(cssContent)) {
+    issues.push({
+      type: 'CARD_TEXT_OVERLAY_ON_COVER',
+      severity: 'MEDIUM',
+      file: 'src/styles.css',
+      line: 1,
+      snippet: '.game-card[data-has-image="true"] .game-card-logo',
+      message: 'When game cards have cover artwork, text logos must be suppressed to avoid obscuring poster art.'
+    });
+  }
+
   return issues;
 }
 
@@ -110,6 +134,18 @@ function inspectJsComponent(filePath, content) {
         line: lineNum,
         snippet: line.trim(),
         message: 'Launch action button inside generic .actions risks being compressed or clipped if drawer width shrinks.'
+      });
+    }
+
+    // Check for word truncation like slice(0, 10) in logo text
+    if (/word\.slice\(0,\s*\d+\)/i.test(line)) {
+      issues.push({
+        type: 'WORD_TRUNCATION_ARTIFACT',
+        severity: 'HIGH',
+        file: filePath,
+        line: lineNum,
+        snippet: line.trim(),
+        message: 'Blind character slicing on game title words cuts words prematurely (e.g. Counter-Strike -> COUNTER-ST).'
       });
     }
   });

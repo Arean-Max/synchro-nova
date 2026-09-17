@@ -94,16 +94,13 @@ function gameAccent(game) {
 }
 
 function gameLogoText(name) {
-  const words = String(name || "")
-    .replace(/[^\p{L}\p{N}\s:-]/gu, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-  if (!words.length) return "GAME";
-  if (words.length === 1) return escapeHtml(words[0].slice(0, 12));
-  return words
-    .slice(0, 2)
-    .map((word) => escapeHtml(word.slice(0, 10)))
-    .join("<br>");
+  const clean = String(name || "").trim();
+  if (!clean) return "GAME";
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (words.length <= 2) {
+    return words.map((word) => escapeHtml(word)).join("<br>");
+  }
+  return words.slice(0, 3).map((word) => escapeHtml(word)).join("<br>");
 }
 
 function gameImageSrc(game) {
@@ -146,15 +143,18 @@ function relativeGameOffset(index, selectedIndex, total) {
 function renderGameCard(game, offset, active) {
   const imageSrc = gameImageSrc(game);
   const logoSrc = gameLogoSrc(game);
-  const image = imageSrc ? `<img class="game-card-image" src="${escapeAttr(imageSrc)}" alt="" onerror="this.style.display='none'">` : "";
+  const hasImage = Boolean(imageSrc);
+  const image = hasImage
+    ? `<img class="game-card-image" src="${escapeAttr(imageSrc)}" alt="" onerror="this.style.display='none'; this.closest('.game-card')?.setAttribute('data-has-image', 'false');">`
+    : "";
   const source = game.source ? `<span class="game-card-source">${escapeHtml(game.source)}</span>` : "";
   const logo = gameLogoText(game.name);
-  const logoImage = logoSrc ? `<img class="game-card-logo-image" src="${escapeAttr(logoSrc)}" alt="" onerror="this.style.display='none'">` : "";
+  const logoImage = logoSrc ? `<img class="game-card-logo-image" src="${escapeAttr(logoSrc)}" alt="" onerror="this.style.display='none';">` : "";
   const watermark = logoSrc
-    ? `<img class="game-card-watermark image" src="${escapeAttr(logoSrc)}" alt="" aria-hidden="true" onerror="this.style.display='none'">`
+    ? `<img class="game-card-watermark image" src="${escapeAttr(logoSrc)}" alt="" aria-hidden="true" onerror="this.style.display='none';">`
     : `<span class="game-card-watermark" aria-hidden="true">${logo}</span>`;
   return [
-    `<button class="game-card" type="button" data-game-id="${escapeAttr(game.id)}" data-offset="${offset}" data-logo-loaded="${logoSrc ? "true" : "false"}" aria-current="${active ? "true" : "false"}" style="--game-accent:${gameAccent(game)}">`,
+    `<button class="game-card" type="button" data-game-id="${escapeAttr(game.id)}" data-offset="${offset}" data-has-image="${hasImage ? "true" : "false"}" data-logo-loaded="${logoSrc ? "true" : "false"}" aria-current="${active ? "true" : "false"}" style="--game-accent:${gameAccent(game)}">`,
     image,
     '<span class="game-card-glow" aria-hidden="true"></span>',
     watermark,
