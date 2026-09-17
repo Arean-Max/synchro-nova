@@ -4,8 +4,6 @@
   "version": "0.1.0",
   "identifier": "app.synchro.performance",
   "build": {
-    "beforeDevCommand": "npm run serve",
-    "devUrl": "http://127.0.0.1:64927",
     "frontendDist": "../src"
   },
   "app": {
