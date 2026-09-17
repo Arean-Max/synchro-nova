@@ -229,8 +229,23 @@ function renderTemplates(viewState, t) {
     .join("");
 
   const saved = (Array.isArray(viewState.configs) ? viewState.configs : [])
-    .slice(0, 6)
-    .map((config) => templateButton(config.id, config.name, colorSummary(config.color), "data-color-template-id", "save"))
+    .slice(0, 12)
+    .map((config) => {
+      const meta = colorSummary(config.color);
+      const metaHtml = meta ? `<small>${escapeHtml(meta)}</small>` : "";
+      return [
+        '<div class="color-template-item">',
+        `<button type="button" class="color-template-btn" data-color-template-id="${escapeAttr(config.id)}">`,
+        icon("save"),
+        `<span>${escapeHtml(config.name)}</span>`,
+        metaHtml,
+        '</button>',
+        `<button type="button" class="color-template-delete-btn" data-action="delete-color-template" data-delete-config-id="${escapeAttr(config.id)}" title="${escapeAttr(t("delete") || "Удалить")}" aria-label="${escapeAttr(t("delete") || "Удалить")}">`,
+        icon("trash"),
+        '</button>',
+        '</div>'
+      ].join("");
+    })
     .join("");
 
   const savedTemplates = saved || `<div class="color-template-empty">${t("noTemplates")}</div>`;

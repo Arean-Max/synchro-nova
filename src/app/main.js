@@ -264,9 +264,7 @@ async function handleAction(action) {
     return null;
   }
   if (action === "save-color-template") {
-    const game = selectedColorGame(viewState);
-    const fallbackName = game?.name ? `${game.name} color` : "Color template";
-    const name = (viewState.colorTemplateName || "").trim() || fallbackName;
+    const name = (viewState.colorTemplateName || "").trim() || "Default";
     const configs = await invokeCommand("save_config", { name });
     if (Array.isArray(configs)) {
       viewState.configs = configs;
@@ -417,8 +415,11 @@ async function handleClick(event) {
     } else if (nextPage === "characteristics") {
       if (!viewState.system) refreshCharacteristics();
       else refreshLiveCharacteristics();
-    } else if ((nextPage === "backups" || nextPage === "configs") && !viewState.backups.length && !viewState.configs.length) {
-      loadLists().then(updateMain);
+    } else if ((nextPage === "color" || nextPage === "gameColor" || nextPage === "backups" || nextPage === "configs" || nextPage === "storage") && (!viewState.configs.length || !viewState.backups.length)) {
+      loadLists().then(() => {
+        if (nextPage === "color" || nextPage === "gameColor") updateColorPage();
+        else updateMain();
+      });
     }
     return;
   }
@@ -446,6 +447,24 @@ async function handleClick(event) {
   const preset = target.closest("[data-preset]");
   if (preset) {
     applyPreset(preset.getAttribute("data-preset"));
+    return;
+  }
+
+  const deleteTemplate = target.closest("[data-action='delete-color-template']");
+  if (deleteTemplate) {
+    event.preventDefault();
+    event.stopPropagation();
+    const id = deleteTemplate.getAttribute("data-delete-config-id");
+    if (id) {
+      const configs = await invokeCommand("delete_config", { id });
+      if (Array.isArray(configs)) {
+        viewState.configs = configs;
+        if (viewState.selectedConfig === id) {
+          viewState.selectedConfig = configs[0]?.id || "";
+        }
+        updateColorPage();
+      }
+    }
     return;
   }
 
@@ -588,6 +607,7 @@ function render() {
 async function boot() {
   const state = await invokeCommand("get_app_state");
   if (state) mergeState(state);
+  await loadLists();
   render();
   loadColorGames();
   scheduleTrimMemory(1200);
