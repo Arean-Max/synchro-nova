@@ -1,61 +1,112 @@
-# Security Notes & Hardening Architecture
+# Security Architecture & Threat Model
 
-Synchro Nova is a local, privacy-first desktop application designed with zero telemetry, complete offline operation, and rigorous defensive security. The frontend is treated as untrusted UI: every sensitive decision and system operation is strictly validated and executed in Rust.
+This document outlines the security architecture, threat model, and mitigation mechanisms implemented in Synchro Nova.
 
-## Current Hardening & Protection Measures
+---
 
-### 1. Process & OS Security Mitigations
-- **Data Execution Prevention (DEP)**: Enforced via `SetProcessDEPPolicy(PROCESS_DEP_ENABLE)` at process startup.
-- **Safe DLL Search Order (Anti-DLL Hijacking)**:
-  - Enforced permanently via `SetSearchPathMode(BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT)`.
-  - Enforced via `SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32)`: strictly restricts DLL resolution to `%SystemRoot%\System32`, completely blocking DLL preloading attacks from current working directories or user folders.
-- **Heap Corruption Defense**: Enforced via `HeapSetInformation(HeapEnableTerminationOnCorruption)` on the default process heap; immediately terminates if heap tampering or overflow is detected.
-- **Panic Policy**: Release builds use `panic = "abort"` to prevent unwind-based state inconsistency or information leakage.
-- **Compiler Hardening**: Built with `overflow-checks = true`, `opt-level = "z"`, and `lto = true`.
+## 1. Threat Model & Boundaries
 
-### 2. User Protection & Fail-Safe Rollback Engine
-- **Automatic Pre-Tweak Safety Snapshots**:
-  - Before applying any system or registry tweak, Synchro automatically creates a timestamped safety snapshot (`Safety backup <timestamp>`) containing all previous registry values, color settings, and app options.
-  - Automatic retention policy: automatically prunes older automated snapshots while preserving the last 10, preventing disk bloat.
-- **1-Click Rollback (`rollback_last_tweaks`)**:
-  - An explicit "Откатить изменения" (Rollback tweaks) button is directly available on the Tweaks page.
-  - Instantly restores previous registry values and settings in 1 click, updating checkboxes in real time.
-- **Administrator Privilege Verification**:
-  - Tweak operations targeting `HKLM` or system services pre-verify elevation via token inspection (`GetTokenInformation(TokenElevation)`).
-  - If not elevated, requests are cleanly rejected with clear guidance instead of failing with obscure Windows error codes.
-- **Dangerous Tweaks Blocklist**:
-  - Aggressive/unsafe tweaks (disabling memory integrity, dynamic tick tampering, bulk MSI mode, disabling paging file) are permanently blocked by the safe apply engine.
-- **Full Tweak Audit Trail**:
-  - Every tweak attempt, status, and message is permanently logged with timestamps to `%APPDATA%\app.synchro.performance\tweaks_audit.log` (with automatic log rotation at 512 KB).
+Synchro Nova operates under the following security assumptions:
 
-### 3. Frontend & IPC Defense
-- **Strict Content Security Policy (CSP)**:
-  - `default-src 'self'`, `script-src 'self'`, `style-src 'self'`, `object-src 'none'`, `frame-ancestors 'none'`, `base-uri 'none'`, `connect-src 'self'`.
-  - Remote scripts, inline scripts, remote frames, and external network connections are 100% blocked.
-- **Full XML/HTML Entity Escaping**:
-  - `escapeHtml` and `escapeAttr` escape all 5 critical entities: `&`, `<`, `>`, `"`, and `'` (`&#39;`).
-  - Blocks DOM-based and attribute-based XSS injection.
-- **Strict URL Scheme Allowlist**:
-  - External driver searches strictly enforce `https://` only (`browser::open_url`).
-  - Game launchers only allow validated custom protocols: `steam://`, `com.epicgames.launcher://`, and `riotclient://`.
-- **Atomic File Storage & Path Traversal Guard**:
-  - Settings, backups, and configs are written atomically using unique temporary files and synced (`sync_all`) before replacement.
-  - Storage paths are strictly checked via `canonicalize()` and `starts_with(&root)` to prevent directory traversal (`../`).
-  - Windows reserved filenames (`CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9`) are filtered out.
+- **Untrusted Frontend Layer**: The webview renderer (HTML/CSS/JS) is considered an untrusted presentation layer. It possesses no direct filesystem access, no raw network access, and cannot execute arbitrary system binaries.
+- **Strict IPC Boundary**: Communication between the webview and the native Rust backend occurs exclusively through Tauri's typed command dispatcher (`invoke_handler`). Only explicitly registered commands can be invoked.
+- **Least Privilege Execution**: Operations are split into unprivileged (HKCU registry, display gamma ramps) and elevated (HKLM registry, system services). Privileged commands explicitly verify administrator tokens prior to execution.
+- **Anti-Cheat Coexistence**: The application must never interfere with anti-cheat software (Easy Anti-Cheat, BattlEye, Vanguard). It performs no process injection, installs no global keyboard/mouse hooks, and never modifies memory of third-party processes.
 
-### 4. Anti-Cheat (EAC / BattlEye) Compatibility
-- **Zero Process Tampering**:
-  - Synchro performs **zero background game scanning**, **zero periodic system snapshots**, and **zero DLL injection**.
-  - Memory trimming (`SetProcessWorkingSetSize`) is applied strictly to Synchro's own process tree (`synchro.exe` and its direct `msedgewebview2.exe` children).
-  - Zero interference with game hooks, anti-cheat drivers, or protected memory regions.
+---
 
-### 5. Zero Telemetry & 100% Offline Architecture
-- No analytics, tracking, daily pings, crash uploaders, or telemetry services exist in the code.
-- No local HTTP web servers or listening TCP ports (`devUrl` removed; assets served directly via Tauri's embedded asset protocol).
-- Operates 100% offline even without internet or local network adapters.
+## 2. Process & OS Mitigations
 
-### 6. Resource & Memory Minimization
-- **RAM**: Down to single-digit MBs (~7-8 MB total across `synchro.exe` and all WebView2 processes) via targeted working set management.
-- **CPU**: 0.0% idle load; all background timers pause immediately when window is minimized (`visibilitychange` + `document.hidden`).
-- **Disk I/O**: Game list is cached in-memory with a 60s TTL, eliminating repeat disk scans on tab navigation.
-- **Heap Allocations**: PDH performance counter buffers are recycled across ticks, eliminating heap fragmentation.
+During startup in `src-tauri/src/ffi.rs`, the native process configures several Win32 security policies:
+
+### Data Execution Prevention (DEP)
+```rust
+winapi::SetProcessDEPPolicy(PROCESS_DEP_ENABLE);
+```
+Enforces permanent DEP for the process lifetime, preventing execution of code in non-executable memory pages (data, heap, stack).
+
+### DLL Search Order Hijacking Protection
+```rust
+winapi::SetSearchPathMode(BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT);
+winapi::SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+```
+Portable binaries running from user directories (`Desktop`, `Downloads`) are vulnerable to DLL preloading attacks if an attacker places a rogue DLL in the current working directory. `SetDefaultDllDirectories(0x00000800)` restricts library resolution exclusively to `%SystemRoot%\System32`.
+
+### Heap Corruption Defense
+```rust
+winapi::HeapSetInformation(heap, HeapEnableTerminationOnCorruption, NULL, 0);
+```
+Enables immediate process termination if the Windows heap manager detects corruption in internal metadata structures, neutralizing heap-based buffer overflow exploitation.
+
+### Compiler Flags
+Release binaries are built with:
+- `panic = "abort"`: Eliminates stack unwinding code, reducing attack surface and binary size.
+- `overflow-checks = true`: Prevents integer overflow exploitation in release builds.
+- `opt-level = "z"` and `lto = true`: Link-time optimization with aggressive code elimination.
+
+---
+
+## 3. Frontend & IPC Defense
+
+### Content Security Policy (CSP)
+The WebView2 container enforces a locked-down CSP:
+```
+default-src 'self';
+script-src 'self';
+style-src 'self';
+img-src 'self' data: asset: asset://localhost http://asset.localhost https://asset.localhost;
+font-src 'self';
+connect-src 'self';
+object-src 'none';
+base-uri 'none';
+frame-ancestors 'none';
+form-action 'none';
+```
+- Remote scripts (`<script src="https://...">`) and inline executable strings (`eval`, `setTimeout(string)`) are prohibited.
+- Sub-frames, plugins (`<object>`, `<embed>`), and form posts are blocked.
+
+### HTML and Attribute Escaping
+All dynamic content rendered in the DOM passes through `escapeHtml()` in `src/app/core/html.js`, escaping all five XML/HTML entities (`&`, `<`, `>`, `"`, `'`). This prevents DOM-based cross-site scripting when rendering local file paths or game titles.
+
+### URL Scheme Validation
+Native URL handlers enforce strict scheme validation:
+- External browser searches enforce `https://` only; non-HTTP schemes and local paths are rejected.
+- Game launcher shortcuts strictly match `steam://`, `com.epicgames.launcher://`, or `riotclient://`.
+
+---
+
+## 4. System Modifications & Rollback Architecture
+
+### Pre-Execution State Snapshots
+Before applying any batch of system tweaks, the backend captures current registry values into a `.reg` file:
+- Location: `%APPDATA%\app.synchro.performance\backups\tweak_safety_backup_<timestamp>.reg`
+- Storage retention: The last 10 snapshots are preserved; older snapshots are pruned automatically.
+
+### 1-Click Rollback
+The `rollback_last_tweaks` command restores the most recent snapshot using Windows `reg import` and refreshes the application state.
+
+### Privilege Verification
+Tweaks that require administrative access (e.g. HKLM policies, `powercfg`, `netsh`) verify token elevation via `GetTokenInformation(TokenElevation)` before attempting execution. If not running as administrator, the application returns a clear error instead of generating partial or broken state.
+
+### Audit Logging
+All tweak executions, rollbacks, and failures are recorded in `%APPDATA%\app.synchro.performance\tweaks_audit.log`. The log automatically rolls over when reaching 512 KB.
+
+---
+
+## 5. Anti-Cheat & Process Interaction
+
+Synchro Nova is designed to be fully compatible with games running kernel-level or user-mode anti-cheats (Easy Anti-Cheat, BattlEye, Ricochet, Vanguard):
+
+1. **No External Memory Access**: The application never calls `OpenProcess` with `PROCESS_VM_READ`, `PROCESS_VM_WRITE`, or `PROCESS_ALL_ACCESS` on game processes.
+2. **No Hooking**: No API hooking (`Detours`, `MinHook`), no Windows message hooks (`SetWindowsHookEx`), and no driver-level filters are installed.
+3. **Scoped Working Set Management**: Memory reduction via `SetProcessWorkingSetSize` is applied strictly to Synchro's own process (`synchro.exe`) and its direct child `msedgewebview2.exe` processes. Other processes are never inspected or modified.
+4. **Offline Operation**: The application runs completely offline with no background listening ports or remote telemetry, avoiding network heuristic flags.
+
+---
+
+## 6. Verifying Releases
+
+To ensure binary integrity:
+1. Every release includes a `SHA256SUMS.txt` file containing cryptographic hashes of all binaries.
+2. Official builds are compiled transparently via GitHub Actions from tagged commits.
+3. Users can independently build the project using standard Rust toolchains (`cargo build --release`) to verify reproducibility.

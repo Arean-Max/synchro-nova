@@ -1,149 +1,130 @@
-<div align="center">
-
 # Synchro Nova
 
-**High-Performance Windows System Management & Display Optimization Suite**
+Windows display calibration, color profiles, and system performance management utility built with Tauri v2 and Rust.
 
-[![Tauri](https://img.shields.io/badge/Tauri-v2.0-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app/)
-[![Rust](https://img.shields.io/badge/Rust-2021%20Edition-DEA584?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![JavaScript](https://img.shields.io/badge/Frontend-Vanilla%20ES%20Modules-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://microsoft.com/windows)
+[![CI](https://github.com/Arean-Max/synchro-nova/actions/workflows/ci.yml/badge.svg)](https://github.com/Arean-Max/synchro-nova/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6.svg)](https://microsoft.com/windows)
+[![Tauri](https://img.shields.io/badge/Tauri-v2.0-24C8DB.svg)](https://tauri.app/)
 
-</div>
-
----
-
-## 🌟 Overview
-
-**Synchro Nova** is a lightweight, responsive, and secure desktop utility designed for Windows gamers, power users, and system builders. Built with **Tauri v2** and **Rust**, it combines direct hardware-level display color controls, curated performance tweaks, and real-time hardware telemetry into a modern, minimalist interface.
+Synchro Nova provides desktop gamers and power users with hardware-level display color adjustments (vibrance, gamma, saturation), safe system and registry optimizations, and real-time hardware telemetry in a single lightweight, offline-first application.
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
-<div align="center">
-
-### Color Correction & Display Calibration
-![Color Correction](docs/screenshots/color-correction.png)
-
-### Performance & System Tweaks
-![System Tweaks](docs/screenshots/tweaks.png)
-
-</div>
+| Display Calibration | System Tweaks & Optimization |
+| :---: | :---: |
+| ![Color Correction](docs/screenshots/color-correction.png) | ![System Tweaks](docs/screenshots/tweaks.png) |
 
 ---
 
-## ✨ Features
+## Key Features
 
-- 🎨 **Game & Display Color Control**:
-  - Live adjustment of **Vibrance**, **Saturation**, **Contrast**, **Gamma**, and **Hue**.
-  - Per-game color profiles and quick-switch presets (*Balanced*, *Vibrant*, *Soft*, *Night*).
-  - Instant background application via low-latency Windows display APIs.
-
-- ⚡ **Curated Performance Tweaks**:
-  - Safe and isolated system performance optimizations.
-  - Granular selection with clear safety classifications and one-click application.
-  - Built-in verification and state recovery.
-
-- 📊 **Hardware & Characteristics Monitor**:
-  - Real-time CPU utilization graph and hardware telemetry.
-  - Detailed system specs, installed GPU/display driver information, and version inspection.
-  - Low-spec optimization mode for minimal idle footprint.
-
-- 💾 **Snapshots & Configurations**:
-  - Instant configuration saving and loading.
-  - Automatic backup system before applying system modifications.
-  - Direct access to local storage directories.
-
-- 🔒 **Hardened Security Model**:
-  - Zero sensitive logic or elevated tokens in the frontend layer.
-  - Strict Content Security Policy (CSP) blocking remote scripts, frames, and injection vectors.
-  - Allowlisted, bounds-checked native commands executed in memory-safe Rust.
+- **Display Color Calibration**: Direct GDI gamma ramp control for vibrance, saturation, contrast, gamma, and color balance with per-game profile associations.
+- **System & Registry Optimizations**: Curated system settings split into user-level (`HKCU`) and administrative (`HKLM`) tweaks with automated safety backups and 1-click rollback.
+- **Hardware Telemetry**: Real-time CPU utilization, system specs, and display driver information via Windows PDH counters.
+- **Game Library Integration**: Auto-detects installed Steam and Epic Games titles to easily map individual color presets to executables.
+- **Minimal Resource Footprint**: Processes run with targeted working set trimming (~8 MB total RAM in Task Manager) and zero CPU usage when minimized.
+- **Offline & Private**: Zero telemetry, zero external network connections, no listening ports, and no background services.
 
 ---
 
-## 🛠️ Architecture & Tech Stack
+## Administrative Privileges & Transparency
 
-| Layer | Technology | Description |
-| :--- | :--- | :--- |
-| **Core & Engine** | [Rust](https://www.rust-lang.org/) (2021 Edition) | Native system calls, Windows registry manipulation, hardware querying, security boundaries |
-| **App Runtime** | [Tauri v2](https://tauri.app/) | Ultra-compact webview bridge with minimal memory overhead |
-| **Frontend** | Vanilla JS / CSS3 / HTML5 | Modular ES6 architecture, high-DPI rendering, zero heavy UI frameworks |
-| **Packaging** | NSIS / Portable Executable | Standalone portable single `.exe` or bundled offline NSIS setup |
+Synchro Nova operates under a strict principle of transparency. Many features (display calibration, user tweaks, game launcher integration) run entirely with standard user privileges.
+
+Certain system optimizations require elevated administrator rights because they modify machine-wide policies (`HKEY_LOCAL_MACHINE`) or execute standard Windows administrative tools (`powercfg`, `netsh`, `fsutil`).
+
+### Why Admin is Requested:
+- **Multimedia Class Scheduler (MMCSS)**: Configuring `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile` to prioritize gaming network packets.
+- **Hardware-Accelerated GPU Scheduling (HAGS)**: Enabling `HwSchMode` in `HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers`.
+- **Power Schemes**: Activating High Performance or Ultimate Performance power plans via `powercfg`.
+- **Network Stack**: Applying TCP window autotuning and Receive-Side Scaling (RSS) via `netsh`.
+
+### Safety & Rollback:
+- **Pre-Tweak Snapshots**: Before any registry change is written, Synchro creates a timestamped `.reg` backup in `%APPDATA%\app.synchro.performance\backups\`.
+- **1-Click Rollback**: You can revert all applied tweaks at any time by clicking **"Откатить изменения"** on the Tweaks page.
+- **Audit Log**: Every applied setting and status code is recorded locally in `%APPDATA%\app.synchro.performance\tweaks_audit.log`.
+
+For a full list of all registry keys and commands executed by the application, see the [Tweaks Reference Documentation](docs/TWEAKS_REFERENCE.md).
 
 ---
 
-## 🚀 Getting Started
+## Security & Anti-Cheat Compatibility
+
+Synchro Nova is engineered to coexist safely with kernel-level and user-mode anti-cheat systems (Easy Anti-Cheat, BattlEye, Vanguard):
+
+- **No Memory Injection**: The application never reads or writes to the memory of other processes (`WriteProcessMemory`, `CreateRemoteThread`, etc. are not used).
+- **No Global Hooks**: No keyboard, mouse, or graphics API hooks (`SetWindowsHookEx`, DirectX hooks) are installed.
+- **Process Hardening**: Built with permanent Data Execution Prevention (DEP), Safe DLL Search Mode (`LOAD_LIBRARY_SEARCH_SYSTEM32` to prevent DLL hijacking), and Heap Corruption Termination.
+- **Network Isolation**: The application contains no analytics, telemetry, or remote command execution capabilities.
+
+Detailed technical threat models and architecture notes are documented in [SECURITY_NOTES.md](SECURITY_NOTES.md).
+
+---
+
+## Verifying Downloads & Checksums
+
+All official releases include a `SHA256SUMS.txt` file generated directly in GitHub Actions. To verify your downloaded binary:
+
+```powershell
+Get-FileHash -Path .\synchro.exe -Algorithm SHA256
+```
+
+Compare the output hash against `SHA256SUMS.txt`. For details on code signing and verifying binaries, see [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md).
+
+---
+
+## Building from Source
 
 ### Prerequisites
 
-Ensure you have the following installed on your Windows machine:
-1. **[Node.js](https://nodejs.org/)** (v18+ recommended)
-2. **[Rust & Cargo](https://www.rust-lang.org/tools/install)** (`x86_64-pc-windows-msvc` toolchain)
-3. **[Microsoft Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)**
+- [Node.js](https://nodejs.org/) (v18 or newer)
+- [Rust & Cargo](https://www.rust-lang.org/tools/install) (stable `x86_64-pc-windows-msvc` toolchain)
+- Microsoft Visual Studio C++ Build Tools
 
----
-
-### Installation
-
-Clone the repository and install frontend dependencies:
+### Build Steps
 
 ```bash
+# Clone the repository
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
+
+# Install dependencies
 npm install
-```
 
----
-
-### Development
-
-#### Run in Tauri Desktop Mode:
-```bash
+# Run in development mode
 npm run dev
+
+# Build standalone portable executable
+npm run build:portable
+# Output: src-tauri/target/release/synchro.exe
+
+# Build NSIS installer
+npm run build
+# Output: src-tauri/target/release/bundle/nsis/Synchro_0.1.0_x64-setup.exe
 ```
 
-#### Run as a Local Web Preview:
+---
+
+## Automated Testing
+
+Run the Rust backend test suite:
+
 ```bash
-npm run serve
+cargo test --manifest-path src-tauri/Cargo.toml
 ```
-Then open `http://127.0.0.1:65527` in your browser.
+
+Verify frontend syntax:
+
+```bash
+node --check src/app/main.js
+node --check scripts/app-server.mjs
+```
 
 ---
 
-## 📦 Building for Production
-
-### Quick Build (One-Click Batch)
-Double-click `Build Synchro.bat` to automatically build and optimize the portable executable.
-
-### Via NPM Scripts
-
-- **Full Release Build (with NSIS installer)**:
-  ```bash
-  npm run build
-  ```
-  Output: `src-tauri/target/release/bundle/nsis/Synchro_0.1.0_x64-setup.exe`
-
-- **Portable Executable Build**:
-  ```bash
-  npm run build:portable
-  ```
-  Output: `src-tauri/target/release/synchro.exe`
-
----
-
-## 🛡️ Security & Privacy
-
-Synchro Nova is engineered with strict defense-in-depth principles:
-- **No Telemetry**: No external telemetry, tracking, or network callbacks are enabled by default.
-- **Sandboxed IPC**: Tauri plugin permissions are explicitly minimized; native operations are allowlisted.
-- **Safety Boundaries**: Registry tweaks and system state changes enforce pre-execution validation and require explicit administrative elevation.
-
-For detailed security guidelines, refer to [`SECURITY_NOTES.md`](SECURITY_NOTES.md).
-
----
-
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).
