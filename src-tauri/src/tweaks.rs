@@ -212,6 +212,11 @@ static REGISTRY_BACKUP_TARGETS: &[RegistryTarget] = &[
         "StartupDelayInMSec",
     ),
     reg_text("HKCU", "Control Panel\\Desktop", "MenuShowDelay"),
+    reg_text(
+        "HKCU",
+        "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+        "DirectXUserGlobalSettings",
+    ),
 ];
 
 fn registry_backup_targets() -> &'static [RegistryTarget] {
@@ -304,7 +309,7 @@ fn restore_registry_value(_entry: &TweakRegistrySnapshot) -> Result<(), String> 
     Ok(())
 }
 
-fn is_admin_tweak(id: &str) -> bool {
+pub(crate) fn is_admin_tweak(id: &str) -> bool {
     matches!(
         id,
         "disable-gamedvr"
@@ -328,12 +333,14 @@ fn is_admin_tweak(id: &str) -> bool {
 
 fn apply_one(id: &str) -> TweakApplyResult {
     if is_admin_tweak(id) && !crate::admin::is_running_elevated() {
-        return failed(
-            id,
-            "Requires administrator privileges; restart Synchro as administrator to apply this tweak",
-        );
+        return TweakApplyResult {
+            id: id.to_string(),
+            status: "requiresAdmin".to_string(),
+            message: "Requires administrator privileges; restart Synchro as administrator to apply this tweak".to_string(),
+        };
     }
     match id {
+        "modern-flip-model-on" => apply_modern_flip_model(id),
         "game-mode-on" => apply_game_mode(id),
         "disable-gamedvr" => apply_disable_gamedvr(id),
         "disable-bg-recording" => apply_disable_bg_recording(id),
@@ -443,7 +450,7 @@ fn apply_one(id: &str) -> TweakApplyResult {
     }
 }
 
-fn known_tweak_ids() -> &'static [&'static str] {
+pub(crate) fn known_tweak_ids() -> &'static [&'static str] {
     &[
         "game-mode-on",
         "disable-gamedvr",
@@ -464,11 +471,18 @@ fn known_tweak_ids() -> &'static [&'static str] {
         "transparency-off",
         "startup-delay-off",
         "menu-show-delay-low",
+        "modern-flip-model-on",
     ]
 }
 
 fn is_tweak_applied(id: &str) -> bool {
     match id {
+        "modern-flip-model-on" => {
+            hkcu_string("Software\\Microsoft\\DirectX\\UserGpuPreferences", "DirectXUserGlobalSettings")
+                .as_deref()
+                .map(|v| v.contains("SwapEffectUpgradeCache=1"))
+                .unwrap_or(false)
+        }
         "game-mode-on" => hkcu_dword("Software\\Microsoft\\GameBar", "AutoGameModeEnabled") == Some(1),
         "disable-gamedvr" => {
             hkcu_dword("System\\GameConfigStore", "GameDVR_Enabled") == Some(0)
@@ -549,6 +563,21 @@ fn is_tweak_applied(id: &str) -> bool {
         "menu-show-delay-low" => hkcu_string("Control Panel\\Desktop", "MenuShowDelay").as_deref() == Some("100"),
         _ => false,
     }
+}
+
+fn apply_modern_flip_model(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [
+            set_hkcu_string(
+                "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+                "DirectXUserGlobalSettings",
+                "SwapEffectUpgradeCache=1;",
+            ),
+            set_hkcu_dword("Software\\Microsoft\\GameBar", "AllowAutoGameMode", 1),
+        ],
+        "Modern Flip Model optimization enabled for windowed & fullscreen games",
+    )
 }
 
 fn apply_game_mode(id: &str) -> TweakApplyResult {

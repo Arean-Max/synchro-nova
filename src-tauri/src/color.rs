@@ -1,14 +1,55 @@
 use crate::ColorSettings;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
+
+static ACTIVE_COLOR: Mutex<Option<ColorSettings>> = Mutex::new(None);
+static COLOR_GUARD_STARTED: OnceLock<()> = OnceLock::new();
+
+#[cfg(target_os = "windows")]
+pub(crate) fn start_color_guard() {
+    COLOR_GUARD_STARTED.get_or_init(|| {
+        std::thread::spawn(|| {
+            loop {
+                std::thread::sleep(std::time::Duration::from_millis(2500));
+                let color_opt = if let Ok(guard) = ACTIVE_COLOR.lock() {
+                    guard.clone()
+                } else {
+                    None
+                };
+                if let Some(color) = color_opt {
+                    if color.enabled {
+                        // Reassert gamma ramp in case an exclusive fullscreen game reset it
+                        let _ = apply_gamma_ramp(color.gamma);
+                    }
+                }
+            }
+        });
+    });
+}
+
+#[cfg(not(target_os = "windows"))]
+pub(crate) fn start_color_guard() {}
+
+fn set_active_color(color: Option<ColorSettings>) {
+    if let Ok(mut guard) = ACTIVE_COLOR.lock() {
+        *guard = color;
+    }
+}
 
 #[cfg(target_os = "windows")]
 pub(crate) fn apply_color_transform(color: &ColorSettings) -> Result<(), String> {
     if !color.enabled {
+        set_active_color(None);
         return reset_color_transform();
     }
 
-    apply_magnification_color(color)?;
-    apply_gamma_ramp(color.gamma)?;
+    set_active_color(Some(color.clone()));
+
+    // Try hardware LUT gamma ramp first (optimal for standard SDR monitors)
+    let ramp_success = apply_gamma_ramp(color.gamma).is_ok();
+
+    // If hardware gamma ramp was rejected (Windows Auto HDR, Advanced Color, or driver limitation),
+    // incorporate software gamma gain into the DWM Magnification matrix so calibration never fails.
+    apply_magnification_color(color, !ramp_success)?;
     Ok(())
 }
 
@@ -19,6 +60,7 @@ pub(crate) fn apply_color_transform(_color: &ColorSettings) -> Result<(), String
 
 #[cfg(target_os = "windows")]
 pub(crate) fn reset_color_transform() -> Result<(), String> {
+    set_active_color(None);
     let effect = crate::ffi::MagColorEffect {
         transform: identity_matrix(),
     };
@@ -36,8 +78,8 @@ pub(crate) fn reset_color_transform() -> Result<(), String> {
 }
 
 #[cfg(target_os = "windows")]
-fn apply_magnification_color(color: &ColorSettings) -> Result<(), String> {
-    let matrix = build_color_matrix(color);
+fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) -> Result<(), String> {
+    let matrix = build_color_matrix(color, include_matrix_gamma);
     let effect = crate::ffi::MagColorEffect { transform: matrix };
 
     static MAGNIFICATION_READY: OnceLock<Result<(), String>> = OnceLock::new();
@@ -92,7 +134,17 @@ fn apply_gamma_ramp(gamma_percent: f32) -> Result<(), String> {
     Ok(())
 }
 
-fn build_color_matrix(color: &ColorSettings) -> [f32; 25] {
+pub(crate) fn gamma_fallback_matrix(gamma_percent: f32) -> [f32; 25] {
+    let gamma = (gamma_percent / 100.0).clamp(0.5, 1.5);
+    let gain = gamma.powf(0.85);
+    let mut m = identity_matrix();
+    m[0] = gain;
+    m[6] = gain;
+    m[12] = gain;
+    m
+}
+
+fn build_color_matrix(color: &ColorSettings, include_matrix_gamma: bool) -> [f32; 25] {
     let saturation = color.saturation / 100.0;
     let contrast = color.contrast / 100.0;
     let hue = color.hue.to_radians();
@@ -101,6 +153,9 @@ fn build_color_matrix(color: &ColorSettings) -> [f32; 25] {
     matrix = multiply_matrix(matrix, saturation_matrix(saturation));
     matrix = multiply_matrix(matrix, hue_matrix(hue));
     matrix = multiply_matrix(matrix, contrast_matrix(contrast));
+    if include_matrix_gamma {
+        matrix = multiply_matrix(matrix, gamma_fallback_matrix(color.gamma));
+    }
     matrix
 }
 

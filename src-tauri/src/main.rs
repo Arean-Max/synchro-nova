@@ -157,12 +157,30 @@ mod prerequisites_check {
             }
         }
 
+        // Check local portable runtime directory next to executable
+        if let Ok(current_exe) = std::env::current_exe() {
+            if let Some(parent) = current_exe.parent() {
+                let local_wv = parent.join("webview2");
+                if has_webview2_in_dir(&local_wv) || local_wv.join("msedgewebview2.exe").exists() {
+                    std::env::set_var("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", &local_wv);
+                    return true;
+                }
+                let runtimes_wv = parent.join("runtimes").join("webview2");
+                if has_webview2_in_dir(&runtimes_wv) || runtimes_wv.join("msedgewebview2.exe").exists() {
+                    std::env::set_var("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", &runtimes_wv);
+                    return true;
+                }
+            }
+        }
+
         let mut candidate_dirs = Vec::new();
         if let Ok(prog_x86) = std::env::var("ProgramFiles(x86)") {
-            candidate_dirs.push(PathBuf::from(prog_x86).join("Microsoft\\EdgeWebView\\Application"));
+            candidate_dirs.push(PathBuf::from(&prog_x86).join("Microsoft\\EdgeWebView\\Application"));
+            candidate_dirs.push(PathBuf::from(&prog_x86).join("Microsoft\\Edge\\Application"));
         }
         if let Ok(prog) = std::env::var("ProgramFiles") {
-            candidate_dirs.push(PathBuf::from(prog).join("Microsoft\\EdgeWebView\\Application"));
+            candidate_dirs.push(PathBuf::from(&prog).join("Microsoft\\EdgeWebView\\Application"));
+            candidate_dirs.push(PathBuf::from(&prog).join("Microsoft\\Edge\\Application"));
         }
         if let Ok(local) = std::env::var("LOCALAPPDATA") {
             candidate_dirs.push(PathBuf::from(local).join("Microsoft\\EdgeWebView\\Application"));
@@ -170,6 +188,8 @@ mod prerequisites_check {
         if let Ok(drive) = std::env::var("SystemDrive") {
             candidate_dirs.push(PathBuf::from(format!("{drive}\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application")));
             candidate_dirs.push(PathBuf::from(format!("{drive}\\Program Files\\Microsoft\\EdgeWebView\\Application")));
+            candidate_dirs.push(PathBuf::from(format!("{drive}\\Program Files (x86)\\Microsoft\\Edge\\Application")));
+            candidate_dirs.push(PathBuf::from(format!("{drive}\\Program Files\\Microsoft\\Edge\\Application")));
         }
 
         for dir in candidate_dirs {
@@ -189,7 +209,8 @@ mod prerequisites_check {
             for entry in entries.flatten() {
                 if entry.path().is_dir() {
                     let exe = entry.path().join("msedgewebview2.exe");
-                    if exe.exists() {
+                    let edge = entry.path().join("msedge.exe");
+                    if exe.exists() || edge.exists() {
                         return true;
                     }
                 }

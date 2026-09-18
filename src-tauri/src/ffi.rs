@@ -266,6 +266,21 @@ pub mod winapi {
         pub fn GetSystemMetrics(index: i32) -> i32;
         pub fn GetDC(hwnd: *mut c_void) -> *mut c_void;
         pub fn ReleaseDC(hwnd: *mut c_void, hdc: *mut c_void) -> i32;
+        pub fn SendMessageTimeoutW(
+            hwnd: *mut c_void,
+            msg: u32,
+            w_param: usize,
+            l_param: isize,
+            flags: u32,
+            timeout: u32,
+            result: *mut usize,
+        ) -> isize;
+        pub fn keybd_event(
+            b_vk: u8,
+            b_scan: u8,
+            dw_flags: u32,
+            dw_extra_info: usize,
+        );
     }
 
     #[link(name = "Gdi32")]
@@ -554,6 +569,84 @@ pub fn runas_executable(_path: &Path) -> Result<(), String> {
 
 #[cfg(not(target_os = "windows"))]
 pub fn runas_executable_with_args(_path: &Path, _args: Option<&str>) -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+pub fn restart_explorer() -> Result<(), String> {
+    use std::process::Command;
+    use std::os::windows::process::CommandExt;
+
+    // 1. Terminate existing explorer instances cleanly
+    let mut kill_cmd = Command::new("taskkill");
+    kill_cmd.args(["/F", "/IM", "explorer.exe"]);
+    kill_cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
+    let _ = kill_cmd.status();
+
+    // 2. Wait a brief moment for handle cleanup
+    std::thread::sleep(std::time::Duration::from_millis(350));
+
+    // 3. Broadcast WM_SETTINGCHANGE before spawning new explorer
+    unsafe {
+        let env_w = wide_null("Environment");
+        let mut result: usize = 0;
+        let _ = winapi::SendMessageTimeoutW(
+            0xFFFF as *mut std::ffi::c_void, // HWND_BROADCAST
+            0x001A,                          // WM_SETTINGCHANGE
+            0,
+            env_w.as_ptr() as isize,
+            2,                               // SMTO_ABORTIFHUNG
+            1000,
+            &mut result,
+        );
+    }
+
+    // 4. Launch fresh explorer.exe from SystemRoot
+    let explorer_exe = if let Ok(root) = std::env::var("SystemRoot") {
+        std::path::PathBuf::from(root).join("explorer.exe")
+    } else {
+        std::path::PathBuf::from("explorer.exe")
+    };
+
+    let mut start_cmd = Command::new(&explorer_exe);
+    start_cmd.creation_flags(0x0800_0000);
+    start_cmd
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("Failed to restart explorer: {e}"))
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn restart_explorer() -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+pub fn restart_graphics_driver() -> Result<(), String> {
+    const VK_LWIN: u8 = 0x5B;
+    const VK_CONTROL: u8 = 0x11;
+    const VK_SHIFT: u8 = 0x10;
+    const VK_B: u8 = 0x42;
+    const KEYEVENTF_KEYUP: u32 = 0x0002;
+
+    unsafe {
+        winapi::keybd_event(VK_LWIN, 0, 0, 0);
+        winapi::keybd_event(VK_CONTROL, 0, 0, 0);
+        winapi::keybd_event(VK_SHIFT, 0, 0, 0);
+        winapi::keybd_event(VK_B, 0, 0, 0);
+
+        std::thread::sleep(std::time::Duration::from_millis(60));
+
+        winapi::keybd_event(VK_B, 0, KEYEVENTF_KEYUP, 0);
+        winapi::keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+        winapi::keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+        winapi::keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn restart_graphics_driver() -> Result<(), String> {
     Ok(())
 }
 

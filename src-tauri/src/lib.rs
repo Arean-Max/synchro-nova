@@ -695,6 +695,16 @@ fn restart_as_admin(app: AppHandle, state: State<'_, RuntimeState>) -> Result<()
     std::process::exit(0);
 }
 
+#[tauri::command]
+fn restart_explorer() -> Result<(), String> {
+    ffi::restart_explorer()
+}
+
+#[tauri::command]
+fn restart_graphics_driver() -> Result<(), String> {
+    ffi::restart_graphics_driver()
+}
+
 fn create_backup_file(
     dir: &Path,
     name: String,
@@ -1141,6 +1151,7 @@ pub fn run() {
             app.manage(runtime);
 
             let _ = apply_color_transform(&initial.color);
+            color::start_color_guard();
             let _ = set_autostart(app.handle(), initial.settings.autostart_windows);
             install_tray(app.handle())?;
 
@@ -1238,7 +1249,9 @@ pub fn run() {
             restart_as_admin,
             trim_memory,
             rollback_last_tweaks,
-            detect_installed_apps
+            detect_installed_apps,
+            restart_explorer,
+            restart_graphics_driver
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Synchro");
@@ -1415,5 +1428,28 @@ mod tests {
         assert!(!games::is_safe_game_url("file:///c:/windows/system32/calc.exe"));
         assert!(!games::is_safe_game_url("steam://rungameid/730 & whoami"));
         assert!(!games::is_safe_game_url("steam://rungameid/730\nmalicious"));
+    }
+
+    #[test]
+    fn test_modern_flip_model_and_admin_tweak_separation() {
+        assert!(!tweaks::is_admin_tweak("modern-flip-model-on"));
+        assert!(!tweaks::is_admin_tweak("pointer-precision-off"));
+        assert!(tweaks::is_admin_tweak("hags-on"));
+        assert!(tweaks::is_admin_tweak("disable-gamedvr"));
+        assert!(tweaks::known_tweak_ids().contains(&"modern-flip-model-on"));
+    }
+
+    #[test]
+    fn test_gamma_fallback_matrix_scaling() {
+        let m100 = color::gamma_fallback_matrix(100.0);
+        assert!((m100[0] - 1.0).abs() < 1e-4);
+        assert!((m100[6] - 1.0).abs() < 1e-4);
+        assert!((m100[12] - 1.0).abs() < 1e-4);
+
+        let m150 = color::gamma_fallback_matrix(150.0);
+        assert!(m150[0] > 1.0);
+
+        let m50 = color::gamma_fallback_matrix(50.0);
+        assert!(m50[0] < 1.0);
     }
 }
