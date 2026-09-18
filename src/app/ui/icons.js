@@ -35,7 +35,8 @@ const iconPaths = {
   minus: ['<path d="M5 12h14"></path>'],
   square: ['<rect x="6" y="6" width="12" height="12" rx="1"></rect>'],
   x: ['<path d="M18 6 6 18"></path>', '<path d="m6 6 12 12"></path>'],
-  sidebar: ['<rect x="3" y="3" width="18" height="18" rx="2"></rect>', '<path d="M9 3v18"></path>']
+  sidebar: ['<rect x="3" y="3" width="18" height="18" rx="2"></rect>', '<path d="M9 3v18"></path>'],
+  user: ['<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>', '<circle cx="12" cy="7" r="4"></circle>']
 };
 
 export function icon(name, extraClass) {

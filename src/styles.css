@@ -1717,6 +1717,37 @@ button.check-row {
   min-width: 0;
 }
 
+.tweak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.tweak-badge svg {
+  width: 10px;
+  height: 10px;
+}
+
+.tweak-badge.user {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.tweak-badge.admin {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+}
+
 .tweak-title {
   min-width: 80px;
   flex: 1 1 auto;
@@ -1785,20 +1816,103 @@ button.check-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 14px;
   padding: 0 2px;
+  flex-wrap: wrap;
 }
 
-.tweaks-count-tag span {
+.tweaks-filter-bar {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  gap: 4px;
+  padding: 3px;
   background: rgba(255, 255, 255, 0.03);
-  font-size: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.tweak-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 11.5px;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.tweak-filter-btn svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.8;
+}
+
+.tweak-filter-btn small {
+  display: inline-block;
+  opacity: 0.65;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.tweak-filter-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tweak-filter-btn.active {
+  color: #fff;
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(96, 165, 250, 0.4);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.15);
+}
+
+.tweaks-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tweak-action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.tweak-action-pill svg {
+  width: 13px;
+  height: 13px;
+  color: var(--text-tertiary);
+  transition: transform 260ms ease, color 160ms ease;
+}
+
+.tweak-action-pill:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text-primary);
+}
+
+.tweak-action-pill:hover svg {
+  color: #60a5fa;
+  transform: rotate(35deg);
+}
+
+.tweak-action-pill:active {
+  transform: scale(0.97);
 }
 
 .smart-tips-trigger {

@@ -22,11 +22,26 @@ function tweakTile(tweak, viewState, t) {
   const noteText = tweakNote(tweak, t) || t("noKnownConflict");
   const note = `<div class="tweak-note"><span>!</span><em>${escapeHtml(noteText)}</em></div>`;
 
-  return `<button class="tweak-tile ${selected ? "selected" : ""} ${installed ? "installed" : "not-installed"}" type="button" data-tweak-id="${escapeAttr(tweak.id)}" data-category="${category}"><div class="tweak-head"><span class="tweak-title">${escapeHtml(title)}</span></div><p>${escapeHtml(desc)}</p>${note}</button>`;
+  const isAdmin = Boolean(tweak.badges?.includes("ADMIN"));
+  const badgeLabel = isAdmin ? t("adminBadge") : t("userBadge");
+  const badgeTooltip = isAdmin ? t("adminBadgeTooltip") : t("userBadgeTooltip");
+  const badgeIcon = isAdmin ? icon("shield") : icon("user");
+  const badgeClass = isAdmin ? "admin" : "user";
+  const badge = `<span class="tweak-badge ${badgeClass}" title="${escapeAttr(badgeTooltip)}">${badgeIcon}<span>${escapeHtml(badgeLabel)}</span></span>`;
+
+  return `<button class="tweak-tile ${selected ? "selected" : ""} ${installed ? "installed" : "not-installed"}" type="button" data-tweak-id="${escapeAttr(tweak.id)}" data-category="${category}"><div class="tweak-head"><span class="tweak-title">${escapeHtml(title)}</span>${badge}</div><p>${escapeHtml(desc)}</p>${note}</button>`;
 }
 
 function tweakGroup(group, viewState, t) {
-  const tiles = group.tweaks.map((tweak) => tweakTile(tweak, viewState, t)).join("");
+  const filter = viewState.tweakFilter || "all";
+  let tweaks = group.tweaks;
+  if (filter === "user") {
+    tweaks = tweaks.filter((tw) => !tw.badges?.includes("ADMIN"));
+  } else if (filter === "admin") {
+    tweaks = tweaks.filter((tw) => tw.badges?.includes("ADMIN"));
+  }
+  if (!tweaks.length) return "";
+  const tiles = tweaks.map((tweak) => tweakTile(tweak, viewState, t)).join("");
   const title = tweakGroupTitle(group, t);
   return `<section class="card tweak-group"><h2 class="group-title">${icon(group.icon)}<span>${escapeHtml(title)}</span></h2><div class="tweak-grid">${tiles}</div></section>`;
 }
@@ -135,15 +150,27 @@ export function renderTweaksPage(viewState, t) {
   const groups = tweakCatalog.map((group) => tweakGroup(group, viewState, t)).join("");
   const applyLabel = viewState.applyingTweaks ? t("loading") : t("applySelected");
 
+  const filter = viewState.tweakFilter || "all";
+  const allList = allTweaks();
+  const allCount = allList.length;
+  const userCount = allList.filter((tw) => !tw.badges?.includes("ADMIN")).length;
+  const adminCount = allList.filter((tw) => tw.badges?.includes("ADMIN")).length;
+
   const topToolbar = [
     '<div class="tweaks-top-toolbar">',
-    '<div class="tweaks-count-tag">',
-    `<span>${viewState.installedTweaks?.size || 0} / ${allTweaks().length}</span>`,
-    '</div>',
-    `<button class="smart-tips-trigger" type="button" data-action="toggle-smart-tips" title="${escapeAttr(t("smartTipsTitle"))}" aria-label="${escapeAttr(t("smartTipsTitle"))}">`,
-    '<span class="smart-tips-badge-icon">?</span>',
-    `<span>${escapeHtml(t("smartTips"))}</span>`,
-    '</button>',
+    '  <div class="tweaks-filter-bar">',
+    `    <button class="tweak-filter-btn ${filter === "all" ? "active" : ""}" type="button" data-action="filter-tweaks-all"><span>${escapeHtml(t("tweakFilterAll"))}</span><small>(${allCount})</small></button>`,
+    `    <button class="tweak-filter-btn ${filter === "user" ? "active" : ""}" type="button" data-action="filter-tweaks-user">${icon("user")}<span>${escapeHtml(t("tweakFilterUser"))}</span><small>(${userCount})</small></button>`,
+    `    <button class="tweak-filter-btn ${filter === "admin" ? "active" : ""}" type="button" data-action="filter-tweaks-admin">${icon("shield")}<span>${escapeHtml(t("tweakFilterAdmin"))}</span><small>(${adminCount})</small></button>`,
+    '  </div>',
+    '  <div class="tweaks-toolbar-actions">',
+    `    <button class="tweak-action-pill" type="button" data-action="restart-explorer" title="${escapeAttr(t("restartExplorer"))}">${icon("rotate")}<span>${escapeHtml(t("restartExplorer"))}</span></button>`,
+    `    <button class="tweak-action-pill" type="button" data-action="restart-graphics-driver" title="${escapeAttr(t("restartGpuDriver"))}">${icon("monitor")}<span>${escapeHtml(t("restartGpuDriver"))}</span></button>`,
+    `    <button class="smart-tips-trigger" type="button" data-action="toggle-smart-tips" title="${escapeAttr(t("smartTipsTitle"))}" aria-label="${escapeAttr(t("smartTipsTitle"))}">`,
+    '      <span class="smart-tips-badge-icon">?</span>',
+    `      <span>${escapeHtml(t("smartTips"))}</span>`,
+    '    </button>',
+    '  </div>',
     '</div>'
   ].join("");
 

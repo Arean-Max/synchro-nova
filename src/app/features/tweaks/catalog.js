@@ -35,6 +35,7 @@ export const tweakCatalog = [
     title: "GPU & Display",
     tweaks: [
       { id: "hags-on", title: "Hardware GPU scheduling", description: "Enables Windows Hardware-accelerated GPU Scheduling when the driver supports it.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
+      { id: "modern-flip-model-on", title: "Modern Flip Model upgrade", description: "Forces Modern Flip presentation model for windowed and borderless games to prevent gamma resets and reduce latency.", badges: ["SAFE", "VERIFIED"] },
       { id: "shader-cache-on", title: "Keep shader cache", description: "Keeps driver shader caches enabled to reduce repeat stutter after first run.", badges: ["SAFE", "VERIFIED"] },
       { id: "mpo-disable", title: "Disable MPO", description: "Disables Multiplane Overlay for systems with flicker, black screens or overlay stutter.", badges: ["ADMIN", "REBOOT", "ADVANCED", "EXPERIMENTAL"] },
       { id: "display-refresh-verify", title: "Refresh rate verify", description: "Checks that Windows is using the monitor's intended refresh rate.", badges: ["SAFE"] },
@@ -268,6 +269,12 @@ export const tweakAppImpacts = {
     appName: "OBS / NVIDIA GPU",
     impactEn: "Hardware-accelerated GPU Scheduling requires PC reboot to take full effect.",
     impactRu: "Аппаратное планирование HAGS требует перезагрузки ПК для вступления в силу."
+  },
+  "modern-flip-model-on": {
+    appId: "windows_shell",
+    appName: "DirectX / Modern Flip Model",
+    impactEn: "Upgrades legacy DX9/DX11 presentation to Modern Flip Model; prevents gamma and color correction reset in borderless games.",
+    impactRu: "Переводит игры DX9/DX11 на Modern Flip Model; устраняет задержку DWM и защищает от сброса калибровки цвета в играх."
   }
 };
 

@@ -37,7 +37,8 @@ export const viewState = {
   detectedApps: [],
   smartTipsOpen: false,
   showAdminPrompt: false,
-  dismissedAdminPrompt: false
+  dismissedAdminPrompt: false,
+  tweakFilter: "all"
 };
 
 

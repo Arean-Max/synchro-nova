@@ -24,6 +24,17 @@ export const tweakTranslations = {
     restartAsAdmin: "Restart as Administrator",
     continueWithoutAdmin: "Continue as Standard User",
 
+    tweakFilterAll: "All",
+    tweakFilterUser: "User (No Admin)",
+    tweakFilterAdmin: "System (Admin)",
+    restartExplorer: "Restart Explorer",
+    restartGpuDriver: "Restart GPU Driver",
+    statusRequiresAdmin: "Requires Admin",
+    userBadge: "User",
+    adminBadge: "Admin",
+    userBadgeTooltip: "Safe user-level tweak (no administrator rights needed)",
+    adminBadgeTooltip: "Requires administrator privileges to apply system policies",
+
     // Capture
     tweak_game_mode_on_title: "Enable Game Mode",
     tweak_game_mode_on_desc: "Enables Windows Game Mode hints for active games.",
@@ -60,6 +71,9 @@ export const tweakTranslations = {
     // GPU & Display
     tweak_hags_on_title: "Hardware GPU scheduling",
     tweak_hags_on_desc: "Enables Windows Hardware-accelerated GPU Scheduling (HAGS) for lower frame latency.",
+    tweak_modern_flip_model_on_title: "Modern Flip Model upgrade",
+    tweak_modern_flip_model_on_desc: "Forces Modern Flip presentation model for windowed and borderless games to prevent gamma resets and reduce latency.",
+    tweak_modern_flip_model_on_note: "Allows DWM to bypass composition for games without exclusive fullscreen bugs.",
     tweak_shader_cache_on_title: "Keep shader cache",
     tweak_shader_cache_on_desc: "Keeps GPU driver shader caches enabled to eliminate repeat compilation stutters.",
     tweak_mpo_disable_title: "Disable MPO (Multiplane Overlay)",
@@ -205,6 +219,17 @@ export const tweakTranslations = {
     restartAsAdmin: "Перезапустить как администратор",
     continueWithoutAdmin: "Продолжить без прав",
 
+    tweakFilterAll: "Все",
+    tweakFilterUser: "Без прав админа",
+    tweakFilterAdmin: "Системные (Админ)",
+    restartExplorer: "Перезапуск Проводника",
+    restartGpuDriver: "Перезапуск видеодрайвера",
+    statusRequiresAdmin: "Требуются права админа",
+    userBadge: "User",
+    adminBadge: "Admin",
+    userBadgeTooltip: "Пользовательский твик (права администратора не требуются)",
+    adminBadgeTooltip: "Требуются права администратора для изменения системных параметров",
+
     // Capture
     tweak_game_mode_on_title: "Включить игровой режим",
     tweak_game_mode_on_desc: "Активирует оптимизации Windows Game Mode для активных игр.",
@@ -241,6 +266,9 @@ export const tweakTranslations = {
     // GPU & Display
     tweak_hags_on_title: "Аппаратное планирование GPU (HAGS)",
     tweak_hags_on_desc: "Включает планирование GPU с аппаратным ускорением для снижения задержки кадров.",
+    tweak_modern_flip_model_on_title: "Апгрейд до Modern Flip Model",
+    tweak_modern_flip_model_on_desc: "Переводит оконные и полноэкранные игры на Modern Flip Model для защиты от сброса гаммы и снижения задержки ввода.",
+    tweak_modern_flip_model_on_note: "Позволяет DWM выводить кадры в обход композитора без сброса калибровки цвета.",
     tweak_shader_cache_on_title: "Сохранять кэш шейдеров",
     tweak_shader_cache_on_desc: "Оставляет включённым кэш шейдеров драйвера для устранения повторных статтеров.",
     tweak_mpo_disable_title: "Отключить MPO (Multiplane Overlay)",

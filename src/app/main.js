@@ -312,6 +312,36 @@ async function handleAction(action) {
     viewState.dismissedAdminPrompt = true;
     return updateMain();
   }
+  if (action === "filter-tweaks-all") {
+    viewState.tweakFilter = "all";
+    return updateMain();
+  }
+  if (action === "filter-tweaks-user") {
+    viewState.tweakFilter = "user";
+    return updateMain();
+  }
+  if (action === "filter-tweaks-admin") {
+    viewState.tweakFilter = "admin";
+    return updateMain();
+  }
+  if (action === "restart-explorer") {
+    const res = await invokeCommand("restart_explorer");
+    viewState.tweakResults = [{
+      id: "explorer",
+      status: res?.success ? "applied" : "skipped",
+      message: res?.message || (res?.success ? "Explorer restarted" : "Failed to restart Explorer")
+    }];
+    return updateMain();
+  }
+  if (action === "restart-graphics-driver") {
+    const res = await invokeCommand("restart_graphics_driver");
+    viewState.tweakResults = [{
+      id: "gpu-driver",
+      status: res?.success ? "applied" : "skipped",
+      message: res?.message || (res?.success ? "Graphics driver restart signal sent (Win+Ctrl+Shift+B)" : "Failed to restart GPU driver")
+    }];
+    return updateMain();
+  }
   if (action === "apply-tweaks") {
     if (viewState.applyingTweaks) return null;
     const ids = Array.from(viewState.selectedTweaks);
@@ -323,6 +353,9 @@ async function handleAction(action) {
     updateMain();
     const results = await invokeCommand("apply_tweaks", { ids });
     viewState.tweakResults = Array.isArray(results) ? results : [];
+    if (results?.some((r) => r.status === "requiresAdmin") && !appState.isAdmin) {
+      viewState.showAdminPrompt = true;
+    }
     await Promise.all([loadTweakStatuses(), loadLists()]);
     viewState.applyingTweaks = false;
     return updateMain();
