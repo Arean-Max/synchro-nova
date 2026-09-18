@@ -1,4 +1,5 @@
 import { escapeAttr, escapeHtml } from "../../core/html.js";
+import { lang } from "../../core/state.js";
 import { button } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
 import {
@@ -44,7 +45,7 @@ function tweakResults(viewState, t) {
 }
 
 function renderSmartTipsModal(viewState, t) {
-  const isRu = (document.documentElement.lang || "ru") === "ru";
+  const isRu = lang() === "ru";
   const apps = Array.isArray(viewState.detectedApps) ? viewState.detectedApps : [];
   const appMap = new Map(apps.map((a) => [a.id, a.installed]));
 

@@ -125,6 +125,7 @@ function syncTweakTile(id) {
   const checked = selected || installed;
   tile.classList.toggle("selected", selected);
   tile.classList.toggle("installed", installed);
+  tile.classList.toggle("not-installed", !installed);
   tile.setAttribute("aria-pressed", selected ? "true" : "false");
   const box = tile.querySelector(".box");
   if (box) {
@@ -219,7 +220,7 @@ async function refreshLiveCharacteristics() {
   characteristicsBusy = true;
   const info = await invokeCommand("get_system_live_metrics");
   characteristicsBusy = false;
-  if (mergeCharacteristics(info) && activePage === "characteristics") updateCharacteristicsLiveDom(viewState);
+  if (mergeCharacteristics(info) && activePage === "characteristics") updateCharacteristicsLiveDom(viewState, t);
 }
 
 function syncCharacteristicsMonitor() {

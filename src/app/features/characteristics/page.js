@@ -283,7 +283,7 @@ export function renderCharacteristicsPage(viewState, t) {
   return `<div class="characteristics-page"><div class="characteristics-actions">${button(t("refresh"), "rotate", "outline", "refresh-characteristics")}</div><div class="character-summary">${metrics}</div><div class="characteristics-dashboard"><div class="characteristics-grid">${panels}</div>${driverPanel(info, t, viewState.showAllDrivers)}</div></div>`;
 }
 
-export function updateCharacteristicsLiveDom(viewState) {
+export function updateCharacteristicsLiveDom(viewState, t) {
   const info = viewState.system || {};
   const cpuUsage = clamp(numberValue(info.cpuUsagePercent));
   const gpuUsage = clamp(numberValue(info.gpuUsagePercent));
@@ -293,6 +293,7 @@ export function updateCharacteristicsLiveDom(viewState) {
   const availablePercent = total ? (available / total) * 100 : 0;
   const availableLabel = gb(info.ramAvailableGb || info.ramAvailable);
   const vramPercent = clamp(numberValue(info.vramUsedPercent));
+  const usageLabel = t ? t("cpuUsageLabel") : "usage";
   const setText = (key, value) => {
     document.querySelectorAll(`[data-live="${key}"]`).forEach((element) => {
       element.textContent = value;
@@ -303,12 +304,12 @@ export function updateCharacteristicsLiveDom(viewState) {
       element.style.width = `${clamp(value)}%`;
     });
   };
-  setText("cpu-usage", `${cpuUsage}% usage`);
+  setText("cpu-usage", `${cpuUsage}% ${usageLabel}`);
   const cpuLine = document.querySelector(".cpu-graph polyline");
   if (cpuLine) cpuLine.setAttribute("points", cpuGraphPoints(viewState.cpuHistory));
   setText("gpu-usage", `${gpuUsage}%`);
   setFill("gpu-usage", gpuUsage);
-  setText("vram-total", vramTotalLabel(info));
+  setText("vram-total", vramTotalLabel(info, t));
   setFill("vram-total", vramPercent);
   setText("ram-percent", `${ramPercent}%`);
   setText("ram-available", availableLabel);

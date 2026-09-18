@@ -1,10 +1,12 @@
 import { escapeAttr, escapeHtml } from "../../core/html.js";
+import { lang } from "../../core/state.js";
 import { button } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
 
-export function formatDate(seconds) {
+export function formatDate(seconds, currentLang) {
   if (!seconds) return "-";
-  return new Intl.DateTimeFormat("ru-RU", {
+  const locale = (currentLang || lang()) === "en" ? "en-US" : "ru-RU";
+  return new Intl.DateTimeFormat(locale, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric"
