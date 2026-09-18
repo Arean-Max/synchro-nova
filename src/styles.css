@@ -1420,9 +1420,16 @@ button.check-row {
   border-radius: 8px;
 }
 
-.global-color-grid-compact {
-  grid-template-columns: minmax(0, 560px);
-  max-width: 600px;
+.global-color-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.global-color-grid > .stack,
+.global-color-grid > .card {
+  min-height: 0;
 }
 
 .btn:disabled {
@@ -1581,11 +1588,13 @@ button.check-row {
 }
 
 .color-template-save .text-input {
-  flex-basis: 180px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .color-template-save .btn {
   flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .tweaks-page {

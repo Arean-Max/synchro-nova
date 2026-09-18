@@ -309,12 +309,12 @@ export function renderColorPage(appState, viewState, t) {
   const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState, t)).join("");
   return [
     '<div class="global-color-page">',
-    '<div class="global-color-grid global-color-grid-compact">',
+    '<div class="global-color-grid">',
     '<div class="stack">',
     card(t("controls"), controls),
-    card(t("templates"), renderTemplates(viewState, t)),
     `<div class="actions color-actions-single">${button(t("reset"), "rotate", "outline", "reset-color")}</div>`,
     "</div>",
+    card(t("templates"), renderTemplates(viewState, t), "color-templates-card"),
     "</div>",
     "</div>"
   ].join("");
