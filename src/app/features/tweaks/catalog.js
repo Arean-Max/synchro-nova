@@ -9,6 +9,7 @@ export const tweakCatalog = [
       { id: "disable-gamedvr", title: "Disable GameDVR", description: "Disables Windows GameDVR capture policy and user capture toggles.", badges: ["ADMIN", "VERIFIED"], note: "Xbox Game Bar recording and Win+Alt+R capture can stop working." },
       { id: "disable-bg-recording", title: "Disable background recording", description: "Stops passive clip recording for the current Windows user.", badges: ["SAFE", "VERIFIED"], note: "Background clips and instant replay in Xbox Game Bar will be unavailable." },
       { id: "gamebar-startup-off", title: "Game Bar startup off", description: "Keeps Game Bar startup prompts and controller launch hooks quiet.", badges: ["SAFE"], note: "The Xbox button may stop opening Game Bar automatically." },
+      { id: "gamedvr-fse-mode", title: "DirectX FSE mode", description: "Enforces true Full Screen Exclusive presentation for games to minimize latency.", badges: ["SAFE", "VERIFIED"] },
       { id: "fullscreen-latency", title: "Fullscreen latency profile", description: "Advisory profile for games that expose their own fullscreen latency path.", badges: ["EXPERIMENTAL"] },
       { id: "overlay-audit", title: "Overlay audit", description: "Flags capture and chat overlays for manual benchmark review.", badges: ["SAFE"] }
     ]
@@ -21,6 +22,7 @@ export const tweakCatalog = [
     tweaks: [
       { id: "mmcss-games-priority", title: "MMCSS game priority", description: "Raises the Games multimedia task priority hints used by MMCSS.", badges: ["ADMIN", "REBOOT", "ADVANCED"] },
       { id: "system-responsiveness-10", title: "Minimal system reserve", description: "Reduces the MMCSS low-priority CPU reserve from the default desktop profile.", badges: ["ADMIN", "REBOOT", "ADVANCED"] },
+      { id: "wer-off", title: "Disable Error Reporting", description: "Disables Windows Error Reporting (WerFault) to prevent crash lag spikes.", badges: ["SAFE", "VERIFIED"] },
       { id: "power-plan-high", title: "High performance plan", description: "Switches to the supported Windows high performance power scheme.", badges: ["VERIFIED"] },
       { id: "ultimate-performance-plan", title: "Ultimate performance plan", description: "Attempts to enable the hidden Windows Ultimate Performance scheme.", badges: ["EXPERIMENTAL"] },
       { id: "power-throttle-audit", title: "Power throttling audit", description: "Reviews throttling candidates before disabling anything globally.", badges: ["SAFE"] },
@@ -50,6 +52,7 @@ export const tweakCatalog = [
     title: "Input & Smoothness",
     tweaks: [
       { id: "pointer-precision-off", title: "Disable pointer precision", description: "Turns off Windows mouse acceleration for consistent input feel.", badges: ["SAFE", "VERIFIED"] },
+      { id: "sticky-keys-off", title: "Disable Sticky Keys", description: "Disables Shift x5 Sticky Keys and Filter Keys shortcut popups during gaming.", badges: ["SAFE", "VERIFIED"] },
       { id: "usb-selective-suspend-off", title: "USB selective suspend off", description: "Prevents USB devices from entering selective suspend on the current power plan.", badges: ["ADVANCED"] },
       { id: "visual-effects-performance", title: "Visual effects performance", description: "Switches Explorer visual effects to the Windows performance profile.", badges: ["SAFE", "VERIFIED"], note: "Some window animations and visual polish will be reduced." },
       { id: "transparency-off", title: "Transparency off", description: "Disables Windows transparency effects for a lighter desktop compositor path.", badges: ["SAFE", "VERIFIED"], note: "Acrylic and translucent shell surfaces will become solid." },
@@ -69,6 +72,7 @@ export const tweakCatalog = [
     tweaks: [
       { id: "advertising-id-off", title: "Advertising ID off", description: "Disables the Windows per-user advertising identifier.", badges: ["PRIVACY", "SAFE"] },
       { id: "tailored-experiences-off", title: "Tailored experiences off", description: "Turns off recommendations based on diagnostic data.", badges: ["PRIVACY", "SAFE"] },
+      { id: "start-bing-search-off", title: "Disable Start web search", description: "Disables Bing web search in Start menu for instant, offline local search.", badges: ["SAFE", "PRIVACY", "VERIFIED"] },
       { id: "activity-history-off", title: "Activity history off", description: "Stops activity history feed, publishing and upload policies.", badges: ["ADMIN", "PRIVACY"] },
       { id: "delivery-optimization-lan", title: "Delivery Optimization LAN only", description: "Prevents update sharing outside the local network policy.", badges: ["ADMIN", "PRIVACY"] },
       { id: "clipboard-cloud-off", title: "Cloud clipboard off", description: "Keeps clipboard history and sync disabled for sensitive systems.", badges: ["PRIVACY", "SAFE"] },
@@ -275,6 +279,31 @@ export const tweakAppImpacts = {
     appName: "DirectX / Modern Flip Model",
     impactEn: "Upgrades legacy DX9/DX11 presentation to Modern Flip Model; prevents gamma and color correction reset in borderless games.",
     impactRu: "Переводит игры DX9/DX11 на Modern Flip Model; устраняет задержку DWM и защищает от сброса калибровки цвета в играх."
+  },
+  "gamedvr-fse-mode": {
+    appId: "xbox_game_bar",
+    appName: "DirectX / FSE Mode",
+    impactEn: "DirectX Full Screen Exclusive mode prioritizes raw frame delivery directly to display output.",
+    impactRu: "Режим DirectX FSE отдает кадровый буфер напрямую дисплею в обход композитора рабочего стола."
+  },
+  "wer-off": {
+    appId: "windows_shell",
+    appName: "Windows Error Reporting (WER)",
+    impactEn: "WerFault error reporting disabled: crashes will exit cleanly without sending crash reports to Microsoft.",
+    impactRu: "Служба WerFault отключена: при сбоях приложения не зависают на отправку отчётов в Microsoft."
+  },
+  "sticky-keys-off": {
+    appId: "accessibility",
+    appName: "Accessibility / Залипание клавиш",
+    impactEn: "Shift key 5x press popup disabled; keyboard input will never trigger accessibility dialogs during games.",
+    impactRu: "Диалоговые окна залипания клавиш отключены: 5 нажатий Shift подряд не свернут полноэкранную игру."
+  },
+  "start-bing-search-off": {
+    appId: "windows_search",
+    appName: "Start Menu / Поиск Bing",
+    impactEn: "Start menu web search disabled: queries are resolved locally with zero web latency.",
+    impactRu: "Поиск в меню Пуск работает полностью автономно и локально, не отправляя запросы на сервера Bing."
   }
 };
+
 

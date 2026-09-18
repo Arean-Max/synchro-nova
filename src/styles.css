@@ -1657,10 +1657,10 @@ button.check-row {
   flex-direction: column;
   width: 100%;
   color: var(--text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-bottom: 3px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-bottom: 3.5px solid rgba(255, 255, 255, 0.5);
   border-radius: 8px 8px 4px 4px;
-  background: rgba(31, 31, 31, 0.75);
+  background: rgba(30, 30, 32, 0.85);
   text-align: left;
   cursor: pointer;
   backdrop-filter: blur(4px);
@@ -1670,48 +1670,49 @@ button.check-row {
 /* Inactive / unapplied tweak tile: noticeably smaller than active */
 .tweak-tile.not-installed:not(.selected),
 .tweak-tile:not(.installed):not(.selected) {
-  min-height: 114px;
+  min-height: 112px;
   padding: 10px 13px 10px;
-  transform: scale(0.94);
+  transform: scale(0.93);
   opacity: 0.82;
   z-index: 1;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.38);
 }
 
 .tweak-tile.not-installed:not(.selected):hover,
 .tweak-tile:not(.installed):not(.selected):hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.24);
-  opacity: 0.95;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.7);
+  opacity: 0.96;
   transform: scale(0.96);
 }
 
 /* Active tweak tile (installed in Windows or selected): noticeably bigger than others */
 .tweak-tile.installed,
 .tweak-tile.selected {
-  min-height: 140px;
-  padding: 14px 16px 13px;
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  background: rgba(34, 34, 38, 0.92);
-  transform: scale(1.03);
+  min-height: 144px;
+  padding: 14px 16px 14px;
+  border: 2px solid #ffffff;
+  background: rgba(36, 36, 42, 0.96);
+  transform: scale(1.07);
   opacity: 1;
-  z-index: 3;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  z-index: 4;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.18), 0 8px 28px rgba(0, 0, 0, 0.7);
 }
 
 .tweak-tile.installed:hover,
 .tweak-tile.selected:hover {
-  transform: scale(1.045);
-  border-color: rgba(255, 255, 255, 0.45);
-  background: rgba(40, 40, 46, 0.96);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
+  transform: scale(1.085);
+  border-color: #ffffff;
+  background: rgba(44, 44, 52, 0.98);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.28), 0 10px 32px rgba(0, 0, 0, 0.8);
 }
 
 .tweak-tile.selected {
   background:
-    linear-gradient(180deg, rgba(59, 130, 246, 0.16), rgba(59, 130, 246, 0.04)),
-    rgba(30, 30, 36, 0.92);
-  border-color: rgba(96, 165, 250, 0.55);
+    linear-gradient(180deg, rgba(59, 130, 246, 0.22), rgba(59, 130, 246, 0.06)),
+    rgba(32, 32, 40, 0.96);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.35), 0 8px 28px rgba(0, 0, 0, 0.7);
 }
 
 /* Category bottom borders */

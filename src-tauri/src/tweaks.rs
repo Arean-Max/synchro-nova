@@ -217,6 +217,14 @@ static REGISTRY_BACKUP_TARGETS: &[RegistryTarget] = &[
         "Software\\Microsoft\\DirectX\\UserGpuPreferences",
         "DirectXUserGlobalSettings",
     ),
+    reg_text("HKCU", "Control Panel\\Accessibility\\StickyKeys", "Flags"),
+    reg_text("HKCU", "Control Panel\\Accessibility\\Keyboard Response", "Flags"),
+    reg_text("HKCU", "Control Panel\\Accessibility\\ToggleKeys", "Flags"),
+    reg_dword("HKCU", "Software\\Microsoft\\Windows\\CurrentVersion\\Search", "BingSearchEnabled"),
+    reg_dword("HKCU", "Software\\Microsoft\\Windows\\CurrentVersion\\Search", "DisableSearchBoxSuggestions"),
+    reg_dword("HKCU", "Software\\Microsoft\\Windows\\Windows Error Reporting", "Disabled"),
+    reg_dword("HKCU", "System\\GameConfigStore", "GameDVR_FSEBehaviorMode"),
+    reg_dword("HKCU", "System\\GameConfigStore", "GameDVR_HonorUserFSEBehaviorMode"),
 ];
 
 fn registry_backup_targets() -> &'static [RegistryTarget] {
@@ -341,6 +349,10 @@ fn apply_one(id: &str) -> TweakApplyResult {
     }
     match id {
         "modern-flip-model-on" => apply_modern_flip_model(id),
+        "sticky-keys-off" => apply_sticky_keys_off(id),
+        "start-bing-search-off" => apply_start_bing_search_off(id),
+        "wer-off" => apply_wer_off(id),
+        "gamedvr-fse-mode" => apply_gamedvr_fse_mode(id),
         "game-mode-on" => apply_game_mode(id),
         "disable-gamedvr" => apply_disable_gamedvr(id),
         "disable-bg-recording" => apply_disable_bg_recording(id),
@@ -472,11 +484,28 @@ pub(crate) fn known_tweak_ids() -> &'static [&'static str] {
         "startup-delay-off",
         "menu-show-delay-low",
         "modern-flip-model-on",
+        "sticky-keys-off",
+        "start-bing-search-off",
+        "wer-off",
+        "gamedvr-fse-mode",
     ]
 }
 
 fn is_tweak_applied(id: &str) -> bool {
     match id {
+        "sticky-keys-off" => {
+            hkcu_string("Control Panel\\Accessibility\\StickyKeys", "Flags").as_deref() == Some("506")
+        }
+        "start-bing-search-off" => {
+            hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "BingSearchEnabled") == Some(0)
+                && hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "DisableSearchBoxSuggestions") == Some(1)
+        }
+        "wer-off" => {
+            hkcu_dword("Software\\Microsoft\\Windows\\Windows Error Reporting", "Disabled") == Some(1)
+        }
+        "gamedvr-fse-mode" => {
+            hkcu_dword("System\\GameConfigStore", "GameDVR_FSEBehaviorMode") == Some(2)
+        }
         "modern-flip-model-on" => {
             hkcu_string("Software\\Microsoft\\DirectX\\UserGpuPreferences", "DirectXUserGlobalSettings")
                 .as_deref()
@@ -577,6 +606,52 @@ fn apply_modern_flip_model(id: &str) -> TweakApplyResult {
             set_hkcu_dword("Software\\Microsoft\\GameBar", "AllowAutoGameMode", 1),
         ],
         "Modern Flip Model optimization enabled for windowed & fullscreen games",
+    )
+}
+
+fn apply_sticky_keys_off(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [
+            set_hkcu_string("Control Panel\\Accessibility\\StickyKeys", "Flags", "506"),
+            set_hkcu_string("Control Panel\\Accessibility\\Keyboard Response", "Flags", "98"),
+            set_hkcu_string("Control Panel\\Accessibility\\ToggleKeys", "Flags", "58"),
+        ],
+        "Sticky Keys and accessibility gaming popups disabled",
+    )
+}
+
+fn apply_start_bing_search_off(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [
+            set_hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "BingSearchEnabled", 0),
+            set_hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "DisableSearchBoxSuggestions", 1),
+        ],
+        "Start menu web search and Bing suggestions disabled for fast local search",
+    )
+}
+
+fn apply_wer_off(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [
+            set_hkcu_dword("Software\\Microsoft\\Windows\\Windows Error Reporting", "Disabled", 1),
+            set_hkcu_dword("Software\\Microsoft\\Windows\\Windows Error Reporting", "DontShowUI", 1),
+        ],
+        "Windows Error Reporting (WerFault) disabled to eliminate crash lag spikes",
+    )
+}
+
+fn apply_gamedvr_fse_mode(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [
+            set_hkcu_dword("System\\GameConfigStore", "GameDVR_FSEBehaviorMode", 2),
+            set_hkcu_dword("System\\GameConfigStore", "GameDVR_HonorUserFSEBehaviorMode", 1),
+            set_hkcu_dword("System\\GameConfigStore", "GameDVR_DXGIHonorFSEWindowsCompatible", 1),
+        ],
+        "DirectX Full Screen Exclusive (FSE) optimization mode enabled",
     )
 }
 
