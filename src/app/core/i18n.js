@@ -1,3 +1,5 @@
+import { tweakTranslations } from "../features/tweaks/i18n.js";
+
 const dictionaries = {
   en: {
     appSubtitle: "all in one.",
@@ -140,7 +142,23 @@ const dictionaries = {
     security: "Security",
     securityValue: "DEP & ASLR Enforced",
     openBackups: "Open Backups Folder",
-    openConfigs: "Open Configs Folder"
+    openConfigs: "Open Configs Folder",
+    cpuUsageLabel: "usage",
+    logicalCores: "Logical Cores",
+    notReported: "Not reported",
+    adaptiveSync: "Adaptive Sync indicator",
+    statusUnavailable: "Status unavailable",
+    resolution: "Resolution",
+    refreshRate: "Refresh rate",
+    driverProblem: "Problem",
+    driverManual: "Manual",
+    driverDetected: "Detected",
+    driverGroupGraphics: "Graphics Drivers",
+    driverGroupChipset: "Chipset & Processor",
+    driverGroupAudio: "Audio Drivers",
+    driverGroupNetwork: "Network & Storage",
+    driverGroupOther: "Other Drivers",
+    ...tweakTranslations.en
   },
   ru: {
     appSubtitle: "all in one.",
@@ -283,7 +301,23 @@ const dictionaries = {
     security: "Безопасность",
     securityValue: "DEP и ASLR включены",
     openBackups: "Открыть папку бэкапов",
-    openConfigs: "Открыть папку конфигов"
+    openConfigs: "Открыть папку конфигов",
+    cpuUsageLabel: "нагрузка",
+    logicalCores: "Логических ядер",
+    notReported: "Не указано",
+    adaptiveSync: "Индикатор Adaptive Sync",
+    statusUnavailable: "Статус недоступен",
+    resolution: "Разрешение",
+    refreshRate: "Частота обновления",
+    driverProblem: "Ошибка",
+    driverManual: "Вручную",
+    driverDetected: "Активен",
+    driverGroupGraphics: "Видеодрайверы",
+    driverGroupChipset: "Чипсет и процессор",
+    driverGroupAudio: "Аудиодрайверы",
+    driverGroupNetwork: "Сеть и накопители",
+    driverGroupOther: "Прочие драйверы",
+    ...tweakTranslations.ru
   }
 };
 
