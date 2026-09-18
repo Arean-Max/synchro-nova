@@ -22,14 +22,7 @@ function tweakTile(tweak, viewState, t) {
   const noteText = tweakNote(tweak, t) || t("noKnownConflict");
   const note = `<div class="tweak-note"><span>!</span><em>${escapeHtml(noteText)}</em></div>`;
 
-  const isAdmin = Boolean(tweak.badges?.includes("ADMIN"));
-  const badgeLabel = isAdmin ? t("adminBadge") : t("userBadge");
-  const badgeTooltip = isAdmin ? t("adminBadgeTooltip") : t("userBadgeTooltip");
-  const badgeIcon = isAdmin ? icon("shield") : icon("user");
-  const badgeClass = isAdmin ? "admin" : "user";
-  const badge = `<span class="tweak-badge ${badgeClass}" title="${escapeAttr(badgeTooltip)}">${badgeIcon}<span>${escapeHtml(badgeLabel)}</span></span>`;
-
-  return `<button class="tweak-tile ${selected ? "selected" : ""} ${installed ? "installed" : "not-installed"}" type="button" data-tweak-id="${escapeAttr(tweak.id)}" data-category="${category}"><div class="tweak-head"><span class="tweak-title">${escapeHtml(title)}</span>${badge}</div><p>${escapeHtml(desc)}</p>${note}</button>`;
+  return `<button class="tweak-tile ${selected ? "selected" : ""} ${installed ? "installed" : "not-installed"}" type="button" data-tweak-id="${escapeAttr(tweak.id)}" data-category="${category}"><div class="tweak-head"><span class="tweak-title">${escapeHtml(title)}</span></div><p>${escapeHtml(desc)}</p>${note}</button>`;
 }
 
 function tweakGroup(group, viewState, t) {
@@ -151,17 +144,13 @@ export function renderTweaksPage(viewState, t) {
   const applyLabel = viewState.applyingTweaks ? t("loading") : t("applySelected");
 
   const filter = viewState.tweakFilter || "all";
-  const allList = allTweaks();
-  const allCount = allList.length;
-  const userCount = allList.filter((tw) => !tw.badges?.includes("ADMIN")).length;
-  const adminCount = allList.filter((tw) => tw.badges?.includes("ADMIN")).length;
 
   const topToolbar = [
     '<div class="tweaks-top-toolbar">',
     '  <div class="tweaks-filter-bar">',
-    `    <button class="tweak-filter-btn ${filter === "all" ? "active" : ""}" type="button" data-action="filter-tweaks-all"><span>${escapeHtml(t("tweakFilterAll"))}</span><small>(${allCount})</small></button>`,
-    `    <button class="tweak-filter-btn ${filter === "user" ? "active" : ""}" type="button" data-action="filter-tweaks-user">${icon("user")}<span>${escapeHtml(t("tweakFilterUser"))}</span><small>(${userCount})</small></button>`,
-    `    <button class="tweak-filter-btn ${filter === "admin" ? "active" : ""}" type="button" data-action="filter-tweaks-admin">${icon("shield")}<span>${escapeHtml(t("tweakFilterAdmin"))}</span><small>(${adminCount})</small></button>`,
+    `    <button class="tweak-filter-btn ${filter === "all" ? "active" : ""}" type="button" data-action="filter-tweaks-all"><span>${escapeHtml(t("tweakFilterAll"))}</span></button>`,
+    `    <button class="tweak-filter-btn ${filter === "user" ? "active" : ""}" type="button" data-action="filter-tweaks-user">${icon("user")}<span>${escapeHtml(t("tweakFilterUser"))}</span></button>`,
+    `    <button class="tweak-filter-btn ${filter === "admin" ? "active" : ""}" type="button" data-action="filter-tweaks-admin">${icon("shield")}<span>${escapeHtml(t("tweakFilterAdmin"))}</span></button>`,
     '  </div>',
     '  <div class="tweaks-toolbar-actions">',
     `    <button class="tweak-action-pill" type="button" data-action="restart-explorer" title="${escapeAttr(t("restartExplorer"))}">${icon("rotate")}<span>${escapeHtml(t("restartExplorer"))}</span></button>`,
