@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Build & Test (Windows)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+          components: clippy, rustfmt
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci || npm install
+
+      - name: Verify JavaScript syntax
+        run: |
+          node --check src/app/main.js
+          node --check src/app/core/html.js
+          node --check src/app/core/i18n.js
+          node --check scripts/app-server.mjs
+
+      - name: Cargo test
+        run: cargo test --manifest-path src-tauri/Cargo.toml --verbose
+
+      - name: Cargo clippy
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --no-deps
+
+      - name: Cargo check (release profile)
+        run: cargo check --manifest-path src-tauri/Cargo.toml --release
