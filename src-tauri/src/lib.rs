@@ -688,8 +688,11 @@ fn exit_app(app: AppHandle, state: State<'_, RuntimeState>) {
 fn restart_as_admin(app: AppHandle, state: State<'_, RuntimeState>) -> Result<(), String> {
     restart_current_process_as_admin()?;
     state.exiting.store(true, Ordering::SeqCst);
-    app.exit(0);
-    Ok(())
+    crate::ffi::release_single_instance();
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+    std::process::exit(0);
 }
 
 fn create_backup_file(

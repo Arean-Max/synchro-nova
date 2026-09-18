@@ -261,9 +261,24 @@ mod prerequisites_check {
 fn main() {
     #[cfg(target_os = "windows")]
     {
+        let mut restarted_from_pid: Option<u32> = None;
+        let args: Vec<String> = std::env::args().collect();
+        for i in 0..args.len() {
+            if args[i] == "--restarted-from-pid" && i + 1 < args.len() {
+                if let Ok(pid) = args[i + 1].parse::<u32>() {
+                    restarted_from_pid = Some(pid);
+                }
+            }
+        }
+
+        if let Some(old_pid) = restarted_from_pid {
+            synchro_lib::ffi::wait_for_process_exit(old_pid, 5000);
+        }
+
         const MUTEX_NAME: &str = "Local\\SynchroNovaSingleInstanceMutex";
         const WINDOW_TITLE: &str = "Synchro Nova";
-        if !synchro_lib::ffi::ensure_single_instance(MUTEX_NAME, WINDOW_TITLE) {
+        let is_restart = restarted_from_pid.is_some();
+        if !synchro_lib::ffi::ensure_single_instance_retry(MUTEX_NAME, WINDOW_TITLE, is_restart) {
             std::process::exit(0);
         }
         prerequisites_check::ensure_runtime_prerequisites();

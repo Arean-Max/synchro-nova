@@ -179,6 +179,7 @@ pub const SM_CYSCREEN: i32 = 1;
 pub const TH32CS_SNAPPROCESS: u32 = 0x0000_0002;
 pub const ERROR_ALREADY_EXISTS: u32 = 183;
 pub const SW_RESTORE: i32 = 9;
+pub const SYNCHRONIZE: u32 = 0x0010_0000;
 
 #[cfg(target_os = "windows")]
 pub mod winapi {
@@ -189,6 +190,7 @@ pub mod winapi {
         pub fn GetCurrentProcess() -> *mut c_void;
         pub fn GetCurrentProcessId() -> u32;
         pub fn OpenProcess(desired_access: u32, inherit_handle: i32, process_id: u32) -> *mut c_void;
+        pub fn WaitForSingleObject(handle: *mut c_void, milliseconds: u32) -> u32;
         pub fn CreateMutexW(
             mutex_attributes: *mut c_void,
             initial_owner: i32,
@@ -515,15 +517,25 @@ pub fn open_path_or_url(_target: &str) -> Result<(), String> {
 
 #[cfg(target_os = "windows")]
 pub fn runas_executable(path: &Path) -> Result<(), String> {
+    runas_executable_with_args(path, None)
+}
+
+#[cfg(target_os = "windows")]
+pub fn runas_executable_with_args(path: &Path, args: Option<&str>) -> Result<(), String> {
     let operation = wide_null("runas");
     let file = wide_null(&path.to_string_lossy());
+    let params = args.map(wide_null);
+    let params_ptr = params.as_ref().map(|p| p.as_ptr()).unwrap_or(std::ptr::null());
+    let dir = path.parent().map(|p| wide_null(&p.to_string_lossy()));
+    let dir_ptr = dir.as_ref().map(|d| d.as_ptr()).unwrap_or(std::ptr::null());
+
     let result = unsafe {
         winapi::ShellExecuteW(
             std::ptr::null_mut(),
             operation.as_ptr(),
             file.as_ptr(),
-            std::ptr::null(),
-            std::ptr::null(),
+            params_ptr,
+            dir_ptr,
             SW_SHOWNORMAL,
         )
     };
@@ -536,6 +548,11 @@ pub fn runas_executable(path: &Path) -> Result<(), String> {
 
 #[cfg(not(target_os = "windows"))]
 pub fn runas_executable(_path: &Path) -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn runas_executable_with_args(_path: &Path, _args: Option<&str>) -> Result<(), String> {
     Ok(())
 }
 
@@ -622,41 +639,92 @@ static SINGLE_INSTANCE_MUTEX_HANDLE: std::sync::atomic::AtomicPtr<c_void> =
     std::sync::atomic::AtomicPtr::new(std::ptr::null_mut());
 
 #[cfg(target_os = "windows")]
-pub fn ensure_single_instance(mutex_name: &str, window_title: &str) -> bool {
-    let name_w = wide_null(mutex_name);
-    let handle = unsafe {
-        winapi::CreateMutexW(std::ptr::null_mut(), 1, name_w.as_ptr())
-    };
-
-    if handle.is_null() {
-        return true;
+pub fn wait_for_process_exit(pid: u32, timeout_ms: u32) {
+    if pid == 0 {
+        return;
     }
+    let handle = unsafe { winapi::OpenProcess(SYNCHRONIZE, 0, pid) };
+    if !handle.is_null() {
+        unsafe {
+            winapi::WaitForSingleObject(handle, timeout_ms);
+            winapi::CloseHandle(handle);
+        }
+    }
+}
 
-    let last_err = unsafe { winapi::GetLastError() };
-    if last_err == ERROR_ALREADY_EXISTS {
+#[cfg(not(target_os = "windows"))]
+pub fn wait_for_process_exit(_pid: u32, _timeout_ms: u32) {}
+
+#[cfg(target_os = "windows")]
+pub fn release_single_instance() {
+    let handle = SINGLE_INSTANCE_MUTEX_HANDLE.swap(std::ptr::null_mut(), std::sync::atomic::Ordering::SeqCst);
+    if !handle.is_null() {
         unsafe {
             winapi::CloseHandle(handle);
         }
+    }
+}
 
-        let title_w = wide_null(window_title);
-        let hwnd = unsafe {
-            winapi::FindWindowW(std::ptr::null(), title_w.as_ptr())
+#[cfg(not(target_os = "windows"))]
+pub fn release_single_instance() {}
+
+#[cfg(target_os = "windows")]
+pub fn ensure_single_instance(mutex_name: &str, window_title: &str) -> bool {
+    ensure_single_instance_retry(mutex_name, window_title, false)
+}
+
+#[cfg(target_os = "windows")]
+pub fn ensure_single_instance_retry(mutex_name: &str, window_title: &str, is_restart: bool) -> bool {
+    let max_attempts = if is_restart { 30 } else { 1 };
+    let name_w = wide_null(mutex_name);
+
+    for attempt in 0..max_attempts {
+        let handle = unsafe {
+            winapi::CreateMutexW(std::ptr::null_mut(), 1, name_w.as_ptr())
         };
-        if !hwnd.is_null() {
-            unsafe {
-                winapi::ShowWindow(hwnd, SW_RESTORE);
-                winapi::SetForegroundWindow(hwnd);
-            }
+
+        if handle.is_null() {
+            return true;
         }
-        return false;
+
+        let last_err = unsafe { winapi::GetLastError() };
+        if last_err == ERROR_ALREADY_EXISTS {
+            unsafe {
+                winapi::CloseHandle(handle);
+            }
+
+            if attempt + 1 < max_attempts {
+                std::thread::sleep(std::time::Duration::from_millis(150));
+                continue;
+            }
+
+            let title_w = wide_null(window_title);
+            let hwnd = unsafe {
+                winapi::FindWindowW(std::ptr::null(), title_w.as_ptr())
+            };
+            if !hwnd.is_null() {
+                unsafe {
+                    winapi::ShowWindow(hwnd, SW_RESTORE);
+                    winapi::SetForegroundWindow(hwnd);
+                }
+            }
+            return false;
+        }
+
+        SINGLE_INSTANCE_MUTEX_HANDLE.store(handle, std::sync::atomic::Ordering::SeqCst);
+        return true;
     }
 
-    SINGLE_INSTANCE_MUTEX_HANDLE.store(handle, std::sync::atomic::Ordering::SeqCst);
-    true
+    false
 }
 
 #[cfg(not(target_os = "windows"))]
 pub fn ensure_single_instance(_mutex_name: &str, _window_title: &str) -> bool {
+    true
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn ensure_single_instance_retry(_mutex_name: &str, _window_title: &str, _is_restart: bool) -> bool {
     true
 }
 
