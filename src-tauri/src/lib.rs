@@ -452,6 +452,11 @@ fn rollback_last_tweaks(
     Ok(restored)
 }
 
+#[tauri::command]
+fn detect_installed_apps() -> Vec<system_info::DetectedAppConflictInfo> {
+    system_info::detect_installed_tweak_apps()
+}
+
 fn log_tweaks_audit(app_dir: &Path, results: &[TweakApplyResult]) {
     let log_path = app_dir.join("tweaks_audit.log");
     let now = match SystemTime::now().duration_since(UNIX_EPOCH) {
@@ -1229,7 +1234,8 @@ pub fn run() {
             exit_app,
             restart_as_admin,
             trim_memory,
-            rollback_last_tweaks
+            rollback_last_tweaks,
+            detect_installed_apps
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Synchro");
@@ -1375,5 +1381,12 @@ mod tests {
         let remaining = read_backup_entries(&temp_dir).unwrap();
         assert_eq!(remaining.len(), 10);
         let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_detect_installed_tweak_apps() {
+        let apps = system_info::detect_installed_tweak_apps();
+        assert!(!apps.is_empty());
+        assert!(apps.iter().any(|a| a.id == "xbox_game_bar"));
     }
 }
