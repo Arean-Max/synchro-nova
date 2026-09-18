@@ -55,7 +55,10 @@ mod prerequisites_check {
         // 1. Install VC++ Redistributable if missing
         if missing_vc_redist {
             let vc_installer = temp_dir.join("vc_redist.x64.exe");
-            if download_file(VC_REDIST_X64_URL, &vc_installer) && vc_installer.exists() {
+            if download_file(VC_REDIST_X64_URL, &vc_installer)
+                && vc_installer.exists()
+                && is_authenticode_valid(&vc_installer)
+            {
                 let _ = run_installer_silent(&vc_installer, &["/install", "/quiet", "/norestart"]);
                 let _ = std::fs::remove_file(&vc_installer);
             }
@@ -64,7 +67,10 @@ mod prerequisites_check {
         // 2. Install WebView2 Runtime if missing
         if missing_webview2 {
             let webview_installer = temp_dir.join("MicrosoftEdgeWebview2Setup.exe");
-            if download_file(WEBVIEW_BOOTSTRAPPER_URL, &webview_installer) && webview_installer.exists() {
+            if download_file(WEBVIEW_BOOTSTRAPPER_URL, &webview_installer)
+                && webview_installer.exists()
+                && is_authenticode_valid(&webview_installer)
+            {
                 let _ = run_installer_silent(&webview_installer, &["/silent", "/install"]);
                 let _ = std::fs::remove_file(&webview_installer);
 
@@ -203,6 +209,55 @@ mod prerequisites_check {
         cmd.status().map(|s| s.success()).unwrap_or(false)
     }
 
+    fn base64_encode(data: &[u8]) -> String {
+        const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        let mut out = String::with_capacity((data.len() + 2) / 3 * 4);
+        for chunk in data.chunks(3) {
+            let b0 = chunk[0] as usize;
+            let b1 = chunk.get(1).copied().unwrap_or(0) as usize;
+            let b2 = chunk.get(2).copied().unwrap_or(0) as usize;
+            let triple = (b0 << 16) | (b1 << 8) | b2;
+            out.push(ALPHABET[(triple >> 18) & 0x3F] as char);
+            out.push(ALPHABET[(triple >> 12) & 0x3F] as char);
+            if chunk.len() > 1 {
+                out.push(ALPHABET[(triple >> 6) & 0x3F] as char);
+            } else {
+                out.push('=');
+            }
+            if chunk.len() > 2 {
+                out.push(ALPHABET[triple & 0x3F] as char);
+            } else {
+                out.push('=');
+            }
+        }
+        out
+    }
+
+    fn is_authenticode_valid(path: &Path) -> bool {
+        if !path.is_file() {
+            return false;
+        }
+        let ps_exe = std::env::var("SystemRoot")
+            .map(|root| PathBuf::from(root).join("System32\\WindowsPowerShell\\v1.0\\powershell.exe"))
+            .unwrap_or_else(|_| PathBuf::from("powershell.exe"));
+        let path_str = path.to_string_lossy().replace('\'', "''");
+        let script = format!(
+            "$sig = Get-AuthenticodeSignature -LiteralPath '{path_str}'; if ($sig.Status -eq 'Valid') {{ exit 0 }} else {{ exit 1 }}"
+        );
+        let utf16_bytes: Vec<u8> = script.encode_utf16().flat_map(|u| u.to_le_bytes()).collect();
+        let encoded = base64_encode(&utf16_bytes);
+        let mut cmd = std::process::Command::new(ps_exe);
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x0800_0000);
+        }
+        cmd.args(["-NoProfile", "-WindowStyle", "Hidden", "-EncodedCommand", &encoded])
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false)
+    }
+
     fn download_file(url: &str, dest: &Path) -> bool {
         // Tier 1: WinAPI URLDownloadToFileW
         if download_url_to_file(url, dest).is_ok() && dest.exists() && file_has_content(dest) {
@@ -226,7 +281,7 @@ mod prerequisites_check {
             }
         }
 
-        // Tier 3: PowerShell Net.WebClient with TLS 1.2
+        // Tier 3: PowerShell Net.WebClient with TLS 1.2 using Base64 EncodedCommand
         let ps_exe = std::env::var("SystemRoot")
             .map(|root| PathBuf::from(root).join("System32\\WindowsPowerShell\\v1.0\\powershell.exe"))
             .unwrap_or_else(|_| PathBuf::from("powershell.exe"));
@@ -238,16 +293,13 @@ mod prerequisites_check {
         }
         let safe_url = url.replace('\'', "''");
         let safe_dest = dest.to_string_lossy().replace('\'', "''");
+        let script = format!(
+            "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{safe_url}', '{safe_dest}')"
+        );
+        let utf16_bytes: Vec<u8> = script.encode_utf16().flat_map(|u| u.to_le_bytes()).collect();
+        let encoded = base64_encode(&utf16_bytes);
         let status = cmd
-            .args([
-                "-NoProfile",
-                "-WindowStyle",
-                "Hidden",
-                "-Command",
-                &format!(
-                    "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{safe_url}', '{safe_dest}')"
-                ),
-            ])
+            .args(["-NoProfile", "-WindowStyle", "Hidden", "-EncodedCommand", &encoded])
             .status();
 
         status.map(|s| s.success()).unwrap_or(false) && dest.exists() && file_has_content(dest)

@@ -1392,4 +1392,28 @@ mod tests {
         assert!(!apps.is_empty());
         assert!(apps.iter().any(|a| a.id == "xbox_game_bar"));
     }
+
+    #[test]
+    fn test_quote_windows_arg() {
+        assert_eq!(games::quote_windows_arg(""), "\"\"");
+        assert_eq!(games::quote_windows_arg("simple"), "simple");
+        assert_eq!(games::quote_windows_arg("hello world"), "\"hello world\"");
+        assert_eq!(games::quote_windows_arg(r#"C:\Games\Rust Game\"#), r#""C:\Games\Rust Game\\""#);
+        assert_eq!(games::quote_windows_arg("bad\nstring\r"), "badstring");
+        assert_eq!(games::quote_windows_arg(r#"quote "inside""#), r#""quote \"inside\"""#);
+    }
+
+    #[test]
+    fn test_safe_game_url() {
+        assert!(games::is_safe_game_url("steam://rungameid/730"));
+        assert!(games::is_safe_game_url("steam://rungameid/123456789"));
+        assert!(!games::is_safe_game_url("steam://rungameid/invalid_chars"));
+        assert!(!games::is_safe_game_url("steam://open/url/calc.exe"));
+        assert!(games::is_safe_game_url("com.epicgames.launcher://apps/Fortnite?action=launch"));
+        assert!(games::is_safe_game_url("riotclient://launch/valorant"));
+        assert!(!games::is_safe_game_url("https://malicious.site/"));
+        assert!(!games::is_safe_game_url("file:///c:/windows/system32/calc.exe"));
+        assert!(!games::is_safe_game_url("steam://rungameid/730 & whoami"));
+        assert!(!games::is_safe_game_url("steam://rungameid/730\nmalicious"));
+    }
 }

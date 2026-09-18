@@ -26,15 +26,10 @@ time = "=0.3.36"
 
 [profile.dev]
 debug = false
-debug-assertions = false
 incremental = false
-overflow-checks = true
-panic = "abort"
-strip = false
 
 [profile.dev.build-override]
 debug = false
-debug-assertions = false
 strip = false
 
 [profile.release]

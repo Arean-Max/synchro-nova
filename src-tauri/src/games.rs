@@ -1196,14 +1196,34 @@ fn launch_target(target: &LaunchTarget) -> Result<(), String> {
     }
 }
 
+pub(crate) fn is_safe_game_url(url: &str) -> bool {
+    if url.is_empty() || url.len() > 512 {
+        return false;
+    }
+    // Disallow control characters, quotes, and dangerous shell metacharacters
+    if url.chars().any(|ch| ch.is_control() || matches!(ch, '"' | '\'' | '`' | '<' | '>' | '^' | '|' | '&')) {
+        return false;
+    }
+    let lower = url.to_lowercase();
+    if lower.starts_with("steam://") {
+        if let Some(rest) = lower.strip_prefix("steam://rungameid/") {
+            return !rest.is_empty() && rest.chars().all(|ch| ch.is_ascii_digit());
+        }
+        return false;
+    }
+    if lower.starts_with("com.epicgames.launcher://") {
+        return lower.starts_with("com.epicgames.launcher://apps/");
+    }
+    if lower.starts_with("riotclient://") {
+        return true;
+    }
+    false
+}
+
 #[cfg(target_os = "windows")]
 fn open_url(url: &str) -> Result<(), String> {
-    let lower = url.to_lowercase();
-    if !lower.starts_with("steam://")
-        && !lower.starts_with("com.epicgames.launcher://")
-        && !lower.starts_with("riotclient://")
-    {
-        return Err("Blocked launch of untrusted game URL scheme".to_string());
+    if !is_safe_game_url(url) {
+        return Err("Blocked launch of invalid or untrusted game URL".to_string());
     }
     shell_execute("open", url, None, None, "Failed to launch game")
 }
@@ -1215,6 +1235,10 @@ fn open_url(_url: &str) -> Result<(), String> {
 
 #[cfg(target_os = "windows")]
 fn open_executable(path: &Path, args: &[String], cwd: Option<&Path>) -> Result<(), String> {
+    let path_str = path.to_string_lossy();
+    if path_str.starts_with(r"\\") || path_str.starts_with("//") {
+        return Err("Refusing to execute binary from remote network location".to_string());
+    }
     if !path.is_file() {
         return Err("Game executable is missing".to_string());
     }
@@ -1233,7 +1257,7 @@ fn open_executable(path: &Path, args: &[String], cwd: Option<&Path>) -> Result<(
     };
     shell_execute(
         "open",
-        &path.to_string_lossy(),
+        &path_str,
         args.as_deref(),
         cwd.map(|path| path.to_string_lossy().into_owned()).as_deref(),
         "Failed to launch game",
@@ -1281,15 +1305,48 @@ fn shell_execute(
     }
 }
 
+pub(crate) fn quote_windows_arg(arg: &str) -> String {
+    let clean: String = arg.chars().filter(|ch| !ch.is_control()).collect();
+    if clean.is_empty() {
+        return "\"\"".to_string();
+    }
+    if clean.chars().all(|ch| !ch.is_whitespace() && ch != '"') {
+        return clean;
+    }
+
+    let mut result = String::with_capacity(clean.len() + 8);
+    result.push('"');
+
+    let mut backslash_count = 0;
+    for ch in clean.chars() {
+        if ch == '\\' {
+            backslash_count += 1;
+        } else if ch == '"' {
+            for _ in 0..(backslash_count * 2 + 1) {
+                result.push('\\');
+            }
+            result.push('"');
+            backslash_count = 0;
+        } else {
+            for _ in 0..backslash_count {
+                result.push('\\');
+            }
+            backslash_count = 0;
+            result.push(ch);
+        }
+    }
+
+    for _ in 0..(backslash_count * 2) {
+        result.push('\\');
+    }
+    result.push('"');
+
+    result
+}
+
 fn join_command_args(args: &[String]) -> String {
     args.iter()
-        .map(|arg| {
-            if arg.chars().all(|ch| !ch.is_whitespace() && ch != '"') {
-                arg.clone()
-            } else {
-                format!("\"{}\"", arg.replace('"', "\\\""))
-            }
-        })
+        .map(|arg| quote_windows_arg(arg))
         .collect::<Vec<_>>()
         .join(" ")
 }

@@ -149,6 +149,17 @@ struct PdhSession {
 }
 
 #[cfg(target_os = "windows")]
+impl Drop for PdhSession {
+    fn drop(&mut self) {
+        if self.query != 0 {
+            unsafe {
+                let _ = PdhCloseQuery(self.query);
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
 fn read_gpu_live_metrics() -> (u64, u64) {
     use std::sync::Mutex;
     static SESSION: Mutex<Option<PdhSession>> = Mutex::new(None);
@@ -237,7 +248,7 @@ unsafe extern "system" {
 fn read_pdh_counter_sum(counter: isize) -> f64 {
     use std::cell::RefCell;
     thread_local! {
-        static PDH_BUFFER: RefCell<Vec<u8>> = RefCell::new(Vec::with_capacity(4096));
+        static PDH_BUFFER: RefCell<Vec<u64>> = RefCell::new(Vec::with_capacity(512));
     }
 
     const ERROR_SUCCESS: u32 = 0;
@@ -265,22 +276,31 @@ fn read_pdh_counter_sum(counter: isize) -> f64 {
 
     PDH_BUFFER.with(|buf_cell| {
         let mut buffer = buf_cell.borrow_mut();
-        let needed = buffer_size as usize;
-        if buffer.len() < needed {
-            buffer.resize(needed, 0);
+        // buffer_size is in bytes. Ensure capacity in u64 words to guarantee 8-byte alignment
+        let needed_words = (buffer_size as usize + 7) / 8;
+        if buffer.len() < needed_words {
+            buffer.resize(needed_words, 0);
         }
         let items = buffer.as_mut_ptr() as *mut PdhFmtCounterValueItemW;
+        let mut current_size = (buffer.len() * 8) as u32;
         let second = unsafe {
             PdhGetFormattedCounterArrayW(
                 counter,
                 PDH_FMT_DOUBLE,
-                &mut buffer_size,
+                &mut current_size,
                 &mut item_count,
                 items,
             )
         };
 
-        if second == ERROR_SUCCESS {
+        let item_size = std::mem::size_of::<PdhFmtCounterValueItemW>();
+        let max_items_fit = if item_size > 0 {
+            (buffer.len() * 8) / item_size
+        } else {
+            0
+        };
+
+        if second == ERROR_SUCCESS && (item_count as usize) <= max_items_fit {
             let values = unsafe { std::slice::from_raw_parts(items, item_count as usize) };
             values
                 .iter()

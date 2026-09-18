@@ -419,7 +419,7 @@ pub fn apply_process_hardening() {
     const PROCESS_DEP_ENABLE: u32 = 0x0000_0001;
     const BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE: u32 = 0x0000_0001;
     const BASE_SEARCH_PATH_PERMANENT: u32 = 0x0000_8000;
-    const LOAD_LIBRARY_SEARCH_SYSTEM32: u32 = 0x0000_0800;
+    const LOAD_LIBRARY_SEARCH_DEFAULT_DIRS: u32 = 0x0000_1000;
     const HEAP_ENABLE_TERMINATION_ON_CORRUPTION: i32 = 1;
 
     unsafe {
@@ -431,8 +431,9 @@ pub fn apply_process_hardening() {
             BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT,
         );
 
-        // 3. Restrict default DLL search directories to %SystemRoot%\System32 to prevent DLL hijacking
-        let _ = winapi::SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+        // 3. Restrict default DLL search directories to application dir and System32,
+        // permanently eliminating Current Working Directory (CWD) binary planting / DLL hijacking
+        let _ = winapi::SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 
         // 4. Terminate process immediately if heap corruption occurs (blocks heap exploitation)
         let heap = winapi::GetProcessHeap();
