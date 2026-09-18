@@ -280,12 +280,12 @@ mod prerequisites_check {
     }
 
     fn download_file(url: &str, dest: &Path) -> bool {
-        // Tier 1: WinAPI URLDownloadToFileW
+        // 1. Try URLDownloadToFile WinAPI
         if download_url_to_file(url, dest).is_ok() && dest.exists() && file_has_content(dest) {
             return true;
         }
 
-        // Tier 2: System curl.exe
+        // 2. Fallback to system curl
         if let Ok(sys_root) = std::env::var("SystemRoot") {
             let curl_exe = PathBuf::from(sys_root).join("System32\\curl.exe");
             if curl_exe.exists() {
@@ -302,7 +302,7 @@ mod prerequisites_check {
             }
         }
 
-        // Tier 3: PowerShell Net.WebClient with TLS 1.2 using Base64 EncodedCommand
+        // 3. Fallback to PowerShell WebClient
         let ps_exe = std::env::var("SystemRoot")
             .map(|root| PathBuf::from(root).join("System32\\WindowsPowerShell\\v1.0\\powershell.exe"))
             .unwrap_or_else(|_| PathBuf::from("powershell.exe"));
