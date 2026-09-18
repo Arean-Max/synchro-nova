@@ -1,5 +1,7 @@
 export const tweakCatalog = [
   {
+    id: "capture",
+    groupKey: "tweakGroup_capture",
     icon: "video",
     title: "Capture",
     tweaks: [
@@ -12,6 +14,8 @@ export const tweakCatalog = [
     ]
   },
   {
+    id: "scheduler",
+    groupKey: "tweakGroup_scheduler",
     icon: "cpu",
     title: "Scheduler & Power",
     tweaks: [
@@ -25,6 +29,8 @@ export const tweakCatalog = [
     ]
   },
   {
+    id: "gpu",
+    groupKey: "tweakGroup_gpu",
     icon: "monitor",
     title: "GPU & Display",
     tweaks: [
@@ -37,6 +43,8 @@ export const tweakCatalog = [
     ]
   },
   {
+    id: "input",
+    groupKey: "tweakGroup_input",
     icon: "settings",
     title: "Input & Smoothness",
     tweaks: [
@@ -53,6 +61,8 @@ export const tweakCatalog = [
     ]
   },
   {
+    id: "privacy",
+    groupKey: "tweakGroup_privacy",
     icon: "shield",
     title: "Privacy & Telemetry",
     tweaks: [
@@ -66,6 +76,8 @@ export const tweakCatalog = [
     ]
   },
   {
+    id: "storage",
+    groupKey: "tweakGroup_storage",
     icon: "archive",
     title: "Storage & Memory",
     tweaks: [
@@ -82,6 +94,8 @@ export const tweakCatalog = [
     ]
   },
   {
+    id: "network",
+    groupKey: "tweakGroup_network",
     icon: "cpu",
     title: "Network Latency",
     tweaks: [
@@ -97,6 +111,8 @@ export const tweakCatalog = [
     ]
   },
   {
+    id: "restore",
+    groupKey: "tweakGroup_restore",
     icon: "shield",
     title: "Restore & Guardrails",
     tweaks: [
@@ -116,6 +132,49 @@ export function tweakBadges(tweak) {
   return Array.isArray(tweak.badges) ? tweak.badges : tweak.badges ? [tweak.badges] : [];
 }
 
+export function tweakKey(tweak) {
+  return String(tweak?.id || "").replace(/-/g, "_");
+}
+
+export function tweakTitle(tweak, t) {
+  const key = `tweak_${tweakKey(tweak)}_title`;
+  const val = t(key);
+  return val && val !== key ? val : tweak.title;
+}
+
+export function tweakDescription(tweak, t) {
+  const key = `tweak_${tweakKey(tweak)}_desc`;
+  const val = t(key);
+  return val && val !== key ? val : tweak.description;
+}
+
+export function tweakNote(tweak, t) {
+  const key = `tweak_${tweakKey(tweak)}_note`;
+  const val = t(key);
+  if (val && val !== key) return val;
+  return tweak.note || "";
+}
+
+export function tweakGroupTitle(group, t) {
+  const key = group.groupKey || `tweakGroup_${group.id || ""}`;
+  const val = t(key);
+  return val && val !== key ? val : group.title;
+}
+
+export function tweakCategory(tweak) {
+  const badges = tweakBadges(tweak);
+  if (badges.includes("AGGRESSIVE") || ["pagefile-off", "dynamic-tick-off", "platform-tick-force", "driver-msi-bulk", "memory-integrity-off"].includes(tweak.id)) {
+    return "risk";
+  }
+  if (badges.includes("EXPERIMENTAL")) {
+    return "experimental";
+  }
+  if (badges.includes("ADMIN")) {
+    return "admin";
+  }
+  return "safe";
+}
+
 export function isSafeTweak(tweak) {
   const risky = new Set(["ADMIN", "REBOOT", "ADVANCED", "AGGRESSIVE", "EXPERIMENTAL"]);
   return tweakBadges(tweak).every((badge) => !risky.has(badge));
@@ -124,3 +183,91 @@ export function isSafeTweak(tweak) {
 export function allTweaks() {
   return tweakCatalog.flatMap((group) => group.tweaks);
 }
+
+export const tweakAppImpacts = {
+  "disable-gamedvr": {
+    appId: "xbox_game_bar",
+    appName: "Xbox Game Bar",
+    impactEn: "Win+Alt+R clip capture, background recording, and Game Bar screen capture will stop working.",
+    impactRu: "Запись клипов по Win+Alt+R, фоновый повтор и оверлей захвата Xbox Game Bar перестанут работать."
+  },
+  "disable-bg-recording": {
+    appId: "xbox_game_bar",
+    appName: "Xbox Game Bar",
+    impactEn: "Instant replay and passive background clip recording will be disabled.",
+    impactRu: "Фоновая запись последних минут геймплея и мгновенный повтор в Game Bar будут выключены."
+  },
+  "gamebar-startup-off": {
+    appId: "xbox_game_bar",
+    appName: "Xbox Game Bar / Controller",
+    impactEn: "Controller Xbox button guide hook disabled; Game Bar will not open on controller button press.",
+    impactRu: "Кнопка Xbox на геймпаде больше не будет вызывать оверлей Game Bar."
+  },
+  "overlay-audit": {
+    appId: "discord",
+    appName: "Discord / RTSS / Steam / NVIDIA",
+    impactEn: "Capture and chat overlays (Discord, ShadowPlay, Steam, RTSS) can cause frametime microstutters.",
+    impactRu: "Оверлеи Discord, ShadowPlay, Steam и RTSS могут вызывать микростаттеры и колебания frametime."
+  },
+  "mpo-disable": {
+    appId: "discord",
+    appName: "Discord / Chrome / Edge",
+    impactEn: "Multiplane Overlay disabled: eliminates screen flicker and stutter, but GPU video playback usage may increase slightly.",
+    impactRu: "MPO отключён: устраняет мерцания экрана и статтеры в играх, но нагрузка GPU при видео в браузере и Discord может вырасти."
+  },
+  "startup-delay-off": {
+    appId: "steam",
+    appName: "Steam / Discord / Telegram",
+    impactEn: "All startup programs will launch simultaneously upon Windows sign-in without 10-second pause.",
+    impactRu: "Все автозагружаемые программы (Steam, Discord, Telegram) запустятся одновременно сразу после входа."
+  },
+  "visual-effects-performance": {
+    appId: "windows_shell",
+    appName: "Windows Explorer",
+    impactEn: "Window opening/minimizing animations and drop shadows will be turned off.",
+    impactRu: "Анимации открытия и сворачивания окон, а также тени проводника Windows будут отключены."
+  },
+  "transparency-off": {
+    appId: "windows_shell",
+    appName: "Windows Shell / Acrylic",
+    impactEn: "Acrylic and translucent taskbar / window surfaces will become solid dark.",
+    impactRu: "Эффекты полупрозрачности Acrylic в меню «Пуск» и окнах станут сплошными."
+  },
+  "bluetooth-power-save-off": {
+    appId: "bluetooth",
+    appName: "Bluetooth Controller / Audio",
+    impactEn: "Bluetooth radio won't enter low-power sleep; increases battery drain on laptops.",
+    impactRu: "Bluetooth-модуль не будет уходить в сон; на ноутбуках может чуть быстрее расходовать батарею."
+  },
+  "hibernate-off": {
+    appId: "fast_startup",
+    appName: "Быстрый запуск Windows (Fast Startup)",
+    impactEn: "Windows Fast Startup and Hibernate will stop working; PC will perform a clean boot every time.",
+    impactRu: "«Быстрый запуск» и гибернация Windows перестанут работать; каждый запуск ПК будет чистым."
+  },
+  "winsock-reset": {
+    appId: "vpn",
+    appName: "VPN / Proxy / Anti-Cheat",
+    impactEn: "Resets TCP/IP and Winsock stack; VPN adapters (WireGuard/OpenVPN) and proxy tools may need restart.",
+    impactRu: "Сбрасывает стек Winsock и TCP/IP; виртуальные сетевые адаптеры VPN и прокси могут потребовать перезапуска."
+  },
+  "search-indexer-light": {
+    appId: "windows_search",
+    appName: "Windows Search / Индексация",
+    impactEn: "Windows Search indexing will run in low priority during desktop usage.",
+    impactRu: "Индексация поиска Windows Search будет работать с пониженным приоритетом."
+  },
+  "sysmain-manual": {
+    appId: "sysmain",
+    appName: "SysMain (Superfetch)",
+    impactEn: "SysMain service disabled: optimal for fast NVMe SSDs; not recommended for mechanical HDDs.",
+    impactRu: "Служба SysMain переведена в ручной режим: идеально для быстрых NVMe SSD, не рекомендуется для HDD."
+  },
+  "hags-on": {
+    appId: "geforce_experience",
+    appName: "OBS / NVIDIA GPU",
+    impactEn: "Hardware-accelerated GPU Scheduling requires PC reboot to take full effect.",
+    impactRu: "Аппаратное планирование HAGS требует перезагрузки ПК для вступления в силу."
+  }
+};
+

@@ -63,25 +63,29 @@ function cpuGraph(history, current) {
   return `<svg class="cpu-graph" viewBox="0 0 132 64" preserveAspectRatio="none" aria-hidden="true"><path d="M0 16H132M0 32H132M0 48H132M33 0V64M66 0V64M99 0V64"></path><polyline points="${cpuGraphPoints(values)}"></polyline></svg>`;
 }
 
-function cpuMetric(info, history) {
+function cpuMetric(info, history, t) {
   const cpuUsage = clamp(numberValue(info.cpuUsagePercent));
+  const usageLabel = t ? t("cpuUsageLabel") : "usage";
+  const coresLabel = t ? t("logicalCores") : "Logical Cores";
   return topMetric(
     "cpu",
-    `<div class="metric-head">${icon("cpu")}<span>CPU</span></div><div class="metric-main"><strong>${safeValue(info.cpuCores || "--")}</strong><em data-live="cpu-usage">${cpuUsage}% usage</em></div>${cpuGraph(history, cpuUsage)}<h3>${safeValue(compactName(info.cpu))}</h3><p>${safeValue(info.cpuCores || "--")} Logical Cores</p>`
+    `<div class="metric-head">${icon("cpu")}<span>CPU</span></div><div class="metric-main"><strong>${safeValue(info.cpuCores || "--")}</strong><em data-live="cpu-usage">${cpuUsage}% ${escapeHtml(usageLabel)}</em></div>${cpuGraph(history, cpuUsage)}<h3>${safeValue(compactName(info.cpu))}</h3><p>${safeValue(info.cpuCores || "--")} ${escapeHtml(coresLabel)}</p>`
   );
 }
 
-function vramTotalLabel(info) {
+function vramTotalLabel(info, t) {
   const total = numberValue(info.vramTotalGb);
-  return total ? `${total.toFixed(1)} GB` : "Not reported";
+  return total ? `${total.toFixed(1)} GB` : (t ? t("notReported") : "Not reported");
 }
 
-function gpuMetric(info) {
+function gpuMetric(info, t) {
   const vramPercent = clamp(numberValue(info.vramUsedPercent));
   const gpuUsage = clamp(numberValue(info.gpuUsagePercent));
+  const devicesLabel = t ? t("devices") : "Devices";
+  const usageLabel = t ? t("cpuUsageLabel") : "Usage";
   return topMetric(
     "gpu",
-    `<div class="metric-head">${icon("monitor")}<span>GPU</span></div><div class="metric-main"><strong>${safeValue(info.gpuCount || "--")}</strong><em>Devices</em></div><div class="metric-stack">${smallMeter("VRAM", vramTotalLabel(info), vramPercent, "vram-total")}${smallMeter("Usage", `${gpuUsage}%`, gpuUsage, "gpu-usage")}</div><h3>${safeValue(compactName(info.gpu))}</h3>`
+    `<div class="metric-head">${icon("monitor")}<span>GPU</span></div><div class="metric-main"><strong>${safeValue(info.gpuCount || "--")}</strong><em>${escapeHtml(devicesLabel)}</em></div><div class="metric-stack">${smallMeter("VRAM", vramTotalLabel(info, t), vramPercent, "vram-total")}${smallMeter(usageLabel, `${gpuUsage}%`, gpuUsage, "gpu-usage")}</div><h3>${safeValue(compactName(info.gpu))}</h3>`
   );
 }
 
@@ -94,10 +98,12 @@ function ramMetric(info) {
   );
 }
 
-function hzMetric(info) {
+function hzMetric(info, t) {
+  const syncTitle = t ? t("adaptiveSync") : "Adaptive Sync indicator";
+  const syncStatus = t ? t("statusUnavailable") : "Status unavailable";
   return topMetric(
     "hz",
-    `<div class="metric-head">${icon("video")}<span>Hz</span></div><div class="metric-main"><strong>${safeValue(info.refreshRateHz || "--")}</strong><em>${safeValue(info.colorDepth || "-")}</em></div><div class="screen-glyph"><span>Hz</span></div><h3>Adaptive Sync indicator</h3><p>Status unavailable</p>`
+    `<div class="metric-head">${icon("video")}<span>Hz</span></div><div class="metric-main"><strong>${safeValue(info.refreshRateHz || "--")}</strong><em>${safeValue(info.colorDepth || "-")}</em></div><div class="screen-glyph"><span>Hz</span></div><h3>${escapeHtml(syncTitle)}</h3><p>${escapeHtml(syncStatus)}</p>`
   );
 }
 
@@ -140,9 +146,11 @@ function memoryPanel(info, t) {
 }
 
 function displayPanel(info, t) {
+  const resLabel = t ? t("resolution") : "Resolution";
+  const hzLabel = t ? t("refreshRate") : "Refresh rate";
   return panel(
     t("display"),
-    `${detailRow("Resolution", info.display)}${detailRow("Refresh rate", info.refreshRate)}<div class="resolution-tile"><span>Resolution</span><strong>${safeValue(info.display)}</strong></div>`
+    `${detailRow(resLabel, info.display)}${detailRow(hzLabel, info.refreshRate)}<div class="resolution-tile"><span>${escapeHtml(resLabel)}</span><strong>${safeValue(info.display)}</strong></div>`
   );
 }
 
@@ -173,11 +181,14 @@ function normalizeDrivers(drivers) {
   });
 }
 
-function driverStatus(driver) {
+function driverStatus(driver, t) {
   const status = String(driver.status || "").toLowerCase();
-  if (status.includes("disabled") || status.includes("problem") || status.includes("unknown")) return ["problem", "Problem"];
-  if (status.includes("demand")) return ["warn", "Manual"];
-  return ["ok", "Detected"];
+  const problemLabel = t ? t("driverProblem") : "Problem";
+  const manualLabel = t ? t("driverManual") : "Manual";
+  const detectedLabel = t ? t("driverDetected") : "Detected";
+  if (status.includes("disabled") || status.includes("problem") || status.includes("unknown")) return ["problem", problemLabel];
+  if (status.includes("demand")) return ["warn", manualLabel];
+  return ["ok", detectedLabel];
 }
 
 function driverKind(driver) {
@@ -225,7 +236,7 @@ function driverCategory(driver) {
 
 function driverRow(driver, t) {
   const query = driver.searchQuery || `${driver.name || ""} ${driver.version || ""} driver latest version`;
-  const [state, label] = driverStatus(driver);
+  const [state, label] = driverStatus(driver, t);
   const details = [
     detailRow(t("provider"), driver.provider),
     detailRow(t("version"), driver.version),
@@ -249,16 +260,16 @@ function driverPanel(info, t, showAll) {
   const by = (categories) => drivers.filter((driver) => categories.includes(driverCategory(driver)));
   const groups = showAll
     ? [
-        ["Graphics Drivers", by(["graphics"])],
-        ["Chipset & Processor", by(["chipset", "processor"])],
-        ["Audio Drivers", by(["audio"])],
-        ["Network & Storage", by(["network", "storage"])],
-        ["Other Drivers", by(["other"])]
+        [t ? t("driverGroupGraphics") : "Graphics Drivers", by(["graphics"])],
+        [t ? t("driverGroupChipset") : "Chipset & Processor", by(["chipset", "processor"])],
+        [t ? t("driverGroupAudio") : "Audio Drivers", by(["audio"])],
+        [t ? t("driverGroupNetwork") : "Network & Storage", by(["network", "storage"])],
+        [t ? t("driverGroupOther") : "Other Drivers", by(["other"])]
       ]
     : [
-        ["Graphics Drivers", by(["graphics"])],
-        ["Chipset & Processor", by(["chipset", "processor"])],
-        ["Audio Drivers", by(["audio"])]
+        [t ? t("driverGroupGraphics") : "Graphics Drivers", by(["graphics"])],
+        [t ? t("driverGroupChipset") : "Chipset & Processor", by(["chipset", "processor"])],
+        [t ? t("driverGroupAudio") : "Audio Drivers", by(["audio"])]
       ];
   const body = groups.map(([title, items]) => driverGroup(title, items, t)).join("");
   const label = showAll ? t("showKeyDrivers") : `${t("viewAllDrivers")} ${drivers.length || 0} ${t("drivers")}`;
@@ -267,7 +278,7 @@ function driverPanel(info, t, showAll) {
 
 export function renderCharacteristicsPage(viewState, t) {
   const info = viewState.system || {};
-  const metrics = [cpuMetric(info, viewState.cpuHistory), gpuMetric(info), ramMetric(info), hzMetric(info)].join("");
+  const metrics = [cpuMetric(info, viewState.cpuHistory, t), gpuMetric(info, t), ramMetric(info), hzMetric(info, t)].join("");
   const panels = [systemPanel(info, t), memoryPanel(info, t), displayPanel(info, t), graphicsPanel(info, t)].join("");
   return `<div class="characteristics-page"><div class="characteristics-actions">${button(t("refresh"), "rotate", "outline", "refresh-characteristics")}</div><div class="character-summary">${metrics}</div><div class="characteristics-dashboard"><div class="characteristics-grid">${panels}</div>${driverPanel(info, t, viewState.showAllDrivers)}</div></div>`;
 }

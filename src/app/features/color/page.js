@@ -298,6 +298,7 @@ function renderColorSettingsPanel(appState, viewState, t) {
     '<div class="stack">',
     gameHeader,
     card(t("controls"), controls),
+    card(t("templates"), renderTemplates(viewState, t)),
     `<div class="actions color-actions-single">${button(t("reset"), "rotate", "outline", "reset-color")}</div>`,
     "</div>",
     "</div>"
@@ -311,6 +312,7 @@ export function renderColorPage(appState, viewState, t) {
     '<div class="global-color-grid global-color-grid-compact">',
     '<div class="stack">',
     card(t("controls"), controls),
+    card(t("templates"), renderTemplates(viewState, t)),
     `<div class="actions color-actions-single">${button(t("reset"), "rotate", "outline", "reset-color")}</div>`,
     "</div>",
     "</div>",
