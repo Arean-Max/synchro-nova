@@ -33,8 +33,13 @@ export const viewState = {
   installedTweaks: new Set(),
   tweakResults: [],
   applyingTweaks: false,
-  sidebarCollapsed: false
+  sidebarCollapsed: false,
+  detectedApps: [],
+  smartTipsOpen: false,
+  showAdminPrompt: false,
+  dismissedAdminPrompt: false
 };
+
 
 export const sliderDefs = {
   saturation: { label: "Saturation", min: 0, max: 200, step: 1, suffix: "%" },

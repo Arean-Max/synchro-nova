@@ -262,6 +262,8 @@ async function handleAction(action) {
     const ws = document.querySelector(".workspace");
     if (ws) {
       ws.classList.toggle("sidebar-collapsed", viewState.sidebarCollapsed);
+      syncNavIndicator();
+      setTimeout(syncNavIndicator, 280);
     } else {
       renderApp();
     }
@@ -288,9 +290,25 @@ async function handleAction(action) {
     }
     return null;
   }
-  if (action === "select-safe-tweaks") {
-    viewState.selectedTweaks.clear();
-    allTweaks().filter(isSafeTweak).forEach((tweak) => viewState.selectedTweaks.add(tweak.id));
+  if (action === "toggle-smart-tips") {
+    viewState.smartTipsOpen = !viewState.smartTipsOpen;
+    if (viewState.smartTipsOpen && !viewState.detectedApps.length) {
+      invokeCommand("detect_installed_apps").then((apps) => {
+        if (Array.isArray(apps)) {
+          viewState.detectedApps = apps;
+          if (viewState.smartTipsOpen) updateMain();
+        }
+      });
+    }
+    return updateMain();
+  }
+  if (action === "close-smart-tips") {
+    viewState.smartTipsOpen = false;
+    return updateMain();
+  }
+  if (action === "dismiss-admin-prompt") {
+    viewState.showAdminPrompt = false;
+    viewState.dismissedAdminPrompt = true;
     return updateMain();
   }
   if (action === "apply-tweaks") {
@@ -304,7 +322,7 @@ async function handleAction(action) {
     updateMain();
     const results = await invokeCommand("apply_tweaks", { ids });
     viewState.tweakResults = Array.isArray(results) ? results : [];
-    await loadTweakStatuses();
+    await Promise.all([loadTweakStatuses(), loadLists()]);
     viewState.applyingTweaks = false;
     return updateMain();
   }
@@ -315,7 +333,7 @@ async function handleAction(action) {
     const restored = await invokeCommand("rollback_last_tweaks");
     if (restored) {
       mergeState(restored);
-      await loadTweakStatuses();
+      await Promise.all([loadTweakStatuses(), loadLists()]);
       viewState.tweakResults = [{ id: "rollback", status: "applied", message: t("rollbackSuccess") }];
     } else {
       viewState.tweakResults = [{ id: "rollback", status: "skipped", message: t("noRollbackFound") }];
@@ -424,8 +442,22 @@ async function handleClick(event) {
     syncCharacteristicsMonitor();
     if (nextPage === "gameColor" && !viewState.colorGamesLoaded) {
       loadColorGames();
-    } else if (nextPage === "tweaks" && viewState.installedTweaks.size === 0) {
-      loadTweakStatuses().then(updateMain);
+    } else if (nextPage === "tweaks") {
+      if (!appState.isAdmin && !viewState.dismissedAdminPrompt) {
+        viewState.showAdminPrompt = true;
+        updateMain();
+      }
+      if (!viewState.detectedApps.length) {
+        invokeCommand("detect_installed_apps").then((apps) => {
+          if (Array.isArray(apps)) {
+            viewState.detectedApps = apps;
+            if (activePage === "tweaks" && viewState.smartTipsOpen) updateMain();
+          }
+        });
+      }
+      if (viewState.installedTweaks.size === 0) {
+        loadTweakStatuses().then(updateMain);
+      }
     } else if (nextPage === "characteristics") {
       if (!viewState.system) refreshCharacteristics();
       else refreshLiveCharacteristics();
