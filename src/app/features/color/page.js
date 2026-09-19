@@ -240,7 +240,7 @@ function renderTemplates(viewState, t) {
         `<span>${escapeHtml(config.name)}</span>`,
         metaHtml,
         '</button>',
-        `<button type="button" class="color-template-delete-btn" data-action="delete-color-template" data-delete-config-id="${escapeAttr(config.id)}" title="${escapeAttr(t("delete") || "Удалить")}" aria-label="${escapeAttr(t("delete") || "Удалить")}">`,
+        `<button type="button" class="color-template-delete-btn" data-action="delete-color-template" data-delete-config-id="${escapeAttr(config.id)}" title="${escapeAttr(t("delete"))}" aria-label="${escapeAttr(t("delete"))}">`,
         icon("trash"),
         '</button>',
         '</div>'
@@ -274,7 +274,7 @@ function renderColorSettingsPanel(appState, viewState, t) {
   const launch = selected?.launchable
     ? button(t("launchGame"), "play", "primary", "launch-color-game")
     : `<button class="btn btn-outline" type="button" disabled>${icon("play")}<span>${t("launchUnavailable")}</span></button>`;
-  const closeBtn = `<button class="color-drawer-close" type="button" data-action="close-color-game-panel" title="${escapeAttr(t("close") || "Close")}" aria-label="${escapeAttr(t("close") || "Close")}">${icon("x")}</button>`;
+  const closeBtn = `<button class="color-drawer-close" type="button" data-action="close-color-game-panel" title="${escapeAttr(t("close"))}" aria-label="${escapeAttr(t("close"))}">${icon("x")}</button>`;
   const headStyle = selected ? ` style="--game-accent:${gameAccent(selected)}"` : "";
   const headLogoSrc = gameLogoSrc(selected);
   const headMark = selected

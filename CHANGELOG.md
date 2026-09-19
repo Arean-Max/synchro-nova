@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-09-19
+
+### Fixed
+- Fixed potential UI state hang during tweak application and rollback by wrapping operations in safe `try/finally` blocks.
+- Fixed hardcoded string fallbacks in color template actions to ensure full localization parity.
+- Fixed input state retention by resetting backup and config name inputs upon successful creation.
+- Added explicit accessible labels (`aria-label`) to backup and configuration management inputs.
+- Replaced inline styling on admin elevation prompt with scoped CSS class.
+
+### Performance & Build
+- Unlocked multithreaded compilation in Cargo configuration, removing single-core bottleneck.
+- Streamlined runtime prerequisite checking logic and cleaned up extraneous comments.
+
 ## [0.1.0] - 2026-09-17
 
 ### Added

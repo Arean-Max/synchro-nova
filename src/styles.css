@@ -3409,6 +3409,10 @@ button.check-row {
   background: rgba(255, 255, 255, 0.045);
 }
 
+.settings-admin-row {
+  margin-top: 14px;
+}
+
 @media (max-width: 980px) {
   .workspace {
     grid-template-columns: 280px minmax(0, 1fr);

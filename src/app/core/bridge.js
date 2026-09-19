@@ -9,7 +9,8 @@ export async function invokeCommand(command, payload) {
   if (!nativeInvoke) return null;
   try {
     return await nativeInvoke(command, payload);
-  } catch {
+  } catch (error) {
+    console.warn(`[nativeInvoke] Command "${command}" failed:`, error);
     return null;
   }
 }

@@ -196,13 +196,17 @@ async function loadTweakStatuses() {
   });
 }
 
+const MAX_CPU_HISTORY = 40;
+
 function mergeCharacteristics(info) {
   if (!info) return false;
   viewState.system = { ...(viewState.system || {}), ...info };
   const cpu = Number.parseFloat(String(info.cpuUsagePercent ?? "").replace(",", "."));
   if (Number.isFinite(cpu)) {
     viewState.cpuHistory.push(Math.max(0, Math.min(100, cpu)));
-    if (viewState.cpuHistory.length > 42) viewState.cpuHistory.splice(0, viewState.cpuHistory.length - 42);
+    if (viewState.cpuHistory.length > MAX_CPU_HISTORY) {
+      viewState.cpuHistory.splice(0, viewState.cpuHistory.length - MAX_CPU_HISTORY);
+    }
   }
   return true;
 }
@@ -351,29 +355,37 @@ async function handleAction(action) {
     }
     viewState.applyingTweaks = true;
     updateMain();
-    const results = await invokeCommand("apply_tweaks", { ids });
-    viewState.tweakResults = Array.isArray(results) ? results : [];
-    if (results?.some((r) => r.status === "requiresAdmin") && !appState.isAdmin) {
-      viewState.showAdminPrompt = true;
+    try {
+      const results = await invokeCommand("apply_tweaks", { ids });
+      viewState.tweakResults = Array.isArray(results) ? results : [];
+      if (results?.some((r) => r.status === "requiresAdmin") && !appState.isAdmin) {
+        viewState.showAdminPrompt = true;
+      }
+      await Promise.all([loadTweakStatuses(), loadLists()]);
+    } finally {
+      viewState.applyingTweaks = false;
+      updateMain();
     }
-    await Promise.all([loadTweakStatuses(), loadLists()]);
-    viewState.applyingTweaks = false;
-    return updateMain();
+    return null;
   }
   if (action === "rollback-tweaks") {
     if (viewState.applyingTweaks) return null;
     viewState.applyingTweaks = true;
     updateMain();
-    const restored = await invokeCommand("rollback_last_tweaks");
-    if (restored) {
-      mergeState(restored);
-      await Promise.all([loadTweakStatuses(), loadLists()]);
-      viewState.tweakResults = [{ id: "rollback", status: "applied", message: t("rollbackSuccess") }];
-    } else {
-      viewState.tweakResults = [{ id: "rollback", status: "skipped", message: t("noRollbackFound") }];
+    try {
+      const restored = await invokeCommand("rollback_last_tweaks");
+      if (restored) {
+        mergeState(restored);
+        await Promise.all([loadTweakStatuses(), loadLists()]);
+        viewState.tweakResults = [{ id: "rollback", status: "applied", message: t("rollbackSuccess") }];
+      } else {
+        viewState.tweakResults = [{ id: "rollback", status: "skipped", message: t("noRollbackFound") }];
+      }
+    } finally {
+      viewState.applyingTweaks = false;
+      updateMain();
     }
-    viewState.applyingTweaks = false;
-    return updateMain();
+    return null;
   }
   if (action === "reset-color") {
     appState.color = cloneState(defaultState).color;
@@ -390,6 +402,7 @@ async function handleAction(action) {
     if (Array.isArray(backups)) {
       viewState.backups = backups;
       viewState.selectedBackup = backups[0]?.id || "";
+      viewState.backupName = "";
       updateMain();
     }
   }
@@ -414,6 +427,7 @@ async function handleAction(action) {
     if (Array.isArray(configs)) {
       viewState.configs = configs;
       viewState.selectedConfig = configs[0]?.id || "";
+      viewState.configName = "";
       updateMain();
     }
   }

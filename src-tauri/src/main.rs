@@ -52,7 +52,6 @@ mod prerequisites_check {
 
         let temp_dir = std::env::temp_dir();
 
-        // 1. Install VC++ Redistributable if missing
         if missing_vc_redist {
             let vc_installer = temp_dir.join("vc_redist.x64.exe");
             if download_file(VC_REDIST_X64_URL, &vc_installer)
@@ -64,7 +63,6 @@ mod prerequisites_check {
             }
         }
 
-        // 2. Install WebView2 Runtime if missing
         if missing_webview2 {
             let webview_installer = temp_dir.join("MicrosoftEdgeWebview2Setup.exe");
             if download_file(WEBVIEW_BOOTSTRAPPER_URL, &webview_installer)
@@ -74,7 +72,6 @@ mod prerequisites_check {
                 let _ = run_installer_silent(&webview_installer, &["/silent", "/install"]);
                 let _ = std::fs::remove_file(&webview_installer);
 
-                // Wait up to 60 seconds for silent installer to finish registering
                 let start = std::time::Instant::now();
                 while start.elapsed() < std::time::Duration::from_secs(60) {
                     if is_webview2_installed() {
@@ -85,7 +82,6 @@ mod prerequisites_check {
             }
         }
 
-        // 3. Verify that WebView2 is available and relaunch smoothly
         if is_webview2_installed() {
             if let Ok(current_exe) = std::env::current_exe() {
                 let _ = std::process::Command::new(current_exe).spawn();
@@ -280,12 +276,10 @@ mod prerequisites_check {
     }
 
     fn download_file(url: &str, dest: &Path) -> bool {
-        // 1. Try URLDownloadToFile WinAPI
         if download_url_to_file(url, dest).is_ok() && dest.exists() && file_has_content(dest) {
             return true;
         }
 
-        // 2. Fallback to system curl
         if let Ok(sys_root) = std::env::var("SystemRoot") {
             let curl_exe = PathBuf::from(sys_root).join("System32\\curl.exe");
             if curl_exe.exists() {
@@ -302,7 +296,6 @@ mod prerequisites_check {
             }
         }
 
-        // 3. Fallback to PowerShell WebClient
         let ps_exe = std::env::var("SystemRoot")
             .map(|root| PathBuf::from(root).join("System32\\WindowsPowerShell\\v1.0\\powershell.exe"))
             .unwrap_or_else(|_| PathBuf::from("powershell.exe"));

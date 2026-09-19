@@ -5,7 +5,7 @@ export function renderSettingsPage(appState, _viewState, t) {
 
   const isAdmin = Boolean(appState.isAdmin);
   const restartBtn = !isAdmin
-    ? `<div style="margin-top: 14px;">${button(t("runAsAdmin"), "shield", "outline", "restart-as-admin")}</div>`
+    ? `<div class="settings-admin-row">${button(t("runAsAdmin"), "shield", "outline", "restart-as-admin")}</div>`
     : "";
 
   const appCard = [
