@@ -1401,6 +1401,21 @@ async function handleClick(event) {
     return;
   }
 
+  const openExtUrl = target.closest("[data-action='open-external-url']");
+  if (openExtUrl) {
+    event.preventDefault();
+    event.stopPropagation();
+    const url = openExtUrl.getAttribute("data-url");
+    if (url) {
+      try {
+        await invokeCommand("open_external_url", { url });
+      } catch (e) {
+        console.error("Failed to open external URL:", e);
+      }
+    }
+    return;
+  }
+
   const clearDriverSearch = target.closest("[data-action='clear-driver-search']");
   if (clearDriverSearch) {
     event.preventDefault();

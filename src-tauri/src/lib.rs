@@ -429,6 +429,11 @@ fn open_official_driver_url(url: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn open_external_url(url: String) -> Result<(), String> {
+    open_official_driver_url(url)
+}
+
+#[tauri::command]
 fn open_windows_driver_updates() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
@@ -1353,6 +1358,7 @@ pub fn run() {
             take_juicy_screenshot,
             scan_drivers,
             open_official_driver_url,
+            open_external_url,
             open_windows_driver_updates
         ])
         .run(tauri::generate_context!())

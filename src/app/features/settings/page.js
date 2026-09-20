@@ -1,4 +1,5 @@
 import { button, card, checkbox } from "../../ui/components.js";
+import { icon } from "../../ui/icons.js";
 
 export function renderSettingsPage(appState, _viewState, t) {
   const language = `<div class="form-label">${t("language")}</div><div class="segmented-control"><button class="seg-option ${appState.settings.language === "en" ? "active" : ""}" type="button" data-language="en">${t("english")}</button><button class="seg-option ${appState.settings.language === "ru" ? "active" : ""}" type="button" data-language="ru">${t("russian")}</button></div>`;
@@ -45,10 +46,24 @@ export function renderSettingsPage(appState, _viewState, t) {
     `<p class="settings-hint-text">${t("showOnRecordingsDesc")}</p>`
   ].join("");
 
+  const communityCard = [
+    '<div class="settings-community-row">',
+    `<button class="btn btn-outline settings-link-btn" type="button" data-action="open-external-url" data-url="https://github.com/Arean-Max/synchro-nova">`,
+    icon("github"),
+    `<span>${t("weOnGithub")}</span>`,
+    `</button>`,
+    `<button class="btn btn-outline settings-link-btn" type="button" data-action="open-external-url" data-url="https://t.me/synchro_nova">`,
+    icon("telegram"),
+    `<span>${t("weOnTelegram")}</span>`,
+    `</button>`,
+    '</div>'
+  ].join("");
+
   return [
     '<div class="settings-page">',
     '<div class="stack">',
     card(t("application"), appCard),
+    card(t("community"), communityCard),
     "</div>",
     "</div>"
   ].join("");
