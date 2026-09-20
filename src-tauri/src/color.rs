@@ -1,37 +1,94 @@
 use crate::ColorSettings;
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Arc, Condvar, Mutex, OnceLock};
 
-static ACTIVE_COLOR: Mutex<Option<ColorSettings>> = Mutex::new(None);
-static COLOR_GUARD_STARTED: OnceLock<()> = OnceLock::new();
+struct ColorGuardState {
+    active: Option<ColorSettings>,
+    exiting: bool,
+}
+
+static COLOR_GUARD_SYNC: OnceLock<Arc<(Mutex<ColorGuardState>, Condvar)>> = OnceLock::new();
+
+fn get_guard_sync() -> &'static Arc<(Mutex<ColorGuardState>, Condvar)> {
+    COLOR_GUARD_SYNC.get_or_init(|| {
+        Arc::new((
+            Mutex::new(ColorGuardState {
+                active: None,
+                exiting: false,
+            }),
+            Condvar::new(),
+        ))
+    })
+}
 
 #[cfg(target_os = "windows")]
 pub(crate) fn start_color_guard() {
-    COLOR_GUARD_STARTED.get_or_init(|| {
-        std::thread::spawn(|| {
-            loop {
-                std::thread::sleep(std::time::Duration::from_millis(3000));
-                let color_opt = if let Ok(guard) = ACTIVE_COLOR.lock() {
-                    guard.clone()
-                } else {
-                    None
-                };
-                if let Some(color) = color_opt {
-                    // Only reassert when color calibration is active and gamma is non-neutral
-                    if color.enabled && (color.gamma - 100.0).abs() > 0.5 {
-                        let _ = apply_gamma_ramp(color.gamma);
+    static STARTED: OnceLock<()> = OnceLock::new();
+    STARTED.get_or_init(|| {
+        let sync = Arc::clone(get_guard_sync());
+        std::thread::Builder::new()
+            .name("synchro-color-guard".to_string())
+            .spawn(move || {
+                let (lock, cvar) = &*sync;
+                loop {
+                    let mut state = match lock.lock() {
+                        Ok(g) => g,
+                        Err(e) => e.into_inner(),
+                    };
+
+                    if state.exiting {
+                        break;
+                    }
+
+                    let has_custom_gamma = state
+                        .active
+                        .as_ref()
+                        .map(|c| c.enabled && (c.gamma - 100.0).abs() > 0.5)
+                        .unwrap_or(false);
+
+                    if !has_custom_gamma {
+                        state = match cvar.wait(state) {
+                            Ok(g) => g,
+                            Err(e) => e.into_inner(),
+                        };
+                    } else {
+                        let (new_state, _) = match cvar.wait_timeout(state, std::time::Duration::from_secs(4)) {
+                            Ok(res) => res,
+                            Err(e) => e.into_inner(),
+                        };
+                        state = new_state;
+                    }
+
+                    if state.exiting {
+                        break;
+                    }
+
+                    if let Some(ref color) = state.active {
+                        if color.enabled && (color.gamma - 100.0).abs() > 0.5 {
+                            let _ = apply_gamma_ramp(color.gamma);
+                        }
                     }
                 }
-            }
-        });
+            })
+            .ok();
     });
 }
 
 #[cfg(not(target_os = "windows"))]
 pub(crate) fn start_color_guard() {}
 
+pub(crate) fn stop_color_guard() {
+    let sync = get_guard_sync();
+    if let Ok(mut lock) = sync.0.lock() {
+        lock.exiting = true;
+        sync.1.notify_all();
+    }
+}
+
 fn set_active_color(color: Option<ColorSettings>) {
-    if let Ok(mut guard) = ACTIVE_COLOR.lock() {
-        *guard = color;
+    let sync = get_guard_sync();
+    if let Ok(mut lock) = sync.0.lock() {
+        lock.active = color;
+        sync.1.notify_all();
     }
 }
 

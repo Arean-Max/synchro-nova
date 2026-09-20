@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, Ordering},
-        Mutex,
+        Arc, Condvar, Mutex,
     },
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
@@ -230,7 +230,10 @@ struct SystemCache {
     updated_at: Option<Instant>,
 }
 
-use std::sync::Arc;
+struct TrimmerSync {
+    exited: Mutex<bool>,
+    condvar: Condvar,
+}
 
 struct RuntimeState {
     app_dir: PathBuf,
@@ -241,6 +244,7 @@ struct RuntimeState {
     system_cache: Mutex<SystemCache>,
     cpu_sample: Mutex<Option<CpuSample>>,
     exiting: Arc<AtomicBool>,
+    trimmer_sync: Arc<TrimmerSync>,
 }
 
 impl RuntimeState {
@@ -273,7 +277,20 @@ impl RuntimeState {
             system_cache: Mutex::new(SystemCache::default()),
             cpu_sample: Mutex::new(None),
             exiting: Arc::new(AtomicBool::new(false)),
+            trimmer_sync: Arc::new(TrimmerSync {
+                exited: Mutex::new(false),
+                condvar: Condvar::new(),
+            }),
         })
+    }
+
+    fn signal_shutdown(&self) {
+        self.exiting.store(true, Ordering::SeqCst);
+        if let Ok(mut lock) = self.trimmer_sync.exited.lock() {
+            *lock = true;
+            self.trimmer_sync.condvar.notify_all();
+        }
+        color::stop_color_guard();
     }
 
     fn snapshot(&self) -> Result<PersistedState, String> {
@@ -734,7 +751,7 @@ fn close_window(app: AppHandle, state: State<'_, RuntimeState>) {
             let _ = window.hide();
             trim_process_memory();
         } else {
-            state.exiting.store(true, Ordering::SeqCst);
+            state.signal_shutdown();
             app.exit(0);
         }
     }
@@ -742,14 +759,14 @@ fn close_window(app: AppHandle, state: State<'_, RuntimeState>) {
 
 #[tauri::command]
 fn exit_app(app: AppHandle, state: State<'_, RuntimeState>) {
-    state.exiting.store(true, Ordering::SeqCst);
+    state.signal_shutdown();
     app.exit(0);
 }
 
 #[tauri::command]
 fn restart_as_admin(app: AppHandle, state: State<'_, RuntimeState>) -> Result<(), String> {
     restart_current_process_as_admin()?;
-    state.exiting.store(true, Ordering::SeqCst);
+    state.signal_shutdown();
     crate::ffi::release_single_instance();
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.hide();
@@ -1127,7 +1144,7 @@ fn install_tray(app: &AppHandle) -> tauri::Result<()> {
             "show" => show_main_window(app),
             "exit" => {
                 let state = app.state::<RuntimeState>();
-                state.exiting.store(true, Ordering::SeqCst);
+                state.signal_shutdown();
                 app.exit(0);
             }
             _ => {}
@@ -1236,7 +1253,7 @@ pub fn run() {
                 );
             }
 
-            let exit_signal = Arc::clone(&runtime.exiting);
+            let trimmer_sync = Arc::clone(&runtime.trimmer_sync);
             app.manage(runtime);
 
             let _ = apply_color_transform(&initial.color, initial.settings.show_on_recordings);
@@ -1274,21 +1291,49 @@ pub fn run() {
 
             trim_process_memory();
 
-            // Coordinated background memory maintenance worker
+            // Coordinated background memory maintenance worker with event-driven shutdown
             std::thread::Builder::new()
                 .name("synchro-memory-trimmer".to_string())
                 .spawn(move || {
-                    // Initial post-boot trims to reclaim WebView2 bootstrapping memory
-                    std::thread::sleep(Duration::from_millis(2000));
-                    trim_process_memory();
-                    std::thread::sleep(Duration::from_millis(3000));
+                    let mut lock = match trimmer_sync.exited.lock() {
+                        Ok(l) => l,
+                        Err(e) => e.into_inner(),
+                    };
+                    if *lock {
+                        return;
+                    }
+
+                    // Post-boot initial trims via wait_timeout so shutdown is instantaneous
+                    let (l2, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_millis(2000)) {
+                        Ok(res) => res,
+                        Err(e) => e.into_inner(),
+                    };
+                    lock = l2;
+                    if *lock {
+                        return;
+                    }
                     trim_process_memory();
 
-                    while !exit_signal.load(Ordering::Relaxed) {
-                        std::thread::sleep(Duration::from_secs(20));
-                        if !exit_signal.load(Ordering::Relaxed) {
-                            trim_process_memory();
+                    let (l3, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_millis(3000)) {
+                        Ok(res) => res,
+                        Err(e) => e.into_inner(),
+                    };
+                    lock = l3;
+                    if *lock {
+                        return;
+                    }
+                    trim_process_memory();
+
+                    while !*lock {
+                        let (new_lock, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_secs(25)) {
+                            Ok(res) => res,
+                            Err(e) => e.into_inner(),
+                        };
+                        lock = new_lock;
+                        if *lock {
+                            break;
                         }
+                        trim_process_memory();
                     }
                 })
                 .ok();
@@ -1316,6 +1361,8 @@ pub fn run() {
                             api.prevent_close();
                             let _ = window.hide();
                             trim_process_memory();
+                        } else {
+                            state.signal_shutdown();
                         }
                     }
                 }

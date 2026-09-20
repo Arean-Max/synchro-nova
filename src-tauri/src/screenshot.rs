@@ -91,6 +91,43 @@ pub struct JuicyScreenshotResult {
     pub file_path: Option<String>,
 }
 
+struct ReleaseDcGuard {
+    hwnd: *mut c_void,
+    hdc: *mut c_void,
+}
+
+impl Drop for ReleaseDcGuard {
+    fn drop(&mut self) {
+        if !self.hdc.is_null() {
+            unsafe {
+                ReleaseDC(self.hwnd, self.hdc);
+            }
+        }
+    }
+}
+
+struct DeleteDcGuard(*mut c_void);
+impl Drop for DeleteDcGuard {
+    fn drop(&mut self) {
+        if !self.0.is_null() {
+            unsafe {
+                DeleteDC(self.0);
+            }
+        }
+    }
+}
+
+struct DeleteObjectGuard(*mut c_void);
+impl Drop for DeleteObjectGuard {
+    fn drop(&mut self) {
+        if !self.0.is_null() {
+            unsafe {
+                DeleteObject(self.0);
+            }
+        }
+    }
+}
+
 #[cfg(target_os = "windows")]
 pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshotResult, String> {
     unsafe {
@@ -105,29 +142,38 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
         if hdc_screen.is_null() {
             return Err("Failed to get screen DC".to_string());
         }
+        let _screen_guard = ReleaseDcGuard {
+            hwnd: std::ptr::null_mut(),
+            hdc: hdc_screen,
+        };
 
         let hdc_mem = CreateCompatibleDC(hdc_screen);
+        if hdc_mem.is_null() {
+            return Err("Failed to create memory DC".to_string());
+        }
+        let _dc_guard = DeleteDcGuard(hdc_mem);
+
         let hbm = CreateCompatibleBitmap(hdc_screen, width, height);
+        if hbm.is_null() {
+            return Err("Failed to create compatible bitmap".to_string());
+        }
+        let _hbm_guard = DeleteObjectGuard(hbm);
 
         let old_hbm = SelectObject(hdc_mem, hbm);
         let blt_res = BitBlt(hdc_mem, 0, 0, width, height, hdc_screen, 0, 0, SRCCOPY);
-
         SelectObject(hdc_mem, old_hbm);
-        ReleaseDC(std::ptr::null_mut(), hdc_screen);
 
         if blt_res == 0 {
-            DeleteDC(hdc_mem);
-            DeleteObject(hbm);
             return Err("BitBlt screen capture failed".to_string());
         }
 
         let header = BITMAPINFOHEADER {
             bi_size: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
             bi_width: width,
-            bi_height: height, // positive = standard bottom-up DIB
+            bi_height: height,
             bi_planes: 1,
             bi_bit_count: 32,
-            bi_compression: 0, // BI_RGB
+            bi_compression: 0,
             bi_size_image: (width * height * 4) as u32,
             bi_x_pels_per_meter: 3780,
             bi_y_pels_per_meter: 3780,
@@ -152,9 +198,6 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
             &mut bmi,
             DIB_RGB_COLORS,
         );
-
-        DeleteDC(hdc_mem);
-        DeleteObject(hbm);
 
         if get_dib_res == 0 {
             return Err("Failed to retrieve screen bitmap bits".to_string());

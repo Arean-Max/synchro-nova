@@ -668,10 +668,11 @@ fn is_tweak_applied(id: &str) -> bool {
         }
         "menu-show-delay-low" => hkcu_string("Control Panel\\Desktop", "MenuShowDelay").as_deref() == Some("100"),
 
-        // Group 4: Storage & Debloat
         "clean-temp-junk" => false,
         "hibernate-off" => {
-            !std::path::Path::new("C:\\hiberfil.sys").exists()
+            let sys_drive = std::env::var("SystemDrive").unwrap_or_else(|_| "C:".to_string());
+            let hiberfil = std::path::PathBuf::from(format!("{sys_drive}\\hiberfil.sys"));
+            !hiberfil.exists()
                 || hklm_dword("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power", "HiberbootEnabled") == Some(0)
         }
         "ntfs-last-access-off" => {

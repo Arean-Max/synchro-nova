@@ -229,17 +229,28 @@ pub struct DetectedAppConflictInfo {
 pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
     let mut apps = Vec::new();
 
+    let sys_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
+    let sys32 = std::path::PathBuf::from(&sys_root).join("System32");
+
+    let mut pf_dirs = Vec::new();
+    if let Ok(pf) = std::env::var("ProgramFiles") {
+        pf_dirs.push(std::path::PathBuf::from(pf));
+    }
+    if let Ok(pfx86) = std::env::var("ProgramFiles(x86)") {
+        pf_dirs.push(std::path::PathBuf::from(pfx86));
+    }
+
     // 1. Xbox Game Bar / GameDVR
-    let has_gamebar = std::path::Path::new(r"C:\Windows\System32\bcastdvr.exe").exists()
-        || std::path::Path::new(r"C:\Windows\System32\GameBarPresenceWriter.exe").exists();
+    let has_gamebar = sys32.join("bcastdvr.exe").exists()
+        || sys32.join("GameBarPresenceWriter.exe").exists();
     apps.push(DetectedAppConflictInfo {
         id: "xbox_game_bar".to_string(),
         name: "Xbox Game Bar".to_string(),
         installed: has_gamebar,
         details: if has_gamebar {
-            "Обнаружен компонент захвата Xbox GameDVR".to_string()
+            "Xbox GameDVR / Game Bar capture active".to_string()
         } else {
-            "Не обнаружен в системе".to_string()
+            "Not detected".to_string()
         },
     });
 
@@ -250,67 +261,66 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
         name: "Discord".to_string(),
         installed: has_discord,
         details: if has_discord {
-            "Обнаружен клиент Discord (оверлей / аппаратное ускорение)".to_string()
+            "Discord client detected".to_string()
         } else {
-            "Не обнаружен".to_string()
+            "Not detected".to_string()
         },
     });
 
     // 3. GeForce Experience / NVIDIA App
-    let has_geforce = std::path::Path::new(r"C:\Program Files\NVIDIA Corporation\NVIDIA GeForce Experience").exists()
-        || std::path::Path::new(r"C:\Program Files\NVIDIA Corporation\NVIDIA App").exists()
-        || std::path::Path::new(r"C:\Program Files (x86)\NVIDIA Corporation\NVIDIA GeForce Experience").exists();
+    let has_geforce = pf_dirs.iter().any(|dir| {
+        dir.join("NVIDIA Corporation\\NVIDIA GeForce Experience").exists()
+            || dir.join("NVIDIA Corporation\\NVIDIA App").exists()
+    });
     apps.push(DetectedAppConflictInfo {
         id: "geforce_experience".to_string(),
-        name: "NVIDIA ShadowPlay / App".to_string(),
+        name: "NVIDIA App / ShadowPlay".to_string(),
         installed: has_geforce,
         details: if has_geforce {
-            "Обнаружен оверлей и фоновая запись NVIDIA".to_string()
+            "NVIDIA overlay / shadowplay software detected".to_string()
         } else {
-            "Не обнаружен".to_string()
+            "Not detected".to_string()
         },
     });
 
     // 4. OBS Studio
-    let has_obs = std::path::Path::new(r"C:\Program Files\obs-studio").exists()
-        || std::path::Path::new(r"C:\Program Files (x86)\obs-studio").exists()
+    let has_obs = pf_dirs.iter().any(|dir| dir.join("obs-studio").exists())
         || check_folder_in_roaming("obs-studio");
     apps.push(DetectedAppConflictInfo {
         id: "obs_studio".to_string(),
         name: "OBS Studio".to_string(),
         installed: has_obs,
         details: if has_obs {
-            "Обнаружена программа захвата OBS Studio".to_string()
+            "OBS Studio capture software detected".to_string()
         } else {
-            "Не обнаружена".to_string()
+            "Not detected".to_string()
         },
     });
 
     // 5. RivaTuner Statistics Server (RTSS)
-    let has_rtss = std::path::Path::new(r"C:\Program Files (x86)\RivaTuner Statistics Server").exists()
-        || std::path::Path::new(r"C:\Program Files\RivaTuner Statistics Server").exists();
+    let has_rtss = pf_dirs.iter().any(|dir| dir.join("RivaTuner Statistics Server").exists());
     apps.push(DetectedAppConflictInfo {
         id: "rtss".to_string(),
         name: "RivaTuner (RTSS)".to_string(),
         installed: has_rtss,
         details: if has_rtss {
-            "Обнаружен оверлей статистики RTSS".to_string()
+            "RTSS overlay software detected".to_string()
         } else {
-            "Не обнаружен".to_string()
+            "Not detected".to_string()
         },
     });
 
     // 6. Steam
-    let has_steam = std::path::Path::new(r"C:\Program Files (x86)\Steam").exists()
-        || std::path::Path::new(r"C:\Program Files\Steam").exists();
+    let has_steam = pf_dirs.iter().any(|dir| dir.join("Steam").exists())
+        || crate::games::steam_install_root().is_some();
     apps.push(DetectedAppConflictInfo {
         id: "steam".to_string(),
         name: "Steam".to_string(),
         installed: has_steam,
         details: if has_steam {
-            "Обнаружен игровой клиент Steam".to_string()
+            "Steam client detected".to_string()
         } else {
-            "Не обнаружен".to_string()
+            "Not detected".to_string()
         },
     });
 
@@ -318,12 +328,12 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
     let has_vpn = check_vpn_present();
     apps.push(DetectedAppConflictInfo {
         id: "vpn".to_string(),
-        name: "VPN / Proxy адаптеры".to_string(),
+        name: "VPN Adapters".to_string(),
         installed: has_vpn,
         details: if has_vpn {
-            "Обнаружены виртуальные сетевые интерфейсы (WireGuard / TAP / VPN)".to_string()
+            "Virtual network tunnel interfaces detected".to_string()
         } else {
-            "Сетевые туннели не обнаружены".to_string()
+            "No virtual adapters detected".to_string()
         },
     });
 
@@ -331,12 +341,12 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
     let has_bluetooth = check_bluetooth_present();
     apps.push(DetectedAppConflictInfo {
         id: "bluetooth".to_string(),
-        name: "Bluetooth устройства".to_string(),
+        name: "Bluetooth".to_string(),
         installed: has_bluetooth,
         details: if has_bluetooth {
-            "Обнаружен Bluetooth радиомодуль / драйвер".to_string()
+            "Bluetooth radio adapter detected".to_string()
         } else {
-            "Bluetooth адаптер не обнаружен".to_string()
+            "No adapter detected".to_string()
         },
     });
 
@@ -344,12 +354,12 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
     let has_fast_startup = check_fast_startup_enabled();
     apps.push(DetectedAppConflictInfo {
         id: "fast_startup".to_string(),
-        name: "Быстрый запуск Windows".to_string(),
+        name: "Fast Startup".to_string(),
         installed: has_fast_startup,
         details: if has_fast_startup {
-            "Включена гибернация ядра (Fast Startup)".to_string()
+            "Windows kernel hibernation enabled".to_string()
         } else {
-            "Быстрый запуск отключен".to_string()
+            "Disabled".to_string()
         },
     });
 
@@ -389,7 +399,8 @@ fn check_fast_startup_enabled() -> bool {
             }
         }
     }
-    std::path::Path::new(r"C:\hiberfil.sys").exists()
+    let sys_drive = std::env::var("SystemDrive").unwrap_or_else(|_| "C:".to_string());
+    std::path::PathBuf::from(format!("{sys_drive}\\hiberfil.sys")).exists()
 }
 
 fn check_bluetooth_present() -> bool {

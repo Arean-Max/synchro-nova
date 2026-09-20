@@ -51,26 +51,27 @@ mod prerequisites_check {
         }
 
         let temp_dir = std::env::temp_dir();
+        let vc_installer = temp_dir.join("vc_redist.x64.exe");
+        let webview_installer = temp_dir.join("MicrosoftEdgeWebview2Setup.exe");
 
         if missing_vc_redist {
-            let vc_installer = temp_dir.join("vc_redist.x64.exe");
             if download_file(VC_REDIST_X64_URL, &vc_installer)
                 && vc_installer.exists()
                 && is_authenticode_valid(&vc_installer)
             {
                 let _ = run_installer_silent(&vc_installer, &["/install", "/quiet", "/norestart"]);
+            }
+            if vc_installer.exists() {
                 let _ = std::fs::remove_file(&vc_installer);
             }
         }
 
         if missing_webview2 {
-            let webview_installer = temp_dir.join("MicrosoftEdgeWebview2Setup.exe");
             if download_file(WEBVIEW_BOOTSTRAPPER_URL, &webview_installer)
                 && webview_installer.exists()
                 && is_authenticode_valid(&webview_installer)
             {
                 let _ = run_installer_silent(&webview_installer, &["/silent", "/install"]);
-                let _ = std::fs::remove_file(&webview_installer);
 
                 let start = std::time::Instant::now();
                 while start.elapsed() < std::time::Duration::from_secs(60) {
@@ -79,6 +80,9 @@ mod prerequisites_check {
                     }
                     std::thread::sleep(std::time::Duration::from_millis(1500));
                 }
+            }
+            if webview_installer.exists() {
+                let _ = std::fs::remove_file(&webview_installer);
             }
         }
 
@@ -226,34 +230,17 @@ mod prerequisites_check {
         cmd.status().map(|s| s.success()).unwrap_or(false)
     }
 
-    fn base64_encode(data: &[u8]) -> String {
-        const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-        let mut out = String::with_capacity((data.len() + 2) / 3 * 4);
-        for chunk in data.chunks(3) {
-            let b0 = chunk[0] as usize;
-            let b1 = chunk.get(1).copied().unwrap_or(0) as usize;
-            let b2 = chunk.get(2).copied().unwrap_or(0) as usize;
-            let triple = (b0 << 16) | (b1 << 8) | b2;
-            out.push(ALPHABET[(triple >> 18) & 0x3F] as char);
-            out.push(ALPHABET[(triple >> 12) & 0x3F] as char);
-            if chunk.len() > 1 {
-                out.push(ALPHABET[(triple >> 6) & 0x3F] as char);
-            } else {
-                out.push('=');
-            }
-            if chunk.len() > 2 {
-                out.push(ALPHABET[triple & 0x3F] as char);
-            } else {
-                out.push('=');
-            }
-        }
-        out
-    }
-
-    fn is_authenticode_valid(path: &Path) -> bool {
+    pub(crate) fn is_authenticode_valid(path: &Path) -> bool {
         if !path.is_file() {
             return false;
         }
+
+        // 1. Try in-process native WinVerifyTrust first (ultra fast, zero child processes)
+        if synchro_lib::ffi::verify_embedded_signature(path) {
+            return true;
+        }
+
+        // 2. Safe fallback to PowerShell if signature requires catalog verification
         let ps_exe = std::env::var("SystemRoot")
             .map(|root| PathBuf::from(root).join("System32\\WindowsPowerShell\\v1.0\\powershell.exe"))
             .unwrap_or_else(|_| PathBuf::from("powershell.exe"));
@@ -261,15 +248,13 @@ mod prerequisites_check {
         let script = format!(
             "$sig = Get-AuthenticodeSignature -LiteralPath '{path_str}'; if ($sig.Status -eq 'Valid') {{ exit 0 }} else {{ exit 1 }}"
         );
-        let utf16_bytes: Vec<u8> = script.encode_utf16().flat_map(|u| u.to_le_bytes()).collect();
-        let encoded = base64_encode(&utf16_bytes);
         let mut cmd = std::process::Command::new(ps_exe);
         #[cfg(target_os = "windows")]
         {
             use std::os::windows::process::CommandExt;
             cmd.creation_flags(0x0800_0000);
         }
-        cmd.args(["-NoProfile", "-WindowStyle", "Hidden", "-EncodedCommand", &encoded])
+        cmd.args(["-NoProfile", "-WindowStyle", "Hidden", "-Command", &script])
             .status()
             .map(|s| s.success())
             .unwrap_or(false)
@@ -310,10 +295,8 @@ mod prerequisites_check {
         let script = format!(
             "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object Net.WebClient).DownloadFile('{safe_url}', '{safe_dest}')"
         );
-        let utf16_bytes: Vec<u8> = script.encode_utf16().flat_map(|u| u.to_le_bytes()).collect();
-        let encoded = base64_encode(&utf16_bytes);
         let status = cmd
-            .args(["-NoProfile", "-WindowStyle", "Hidden", "-EncodedCommand", &encoded])
+            .args(["-NoProfile", "-WindowStyle", "Hidden", "-Command", &script])
             .status();
 
         status.map(|s| s.success()).unwrap_or(false) && dest.exists() && file_has_content(dest)
@@ -348,6 +331,34 @@ fn main() {
             std::process::exit(0);
         }
 
+        // Isolate WebView2 browser user data and prevent white flash on window create
+        if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
+            let webview_cache = std::path::PathBuf::from(local_app_data)
+                .join("SynchroNova")
+                .join("EBWebView");
+            let _ = std::fs::create_dir_all(&webview_cache);
+            std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", webview_cache);
+        }
+        std::env::set_var("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0xFF121214");
+
+        // Optimize WebView2 runtime: eliminate telemetry, background network chatter, and limit memory cache
+        if std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").is_err() {
+            std::env::set_var(
+                "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+                "--disable-background-networking \
+                 --disable-component-update \
+                 --disable-domain-reliability \
+                 --disable-sync \
+                 --no-pings \
+                 --disable-client-side-phishing-detection \
+                 --disable-breakpad \
+                 --disable-speech-api \
+                 --disable-features=Translate,OptimizationHints,MediaRouter,DialMediaRouteProvider,CalculateNativeWinOcclusion,InterestFeedContentSuggestions \
+                 --disk-cache-size=33554432 \
+                 --media-cache-size=16777216",
+            );
+        }
+
         prerequisites_check::ensure_runtime_prerequisites();
     }
 
@@ -372,6 +383,22 @@ mod tests {
             let wb = super::prerequisites_check::is_webview2_installed();
             let vc = super::prerequisites_check::is_vc_redist_installed();
             println!("CHECKERS: webview2={}, vc_redist={}", wb, vc);
+        }
+    }
+
+    #[test]
+    fn test_native_winverifytrust() {
+        #[cfg(target_os = "windows")]
+        {
+            let non_existent = std::path::PathBuf::from("C:\\synchro_invalid_non_existent_file.exe");
+            assert!(!synchro_lib::ffi::verify_embedded_signature(&non_existent));
+
+            if let Ok(sys_root) = std::env::var("SystemRoot") {
+                let explorer = std::path::PathBuf::from(sys_root).join("explorer.exe");
+                if explorer.exists() {
+                    assert!(super::prerequisites_check::is_authenticode_valid(&explorer));
+                }
+            }
         }
     }
 }

@@ -227,6 +227,9 @@ pub mod winapi {
             heap_information: *mut c_void,
             heap_information_length: usize,
         ) -> i32;
+        pub fn LoadLibraryW(lib_file_name: *const u16) -> *mut c_void;
+        pub fn GetProcAddress(module: *mut c_void, proc_name: *const u8) -> *mut c_void;
+        pub fn FreeLibrary(module: *mut c_void) -> i32;
     }
 
     #[link(name = "Shell32")]
@@ -843,6 +846,117 @@ pub fn ensure_single_instance(_mutex_name: &str, _window_title: &str) -> bool {
 
 #[cfg(not(target_os = "windows"))]
 pub fn ensure_single_instance_retry(_mutex_name: &str, _window_title: &str, _is_restart: bool) -> bool {
+    true
+}
+
+#[cfg(target_os = "windows")]
+pub fn verify_embedded_signature(path: &Path) -> bool {
+    if !path.is_file() {
+        return false;
+    }
+
+    #[repr(C)]
+    struct Guid {
+        data1: u32,
+        data2: u16,
+        data3: u16,
+        data4: [u8; 8],
+    }
+
+    #[repr(C)]
+    struct WinTrustFileInfo {
+        cb_struct: u32,
+        pcwsz_file_path: *const u16,
+        h_file: *mut c_void,
+        pg_known_subject: *mut c_void,
+    }
+
+    #[repr(C)]
+    struct WinTrustData {
+        cb_struct: u32,
+        p_policy_callback_data: *mut c_void,
+        p_sip_client_data: *mut c_void,
+        dw_ui_choice: u32,
+        fdw_revocation_checks: u32,
+        dw_union_choice: u32,
+        p_file: *mut WinTrustFileInfo,
+        dw_state_action: u32,
+        h_wvt_state_data: *mut c_void,
+        pwsz_url_reference: *mut u16,
+        dw_prov_flags: u32,
+        dw_ui_context: u32,
+        p_signature_settings: *mut c_void,
+    }
+
+    const WTD_UI_NONE: u32 = 2;
+    const WTD_REVOKE_NONE: u32 = 0;
+    const WTD_CHOICE_FILE: u32 = 1;
+    const WTD_STATEACTION_VERIFY: u32 = 1;
+    const WTD_STATEACTION_CLOSE: u32 = 2;
+    const WTD_SAFER_FLAG: u32 = 0x0000_0100;
+
+    let path_w = wide_null(&path.to_string_lossy());
+    let mut file_info = WinTrustFileInfo {
+        cb_struct: std::mem::size_of::<WinTrustFileInfo>() as u32,
+        pcwsz_file_path: path_w.as_ptr(),
+        h_file: std::ptr::null_mut(),
+        pg_known_subject: std::ptr::null_mut(),
+    };
+
+    let mut trust_data = WinTrustData {
+        cb_struct: std::mem::size_of::<WinTrustData>() as u32,
+        p_policy_callback_data: std::ptr::null_mut(),
+        p_sip_client_data: std::ptr::null_mut(),
+        dw_ui_choice: WTD_UI_NONE,
+        fdw_revocation_checks: WTD_REVOKE_NONE,
+        dw_union_choice: WTD_CHOICE_FILE,
+        p_file: &mut file_info,
+        dw_state_action: WTD_STATEACTION_VERIFY,
+        h_wvt_state_data: std::ptr::null_mut(),
+        pwsz_url_reference: std::ptr::null_mut(),
+        dw_prov_flags: WTD_SAFER_FLAG,
+        dw_ui_context: 0,
+        p_signature_settings: std::ptr::null_mut(),
+    };
+
+    let action_guid = Guid {
+        data1: 0x00aa_c56b,
+        data2: 0xcd44,
+        data3: 0x11d0,
+        data4: [0x8c, 0xc2, 0x00, 0xc0, 0x4f, 0xc2, 0xaa, 0xe2],
+    };
+
+    unsafe {
+        let wintrust_dll = winapi::LoadLibraryW(wide_null("wintrust.dll").as_ptr());
+        if wintrust_dll.is_null() {
+            return false;
+        }
+
+        type WinVerifyTrustFn = unsafe extern "system" fn(
+            *mut c_void,
+            *const Guid,
+            *mut WinTrustData,
+        ) -> i32;
+
+        let proc = winapi::GetProcAddress(wintrust_dll, b"WinVerifyTrust\0".as_ptr());
+        if proc.is_null() {
+            winapi::FreeLibrary(wintrust_dll);
+            return false;
+        }
+
+        let verify_fn: WinVerifyTrustFn = std::mem::transmute(proc);
+        let status = verify_fn(std::ptr::null_mut(), &action_guid, &mut trust_data);
+
+        trust_data.dw_state_action = WTD_STATEACTION_CLOSE;
+        let _ = verify_fn(std::ptr::null_mut(), &action_guid, &mut trust_data);
+
+        winapi::FreeLibrary(wintrust_dll);
+        status == 0
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn verify_embedded_signature(_path: &Path) -> bool {
     true
 }
 
