@@ -70,39 +70,39 @@ async function run() {
 
   let release = Array.isArray(rels.data) ? rels.data.find(r => r.tag_name === 'v2.0') : null;
 
+  const releaseBody = {
+    tag_name: 'v2.0',
+    target_commitish: 'main',
+    name: 'Synchro Nova v2.0 - Production Architecture & Optimization',
+    body: [
+      '## Synchro Nova v2.0',
+      '',
+      '### Performance & Production Architecture',
+      '- Ultra-low idle memory footprint (~1.5–3 MB RAM).',
+      '- Event-driven synchronization (`Condvar`): 0 timer wakeups and 0% CPU at idle.',
+      '- Optimized Chromium/WebView2 lifecycle: background networking, telemetry, and GPU caching stripped.',
+      '- 100% Anti-Cheat compliant: Vanguard, EAC, BattlEye, Ricochet safe with zero DLL injection, process hooks, or thread tampering.',
+      '- WebView2Loader Auto-Patch: permanently resolves the Windows Bad Image `0xc000012f` error.',
+      '- Zero hardcoded paths: fully portable across custom Windows drives and locales.',
+      '',
+      '### UI, Community & Localization',
+      '- Integrated Community Hub: Dedicated GitHub and Telegram (`t.me/synchronova`) cards designed seamlessly with dark mode.',
+      '- Instant responsive switches: Settings toggle immediately with zero lag, plus high-contrast thumb for White accent mode.',
+      '- Global text selection disabled: App feels like a solid native Windows desktop application.',
+      '- Zero Language Leakage: Complete i18n locale audit ensuring 100% pure Russian or English across all menus, badges, dialogs, and impact banners.',
+      '',
+      '### Downloads & Verification',
+      '- **synchro.exe** (Standalone portable x64 executable)',
+      '- **Synchro.Nova_2.0.0_x64-setup.exe** (Standard Windows setup installer)',
+      '- **SHA256SUMS.txt** (Official cryptographic verification hashes)'
+    ].join('\n'),
+    draft: false,
+    prerelease: false,
+    make_latest: 'true'
+  };
+
   if (!release) {
     console.log('2. Creating Release v2.0 on GitHub...');
-    const releaseBody = {
-      tag_name: 'v2.0',
-      target_commitish: 'main',
-      name: 'Synchro Nova v2.0 - Production Architecture & Optimization',
-      body: [
-        '## Synchro Nova v2.0',
-        '',
-        '### Performance & Production Architecture',
-        '- Ultra-low idle memory footprint (~1.5–3 MB RAM).',
-        '- Event-driven synchronization (`Condvar`): 0 timer wakeups and 0% CPU at idle.',
-        '- Optimized Chromium/WebView2 lifecycle: background networking, telemetry, and GPU caching stripped.',
-        '- 100% Anti-Cheat compliant: Vanguard, EAC, BattlEye, Ricochet safe with zero DLL injection, process hooks, or thread tampering.',
-        '- WebView2Loader Auto-Patch: permanently resolves the Windows Bad Image `0xc000012f` error.',
-        '- Zero hardcoded paths: fully portable across custom Windows drives and locales.',
-        '',
-        '### UI, Community & Localization',
-        '- Integrated Community Hub: Dedicated GitHub and Telegram (`t.me/synchronova`) cards designed seamlessly with dark mode.',
-        '- Instant responsive switches: Settings toggle immediately with zero lag, plus high-contrast thumb for White accent mode.',
-        '- Global text selection disabled: App feels like a solid native Windows desktop application.',
-        '- Zero Language Leakage: Complete i18n locale audit ensuring 100% pure Russian or English across all menus, badges, dialogs, and impact banners.',
-        '',
-        '### Downloads & Verification',
-        '- **synchro.exe** (Standalone portable x64 executable)',
-        '- **Synchro.Nova_2.0.0_x64-setup.exe** (Standard Windows setup installer)',
-        '- **SHA256SUMS.txt** (Official cryptographic verification hashes)'
-      ].join('\n'),
-      draft: false,
-      prerelease: false,
-      make_latest: 'true'
-    };
-
     const created = await request({
       hostname: 'api.github.com',
       path: `/repos/${owner}/${repo}/releases`,
@@ -118,7 +118,24 @@ async function run() {
     console.log('Release creation status:', created.status);
     release = created.data;
   } else {
-    console.log('Release v2.0 already exists with ID:', release.id);
+    console.log('Release v2.0 already exists with ID:', release.id, '- updating body and name...');
+    const updated = await request({
+      hostname: 'api.github.com',
+      path: `/repos/${owner}/${repo}/releases/${release.id}`,
+      method: 'PATCH',
+      headers: {
+        'User-Agent': 'NodeJS',
+        'Authorization': 'token ' + token,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      }
+    }, JSON.stringify({
+      name: releaseBody.name,
+      body: releaseBody.body
+    }));
+    if (updated.data && updated.data.upload_url) {
+      release = updated.data;
+    }
   }
 
   if (!release || !release.upload_url) {
