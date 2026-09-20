@@ -49,6 +49,9 @@
     "active": true,
     "icon": ["icons/icon.ico"],
     "targets": ["nsis"],
+    "resources": {
+      "crates/webview2-com-sys/x64/WebView2Loader.dll": "WebView2Loader.dll"
+    },
     "windows": {
       "webviewInstallMode": {
         "type": "downloadBootstrapper"

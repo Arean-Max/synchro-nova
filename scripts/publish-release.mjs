@@ -93,8 +93,9 @@ async function run() {
       '- Zero Language Leakage: Complete i18n locale audit ensuring 100% pure Russian or English across all menus, badges, dialogs, and impact banners.',
       '',
       '### Downloads & Verification',
-      '- **synchro.exe** (Standalone portable x64 executable)',
-      '- **Synchro.Nova_2.0.0_x64-setup.exe** (Standard Windows setup installer)',
+      '- **synchro.exe** (Standalone portable x64 executable with embedded dynamic loader)',
+      '- **Synchro-Nova-2.0.0-Portable.zip** (Portable ZIP archive including synchro.exe and WebView2Loader.dll)',
+      '- **Synchro.Nova_2.0.0_x64-setup.exe** (Windows setup installer with bundled WebView2Loader.dll in install directory)',
       '- **SHA256SUMS.txt** (Official cryptographic verification hashes)'
     ].join('\n'),
     draft: false,
@@ -162,6 +163,7 @@ async function run() {
 
   const exePath = path.resolve('dist-artifacts/synchro.exe');
   const setupPath = path.resolve('dist-artifacts/Synchro.Nova_2.0.0_x64-setup.exe');
+  const zipPath = path.resolve('dist-artifacts/Synchro-Nova-2.0.0-Portable.zip');
   const sumPath = path.resolve('dist-artifacts/SHA256SUMS.txt');
 
   console.log('4. Uploading synchro.exe (~6.5MB)...');
@@ -169,12 +171,18 @@ async function run() {
   console.log('synchro.exe upload status:', res1.status);
 
   if (fs.existsSync(setupPath)) {
-    console.log('5. Uploading Synchro.Nova_2.0.0_x64-setup.exe (~6.5MB)...');
+    console.log('5. Uploading Synchro.Nova_2.0.0_x64-setup.exe (~4.5MB)...');
     const resSetup = await uploadAsset(release.upload_url, setupPath, 'Synchro.Nova_2.0.0_x64-setup.exe', 'application/vnd.microsoft.portable-executable');
     console.log('Synchro.Nova_2.0.0_x64-setup.exe upload status:', resSetup.status);
   }
 
-  console.log('6. Uploading SHA256SUMS.txt...');
+  if (fs.existsSync(zipPath)) {
+    console.log('6. Uploading Synchro-Nova-2.0.0-Portable.zip (~5MB)...');
+    const resZip = await uploadAsset(release.upload_url, zipPath, 'Synchro-Nova-2.0.0-Portable.zip', 'application/zip');
+    console.log('Synchro-Nova-2.0.0-Portable.zip upload status:', resZip.status);
+  }
+
+  console.log('7. Uploading SHA256SUMS.txt...');
   const res2 = await uploadAsset(release.upload_url, sumPath, 'SHA256SUMS.txt', 'text/plain');
   console.log('SHA256SUMS.txt upload status:', res2.status);
 
