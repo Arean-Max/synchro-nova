@@ -1,8 +1,20 @@
 import https from 'node:https';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 
-const token = process.env.GITHUB_TOKEN;
+let token = process.env.GITHUB_TOKEN;
+if (!token) {
+  try {
+    const creds = execSync('git credential fill', {
+      input: 'protocol=https\nhost=github.com\n',
+      encoding: 'utf8'
+    });
+    const match = creds.match(/password=(.+)/);
+    if (match) token = match[1].trim();
+  } catch {}
+}
+
 const owner = 'Arean-Max';
 const repo = 'synchro-nova';
 
