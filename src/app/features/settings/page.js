@@ -46,25 +46,35 @@ export function renderSettingsPage(appState, _viewState, t) {
     `<p class="settings-hint-text">${t("showOnRecordingsDesc")}</p>`
   ].join("");
 
-  const communityCard = [
-    '<div class="settings-community-row">',
-    `<button class="btn btn-outline settings-link-btn" type="button" data-action="open-external-url" data-url="https://github.com/Arean-Max/synchro-nova">`,
+  const communityLinks = [
+    '<aside class="settings-side-links">',
+    '  <button class="settings-tall-card-btn" type="button" data-action="open-external-url" data-url="https://github.com/Arean-Max/synchro-nova">',
+    '    <div class="tall-card-icon-wrap">',
     icon("github"),
-    `<span>${t("weOnGithub")}</span>`,
-    `</button>`,
-    `<button class="btn btn-outline settings-link-btn" type="button" data-action="open-external-url" data-url="https://t.me/synchro_nova">`,
+    '    </div>',
+    '    <div class="tall-card-content">',
+    `      <span class="tall-card-title">${t("weOnGithubCaps")}</span>`,
+    '      <span class="tall-card-sub">github.com/Arean-Max</span>',
+    '    </div>',
+    '  </button>',
+    '  <button class="settings-tall-card-btn" type="button" data-action="open-external-url" data-url="https://t.me/synchronova">',
+    '    <div class="tall-card-icon-wrap">',
     icon("telegram"),
-    `<span>${t("weOnTelegram")}</span>`,
-    `</button>`,
-    '</div>'
+    '    </div>',
+    '    <div class="tall-card-content">',
+    `      <span class="tall-card-title">${t("weOnTelegramCaps")}</span>`,
+    '      <span class="tall-card-sub">t.me/synchronova</span>',
+    '    </div>',
+    '  </button>',
+    '</aside>'
   ].join("");
 
   return [
     '<div class="settings-page">',
-    '<div class="stack">',
+    '  <div class="settings-main-col">',
     card(t("application"), appCard),
-    card(t("community"), communityCard),
-    "</div>",
-    "</div>"
+    '  </div>',
+    communityLinks,
+    '</div>'
   ].join("");
 }
