@@ -3,7 +3,7 @@
 <div align="center">
 
 [![English](https://img.shields.io/badge/Language-English-blue?style=flat-square)](README.en.md)
-[![Telegram](https://img.shields.io/badge/Telegram-Канал-229ED9?style=flat-square&logo=telegram&logoColor=white)](https://t.me/synchronova)
+[![Telegram](https://img.shields.io/badge/Telegram-Channel-229ED9?style=flat-square&logo=telegram&logoColor=white)](https://t.me/synchronova)
 [![Releases](https://img.shields.io/github/v/release/Arean-Max/synchro-nova?style=flat-square&color=emerald)](https://github.com/Arean-Max/synchro-nova/releases)
 [![License](https://img.shields.io/badge/License-MIT-white?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20(x64)-informational?style=flat-square)](https://microsoft.com/windows)
@@ -19,7 +19,7 @@
 
 ---
 
-## 📌 О проекте
+## О проекте
 
 Synchro Nova создавалась как замена громоздким оверлеям и сомнительным «бустерам фпс», которые забивают оперативную память, внедряются в системные библиотеки и вызывают блокировки в соревновательных играх. 
 
@@ -27,31 +27,31 @@ Synchro Nova создавалась как замена громоздким о�
 
 ---
 
-## ✨ Основные возможности
+## Основные возможности
 
-### 🎨 1. Аппаратная цветокоррекция (Display Calibration)
+### 1. Аппаратная цветокоррекция (Display Calibration)
 - **Прямое управление через Windows GDI & Magnification API**: сочность (vibrance), насыщенность, гамма, контраст и цветовой тон без задержки кадра и без инпут-лага.
 - **Режим Black Holo**: интеллектуальное вытягивание контраста и глубоких теней в соревновательных шутерах (CS2, Rust, Apex, Tarkov) без потери деталей в ярких зонах.
 - **Автоматические пресеты для игр**: возможность привязать персональную калибровку к конкретной игре.
 
-### ⚡ 2. Системные твики и оптимизация отклика (System Tweaks)
+### 2. Системные твики и оптимизация отклика (System Tweaks)
 - **41 проверенная настройка**: отключение телеметрии, настройка системного таймера, приоритеты мультимедийного планировщика (MMCSS), полноэкранная оптимизация (FSO), сетевой стек и TCP autotuning.
 - **Гарантированная безопасность (1-Click Rollback)**: перед внесением любых изменений утилита создаёт снимок реестра (`.reg`). В любой момент все параметры можно откатить одной кнопкой.
 - **Полная прозрачность**: никаких скрытых скриптов. Каждая команда и путь в реестре описаны в интерфейсе и в [документации по твикам](docs/TWEAKS_REFERENCE.md).
 
-### 🔍 3. Анализ драйверов и ПК (Hardware & Drivers)
+### 3. Анализ драйверов и ПК (Hardware & Drivers)
 - Определение видеокарты, текущей версии видеодрайвера и даты его выпуска.
 - Проверка актуальности драйверов NVIDIA, AMD, Intel и прямые ссылки на официальные сайты производителей.
 - Мониторинг загрузки процессора и оперативной памяти через нативный Windows PDH (Performance Data Helper).
 
-### 🛡️ 4. Полная чистота перед античитами (Anti-Cheat Conformance)
+### 4. Полная чистота перед античитами (Anti-Cheat Conformance)
 - **Строгий User Mode**: приложение не лезет в чужую память (0 вызовов `PROCESS_VM_READ` или `PROCESS_VM_WRITE`).
 - **Без инъекций и перехватов**: 0 вызовов `CreateRemoteThread`, никаких хуков на системный ввод (`SetWindowsHookEx`) и никаких API-detours.
 - Безопасно работает параллельно с **Riot Vanguard, Easy Anti-Cheat (EAC), BattlEye, Valve Anti-Cheat (VAC) и Ricochet**.
 
 ---
 
-## 🚀 Производительность и ресурсы
+## Производительность и ресурсы
 
 | Показатель | Synchro Nova v2.0 | Типичный софт на Electron |
 |---|:---:|:---:|
@@ -65,7 +65,7 @@ Synchro Nova создавалась как замена громоздким о�
 
 ---
 
-## 📥 Скачать и установить
+## Скачать и установить
 
 Свежие сборки всегда доступны на странице [**Releases**](https://github.com/Arean-Max/synchro-nova/releases):
 
@@ -81,7 +81,7 @@ Get-FileHash .\synchro.exe -Algorithm SHA256
 
 ---
 
-## 🛠️ Сборка из исходников
+## Сборка из исходников
 
 ### Требования
 - [Node.js](https://nodejs.org/) (версия 18+)
@@ -108,13 +108,13 @@ npm run build
 
 ---
 
-## 💬 Сообщество и поддержка
+## Сообщество и поддержка
 
 - **Официальный Telegram**: [t.me/synchronova](https://t.me/synchronova) — обновления, обсуждения, идеи и помощь.
 - **GitHub Issues**: нашли ошибку или хотите предложить улучшение? [Создайте issue](https://github.com/Arean-Max/synchro-nova/issues).
 
 ---
 
-## 📄 Лицензия
+## Лицензия
 
 Проект распространяется под свободной лицензией [MIT](LICENSE).

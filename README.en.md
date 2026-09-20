@@ -19,7 +19,7 @@
 
 ---
 
-## 📌 Overview
+## Overview
 
 Synchro Nova was designed as a lightweight, clean alternative to bloated game overlays and questionable "FPS boosters" that clutter memory, inject into game threads, and trigger competitive anti-cheat bans.
 
@@ -27,31 +27,31 @@ We brought together hardware Digital Vibrance, precise gamma ramp calibration, G
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### 🎨 1. Hardware Display Calibration
+### 1. Hardware Display Calibration
 - **Native Win32 GDI & Magnification API**: Real-time digital vibrance, saturation, gamma, contrast, and color balance adjustments with zero frame lag and zero input latency.
 - **Black Holo Mode**: Smart dynamic range enhancement for competitive shooters (CS2, Rust, Apex, Tarkov), lifting dark shadowy spots without overblowing highlights.
 - **Per-Game Color Presets**: Automatically apply custom profiles when launching specific titles.
 
-### ⚡ 2. System Tweaks & Input Latency (System Tweaks)
+### 2. System Tweaks & Input Latency (System Tweaks)
 - **41 Tested Optimizations**: System timer configuration, Multimedia Class Scheduler (MMCSS) priorities, Fullscreen Optimizations (FSO), telemetry suppression, and TCP network stack autotuning.
 - **Guaranteed Safety (1-Click Rollback)**: Before any modification is made, a timestamped `.reg` backup is created. Revert all applied tweaks with a single click at any time.
 - **Total Transparency**: No hidden batch files or detours. Every registry key and command is clearly explained in the UI and in the [Tweaks Reference Documentation](docs/TWEAKS_REFERENCE.md).
 
-### 🔍 3. Hardware & Driver Inspector
+### 3. Hardware & Driver Inspector
 - Detects installed graphics cards, active driver version, and release date.
 - Checks driver status for NVIDIA, AMD, Intel with direct official download links.
 - Real-time CPU and memory monitoring via native Windows Performance Data Helper (PDH).
 
-### 🛡️ 4. Anti-Cheat Compliance (Vanguard, EAC, BattlEye)
+### 4. Anti-Cheat Compliance (Vanguard, EAC, BattlEye)
 - **Strict User Mode**: Zero cross-process memory access (`PROCESS_VM_READ`, `PROCESS_VM_WRITE`, `PROCESS_ALL_ACCESS`).
 - **No DLL Injection or Detours**: Zero `CreateRemoteThread`, zero keyboard/mouse hooks (`SetWindowsHookEx`), and zero API hooking.
 - Fully compatible alongside **Riot Vanguard, Easy Anti-Cheat (EAC), BattlEye, Valve Anti-Cheat (VAC), and Ricochet**.
 
 ---
 
-## 🚀 Resource Efficiency
+## Resource Efficiency
 
 | Metric | Synchro Nova v2.0 | Typical Electron Utility |
 |---|:---:|:---:|
@@ -65,7 +65,7 @@ We brought together hardware Digital Vibrance, precise gamma ramp calibration, G
 
 ---
 
-## 📥 Download & Install
+## Download & Install
 
 Official releases are published on the [**Releases Page**](https://github.com/Arean-Max/synchro-nova/releases):
 
@@ -81,7 +81,7 @@ Compare the output hash against `SHA256SUMS.txt` on the release page.
 
 ---
 
-## 🛠️ Building from Source
+## Building from Source
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (version 18+)
@@ -108,13 +108,13 @@ The compiled standalone executable will be located at `src-tauri/target/release/
 
 ---
 
-## 💬 Community & Support
+## Community & Support
 
 - **Official Telegram**: [t.me/synchronova](https://t.me/synchronova) — Releases, discussions, feature requests, and help.
 - **GitHub Issues**: Found a bug or have a suggestion? [Open an issue](https://github.com/Arean-Max/synchro-nova/issues).
 
 ---
 
-## 📄 License
+## License
 
 Released under the [MIT License](LICENSE).
