@@ -1254,7 +1254,7 @@ fn apply_clean_temp_junk(id: &str) -> TweakApplyResult {
     let mb_freed = total_bytes_freed as f64 / (1024.0 * 1024.0);
     applied(
         id,
-        &format!("Очищено {files_removed} временных файлов ({mb_freed:.1} МБ мусора и кэша шейдеров DirectX)"),
+        &format!("Cleaned {files_removed} temporary files ({mb_freed:.1} MB junk and DirectX shader cache)"),
     )
 }
 

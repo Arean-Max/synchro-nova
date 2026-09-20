@@ -143,246 +143,328 @@ export const tweakAppImpacts = {
   "game-mode-on": {
     appId: "windows_game_mode",
     appName: "Windows Game Mode",
+    appNameEn: "Windows Game Mode",
+    appNameRu: "Игровой режим Windows",
     impactEn: "Windows prioritizes GPU and CPU resources for the active game and suppresses background tasks.",
     impactRu: "Windows выделяет максимум ресурсов CPU и GPU активной игре, приостанавливая фоновые обновления и задачи."
   },
   "modern-flip-model-on": {
     appId: "directx_flip",
     appName: "DirectX / Modern Flip",
+    appNameEn: "DirectX / Modern Flip",
+    appNameRu: "DirectX / Modern Flip",
     impactEn: "Upgrades DX9/DX11 presentation to Modern Flip, eliminating DWM compositing latency and ICC color profile resets.",
     impactRu: "Переводит игры DX9/DX11 на Modern Flip: устраняет задержку DWM в оконном режиме и защищает от сброса калибровки цвета."
   },
   "gamedvr-fse-mode": {
     appId: "directx_fse",
     appName: "DirectX / FSE Mode",
+    appNameEn: "DirectX / FSE Mode",
+    appNameRu: "DirectX / FSE Mode",
     impactEn: "DirectX Full Screen Exclusive mode prioritizes raw frame delivery directly to display output.",
     impactRu: "Режим DirectX FSE отдает кадровый буфер напрямую дисплею в обход композитора рабочего стола."
   },
   "hags-on": {
     appId: "gpu_driver",
     appName: "GPU Driver / HAGS",
+    appNameEn: "GPU Driver / HAGS",
+    appNameRu: "Драйвер GPU / HAGS",
     impactEn: "Hardware-accelerated GPU Scheduling offloads frame scheduling to GPU, improving 1% low FPS in DX12 games.",
     impactRu: "Аппаратное планирование GPU разгружает процессор, снижает задержку кадров и повышает редкие события (1% Low FPS)."
   },
   "mpo-disable": {
     appId: "display_mpo",
     appName: "Multiplane Overlay (MPO)",
+    appNameEn: "Multiplane Overlay (MPO)",
+    appNameRu: "Multiplane Overlay (MPO)",
     impactEn: "Disables Multiplane Overlays, fixing black screens, flickering, and stuttering with Discord, browser, or multi-monitor setups.",
     impactRu: "Отключает Multiplane Overlay (MPO): устраняет мерцания экрана, микростаттеры и чёрные экраны при запущенном Discord и браузере."
   },
   "power-plan-high": {
     appId: "cpu_power",
-    appName: "Схема электропитания",
+    appName: "Power Scheme (High Performance)",
+    appNameEn: "Power Scheme (High Performance)",
+    appNameRu: "Схема электропитания",
     impactEn: "Switches Windows power scheme to High Performance, locking CPU core clocks to eliminate frequency ramp-up lag.",
     impactRu: "Включает схему высокой производительности: фиксирует частоты ядер процессора, исключая задержки при резкой нагрузке в играх."
   },
   "ultimate-performance-plan": {
     appId: "cpu_power",
-    appName: "Схема электропитания Ultimate",
+    appName: "Power Scheme (Ultimate Performance)",
+    appNameEn: "Power Scheme (Ultimate Performance)",
+    appNameRu: "Схема электропитания Ultimate",
     impactEn: "Activates the hidden Windows Ultimate Performance power scheme, eliminating micro-latencies and aggressive core sleep.",
     impactRu: "Активирует скрытую схему «Максимальная производительность»: полностью исключает микрозадержки сна ядер процессора."
   },
   "mmcss-games-priority": {
     appId: "multimedia_scheduler",
     appName: "Windows MMCSS Scheduler",
+    appNameEn: "Windows MMCSS Scheduler",
+    appNameRu: "Планировщик MMCSS",
     impactEn: "Assigns maximum scheduling and disk I/O priority to game threads in Windows Multimedia Class Scheduler.",
     impactRu: "Задаёт наивысший приоритет потоков и дискового ввода-вывода для игровых задач в планировщике MMCSS."
   },
   "system-responsiveness-10": {
     appId: "multimedia_scheduler",
-    appName: "Резерв процессора MMCSS",
+    appName: "MMCSS CPU Reserve",
+    appNameEn: "MMCSS CPU Reserve",
+    appNameRu: "Резерв процессора MMCSS",
     impactEn: "Reduces background CPU reservation from 20% to 10%, giving up to 100% CPU capacity to games.",
     impactRu: "Снижает резерв процессора для фоновых служб с 20% до 10%, отдавая до 100% мощности процессора активной игре."
   },
   "network-throttle-off": {
     appId: "network_mmcss",
-    appName: "Сетевой троттлинг MMCSS",
+    appName: "MMCSS Network Throttling",
+    appNameEn: "MMCSS Network Throttling",
+    appNameRu: "Сетевой троттлинг MMCSS",
     impactEn: "Disables legacy MMCSS network packet throttling, eliminating gaming packet delays during audio playback.",
     impactRu: "Отключает древний лимит сетевых пакетов Windows при воспроизведении звука/музыки, убирая сетевой джиттер в играх."
   },
   "pointer-precision-off": {
     appId: "mouse_input",
-    appName: "Курсор мыши / Raw Input",
+    appName: "Mouse Cursor / Raw Input",
+    appNameEn: "Mouse Cursor / Raw Input",
+    appNameRu: "Курсор мыши / Raw Input",
     impactEn: "Disables Windows mouse acceleration for 1:1 true raw mouse input and consistent muscle memory aim in shooters.",
     impactRu: "Отключает нелинейное ускорение мыши («Повышенная точность»): даёт чистый ввод 1:1 Raw Input для стабильного аима в шутерах."
   },
   "sticky-keys-off": {
     appId: "keyboard_accessibility",
-    appName: "Залипание клавиш (Shift x5)",
+    appName: "Sticky Keys (Shift x5)",
+    appNameEn: "Sticky Keys (Shift x5)",
+    appNameRu: "Залипание клавиш (Shift x5)",
     impactEn: "Disables Shift x5 Sticky Keys and Filter Keys popups that can minimize or freeze fullscreen games.",
     impactRu: "Отключает диалоги залипания клавиш: частое нажатие Shift больше не свернёт полноэкранную игру в разгар боя."
   },
   "usb-selective-suspend-off": {
     appId: "usb_power",
-    appName: "Энергосбережение USB",
+    appName: "USB Power Saving",
+    appNameEn: "USB Power Saving",
+    appNameRu: "Энергосбережение USB",
     impactEn: "Prevents USB controllers from putting mice, keyboards, and DACs to sleep, eliminating initial movement lag.",
     impactRu: "Запрещает Windows переводить USB-порты в спящий режим: устраняет задержку отклика мыши, клавиатуры и звуковой карты."
   },
   "visual-effects-performance": {
     appId: "windows_shell",
-    appName: "Эффекты проводника Windows",
+    appName: "Windows Shell Visual Effects",
+    appNameEn: "Windows Shell Visual Effects",
+    appNameRu: "Эффекты проводника Windows",
     impactEn: "Disables heavy desktop animations, drop shadows, and window transition delays for a snappy UI.",
     impactRu: "Оптимизирует эффекты проводника под максимальное быстродействие: убирает тяжелые анимации окон и тени."
   },
   "transparency-off": {
     appId: "windows_shell",
-    appName: "Прозрачность DWM / Acrylic",
+    appName: "DWM Transparency / Acrylic",
+    appNameEn: "DWM Transparency / Acrylic",
+    appNameRu: "Прозрачность DWM / Acrylic",
     impactEn: "Disables Acrylic and transparent shell surfaces, freeing GPU VRAM and compositor rendering cycles.",
     impactRu: "Отключает полупрозрачность интерфейса Windows: разгружает видеопамять и ускоряет работу композитора рабочего стола."
   },
   "menu-show-delay-low": {
     appId: "windows_shell",
-    appName: "Контекстные меню Windows",
+    appName: "Windows Context Menus",
+    appNameEn: "Windows Context Menus",
+    appNameRu: "Контекстные меню Windows",
     impactEn: "Reduces classic desktop menu delay to 100ms, making context menus and shell navigation instantaneous.",
     impactRu: "Снижает задержку контекстных меню Windows до 100 мс: интерфейс открывается мгновенно."
   },
   "clean-temp-junk": {
     appId: "storage_cleaner",
-    appName: "Очистка мусора и кэша шейдеров",
+    appName: "Junk & Shader Cache Cleaner",
+    appNameEn: "Junk & Shader Cache Cleaner",
+    appNameRu: "Очистка мусора и кэша шейдеров",
     impactEn: "Safely cleans %TEMP%, Windows temp files, DirectX D3D shader cache, and crash dumps, freeing gigabytes and fixing stutters.",
     impactRu: "Безопасно удаляет временные файлы (%TEMP%), кэш шейдеров DirectX и дампы ошибок: освобождает гигабайты и убирает статтеры."
   },
   "hibernate-off": {
     appId: "fast_startup",
-    appName: "Быстрый запуск и hiberfil.sys",
+    appName: "Fast Startup & hiberfil.sys",
+    appNameEn: "Fast Startup & hiberfil.sys",
+    appNameRu: "Быстрый запуск и hiberfil.sys",
     impactEn: "Disables Windows hibernation, deletes hiberfil.sys (freeing 8-32GB of SSD space), and disables Fast Startup.",
     impactRu: "Отключает гибернацию и удаляет hiberfil.sys: освобождает от 8 до 32 ГБ на SSD и обеспечивает чистую загрузку Windows без накопленных ошибок."
   },
   "ntfs-last-access-off": {
     appId: "ntfs_filesystem",
-    appName: "Файловая система NTFS",
+    appName: "NTFS File System",
+    appNameEn: "NTFS File System",
+    appNameRu: "Файловая система NTFS",
     impactEn: "Stops NTFS from updating last-access timestamps on every file read, reducing disk write load during game loading.",
     impactRu: "Запрещает запись меток последнего доступа при чтении файлов: снижает лишнюю нагрузку на SSD при подгрузке игровых локаций."
   },
   "trim-enable": {
     appId: "ssd_trim",
-    appName: "Команда TRIM для SSD",
+    appName: "TRIM Command for SSD",
+    appNameEn: "TRIM Command for SSD",
+    appNameRu: "Команда TRIM для SSD",
     impactEn: "Ensures TRIM command is active for NVMe and SATA SSDs, preserving peak read/write speeds over time.",
     impactRu: "Проверяет и включает TRIM для SSD: гарантирует своевременную очистку ячеек памяти, предотвращая падение скорости со временем."
   },
   "rss-on": {
     appId: "network_adapter",
     appName: "Receive-Side Scaling (RSS)",
+    appNameEn: "Receive-Side Scaling (RSS)",
+    appNameRu: "Receive-Side Scaling (RSS)",
     impactEn: "Enables Receive-Side Scaling, spreading incoming network packet processing across multiple CPU cores.",
     impactRu: "Включает Receive-Side Scaling (RSS): распределяет обработку сетевых пакетов между ядрами CPU, устраняя перегрузку первого ядра."
   },
   "rsc-off": {
     appId: "network_adapter",
     appName: "Receive Segment Coalescing (RSC)",
+    appNameEn: "Receive Segment Coalescing (RSC)",
+    appNameRu: "Receive Segment Coalescing (RSC)",
     impactEn: "Disables Receive Segment Coalescing on network adapters, eliminating packet batching latency in online games.",
     impactRu: "Отключает Receive Segment Coalescing (RSC): исключает буферизацию и склейку пакетов, снижая сетевую задержку в шутерах."
   },
   "ecn-off": {
     appId: "network_tcp",
     appName: "ECN Capability",
+    appNameEn: "ECN Capability",
+    appNameRu: "ECN Capability",
     impactEn: "Disables Explicit Congestion Notification to prevent dropped packets with older routers and game servers.",
     impactRu: "Отключает ECN: устраняет внезапные потери пакетов и скачки пинга при игре на серверах, не поддерживающих ECN."
   },
   "dns-cache-flush": {
     appId: "network_dns",
-    appName: "Кэш DNS",
+    appName: "DNS Cache",
+    appNameEn: "DNS Cache",
+    appNameRu: "Кэш DNS",
     impactEn: "Flushes stale DNS resolver cache and address mappings for clean network server resolution.",
     impactRu: "Очищает кэш сопоставления DNS-имён: полезно при сбоях подключения к игровым серверам и для сброса устаревших маршрутов."
   },
   "disable-gamedvr": {
     appId: "xbox_game_bar",
     appName: "Xbox GameDVR",
+    appNameEn: "Xbox GameDVR",
+    appNameRu: "Xbox GameDVR",
     impactEn: "Disables Xbox GameDVR background recording service, freeing GPU hardware video encoder and memory.",
     impactRu: "Полностью отключает службу записи GameDVR: освобождает аппаратный видеокодер видеокарты и устраняет просадки кадров."
   },
   "disable-bg-recording": {
     appId: "xbox_game_bar",
-    appName: "Фоновая запись клипов",
+    appName: "Background Clip Recording",
+    appNameEn: "Background Clip Recording",
+    appNameRu: "Фоновая запись клипов",
     impactEn: "Stops continuous background gameplay clip buffering, eliminating constant SSD writes and encoder usage.",
     impactRu: "Отключает фоновую непрерывную запись клипов: прекращает постоянную запись видео на накопитель и нагрузку на GPU."
   },
   "gamebar-startup-off": {
     appId: "xbox_game_bar",
-    appName: "Автозапуск Game Bar",
+    appName: "Game Bar Startup",
+    appNameEn: "Game Bar Startup",
+    appNameRu: "Автозапуск Game Bar",
     impactEn: "Disables Game Bar startup hooks and controller guide button intercepts.",
     impactRu: "Отключает автозапуск Game Bar и перехват кнопки Guide на контроллерах Xbox."
   },
   "wer-off": {
     appId: "windows_wer",
     appName: "Windows Error Reporting (WER)",
+    appNameEn: "Windows Error Reporting (WER)",
+    appNameRu: "Отчёты об ошибках (WER)",
     impactEn: "Disables Windows Error Reporting (WerFault) to prevent system freeze spikes when background processes crash.",
     impactRu: "Отключает службу отчётов об ошибках WerFault: исключает микрофризы и зависания игр при сбоях фоновых программ."
   },
   "start-bing-search-off": {
     appId: "windows_search",
-    appName: "Поиск Bing в меню «Пуск»",
+    appName: "Start Menu Bing Search",
+    appNameEn: "Start Menu Bing Search",
+    appNameRu: "Поиск Bing в меню «Пуск»",
     impactEn: "Disables Bing web search in Start menu, making desktop search 100% offline, private, and instant.",
     impactRu: "Отключает поиск Bing в меню «Пуск»: делает поиск локальным, мгновенным и прекращает отправку поисковых запросов в Microsoft."
   },
   "delivery-optimization-lan": {
     appId: "windows_update",
     appName: "Delivery Optimization",
+    appNameEn: "Delivery Optimization",
+    appNameRu: "Оптимизация доставки (LAN)",
     impactEn: "Restricts Windows Delivery Optimization to LAN only, preventing P2P update seeding from using your upload bandwidth during games.",
     impactRu: "Ограничивает раздачу обновлений только локальной сетью: запрещает Windows отдавать обновления в интернет во время игр."
   },
   "activity-history-off": {
     appId: "windows_privacy",
-    appName: "История активности (Timeline)",
+    appName: "Activity History (Timeline)",
+    appNameEn: "Activity History (Timeline)",
+    appNameRu: "История активности (Timeline)",
     impactEn: "Disables Windows user activity history tracking, timeline publishing, and cloud synchronization.",
     impactRu: "Отключает сбор истории активности пользователя (Timeline) и передачу логов в облако Microsoft."
   },
   "advertising-id-off": {
     appId: "windows_privacy",
-    appName: "Рекламный идентификатор",
+    appName: "Advertising ID",
+    appNameEn: "Advertising ID",
+    appNameRu: "Рекламный идентификатор",
     impactEn: "Disables the Windows per-user advertising identifier and tailored diagnostic profiling.",
     impactRu: "Отключает персонализированный рекламный идентификатор Windows, предотвращая фоновый трекинг."
   },
   "disable-fso-globally": {
     appId: "directx_fso",
-    appName: "Полноэкранная оптимизация (FSO)",
+    appName: "Fullscreen Optimization (FSO)",
+    appNameEn: "Fullscreen Optimization (FSO)",
+    appNameRu: "Полноэкранная оптимизация (FSO)",
     impactEn: "Globally disables Windows Fullscreen Optimizations, unlocking true Exclusive Fullscreen with lowest possible render-to-display latency.",
     impactRu: "Глобально отключает оптимизацию во весь экран (FSO): даёт настоящий чистый Exclusive Fullscreen и минимальную задержку кадра."
   },
   "pcie-aspm-off": {
     appId: "pcie_bus",
     appName: "PCI Express ASPM",
+    appNameEn: "PCI Express ASPM",
+    appNameRu: "PCI Express ASPM",
     impactEn: "Disables PCIe Link State Power Management, keeping the GPU bus at peak speed and eliminating frame drop latency.",
     impactRu: "Отключает энергосбережение шины PCI Express: удерживает шину видеокарты на максимальной пропускной способности без задержек пробуждения."
   },
   "cpu-unpark-cores": {
     appId: "cpu_parking",
-    appName: "Парковка ядер CPU (Core Parking)",
+    appName: "CPU Core Parking",
+    appNameEn: "CPU Core Parking",
+    appNameRu: "Парковка ядер CPU (Core Parking)",
     impactEn: "Unparks 100% of CPU logical cores, keeping all cores instantly ready to execute game render threads without sleep latency.",
     impactRu: "Распарковывает все ядра процессора: удерживает 100% ядер в активном состоянии, устраняя микрофризы от пробуждения спящих ядер."
   },
   "power-throttling-off": {
     appId: "cpu_power",
     appName: "Windows Power Throttling",
+    appNameEn: "Windows Power Throttling",
+    appNameRu: "Windows Power Throttling",
     impactEn: "Disables Windows Power Throttling globally to prevent the scheduler from downclocking high-performance game threads.",
     impactRu: "Отключает механизм Power Throttling в Windows: исключает сброс частот процессора под игровой нагрузкой."
   },
   "input-response-fast": {
     appId: "mouse_keyboard_input",
-    appName: "Буферы ввода мыши и клавиатуры",
+    appName: "Mouse & Keyboard Input Buffers",
+    appNameEn: "Mouse & Keyboard Input Buffers",
+    appNameRu: "Буферы ввода мыши и клавиатуры",
     impactEn: "Sets zero repeat delay for keys, 8ms mouse hover responsiveness, and enlarges mouse/keyboard buffer queues for high polling rate devices (1000-8000Hz).",
     impactRu: "Убирает задержку повтора клавиш (0 мс), снижает задержку мыши до 8 мс и увеличивает буфер пакетов ввода для мышей с частотой 1000-8000 Гц."
   },
   "csrss-high-priority": {
     appId: "csrss_subsystem",
-    appName: "Подсистема ввода csrss.exe",
+    appName: "csrss.exe Input Subsystem",
+    appNameEn: "csrss.exe Input Subsystem",
+    appNameRu: "Подсистема ввода csrss.exe",
     impactEn: "Raises csrss.exe process priority to High so raw mouse and keyboard events are dispatched immediately without hitching even under 100% CPU load.",
     impactRu: "Повышает приоритет процесса csrss.exe до Высокого: события мыши и клавиатуры обрабатываются мгновенно даже при 100% нагрузке на процессор."
   },
   "tcp-nodelay-ack": {
     appId: "network_nodelay",
-    appName: "Алгоритм Нагла (TCP NoDelay)",
+    appName: "Nagle's Algorithm (TCP NoDelay)",
+    appNameEn: "Nagle's Algorithm (TCP NoDelay)",
+    appNameRu: "Алгоритм Нагла (TCP NoDelay)",
     impactEn: "Enables TCP NoDelay and AckFrequency=1 across all network adapters, eliminating the 40-200ms delayed ACK buffering and lowering multiplayer ping.",
     impactRu: "Отключает алгоритм Нагла и задержку подтверждения (AckFrequency=1): сетевые пакеты отправляются мгновенно, снижая пинг в онлайн-играх на 40-200 мс."
   },
   "nic-energy-saving-off": {
     appId: "network_adapter",
-    appName: "Энергосбережение сетевой карты (EEE)",
+    appName: "NIC Energy Saving (EEE)",
+    appNameEn: "NIC Energy Saving (EEE)",
+    appNameRu: "Энергосбережение сетевой карты (EEE)",
     impactEn: "Disables Energy-Efficient Ethernet, Green Ethernet, and Flow Control on network cards, stopping packet throttling and sudden ping spikes.",
     impactRu: "Отключает энергосбережение сетевой карты (Green Ethernet, EEE) и Flow Control: предотвращает задержки и внезапные скачки пинга."
   },
   "tcp-heuristics-off": {
     appId: "network_tcp",
-    appName: "Эвристика TCP и Timestamps",
+    appName: "TCP Heuristics & Timestamps",
+    appNameEn: "TCP Heuristics & Timestamps",
+    appNameRu: "Эвристика TCP и Timestamps",
     impactEn: "Disables TCP heuristics and timestamps while enforcing normal autotuning, preventing bufferbloat and packet drop spikes in online shooters.",
     impactRu: "Отключает TCP heuristics и timestamps, стабилизируя автоподстройку окна: предотвращает потерю пакетов и джиттер в шутерах."
   }

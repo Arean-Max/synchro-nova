@@ -1,7 +1,14 @@
-import { defaultPresets, sliderDefs } from "../../core/state.js";
+import { defaultPresets, lang, sliderDefs } from "../../core/state.js";
 import { escapeAttr, escapeHtml, safeValue } from "../../core/html.js";
 import { button, card, checkbox } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
+
+export const standardTemplateNames = new Set([
+  "Balanced", "Сбалансированный",
+  "Vibrant", "Насыщенный", "Saturation", "Насыщенность",
+  "Soft", "Мягкий",
+  "Night", "Ночной"
+]);
 
 const demoColorGames = [
   { id: "demo-cs2", name: "Counter-Strike 2", source: "Demo", launchable: false },
@@ -249,7 +256,8 @@ export function updateTemplateActiveDom(appState) {
 }
 
 function templateItem(id, label, t, active = false) {
-  const gearTitle = t("configureTemplate") || "Настроить шаблон";
+  const isRu = lang() === "ru";
+  const gearTitle = t("configureTemplate") || (isRu ? "Настроить шаблон" : "Template Settings");
   return [
     `<div class="color-template-item ${active ? "active" : ""}" data-preset-id="${escapeAttr(id)}">`,
     `  <button type="button" class="color-template-btn" data-preset="${escapeAttr(id)}">`,
@@ -273,7 +281,7 @@ function renderTemplates(appState, viewState, t) {
   const presetButtons = ["balanced", "vibrant", "soft", "night"]
     .map((id) => {
       let customName = appState?.settings?.templateOverrides?.[id]?.name;
-      if (id === "vibrant" && (customName === "Vibrant" || customName === "Насыщенный")) {
+      if (customName && standardTemplateNames.has(customName)) {
         customName = undefined;
       }
       const label = customName || defaultLabels[id] || id;
@@ -348,7 +356,7 @@ export function renderTemplateConfigModal(appState, viewState, t) {
   let currentName = viewState.editingTemplateName !== undefined && viewState.editingTemplateName !== ""
     ? viewState.editingTemplateName
     : (appState.settings?.templateOverrides?.[presetKey]?.name || defaultName);
-  if (presetKey === "vibrant" && (currentName === "Vibrant" || currentName === "Насыщенный")) {
+  if (currentName && standardTemplateNames.has(currentName)) {
     currentName = defaultName;
   }
   const templateColor = viewState.editingTemplateColor || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
@@ -467,11 +475,12 @@ export function updateColorPreviewDom(color) {
 }
 
 export function renderColorPage(appState, viewState, t) {
+  const isRu = lang() === "ru";
   const preview = renderColorPreview(appState, viewState, t);
   const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState, t)).join("");
 
-  const fineTuningTitle = `<div class="card-title-with-icon">${icon("tune")}<span>${escapeHtml(t("fineTuning") || "Тонкая Настройка")}</span></div>`;
-  const templatesTitle = `<div class="card-title-with-icon">${icon("layers")}<span>${escapeHtml(t("templates") || "Шаблоны")}</span></div>`;
+  const fineTuningTitle = `<div class="card-title-with-icon">${icon("tune")}<span>${escapeHtml(t("fineTuning") || (isRu ? "Тонкая Настройка" : "Fine Tuning"))}</span></div>`;
+  const templatesTitle = `<div class="card-title-with-icon">${icon("layers")}<span>${escapeHtml(t("templates") || (isRu ? "Шаблоны" : "Templates"))}</span></div>`;
 
   return [
     '<div class="global-color-page">',

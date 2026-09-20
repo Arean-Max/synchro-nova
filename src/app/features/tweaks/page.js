@@ -14,11 +14,12 @@ import {
 } from "./catalog.js";
 
 function tweakTile(tweak, viewState, t) {
+  const isRu = lang() === "ru";
   const installed = viewState.installedTweaks?.has(tweak.id);
   const category = tweakCategory(tweak);
   const title = tweakTitle(tweak, t);
   const desc = tweakDescription(tweak, t);
-  const helpTitle = t("whatBreaks") || "Что меняет этот твик?";
+  const helpTitle = t("whatBreaks") || (isRu ? "Что меняет этот твик?" : "What does this tweak affect?");
 
   return `<div class="tweak-tile ${installed ? "installed" : "not-installed"}" role="button" tabindex="0" data-tweak-id="${escapeAttr(tweak.id)}" data-category="${category}"><div class="tweak-head"><span class="tweak-title">${escapeHtml(title)}</span><button class="tweak-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(tweak.id)}" title="${escapeAttr(helpTitle)}" aria-label="${escapeAttr(helpTitle)}">?</button></div><p>${escapeHtml(desc)}</p></div>`;
 }
@@ -32,13 +33,26 @@ function tweakGroup(group, viewState, t) {
 }
 
 function tweakResults(viewState, t) {
+  const isRu = lang() === "ru";
   const results = Array.isArray(viewState.tweakResults) ? viewState.tweakResults : [];
   if (!results.length) return "";
   const rows = results
     .slice(0, 8)
     .map((item) => {
       const statusKey = `status${String(item.status || "").replace(/^./, (ch) => ch.toUpperCase())}`;
-      return `<div class="tweak-result-row ${escapeAttr(item.status || "skipped")}"><span>${escapeHtml(item.id || "-")}</span><strong>${escapeHtml(t(statusKey))}</strong><em>${escapeHtml(item.message || "")}</em></div>`;
+      let msg = item.message || "";
+      if (item.id === "clean-temp-junk" && msg) {
+        const match = msg.match(/Cleaned\s+(\d+)\s+temporary files\s+\(([\d.]+)\s*MB/i);
+        if (match && isRu) {
+          msg = `Очищено ${match[1]} временных файлов (${match[2]} МБ мусора и кэша шейдеров DirectX)`;
+        } else if (!match && !isRu && msg.includes("Очищено")) {
+          const ruMatch = msg.match(/Очищено\s+(\d+)\s+временных файлов\s+\(([\d.]+)\s*МБ/i);
+          if (ruMatch) {
+            msg = `Cleaned ${ruMatch[1]} temporary files (${ruMatch[2]} MB junk and DirectX shader cache)`;
+          }
+        }
+      }
+      return `<div class="tweak-result-row ${escapeAttr(item.status || "skipped")}"><span>${escapeHtml(item.id || "-")}</span><strong>${escapeHtml(t(statusKey))}</strong><em>${escapeHtml(msg)}</em></div>`;
     })
     .join("");
   return [
@@ -56,8 +70,11 @@ export function getTweakImpactDetails(tweak, t, isRu) {
   const category = tweakCategory(tweak);
   const impactInfo = tweakAppImpacts[tweak.id];
   if (impactInfo) {
+    const appName = isRu
+      ? (impactInfo.appNameRu || impactInfo.appName)
+      : (impactInfo.appNameEn || impactInfo.appName);
     return {
-      appName: impactInfo.appName,
+      appName,
       impactText: isRu ? impactInfo.impactRu : impactInfo.impactEn
     };
   }

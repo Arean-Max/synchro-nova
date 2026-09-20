@@ -35,10 +35,11 @@ export function renderBackupNameModal(viewState, t) {
 }
 
 export function renderBackupsPage(viewState, t) {
+  const isRu = lang() === "ru";
   const isSelected = Boolean(viewState.selectedBackup);
   const restoreBtn = isSelected
     ? button(t("restore"), "check", "primary restore-highlight-btn", "restore-backup")
-    : `<button class="btn btn-outline restore-dimmed" type="button" data-action="restore-backup" disabled title="${escapeAttr(t("selectBackupFirst") || "Сначала выберите бэкап")}">${icon("check")}<span>${escapeHtml(t("restore"))}</span></button>`;
+    : `<button class="btn btn-outline restore-dimmed" type="button" data-action="restore-backup" disabled title="${escapeAttr(t("selectBackupFirst") || (isRu ? "Сначала выберите бэкап" : "Select a backup from the list first"))}">${icon("check")}<span>${escapeHtml(t("restore"))}</span></button>`;
 
   const rows = viewState.backups.length
     ? viewState.backups.map((item) => `<button class="config-row backup-row ${viewState.selectedBackup === item.id ? "selected" : ""}" type="button" data-backup-id="${escapeAttr(item.id)}"><span class="config-check">${viewState.selectedBackup === item.id ? icon("check") : ""}</span><span class="backup-name"><strong>${escapeHtml(item.name)}</strong><small>${formatDate(item.createdAt)}</small></span></button>`).join("")

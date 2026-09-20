@@ -61,7 +61,9 @@ export function renderCharacteristicsPage(viewState, t) {
     : (Array.isArray(viewState.system?.drivers) ? viewState.system.drivers : []);
 
   const isScanning = Boolean(viewState.driversLoading);
-  const scanLabel = isScanning ? (t("scanningDrivers") || "Сканирование...") : (t("scanDrivers") || "Сканировать ПК");
+  const scanLabel = isScanning
+    ? (t("scanningDrivers") || (isRu ? "Сканирование..." : "Scanning system..."))
+    : (t("scanDrivers") || (isRu ? "Сканировать ПК" : "Scan PC for Drivers"));
 
   // Keep meaningful hardware drivers only
   const drivers = rawDrivers.filter((d) => d && d.name && d.name !== "Unknown");
@@ -70,7 +72,7 @@ export function renderCharacteristicsPage(viewState, t) {
     return [
       '<div class="drivers-page">',
       '  <div class="scroll-panel">',
-      `    <div class="empty-state">${icon("rotate", "spin")} <span>${escapeHtml(t("scanningDrivers") || "Сканирование ПК...")}</span></div>`,
+      `    <div class="empty-state">${icon("rotate", "spin")} <span>${escapeHtml(t("scanningDrivers") || (isRu ? "Сканирование ПК..." : "Scanning system..."))}</span></div>`,
       '  </div>',
       '</div>'
     ].join("");
@@ -118,7 +120,7 @@ export function renderCharacteristicsPage(viewState, t) {
 
   const scrollContent = groupCards.length
     ? groupCards.join("")
-    : `<div class="empty-state">${escapeHtml(t("noDriversFound") || "Устройства не обнаружены")}</div>`;
+    : `<div class="empty-state">${escapeHtml(t("noDriversFound") || (isRu ? "Устройства не обнаружены" : "No hardware drivers found"))}</div>`;
 
   return [
     '<div class="drivers-page">',

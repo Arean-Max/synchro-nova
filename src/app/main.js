@@ -22,6 +22,7 @@ import {
   renderColorPage,
   selectColorGame,
   selectedColorGame,
+  standardTemplateNames,
   stepColorGame,
   syncAllSliders,
   syncAllTemplateSliders,
@@ -1273,8 +1274,8 @@ async function handleClick(event) {
       const custom = appState.settings?.templateOverrides?.[presetKey];
       const defaultPreset = defaultPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
       let templateDisplayName = custom?.name || presetLabels[presetKey] || presetKey;
-      if (presetKey === "vibrant" && (templateDisplayName === "Vibrant" || templateDisplayName === "Насыщенный")) {
-        templateDisplayName = presetLabels[presetKey] || "Saturation";
+      if (templateDisplayName && standardTemplateNames.has(templateDisplayName)) {
+        templateDisplayName = presetLabels[presetKey] || presetKey;
       }
       viewState.editingTemplateName = templateDisplayName;
       viewState.editingTemplateColor = {

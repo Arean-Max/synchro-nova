@@ -50,6 +50,17 @@ export function renderApplyModal(modalState, t) {
     let iconContent = icon("check");
     let statusTag = isRu ? "Применено" : "Applied";
     let desc = item.message || (isRu ? "Оптимизация активна" : "Tweak enabled");
+    if (item.id === "clean-temp-junk" && item.message) {
+      const match = item.message.match(/Cleaned\s+(\d+)\s+temporary files\s+\(([\d.]+)\s*MB/i);
+      if (match && isRu) {
+        desc = `Очищено ${match[1]} временных файлов (${match[2]} МБ мусора и кэша шейдеров DirectX)`;
+      } else if (!match && !isRu && item.message.includes("Очищено")) {
+        const ruMatch = item.message.match(/Очищено\s+(\d+)\s+временных файлов\s+\(([\d.]+)\s*МБ/i);
+        if (ruMatch) {
+          desc = `Cleaned ${ruMatch[1]} temporary files (${ruMatch[2]} MB junk and DirectX shader cache)`;
+        }
+      }
+    }
 
     if (item.status === "requiresAdmin") {
       statusClass = "requires-admin";
@@ -66,10 +77,12 @@ export function renderApplyModal(modalState, t) {
       statusTag = isRu ? "Ошибка" : "Failed";
     }
 
+    const helpTooltip = t("whatBreaks") || (isRu ? "Что меняет этот твик?" : "What does this tweak affect?");
+
     return [
       `<div class="apply-result-item ${escapeAttr(statusClass)}">`,
       '  <div class="apply-result-left">',
-      `    <button class="tweak-help-btn apply-result-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(item.id)}" title="${escapeAttr(t("whatBreaks") || "?")}">?</button>`,
+      `    <button class="tweak-help-btn apply-result-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(item.id)}" title="${escapeAttr(helpTooltip)}">?</button>`,
       '    <div class="apply-result-info">',
       `      <strong class="apply-result-title">${escapeHtml(title)}</strong>`,
       `      <span class="apply-result-desc">${escapeHtml(desc)}</span>`,
