@@ -360,9 +360,52 @@ fn main() {
         }
 
         prerequisites_check::ensure_runtime_prerequisites();
+        ensure_windows_search_registered();
     }
 
     synchro_lib::run();
+}
+
+fn ensure_windows_search_registered() {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::enums::HKEY_CURRENT_USER;
+        use winreg::RegKey;
+
+        if let Ok(current_exe) = std::env::current_exe() {
+            let exe_str = current_exe.to_string_lossy().to_string();
+            let parent_dir = current_exe
+                .parent()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default();
+
+            let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+
+            // 1. Register App Paths for "synchro.exe"
+            if let Ok((key, _)) =
+                hkcu.create_subkey(r"Software\Microsoft\Windows\CurrentVersion\App Paths\synchro.exe")
+            {
+                let _ = key.set_value("", &exe_str);
+                let _ = key.set_value("Path", &parent_dir);
+            }
+
+            // 2. Register App Paths for "synchro" (without extension)
+            if let Ok((key, _)) =
+                hkcu.create_subkey(r"Software\Microsoft\Windows\CurrentVersion\App Paths\synchro")
+            {
+                let _ = key.set_value("", &exe_str);
+                let _ = key.set_value("Path", &parent_dir);
+            }
+
+            // 3. Register in Applications for Windows Search indexer
+            if let Ok((key, _)) =
+                hkcu.create_subkey(r"Software\Classes\Applications\synchro.exe")
+            {
+                let _ = key.set_value("FriendlyAppName", &"Synchro");
+                let _ = key.set_value("ApplicationName", &"Synchro");
+            }
+        }
+    }
 }
 
 #[cfg(test)]

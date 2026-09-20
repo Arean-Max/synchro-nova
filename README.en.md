@@ -69,8 +69,8 @@ We brought together hardware Digital Vibrance, precise gamma ramp calibration, G
 
 Official releases are published on the [**Releases Page**](https://github.com/Arean-Max/synchro-nova/releases):
 
-- **Portable Version (`synchro.exe`)** — Standalone executable, runs immediately from any folder or USB drive with zero installation and no leftover system traces.
-- **Installer (`Synchro.Nova_2.0.0_x64-setup.exe`)** — Standard Windows setup wizard with Desktop shortcut and clean uninstaller via Windows Settings.
+- **Portable Edition (`synchro:portable.exe`)** — Standalone `synchro.exe` executable, runs immediately from any folder or USB drive with zero dependencies and no leftover traces. Also available as `Synchro-Nova-2.0.0-Portable.zip`.
+- **Installer (`Synchro.Nova_2.0.0_x64-setup.exe`)** — Standard Windows setup with Desktop shortcut, Windows Search indexer integration ("synchro"), and clean uninstaller.
 
 ### Verify Checksums (SHA-256)
 Open PowerShell in the download folder:

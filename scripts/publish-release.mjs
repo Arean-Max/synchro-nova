@@ -93,10 +93,10 @@ async function run() {
       '- Zero Language Leakage: Complete i18n locale audit ensuring 100% pure Russian or English across all menus, badges, dialogs, and impact banners.',
       '',
       '### Downloads & Verification',
-      '- **synchro.exe** (Standalone portable x64 executable with embedded dynamic loader)',
-      '- **Synchro-Nova-2.0.0-Portable.zip** (Portable ZIP archive including synchro.exe and WebView2Loader.dll)',
-      '- **Synchro.Nova_2.0.0_x64-setup.exe** (Windows setup installer with bundled WebView2Loader.dll in install directory)',
-      '- **SHA256SUMS.txt** (Official cryptographic verification hashes)'
+      '- [**synchro:portable.exe**](https://github.com/Arean-Max/synchro-nova/releases/download/v2.0/synchro.exe) — Standalone portable x64 executable (скачивается как synchro.exe, работает без зависимостей)',
+      '- [**Synchro-Nova-2.0.0-Portable.zip**](https://github.com/Arean-Max/synchro-nova/releases/download/v2.0/Synchro-Nova-2.0.0-Portable.zip) — Portable ZIP archive with companion WebView2Loader.dll',
+      '- [**Synchro.Nova_2.0.0_x64-setup.exe**](https://github.com/Arean-Max/synchro-nova/releases/download/v2.0/Synchro.Nova_2.0.0_x64-setup.exe) — Windows setup installer (bundled WebView2Loader.dll + Windows Search indexer integration for "synchro")',
+      '- [**SHA256SUMS.txt**](https://github.com/Arean-Max/synchro-nova/releases/download/v2.0/SHA256SUMS.txt) — Official cryptographic verification hashes'
     ].join('\n'),
     draft: false,
     prerelease: false,
