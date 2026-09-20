@@ -46,3 +46,6 @@ strip = true
 debug = false
 opt-level = 0
 strip = false
+
+[patch.crates-io]
+webview2-com-sys = { path = "crates/webview2-com-sys" }

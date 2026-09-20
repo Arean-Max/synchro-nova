@@ -82,6 +82,7 @@ async function run() {
       '- Event-driven synchronization (`Condvar`): 0 timer wakeups and 0% CPU at idle.',
       '- Optimized Chromium/WebView2 lifecycle: background networking, telemetry, and GPU caching stripped.',
       '- 100% Anti-Cheat compliant: Vanguard, EAC, BattlEye, Ricochet safe with zero DLL injection, process hooks, or thread tampering.',
+      '- 100% Standalone & Portable: Embedded dynamic loader eliminates the "WebView2Loader.dll was not found" error, allowing synchro.exe to run universally anywhere without external DLLs.',
       '- WebView2Loader Auto-Patch: permanently resolves the Windows Bad Image `0xc000012f` error.',
       '- Zero hardcoded paths: fully portable across custom Windows drives and locales.',
       '',
