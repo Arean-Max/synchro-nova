@@ -3413,34 +3413,135 @@ button.check-row:active {
 .settings-page {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 20px;
+  gap: 16px;
   height: 100%;
   width: 100%;
-  padding-right: 6px;
-  overflow-y: auto;
+  overflow: hidden;
   align-items: start;
 }
 
 @media (max-width: 860px) {
   .settings-page {
     grid-template-columns: 1fr;
+    overflow-y: auto;
   }
 }
 
 .settings-main-col {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   min-width: 0;
 }
 
-.settings-side-links {
+.settings-side-col {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   min-width: 240px;
-  position: sticky;
-  top: 0;
+}
+
+.settings-side-card {
+  padding: 14px 16px;
+}
+
+.settings-side-card h2 {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.settings-community-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.page-settings .card {
+  padding: 14px 18px;
+}
+
+.page-settings .card h2 {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.page-settings .form-label {
+  margin: 0 0 5px 0;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.page-settings .segmented-control {
+  min-height: 32px;
+  padding: 2px;
+}
+
+.page-settings .seg-option {
+  min-height: 28px;
+  padding: 4px 12px;
+  font-size: 12px;
+}
+
+.page-settings .accent-color-row {
+  margin-top: 2px;
+  gap: 6px;
+}
+
+.page-settings .accent-swatch {
+  width: 22px;
+  height: 22px;
+}
+
+.page-settings .accent-picker-wrapper {
+  width: 22px;
+  height: 22px;
+}
+
+.page-settings .accent-picker-wrapper .accent-custom-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.page-settings .accent-hint-text {
+  margin: 3px 0 8px 0 !important;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.page-settings .check-row {
+  min-height: 35px;
+  padding: 5px 10px;
+  border-radius: 7px;
+}
+
+.settings-page .check-row + .check-row {
+  margin-top: 3px;
+}
+
+.page-settings .checkbox-label {
+  font-size: 12.5px;
+}
+
+.page-settings .ios-switch {
+  width: 38px;
+  height: 22px;
+}
+
+.page-settings .ios-switch-thumb {
+  width: 18px;
+  height: 18px;
+}
+
+.page-settings .settings-hint-text:last-child {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.3;
 }
 
 .settings-info-row {

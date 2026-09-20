@@ -33,19 +33,25 @@ jobs:
         run: npm ci || npm install
 
       - name: Run test suite
-        run: cargo test --manifest-path src-tauri/Cargo.toml
+        run: cargo test --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc
 
       - name: Build portable binary and installer
         run: |
-          npm run build
-          npm run build:portable
+          npm run build -- --target x86_64-pc-windows-msvc
+          npm run build:portable -- --target x86_64-pc-windows-msvc
 
       - name: Compute SHA-256 checksums
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist-artifacts
-          Copy-Item src-tauri/target/release/synchro.exe dist-artifacts/synchro.exe
-          if (Test-Path src-tauri/target/release/bundle/nsis/*.exe) {
+          if (Test-Path src-tauri/target/x86_64-pc-windows-msvc/release/synchro.exe) {
+            Copy-Item src-tauri/target/x86_64-pc-windows-msvc/release/synchro.exe dist-artifacts/synchro.exe
+          } elseif (Test-Path src-tauri/target/release/synchro.exe) {
+            Copy-Item src-tauri/target/release/synchro.exe dist-artifacts/synchro.exe
+          }
+          if (Test-Path src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe) {
+            Copy-Item src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe dist-artifacts/
+          } elseif (Test-Path src-tauri/target/release/bundle/nsis/*.exe) {
             Copy-Item src-tauri/target/release/bundle/nsis/*.exe dist-artifacts/
           }
           Get-ChildItem -Path dist-artifacts -Filter *.exe | ForEach-Object {

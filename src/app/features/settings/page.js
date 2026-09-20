@@ -46,8 +46,8 @@ export function renderSettingsPage(appState, _viewState, t) {
     `<p class="settings-hint-text">${t("showOnRecordingsDesc")}</p>`
   ].join("");
 
-  const communityLinks = [
-    '<aside class="settings-side-links">',
+  const communityButtons = [
+    '<div class="settings-community-list">',
     '  <button class="settings-tall-card-btn" type="button" data-action="open-external-url" data-url="https://github.com/Arean-Max/synchro-nova">',
     '    <div class="tall-card-icon-wrap">',
     icon("github"),
@@ -66,15 +66,19 @@ export function renderSettingsPage(appState, _viewState, t) {
     '      <span class="tall-card-sub">t.me/synchronova</span>',
     '    </div>',
     '  </button>',
-    '</aside>'
+    '</div>'
   ].join("");
+
+  const communityCard = card(t("community"), communityButtons, "settings-side-card");
 
   return [
     '<div class="settings-page">',
     '  <div class="settings-main-col">',
-    card(t("application"), appCard),
+    card(t("application"), appCard, "settings-main-card"),
     '  </div>',
-    communityLinks,
+    '  <aside class="settings-side-col">',
+    communityCard,
+    '  </aside>',
     '</div>'
   ].join("");
 }
