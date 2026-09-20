@@ -1151,10 +1151,19 @@ async function handleClick(event) {
   if (setting) {
     const key = setting.getAttribute("data-setting");
     if (!Object.hasOwn(appState.settings, key)) return;
-    appState.settings[key] = !appState.settings[key];
-    await saveSettings();
-    syncCharacteristicsMonitor();
-    updateMain();
+    const nextVal = !appState.settings[key];
+    appState.settings[key] = nextVal;
+
+    setting.classList.toggle("active", nextVal);
+    setting.setAttribute("aria-pressed", nextVal ? "true" : "false");
+    setting.setAttribute("aria-checked", nextVal ? "true" : "false");
+    const sw = setting.querySelector(".ios-switch");
+    if (sw) sw.classList.toggle("active", nextVal);
+
+    saveSettings().then(() => {
+      syncCharacteristicsMonitor();
+    });
+
     if (key === "applyInstantly" && appState.settings.applyInstantly) await applyColor();
     if (key === "showOnRecordings") await applyColor();
     return;

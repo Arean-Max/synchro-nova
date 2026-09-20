@@ -27,6 +27,13 @@
   box-sizing: border-box;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input, textarea, [contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 ::-webkit-scrollbar {
@@ -2032,6 +2039,7 @@ button.check-row:active {
 
 .ios-switch.active .ios-switch-thumb {
   transform: translate3d(18px, 0, 0);
+  background: var(--ui-accent-thumb, #ffffff);
 }
 
 .ios-switch:active .ios-switch-thumb {

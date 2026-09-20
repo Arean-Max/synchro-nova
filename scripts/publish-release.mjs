@@ -92,6 +92,7 @@ async function run() {
         '',
         '### 📦 Downloads & Verification',
         '- **synchro.exe** (Standalone portable x64 executable)',
+        '- **Synchro.Nova_2.0.0_x64-setup.exe** (Standard Windows setup installer)',
         '- **SHA256SUMS.txt** (Official cryptographic verification hashes)'
       ].join('\n'),
       draft: false,
@@ -139,13 +140,20 @@ async function run() {
   }
 
   const exePath = path.resolve('dist-artifacts/synchro.exe');
+  const setupPath = path.resolve('dist-artifacts/Synchro.Nova_2.0.0_x64-setup.exe');
   const sumPath = path.resolve('dist-artifacts/SHA256SUMS.txt');
 
   console.log('4. Uploading synchro.exe (~6.5MB)...');
   const res1 = await uploadAsset(release.upload_url, exePath, 'synchro.exe', 'application/vnd.microsoft.portable-executable');
   console.log('synchro.exe upload status:', res1.status);
 
-  console.log('5. Uploading SHA256SUMS.txt...');
+  if (fs.existsSync(setupPath)) {
+    console.log('5. Uploading Synchro.Nova_2.0.0_x64-setup.exe (~6.5MB)...');
+    const resSetup = await uploadAsset(release.upload_url, setupPath, 'Synchro.Nova_2.0.0_x64-setup.exe', 'application/vnd.microsoft.portable-executable');
+    console.log('Synchro.Nova_2.0.0_x64-setup.exe upload status:', resSetup.status);
+  }
+
+  console.log('6. Uploading SHA256SUMS.txt...');
   const res2 = await uploadAsset(release.upload_url, sumPath, 'SHA256SUMS.txt', 'text/plain');
   console.log('SHA256SUMS.txt upload status:', res2.status);
 

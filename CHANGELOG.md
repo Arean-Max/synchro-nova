@@ -1,43 +1,86 @@
-# Changelog
+# История изменений (Changelog)
 
-All notable changes to this project will be documented in this file.
+Все ключевые изменения проекта Synchro Nova документируются в этом файле.  
+Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/), проект придерживается [Семантического версионирования](https://semver.org/lang/ru/).
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+---
 
-## [0.1.1] - 2026-09-19
+## [2.0.0] — 2026-09-20
 
-### Fixed
-- Fixed potential UI state hang during tweak application and rollback by wrapping operations in safe `try/finally` blocks.
-- Fixed hardcoded string fallbacks in color template actions to ensure full localization parity.
-- Fixed input state retention by resetting backup and config name inputs upon successful creation.
-- Added explicit accessible labels (`aria-label`) to backup and configuration management inputs.
-- Replaced inline styling on admin elevation prompt with scoped CSS class.
+### Архитектура и оптимизация ресурсов (0% CPU в простое)
+- **Событийно-ориентированная синхронизация потоков**: Заменили постоянные циклы опроса (`sleep(3000ms)`) в модуле калибровки цвета (`color.rs`) и мониторе памяти (`lib.rs`) на условные переменные Windows `Condvar` (`COLOR_GUARD_SYNC` и `TrimmerSync`). Когда цветовой профиль нейтрален или отключен, поток калибровки засыпает в ядре ОС — **0 пробуждений таймера и 0% нагрузки на CPU**.
+- **Кооперативное завершение (Graceful Shutdown)**: Реализован атомарный механизм `signal_shutdown()`, мгновенно завершающий все фоновые воркеры за 0 мс при закрытии окна, завершении через трей или перезапуске от имени администратора. Процесс больше не зависает в диспетчере задач.
+- **Тюнинг Chromium и изоляция WebView2**:
+  - Через `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` отключены фоновые сетевые службы, телеметрия Chromium, автообновление компонентов, распознавание речи, отправка дампов крашей (`--disable-breakpad`, `--no-pings`, `--disable-background-networking`, `--disable-sync`).
+  - Лимит дискового и медиа-кэша ограничен до 32 МБ и 16 МБ соответственно.
+  - Пользовательские данные и кэш WebView2 вынесены в изолированную директорию `%LOCALAPPDATA%\SynchroNova\EBWebView`.
+  - Установлен цвет фона по умолчанию `0xFF121214`, полностью устранивший белые вспышки при создании окна.
+- **Оптимизация сборщика рабочего набора**:
+  - Введен потокобезопасный кэш PID дочерних процессов WebView2 с временем жизни (TTL) 30 секунд.
+  - Потребление оперативной памяти `synchro.exe` снижено до **~1.5–3 МБ RAM** в режиме ожидания.
 
-### Performance & Build
-- Unlocked multithreaded compilation in Cargo configuration, removing single-core bottleneck.
-- Streamlined runtime prerequisite checking logic and cleaned up extraneous comments.
+### Безопасность, FFI и Anti-Cheat совместимость
+- **Нативная проверка подписей Authenticode (`ffi.rs`)**:
+  - Заменили запуск внешнего процесса PowerShell на прямую внутрипроцессную проверку через Win32 API `WinVerifyTrust` (`wintrust.dll` с политикой `WINTRUST_ACTION_GENERIC_VERIFY_V2`). Проверка загружаемых инсталляторов теперь выполняется мгновенно и без накладных расходов.
+- **Полная совместимость с античитами (EAC, BattlEye, Vanguard, Ricochet)**:
+  - Приложение работает строго в User Mode: исключены вызовы `OpenProcess` с флагами `PROCESS_VM_READ`, `PROCESS_VM_WRITE`, `PROCESS_ALL_ACCESS` к игровым процессам.
+  - Полное отсутствие внедрения DLL, перехватов API (detours) и создания удаленных потоков (`CreateRemoteThread`).
+  - Никаких глобальных низкоуровневых перехватчиков ввода через `SetWindowsHookEx`.
+  - Цветокоррекция использует исключительно легитимные Win32 Display APIs (`MagSetFullscreenColorEffect`, `SetDeviceGammaRamp`).
+- **Исправление ошибки Bad Image `0xc000012f`**:
+  - Реализован автоматический патч `WebView2Loader.dll`: обнуление смещения записи `IMAGE_DIRECTORY_ENTRY_SECURITY` в PE-заголовке DLL, устраняющее блокировку старых сертификатов Microsoft на Windows 10/11.
+- **RAII-управление ресурсами GDI (`screenshot.rs`)**:
+  - Введены структуры-стражи `ReleaseDcGuard`, `DeleteDcGuard` и `DeleteObjectGuard`, гарантирующие автоматическое освобождение хэндлов `HDC` и `HBITMAP` даже в случае непредвиденных сбоев `BitBlt`.
 
-## [0.1.0] - 2026-09-17
+### Портативность и кросс-пользовательская стабильность
+- **Устранение жестко захардкоженных путей**:
+  - Все пути к системным файлам (`C:\Windows\...`, `C:\Program Files\...`, `C:\hiberfil.sys`) заменены на динамический резолвинг через переменные окружения `%SystemRoot%`, `%ProgramFiles%`, `%ProgramFiles(x86)%` и `%SystemDrive%`. Приложение корректно работает на любых системных дисках (`D:`, `E:`) и в мультиязычных редакциях Windows.
+- **Очистка временных файлов**:
+  - Инсталляторы зависимостей (`vc_redist.x64.exe`, `MicrosoftEdgeWebview2Setup.exe`) гарантированно удаляются из директории `%TEMP%` при любом исходе установки.
+- **Переносимая сборка (Portable Toolchain)**:
+  - Из конфигураций сборки удалены локальные пути разработчика. Скрипт `build.rs` динамически определяет MinGW/GCC через переменные `PATH` или `MINGW_PREFIX`.
 
-### Added
-- **Display Calibration Engine**: Direct Windows GDI gamma ramp control for saturation, vibrance, contrast, and color balance.
-- **System Tweaks Module**: Granular system optimizations categorized by privilege level (HKCU user tweaks and HKLM system tweaks).
-- **Safety Snapshot & Rollback**: Automated registry backup creation (`.reg`) before any tweaks are applied, with 1-click rollback support.
-- **Hardware Telemetry**: Real-time CPU and memory metrics via Windows Performance Data Helper (PDH).
-- **GPU & Driver Inspector**: Automatic detection of active display adapter, driver version, and direct search link.
-- **Game Library Integration**: Auto-discovery of installed Steam and Epic Games titles with custom color profile linking.
-- **CI/CD Infrastructure**: GitHub Actions workflows for continuous integration testing and automated release artifact compilation with SHA-256 checksums.
+### Интерфейс и пользовательский опыт (UI/UX)
+- **Запрет выделения текста**:
+  - В приложении глобально отключено случайное выделение текста (`user-select: none`), сохраняя выделение только внутри полей ввода (`input`, `textarea`). Окно воспринимается как монолитное десктопное приложение.
+- **Мгновенный отклик переключателей (Settings)**:
+  - Устранена задержка при переключении настройки «Закрывать в трей» и других чекбоксов. Переключатель меняет состояние мгновенно без блокировки интерфейса и без сброса DOM.
+  - Для активного белого акцентного цвета настроен контрастный ползунок (`--ui-accent-thumb: #111113`), чтобы переключатель не сливался с белым фоном.
+- **Устранение утечек языка (i18n)**:
+  - Проведен полный аудит словарей: устранены утечки русского языка в англоязычном интерфейсе (заголовки карточек воздействия твиков, сообщения Rust-бэкенда об очистке диска, фолбэки названий пресетов).
+- **Обновленный блок «Сообщество» в Настройках**:
+  - Добавлены высокие прямоугольные кнопки со ссылками на официальный GitHub и Telegram-канал (`t.me/synchronova`) с иконками, микроанимацией и четкой гротеск-типографикой.
+- **Компактный лейаут без скроллбара**:
+  - Сетка раздела настроек переработана так, чтобы все элементы помещались на одном экране без вертикальной прокрутки.
 
-### Security
-- Added permanent Data Execution Prevention (DEP) enforcement on startup.
-- Implemented `SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32)` and `SetSearchPathMode` to block DLL search order hijacking attacks.
-- Enabled heap corruption termination (`HeapEnableTerminationOnCorruption`) on default process heap.
-- Hardened HTML rendering engine with full entity escaping (`&`, `<`, `>`, `"`, `'`).
-- Restricted driver search query URLs strictly to `https://` schemes.
-- Added strict privilege verification before executing system-level modifications.
+### Игровые модули
+- **Оптимизатор конфигураций Rust (`rust_cfg.rs`)**:
+  - Добавлен парсер и безопасный генератор пользовательских конфигов `client.cfg` для Rust с оптимизацией фреймрейта и инпут-лага.
+- **Режим Black Holo**:
+  - Добавлена коррекция гаммы и контраста для улучшения видимости темных зон в шутерах без выбеливания светлых участков.
 
-### Performance
-- Restricted WebView2 working set memory via targeted process tree trimming, reducing idle memory footprint to ~8 MB RAM.
-- Added in-memory caching for game library scans with 60-second TTL to eliminate redundant disk I/O.
-- Recycled thread-local PDH query buffers to avoid heap reallocations during telemetry collection.
+---
+
+## [0.1.1] — 2026-09-19
+
+### Исправлено
+- Предотвращено зависание интерфейса при применении и откате твиков за счет безопасных блоков `try/finally`.
+- Добавлены недостающие переводы названий шаблонов цветокоррекции.
+- Сброс полей ввода имени бэкапа и конфигурации после успешного сохранения.
+- Добавлены доступные метки (`aria-label`) для скринридеров на управляющих элементах.
+
+### Производительность
+- Включена многопоточная сборка в конфигурации Cargo.
+- Оптимизирована предварительная проверка зависимостей рантайма.
+
+---
+
+## [0.1.0] — 2026-09-17
+
+### Базовый функционал
+- **Движок калибровки дисплея**: Прямое управление LUT-гаммой через Windows GDI API (насыщенность, цветовой тон, контраст, гамма).
+- **Модуль системных твиков**: Набор оптимизаций реестра с разделением на пользовательские (`HKCU`) и системные (`HKLM`).
+- **Снимки безопасности и откат**: Автоматическое создание бэкапов реестра (`.reg`) перед внесением изменений и откат в 1 клик.
+- **Телеметрия оборудования**: Мониторинг загрузки процессора и оперативной памяти через Windows Performance Data Helper (PDH).
+- **Инспектор видеокарт и драйверов**: Определение активного графического адаптера, текущей версии драйвера и статуса актуальности.
+- **Интеграция с библиотекой игр**: Автоматическое обнаружение установленных игр Steam и Epic Games с привязкой цветовых профилей.

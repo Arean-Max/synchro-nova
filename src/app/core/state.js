@@ -115,7 +115,9 @@ export function applyInterfaceAccent(color) {
   }
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
   const textColor = brightness > 155 ? "#111113" : "#ffffff";
+  const thumbColor = brightness > 155 ? "#111113" : "#ffffff";
   document.documentElement.style.setProperty("--ui-accent-text", textColor);
+  document.documentElement.style.setProperty("--ui-accent-thumb", thumbColor);
   document.documentElement.style.setProperty("--ui-accent-glow", `rgba(${r}, ${g}, ${b}, 0.28)`);
 }
 
