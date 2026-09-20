@@ -381,7 +381,7 @@ fn clean_game_name(name: &str) -> String {
         .to_string()
 }
 
-fn read_steam_libraries(steam_root: &Path) -> Vec<PathBuf> {
+pub(crate) fn read_steam_libraries(steam_root: &Path) -> Vec<PathBuf> {
     let path = steam_root.join("steamapps").join("libraryfolders.vdf");
     let Ok(raw) = fs::read_to_string(path) else {
         return Vec::new();
@@ -1115,7 +1115,7 @@ fn scan_executables(
 }
 
 #[cfg(target_os = "windows")]
-fn steam_install_root() -> Option<PathBuf> {
+pub(crate) fn steam_install_root() -> Option<PathBuf> {
     use winreg::{
         enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE},
         RegKey,
@@ -1128,12 +1128,16 @@ fn steam_install_root() -> Option<PathBuf> {
         ),
         (
             RegKey::predef(HKEY_LOCAL_MACHINE),
+            "SOFTWARE\\Valve\\Steam",
+        ),
+        (
+            RegKey::predef(HKEY_LOCAL_MACHINE),
             "SOFTWARE\\WOW6432Node\\Valve\\Steam",
         ),
     ];
 
-    for (root, key_path) in roots {
-        let Ok(key) = root.open_subkey(key_path) else {
+    for (root, subkey) in roots {
+        let Ok(key) = root.open_subkey(subkey) else {
             continue;
         };
         if let Some(root) = steam_root_from_key(&key) {
@@ -1141,6 +1145,16 @@ fn steam_install_root() -> Option<PathBuf> {
         }
     }
 
+    if let Some(path) = env_path("ProgramFiles(x86)").map(|p| p.join("Steam")) {
+        if path.exists() {
+            return Some(path);
+        }
+    }
+    if let Some(path) = env_path("ProgramFiles").map(|p| p.join("Steam")) {
+        if path.exists() {
+            return Some(path);
+        }
+    }
     None
 }
 
@@ -1162,7 +1176,7 @@ fn steam_root_from_key(key: &winreg::RegKey) -> Option<PathBuf> {
 }
 
 #[cfg(not(target_os = "windows"))]
-fn steam_install_root() -> Option<PathBuf> {
+pub(crate) fn steam_install_root() -> Option<PathBuf> {
     None
 }
 

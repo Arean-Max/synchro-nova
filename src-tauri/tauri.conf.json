@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Synchro Nova",
-  "version": "0.1.1",
+  "version": "2.0.0",
   "identifier": "app.synchro.performance",
   "build": {
     "frontendDist": "../src"
@@ -12,22 +12,22 @@
       {
         "label": "main",
         "title": "Synchro Nova",
-        "width": 1440,
-        "height": 850,
-        "minWidth": 1100,
-        "minHeight": 720,
+        "width": 980,
+        "height": 620,
+        "minWidth": 860,
+        "minHeight": 540,
         "center": true,
         "resizable": true,
-        "maximizable": true,
+        "maximizable": false,
         "fullscreen": false,
         "decorations": false,
         "devtools": false,
-        "additionalBrowserArgs": "--renderer-process-limit=1 --enable-low-end-device-mode --force-gpu-mem-available-mb=16 --disable-gpu-shader-disk-cache --disk-cache-size=1 --media-cache-size=1 --disable-background-networking --disable-component-update --no-pings --disable-sync --disable-domain-reliability --disable-client-side-phishing-detection --safebrowsing-disable-auto-update --disable-default-apps --disable-extensions --disable-breakpad --no-crash-upload --disable-speech-api --disable-speech-synthesis-api --disable-features=Translate,OptimizationHints,MediaRouter,CalculateNativeWinOcclusion,InterestFeedContentSuggestions,AutofillServerCommunication,CertificateTransparencyComponentUpdater,SpeechSynthesis,BackgroundFetch,SafeBrowsing --js-flags=--max-old-space-size=32"
+        "additionalBrowserArgs": "--renderer-process-limit=1 --enable-low-end-device-mode --force-gpu-mem-available-mb=16 --disable-gpu-shader-disk-cache --disk-cache-size=1 --media-cache-size=1 --disable-background-networking --disable-component-update --no-pings --disable-sync --disable-domain-reliability --disable-client-side-phishing-detection --safebrowsing-disable-auto-update --disable-default-apps --disable-extensions --disable-breakpad --no-crash-upload --disable-speech-api --disable-speech-synthesis-api --disable-databases --disable-notifications --disable-dev-shm-usage --disable-shared-workers --disable-service-workers --disable-features=AudioServiceOutOfProcess,IsolateOrigins,site-per-process,MediaRouter,OptimizationHints,Translate,CalculateNativeWinOcclusion,InterestFeedContentSuggestions,AutofillServerCommunication,CertificateTransparencyComponentUpdater,SpeechSynthesis,BackgroundFetch,SafeBrowsing --js-flags=--max-old-space-size=24"
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: asset: asset://localhost http://asset.localhost https://asset.localhost; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
-      "devCsp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: asset: asset://localhost http://asset.localhost https://asset.localhost; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: asset://localhost http://asset.localhost https://asset.localhost; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+      "devCsp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: asset: asset://localhost http://asset.localhost https://asset.localhost; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
       "assetProtocol": {
         "enable": true,
         "scope": {

@@ -9,15 +9,15 @@ pub(crate) fn start_color_guard() {
     COLOR_GUARD_STARTED.get_or_init(|| {
         std::thread::spawn(|| {
             loop {
-                std::thread::sleep(std::time::Duration::from_millis(2500));
+                std::thread::sleep(std::time::Duration::from_millis(3000));
                 let color_opt = if let Ok(guard) = ACTIVE_COLOR.lock() {
                     guard.clone()
                 } else {
                     None
                 };
                 if let Some(color) = color_opt {
-                    if color.enabled {
-                        // Reassert gamma ramp in case an exclusive fullscreen game reset it
+                    // Only reassert when color calibration is active and gamma is non-neutral
+                    if color.enabled && (color.gamma - 100.0).abs() > 0.5 {
                         let _ = apply_gamma_ramp(color.gamma);
                     }
                 }
@@ -36,7 +36,7 @@ fn set_active_color(color: Option<ColorSettings>) {
 }
 
 #[cfg(target_os = "windows")]
-pub(crate) fn apply_color_transform(color: &ColorSettings) -> Result<(), String> {
+pub(crate) fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) -> Result<(), String> {
     if !color.enabled {
         set_active_color(None);
         return reset_color_transform();
@@ -47,14 +47,17 @@ pub(crate) fn apply_color_transform(color: &ColorSettings) -> Result<(), String>
     // Try hardware LUT gamma ramp first (optimal for standard SDR monitors)
     let ramp_success = apply_gamma_ramp(color.gamma).is_ok();
 
-    // If hardware gamma ramp was rejected (Windows Auto HDR, Advanced Color, or driver limitation),
-    // incorporate software gamma gain into the DWM Magnification matrix so calibration never fails.
-    apply_magnification_color(color, !ramp_success)?;
+    // If show_on_recordings is true, incorporate gamma directly into the DWM Magnification
+    // color matrix so that desktop screen capture (OBS Display Capture, Discord screen share, etc.)
+    // records the full color calibration (saturation, contrast, hue and gamma).
+    // If show_on_recordings is false, rely on hardware LUT ramp where available.
+    let include_matrix_gamma = show_on_recordings || !ramp_success;
+    apply_magnification_color(color, include_matrix_gamma)?;
     Ok(())
 }
 
 #[cfg(not(target_os = "windows"))]
-pub(crate) fn apply_color_transform(_color: &ColorSettings) -> Result<(), String> {
+pub(crate) fn apply_color_transform(_color: &ColorSettings, _show_on_recordings: bool) -> Result<(), String> {
     Ok(())
 }
 
@@ -153,10 +156,34 @@ fn build_color_matrix(color: &ColorSettings, include_matrix_gamma: bool) -> [f32
     matrix = multiply_matrix(matrix, saturation_matrix(saturation));
     matrix = multiply_matrix(matrix, hue_matrix(hue));
     matrix = multiply_matrix(matrix, contrast_matrix(contrast));
+    if color.black_holo > 0.0 {
+        matrix = multiply_matrix(matrix, black_holo_matrix(color.black_holo / 100.0));
+    }
     if include_matrix_gamma {
         matrix = multiply_matrix(matrix, gamma_fallback_matrix(color.gamma));
     }
     matrix
+}
+
+fn black_holo_matrix(strength: f32) -> [f32; 25] {
+    let k = strength.clamp(0.0, 1.0);
+    // Preserves neutral/white luminance (row sums = 1.0),
+    // while driving dominant green channel down towards 0 (deep black).
+    let r_from_r = 1.0 + 0.25 * k;
+    let r_from_g = -0.25 * k;
+    let g_from_g = 1.0 - k;
+    let g_from_r = 0.5 * k;
+    let g_from_b = 0.5 * k;
+    let b_from_b = 1.0 + 0.25 * k;
+    let b_from_g = -0.25 * k;
+
+    [
+        r_from_r, g_from_r, 0.0,      0.0, 0.0,
+        r_from_g, g_from_g, b_from_g, 0.0, 0.0,
+        0.0,      g_from_b, b_from_b, 0.0, 0.0,
+        0.0,      0.0,      0.0,      1.0, 0.0,
+        0.0,      0.0,      0.0,      0.0, 1.0,
+    ]
 }
 
 fn identity_matrix() -> [f32; 25] {

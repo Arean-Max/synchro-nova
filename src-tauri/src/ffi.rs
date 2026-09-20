@@ -364,57 +364,81 @@ pub fn init_process_tree_job() {}
 
 #[cfg(target_os = "windows")]
 pub fn trim_working_set() {
+    use std::sync::Mutex;
+    use std::time::{Duration, Instant};
+
+    static CHILD_CACHE: Mutex<(Vec<u32>, Option<Instant>)> = Mutex::new((Vec::new(), None));
+    const CACHE_TTL: Duration = Duration::from_secs(30);
+
     unsafe {
         // 1. Trim the main application process
         let _ = winapi::SetProcessWorkingSetSize(winapi::GetCurrentProcess(), usize::MAX, usize::MAX);
 
-        // 2. Discover direct child and descendant WebView2 processes strictly rooted at this process
-        let my_pid = winapi::GetCurrentProcessId();
-        let snapshot = winapi::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-        if snapshot.is_null() || snapshot as isize == -1 {
-            return;
-        }
+        // 2. Check cached child WebView2 process IDs
+        let mut webview_pids = Vec::new();
+        let mut needs_refresh = true;
 
-        let mut entry = ProcessEntry32W::default();
-        let mut all_entries = Vec::with_capacity(128);
-
-        if winapi::Process32FirstW(snapshot, &mut entry) != 0 {
-            loop {
-                all_entries.push((
-                    entry.th32_process_id,
-                    entry.th32_parent_process_id,
-                    entry.sz_exe_file,
-                ));
-                if winapi::Process32NextW(snapshot, &mut entry) == 0 {
-                    break;
+        if let Ok(guard) = CHILD_CACHE.lock() {
+            if let Some(updated_at) = guard.1 {
+                if updated_at.elapsed() < CACHE_TTL && !guard.0.is_empty() {
+                    webview_pids = guard.0.clone();
+                    needs_refresh = false;
                 }
             }
         }
-        winapi::CloseHandle(snapshot);
 
-        // Track process IDs belonging strictly to synchro's process hierarchy
-        let mut tree_pids = Vec::with_capacity(8);
-        tree_pids.push(my_pid);
+        // 3. Discover direct child and descendant WebView2 processes if cache expired
+        if needs_refresh {
+            let my_pid = winapi::GetCurrentProcessId();
+            let snapshot = winapi::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+            if !snapshot.is_null() && snapshot as isize != -1 {
+                let mut entry = ProcessEntry32W::default();
+                let mut all_entries = Vec::with_capacity(128);
 
-        let mut webview_pids = Vec::with_capacity(8);
-        let mut added = true;
-
-        while added {
-            added = false;
-            for (pid, parent_pid, exe_name) in &all_entries {
-                if *pid != my_pid && !tree_pids.contains(pid) && tree_pids.contains(parent_pid) {
-                    let len = exe_name.iter().position(|&c| c == 0).unwrap_or(exe_name.len());
-                    let name = String::from_utf16_lossy(&exe_name[..len]);
-                    if name.eq_ignore_ascii_case("msedgewebview2.exe") {
-                        tree_pids.push(*pid);
-                        webview_pids.push(*pid);
-                        added = true;
+                if winapi::Process32FirstW(snapshot, &mut entry) != 0 {
+                    loop {
+                        all_entries.push((
+                            entry.th32_process_id,
+                            entry.th32_parent_process_id,
+                            entry.sz_exe_file,
+                        ));
+                        if winapi::Process32NextW(snapshot, &mut entry) == 0 {
+                            break;
+                        }
                     }
                 }
+                winapi::CloseHandle(snapshot);
+
+                // Track process IDs belonging strictly to synchro's process hierarchy
+                let mut tree_pids = Vec::with_capacity(8);
+                tree_pids.push(my_pid);
+
+                let mut discovered = Vec::with_capacity(8);
+                let mut added = true;
+
+                while added {
+                    added = false;
+                    for (pid, parent_pid, exe_name) in &all_entries {
+                        if *pid != my_pid && !tree_pids.contains(pid) && tree_pids.contains(parent_pid) {
+                            let len = exe_name.iter().position(|&c| c == 0).unwrap_or(exe_name.len());
+                            let name = String::from_utf16_lossy(&exe_name[..len]);
+                            if name.eq_ignore_ascii_case("msedgewebview2.exe") {
+                                tree_pids.push(*pid);
+                                discovered.push(*pid);
+                                added = true;
+                            }
+                        }
+                    }
+                }
+
+                if let Ok(mut guard) = CHILD_CACHE.lock() {
+                    *guard = (discovered.clone(), Some(Instant::now()));
+                }
+                webview_pids = discovered;
             }
         }
 
-        // 3. Trim working sets for the discovered WebView2 child processes
+        // 4. Trim working sets for the discovered WebView2 child processes
         const PROCESS_SET_QUOTA: u32 = 0x0100;
         for pid in webview_pids {
             let handle = winapi::OpenProcess(PROCESS_SET_QUOTA, 0, pid);

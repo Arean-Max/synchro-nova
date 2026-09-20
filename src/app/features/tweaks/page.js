@@ -14,25 +14,17 @@ import {
 } from "./catalog.js";
 
 function tweakTile(tweak, viewState, t) {
-  const selected = viewState.selectedTweaks.has(tweak.id);
   const installed = viewState.installedTweaks?.has(tweak.id);
   const category = tweakCategory(tweak);
   const title = tweakTitle(tweak, t);
   const desc = tweakDescription(tweak, t);
-  const noteText = tweakNote(tweak, t) || t("noKnownConflict");
-  const note = `<div class="tweak-note"><span>!</span><em>${escapeHtml(noteText)}</em></div>`;
+  const helpTitle = t("whatBreaks") || "Что меняет этот твик?";
 
-  return `<button class="tweak-tile ${selected ? "selected" : ""} ${installed ? "installed" : "not-installed"}" type="button" data-tweak-id="${escapeAttr(tweak.id)}" data-category="${category}"><div class="tweak-head"><span class="tweak-title">${escapeHtml(title)}</span></div><p>${escapeHtml(desc)}</p>${note}</button>`;
+  return `<div class="tweak-tile ${installed ? "installed" : "not-installed"}" role="button" tabindex="0" data-tweak-id="${escapeAttr(tweak.id)}" data-category="${category}"><div class="tweak-head"><span class="tweak-title">${escapeHtml(title)}</span><button class="tweak-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(tweak.id)}" title="${escapeAttr(helpTitle)}" aria-label="${escapeAttr(helpTitle)}">?</button></div><p>${escapeHtml(desc)}</p></div>`;
 }
 
 function tweakGroup(group, viewState, t) {
-  const filter = viewState.tweakFilter || "all";
-  let tweaks = group.tweaks;
-  if (filter === "user") {
-    tweaks = tweaks.filter((tw) => !tw.badges?.includes("ADMIN"));
-  } else if (filter === "admin") {
-    tweaks = tweaks.filter((tw) => tw.badges?.includes("ADMIN"));
-  }
+  const tweaks = group.tweaks;
   if (!tweaks.length) return "";
   const tiles = tweaks.map((tweak) => tweakTile(tweak, viewState, t)).join("");
   const title = tweakGroupTitle(group, t);
@@ -49,92 +41,100 @@ function tweakResults(viewState, t) {
       return `<div class="tweak-result-row ${escapeAttr(item.status || "skipped")}"><span>${escapeHtml(item.id || "-")}</span><strong>${escapeHtml(t(statusKey))}</strong><em>${escapeHtml(item.message || "")}</em></div>`;
     })
     .join("");
-  return `<section class="card tweak-results"><h2>${t("appliedTweaks")}</h2>${rows}</section>`;
-}
-
-function renderSmartTipsModal(viewState, t) {
-  const isRu = lang() === "ru";
-  const apps = Array.isArray(viewState.detectedApps) ? viewState.detectedApps : [];
-  const appMap = new Map(apps.map((a) => [a.id, a.installed]));
-
-  const appChips = apps.length
-    ? apps
-        .map((app) => {
-          const stateClass = app.installed ? "present" : "absent";
-          const stateLabel = app.installed ? t("detectedOnPc") : t("notDetectedOnPc");
-          return `<div class="app-chip ${stateClass}"><span class="chip-status-icon">${app.installed ? icon("check") : icon("minus")}</span><div class="chip-info"><strong>${escapeHtml(app.name)}</strong><small>${escapeHtml(stateLabel)}</small></div></div>`;
-        })
-        .join("")
-    : `<div class="empty-state">${t("loading")}</div>`;
-
-  const tweaks = allTweaks();
-  const tweakMap = new Map(tweaks.map((tw) => [tw.id, tw]));
-
-  const impactRows = Object.entries(tweakAppImpacts)
-    .map(([tweakId, info]) => {
-      const tweak = tweakMap.get(tweakId);
-      const title = tweak ? tweakTitle(tweak, t) : tweakId;
-      const appInstalled = appMap.get(info.appId) ?? false;
-      const impactText = isRu ? info.impactRu : info.impactEn;
-      const statusBadge = appInstalled
-        ? `<span class="app-installed-badge">${t("detectedOnPc")}</span>`
-        : "";
-
-      return [
-        '<div class="impact-card">',
-        '<div class="impact-head">',
-        `<span class="impact-tweak-name">${escapeHtml(title)}</span>`,
-        `<span class="impact-app-tag">${escapeHtml(info.appName)}</span>`,
-        statusBadge,
-        '</div>',
-        `<div class="impact-body">${escapeHtml(impactText)}</div>`,
-        '</div>'
-      ].join("");
-    })
-    .join("");
-
   return [
-    '<div class="smart-tips-backdrop" data-action="close-smart-tips">',
-    '<div class="smart-tips-dialog" onclick="event.stopPropagation()">',
-    '<div class="smart-tips-dialog-header">',
-    '<div class="smart-tips-dialog-title">',
-    `<span class="smart-tips-glyph big">?</span>`,
-    `<div><h3>${escapeHtml(t("smartTipsTitle"))}</h3><p>${escapeHtml(t("smartTipsDesc"))}</p></div>`,
-    '</div>',
-    `<button class="dialog-close-btn" type="button" data-action="close-smart-tips" title="${escapeAttr(t("close"))}">${icon("x")}</button>`,
-    '</div>',
-    '<div class="smart-tips-dialog-body">',
-    '<div class="smart-tips-section">',
-    `<h4 class="smart-tips-section-title">${icon("monitor")}<span>${escapeHtml(t("detectedAppsSummary"))}</span></h4>`,
-    `<div class="app-chips-grid">${appChips}</div>`,
-    '</div>',
-    '<div class="smart-tips-section">',
-    `<h4 class="smart-tips-section-title">${icon("shield")}<span>${escapeHtml(t("whatWillStopWorking"))}</span></h4>`,
-    `<div class="impact-cards-list">${impactRows}</div>`,
-    '</div>',
-    '</div>',
-    '<div class="smart-tips-dialog-footer">',
-    `<button class="btn btn-primary" type="button" data-action="close-smart-tips"><span>${escapeHtml(t("closeTips"))}</span></button>`,
-    '</div>',
-    '</div>',
-    '</div>'
+    '<section class="card tweak-results">',
+    '  <div class="tweak-results-head">',
+    `    <h2>${escapeHtml(t("appliedTweaks"))}</h2>`,
+    `    <button class="dialog-close-btn" type="button" data-action="dismiss-tweak-results" title="${escapeAttr(t("close"))}">${icon("x")}</button>`,
+    '  </div>',
+    rows,
+    '</section>'
   ].join("");
 }
 
-function renderAdminElevationModal(t) {
+export function getTweakImpactDetails(tweak, t, isRu) {
+  const category = tweakCategory(tweak);
+  const impactInfo = tweakAppImpacts[tweak.id];
+  if (impactInfo) {
+    return {
+      appName: impactInfo.appName,
+      impactText: isRu ? impactInfo.impactRu : impactInfo.impactEn
+    };
+  }
+
+  const note = tweakNote(tweak, t);
+  if (note && note !== t("noKnownConflict")) {
+    let catLabel = isRu ? "Безопасный твик" : "Safe Tweak";
+    if (category === "risk") catLabel = isRu ? "Рискованный твик" : "Risk Tweak";
+    else if (category === "experimental") catLabel = isRu ? "Экспериментальный твик" : "Experimental Tweak";
+    else if (category === "admin") catLabel = isRu ? "Системный твик" : "System Tweak";
+
+    return {
+      appName: catLabel,
+      impactText: note
+    };
+  }
+
+  if (category === "risk") {
+    return {
+      appName: isRu ? "Рискованный твик" : "Risk Tweak",
+      impactText: isRu
+        ? "Агрессивный твик: может приводить к повышенному нагреву, сбоям или нестабильности. Перед применением создайте бэкап."
+        : "Aggressive tweak: may cause excessive heat, crashes, or instability. Creating a backup is recommended."
+    };
+  }
+
+  if (category === "experimental") {
+    return {
+      appName: isRu ? "Экспериментальный твик" : "Experimental Tweak",
+      impactText: isRu
+        ? "Экспериментальная настройка: находится в стадии тестирования, её поведение зависит от конфигурации системы."
+        : "Experimental setting: currently in testing; behavior depends on your system hardware configuration."
+    };
+  }
+
+  if (category === "admin") {
+    return {
+      appName: isRu ? "Системный твик (Admin)" : "System Tweak (Admin)",
+      impactText: isRu
+        ? "Требует прав администратора и изменяет системные параметры Windows."
+        : "Requires administrator privileges and modifies system-level Windows parameters."
+    };
+  }
+
+  return {
+    appName: isRu ? "Безопасный твик" : "Safe Tweak",
+    impactText: isRu
+      ? "У этого твика нет подтверждённых конфликтов с играми и приложениями."
+      : "This tweak has no confirmed conflicts with games or apps."
+  };
+}
+
+export function renderIosNotification(viewState, t) {
+  const banner = viewState.activeImpactBanner;
+  if (!banner) return "";
+
+  const category = banner.category || "safe";
+  const iconName = banner.isAdminPrompt ? "shield" : (category === "risk" || category === "experimental" ? "alert" : "info");
+  const bannerAction = banner.isAdminPrompt
+    ? "restart-as-admin"
+    : (banner.isBackupPrompt ? "open-backup-name-modal" : "dismiss-impact-banner");
+
   return [
-    '<div class="smart-tips-backdrop" data-action="dismiss-admin-prompt">',
-    '<div class="admin-prompt-dialog" onclick="event.stopPropagation()">',
-    '<div class="admin-prompt-header">',
-    icon("shield", "admin-shield-icon"),
-    `<h3>${escapeHtml(t("adminPromptTitle"))}</h3>`,
-    '</div>',
-    `<p class="admin-prompt-text">${escapeHtml(t("adminPromptDesc"))}</p>`,
-    '<div class="admin-prompt-actions">',
-    `<button class="btn btn-primary" type="button" data-action="restart-as-admin">${icon("shield")}<span>${escapeHtml(t("restartAsAdmin"))}</span></button>`,
-    `<button class="btn btn-outline" type="button" data-action="dismiss-admin-prompt"><span>${escapeHtml(t("continueWithoutAdmin"))}</span></button>`,
-    '</div>',
-    '</div>',
+    '<div class="ios-banner-container">',
+    `  <div class="ios-banner ${escapeAttr(category)}" data-action="${bannerAction}">`,
+    `    <div class="ios-banner-icon ${escapeAttr(category)}">`,
+    `      ${icon(iconName)}`,
+    '    </div>',
+    '    <div class="ios-banner-content">',
+    '      <div class="ios-banner-header">',
+    `        <span class="ios-banner-app">${escapeHtml(banner.appName)}</span>`,
+    '      </div>',
+    `      <div class="ios-banner-title">${escapeHtml(banner.title)}</div>`,
+    `      <div class="ios-banner-message">${escapeHtml(banner.impactText)}</div>`,
+    '    </div>',
+    `    <button class="ios-banner-close" type="button" data-action="dismiss-impact-banner" title="${escapeAttr(t("close"))}">${icon("x")}</button>`,
+    '  </div>',
     '</div>'
   ].join("");
 }
@@ -143,33 +143,10 @@ export function renderTweaksPage(viewState, t) {
   const groups = tweakCatalog.map((group) => tweakGroup(group, viewState, t)).join("");
   const applyLabel = viewState.applyingTweaks ? t("loading") : t("applySelected");
 
-  const filter = viewState.tweakFilter || "all";
-
-  const topToolbar = [
-    '<div class="tweaks-top-toolbar">',
-    '  <div class="tweaks-filter-bar">',
-    `    <button class="tweak-filter-btn ${filter === "all" ? "active" : ""}" type="button" data-action="filter-tweaks-all"><span>${escapeHtml(t("tweakFilterAll"))}</span></button>`,
-    `    <button class="tweak-filter-btn ${filter === "user" ? "active" : ""}" type="button" data-action="filter-tweaks-user">${icon("user")}<span>${escapeHtml(t("tweakFilterUser"))}</span></button>`,
-    `    <button class="tweak-filter-btn ${filter === "admin" ? "active" : ""}" type="button" data-action="filter-tweaks-admin">${icon("shield")}<span>${escapeHtml(t("tweakFilterAdmin"))}</span></button>`,
-    '  </div>',
-    '  <div class="tweaks-toolbar-actions">',
-    `    <button class="tweak-action-pill" type="button" data-action="restart-explorer" title="${escapeAttr(t("restartExplorer"))}">${icon("rotate")}<span>${escapeHtml(t("restartExplorer"))}</span></button>`,
-    `    <button class="tweak-action-pill" type="button" data-action="restart-graphics-driver" title="${escapeAttr(t("restartGpuDriver"))}">${icon("monitor")}<span>${escapeHtml(t("restartGpuDriver"))}</span></button>`,
-    `    <button class="smart-tips-trigger" type="button" data-action="toggle-smart-tips" title="${escapeAttr(t("smartTipsTitle"))}" aria-label="${escapeAttr(t("smartTipsTitle"))}">`,
-    '      <span class="smart-tips-badge-icon">?</span>',
-    `      <span>${escapeHtml(t("smartTips"))}</span>`,
-    '    </button>',
-    '  </div>',
-    '</div>'
-  ].join("");
-
   return [
     '<div class="tweaks-page">',
-    topToolbar,
     `<div class="scroll-panel">${tweakResults(viewState, t)}${groups}</div>`,
     `<div class="actions tweaks-actions">${button(applyLabel, "check", "primary", "apply-tweaks")}${button(t("rollbackTweaks"), "rotate", "outline", "rollback-tweaks")}</div>`,
-    viewState.smartTipsOpen ? renderSmartTipsModal(viewState, t) : "",
-    viewState.showAdminPrompt ? renderAdminElevationModal(t) : "",
     '</div>'
   ].join("");
 }

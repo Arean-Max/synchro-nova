@@ -1,4 +1,4 @@
-import { sliderDefs } from "../../core/state.js";
+import { defaultPresets, sliderDefs } from "../../core/state.js";
 import { escapeAttr, escapeHtml, safeValue } from "../../core/html.js";
 import { button, card, checkbox } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
@@ -67,6 +67,19 @@ export function sliderPercent(field, value) {
   return ((value - def.min) / (def.max - def.min)) * 100;
 }
 
+export function sliderFillStyle(field, value) {
+  const def = sliderDefs[field];
+  const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
+  if (def?.fromZero) {
+    return `left:0%;width:${pct}%;`;
+  }
+  const centerPct = 50;
+  if (pct >= centerPct) {
+    return `left:${centerPct}%;width:${pct - centerPct}%;`;
+  }
+  return `left:${pct}%;width:${centerPct - pct}%;`;
+}
+
 export function formatSliderValue(field, value) {
   const def = sliderDefs[field];
   return `${Math.round(value)}${def.suffix}`;
@@ -75,9 +88,11 @@ export function formatSliderValue(field, value) {
 function slider(field, appState, t) {
   const def = sliderDefs[field];
   const label = t ? t(field) : def.label;
-  const value = Number(appState.color[field]);
-  const zero = def.zero ? '<span class="zero-mark"></span>' : "";
-  return `<div class="slider-row" data-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span data-slider-value="${field}">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${sliderPercent(field, value)}%"><span class="slider-fill"></span>${zero}<span class="slider-thumb"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
+  const value = Number(appState.color[field] ?? (def?.fromZero ? 0 : 100));
+  const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
+  const fillStyle = sliderFillStyle(field, value);
+  const zeroMark = def?.zero ? '<span class="zero-mark"></span>' : '';
+  return `<div class="slider-row" data-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span data-slider-value="${field}">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${pct}%">${zeroMark}<span class="slider-fill" style="${fillStyle}"></span><span class="slider-thumb" style="left:${pct}%"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
 }
 
 function hashString(value) {
@@ -213,58 +228,156 @@ function colorSummary(color) {
   ].join(" / ");
 }
 
-function templateButton(id, label, meta, attrName, iconName = "chevronRight") {
-  const metaHtml = meta ? `<small>${escapeHtml(meta)}</small>` : "";
-  return `<button type="button" class="color-template-btn" ${attrName}="${escapeAttr(id)}">${icon(iconName)}<span>${escapeHtml(label)}</span>${metaHtml}</button>`;
+export function isTemplateActive(id, appState) {
+  const overrides = appState?.settings?.templateOverrides?.[id];
+  const target = overrides || defaultPresets[id];
+  if (!target || !appState?.color) return false;
+  return (
+    Math.round(Number(appState.color.saturation ?? 100)) === Math.round(Number(target.saturation)) &&
+    Math.round(Number(appState.color.hue ?? 0)) === Math.round(Number(target.hue)) &&
+    Math.round(Number(appState.color.contrast ?? 100)) === Math.round(Number(target.contrast)) &&
+    Math.round(Number(appState.color.gamma ?? 100)) === Math.round(Number(target.gamma))
+  );
 }
 
-function renderTemplates(viewState, t) {
-  const presetButtons = [
-    ["balanced", t("balanced")],
-    ["vibrant", t("vibrant")],
-    ["soft", t("soft")],
-    ["night", t("night")]
-  ]
-    .map(([id, label]) => templateButton(id, label, t("builtInTemplate"), "data-preset"))
-    .join("");
+export function updateTemplateActiveDom(appState) {
+  document.querySelectorAll(".color-template-item[data-preset-id]").forEach((el) => {
+    const id = el.getAttribute("data-preset-id");
+    const active = isTemplateActive(id, appState);
+    el.classList.toggle("active", active);
+  });
+}
 
-  const saved = (Array.isArray(viewState.configs) ? viewState.configs : [])
-    .slice(0, 12)
-    .map((config) => {
-      const meta = colorSummary(config.color);
-      const metaHtml = meta ? `<small>${escapeHtml(meta)}</small>` : "";
-      return [
-        '<div class="color-template-item">',
-        `<button type="button" class="color-template-btn" data-color-template-id="${escapeAttr(config.id)}">`,
-        icon("save"),
-        `<span>${escapeHtml(config.name)}</span>`,
-        metaHtml,
-        '</button>',
-        `<button type="button" class="color-template-delete-btn" data-action="delete-color-template" data-delete-config-id="${escapeAttr(config.id)}" title="${escapeAttr(t("delete"))}" aria-label="${escapeAttr(t("delete"))}">`,
-        icon("trash"),
-        '</button>',
-        '</div>'
-      ].join("");
+function templateItem(id, label, t, active = false) {
+  const gearTitle = t("configureTemplate") || "Настроить шаблон";
+  return [
+    `<div class="color-template-item ${active ? "active" : ""}" data-preset-id="${escapeAttr(id)}">`,
+    `  <button type="button" class="color-template-btn" data-preset="${escapeAttr(id)}">`,
+    '    <span class="color-template-indicator" aria-hidden="true"></span>',
+    `    <span class="color-template-name">${escapeHtml(label)}</span>`,
+    '  </button>',
+    `  <button type="button" class="template-gear-btn" data-action="configure-template" data-preset="${escapeAttr(id)}" title="${escapeAttr(gearTitle)}" aria-label="${escapeAttr(gearTitle)}">`,
+    `    ${icon("settings")}`,
+    '  </button>',
+    '</div>'
+  ].join("");
+}
+
+function renderTemplates(appState, viewState, t) {
+  const defaultLabels = {
+    balanced: t("balanced"),
+    vibrant: t("vibrant"),
+    soft: t("soft"),
+    night: t("night")
+  };
+  const presetButtons = ["balanced", "vibrant", "soft", "night"]
+    .map((id) => {
+      let customName = appState?.settings?.templateOverrides?.[id]?.name;
+      if (id === "vibrant" && (customName === "Vibrant" || customName === "Насыщенный")) {
+        customName = undefined;
+      }
+      const label = customName || defaultLabels[id] || id;
+      const active = isTemplateActive(id, appState);
+      return templateItem(id, label, t, active);
     })
     .join("");
 
-  const savedTemplates = saved || `<div class="color-template-empty">${t("noTemplates")}</div>`;
-  const saveName = escapeAttr(viewState.colorTemplateName || "");
-  const saveTemplate = [
-    '<div class="color-template-save">',
-    `<input class="text-input wide" type="text" value="${saveName}" placeholder="${escapeAttr(t("templateName"))}" data-field="colorTemplateName">`,
-    `<button class="btn btn-outline" type="button" data-action="save-color-template">${icon("plus")}<span>${t("saveTemplate")}</span></button>`,
-    "</div>"
-  ].join("");
+  const isHoloActive = Number(appState.color.blackHolo || 0) > 0;
 
   return [
     '<div class="color-template-section">',
-    `<h3>${t("quickTemplates")}</h3>`,
-    `<div class="color-template-grid">${presetButtons}</div>`,
-    `<h3>${t("myTemplates")}</h3>`,
-    `<div class="color-template-grid saved">${savedTemplates}</div>`,
-    saveTemplate,
-    "</div>"
+    `  <h3>${t("quickTemplates")}</h3>`,
+    `  <div class="color-template-grid">${presetButtons}</div>`,
+    '</div>',
+    '<div class="black-holo-section">',
+    `  <button type="button" class="check-row checkbox-control black-holo-check-row ${isHoloActive ? "active" : ""}" data-action="toggle-black-holo" role="switch" aria-checked="${isHoloActive}" aria-pressed="${isHoloActive}" title="${escapeAttr(t("blackHolo"))}">`,
+    '    <div class="black-holo-check-title">',
+    '      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="1" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="23"></line><line x1="1" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="23" y2="12"></line></svg>',
+    `      <strong>${escapeHtml(t("blackHolo"))}</strong>`,
+    '    </div>',
+    `    <span class="ios-switch ${isHoloActive ? "active" : ""}" aria-hidden="true">`,
+    '      <span class="ios-switch-thumb"></span>',
+    '    </span>',
+    '  </button>',
+    '</div>'
+  ].join("");
+}
+
+function templateSlider(field, templateColor, t) {
+  const def = sliderDefs[field];
+  const label = t ? t(field) : def.label;
+  const value = Number(templateColor?.[field] ?? 100);
+  const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
+  const fillStyle = sliderFillStyle(field, value);
+  return `<div class="slider-row" data-template-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span data-template-slider-value="${field}">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${pct}%"><span class="zero-mark"></span><span class="slider-fill" style="${fillStyle}"></span><span class="slider-thumb" style="left:${pct}%"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-template-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
+}
+
+export function updateTemplateSliderDom(field, values) {
+  const row = document.querySelector(`[data-template-slider-row="${field}"]`);
+  if (!row) return;
+  const input = row.querySelector("[data-template-color-field]");
+  const valueLabel = row.querySelector("[data-template-slider-value]");
+  const track = row.querySelector(".slider-track");
+  const fill = row.querySelector(".slider-fill");
+  const thumb = row.querySelector(".slider-thumb");
+  const value = Number(values?.[field] ?? 100);
+  const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
+  if (input) input.value = String(value);
+  if (valueLabel) valueLabel.textContent = formatSliderValue(field, value);
+  if (track) track.style.setProperty("--slider-percent", `${pct}%`);
+  if (thumb) thumb.style.left = `${pct}%`;
+  if (fill) fill.style.cssText = sliderFillStyle(field, value);
+}
+
+export function syncAllTemplateSliders(values) {
+  if (!values) return;
+  Object.keys(sliderDefs).forEach((field) => updateTemplateSliderDom(field, values));
+}
+
+export function renderTemplateConfigModal(appState, viewState, t) {
+  const presetKey = viewState.editingTemplate;
+  if (!presetKey) return "";
+
+  const presetLabels = {
+    balanced: t("balanced"),
+    vibrant: t("vibrant"),
+    soft: t("soft"),
+    night: t("night")
+  };
+  const defaultName = presetLabels[presetKey] || presetKey;
+  let currentName = viewState.editingTemplateName !== undefined && viewState.editingTemplateName !== ""
+    ? viewState.editingTemplateName
+    : (appState.settings?.templateOverrides?.[presetKey]?.name || defaultName);
+  if (presetKey === "vibrant" && (currentName === "Vibrant" || currentName === "Насыщенный")) {
+    currentName = defaultName;
+  }
+  const templateColor = viewState.editingTemplateColor || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+  const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => templateSlider(field, templateColor, t)).join("");
+
+  return [
+    '<div class="smart-tips-backdrop">',
+    '  <div class="backdrop-dismiss-area" data-action="close-template-config" style="position:absolute;inset:0;z-index:0;"></div>',
+    '  <div class="template-config-dialog" style="position:relative;z-index:1;">',
+    '    <div class="template-config-header">',
+    '      <div class="template-config-title">',
+    `        <h3>${escapeHtml(t("configureTemplate"))}</h3>`,
+    `        <p>${escapeHtml(t("configureTemplateDesc"))}</p>`,
+    '      </div>',
+    `      <button class="dialog-close-btn" type="button" data-action="close-template-config" title="${escapeAttr(t("close"))}">${icon("x")}</button>`,
+    '    </div>',
+    '    <div class="template-config-body">',
+    '      <div class="template-name-group">',
+    `        <label class="template-name-label" for="template-name-input">${escapeHtml(t("templateName"))}</label>`,
+    `        <input id="template-name-input" class="template-name-input" type="text" data-field="editingTemplateName" value="${escapeAttr(currentName)}" placeholder="${escapeAttr(defaultName)}" maxlength="28" spellcheck="false" autocomplete="off">`,
+    '      </div>',
+    `      <div class="stack template-sliders-stack">${controls}</div>`,
+    '    </div>',
+    '    <div class="template-config-footer">',
+    `      <button class="btn btn-outline template-reset-btn" type="button" data-action="reset-template-preset" data-preset="${escapeAttr(presetKey)}"><span>${escapeHtml(t("resetToDefault"))}</span></button>`,
+    `      <button class="btn btn-primary template-done-btn" type="button" data-action="close-template-config"><span>${escapeHtml(t("done"))}</span></button>`,
+    '    </div>',
+    '  </div>',
+    '</div>'
   ].join("");
 }
 
@@ -298,24 +411,76 @@ function renderColorSettingsPanel(appState, viewState, t) {
     '<div class="stack">',
     gameHeader,
     card(t("controls"), controls),
-    card(t("templates"), renderTemplates(viewState, t)),
-    `<div class="actions color-actions-single">${button(t("reset"), "rotate", "outline", "reset-color")}</div>`,
+    card(t("templates"), renderTemplates(appState, viewState, t)),
     "</div>",
+    viewState.editingTemplate ? renderTemplateConfigModal(appState, viewState, t) : "",
     "</div>"
   ].join("");
 }
 
+export function getPreviewFilterStyle(color) {
+  const sat = Math.max(0, (color?.saturation ?? 100) / 100);
+  const hue = color?.hue ?? 0;
+  const con = Math.max(0, (color?.contrast ?? 100) / 100);
+  const gam = Math.max(0, (color?.gamma ?? 100) / 100);
+  return `filter: saturate(${sat}) hue-rotate(${hue}deg) contrast(${con}) brightness(${gam});`;
+}
+
+export function renderColorPreview(appState, viewState, t) {
+  const mode = viewState?.colorPreviewMode || "day";
+  let imgSrc = "./assets/preview.png";
+  if (mode === "night") imgSrc = "./assets/night.png";
+  else if (mode === "holo") imgSrc = "./assets/blackholo.png";
+  const filterStyle = getPreviewFilterStyle(appState.color);
+
+  return [
+    '<div class="color-preview-viewport">',
+    `  <img id="color-preview-image" class="color-preview-img" src="${imgSrc}" alt="Preview" style="${filterStyle}">`,
+    '  <div class="color-preview-overlay">',
+    '    <div class="color-preview-switch">',
+    `      <button class="preview-mode-btn ${mode === "day" ? "active" : ""}" type="button" data-action="set-color-preview-mode" data-mode="day" title="${escapeAttr(t("previewDay"))}">`,
+    '        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
+    `        <span>${escapeHtml(t("day"))}</span>`,
+    '      </button>',
+    `      <button class="preview-mode-btn ${mode === "night" ? "active" : ""}" type="button" data-action="set-color-preview-mode" data-mode="night" title="${escapeAttr(t("previewNight"))}">`,
+    '        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>',
+    `        <span>${escapeHtml(t("night"))}</span>`,
+    '      </button>',
+    `      <button class="preview-mode-btn ${mode === "holo" ? "active" : ""}" type="button" data-action="set-color-preview-mode" data-mode="holo" title="${escapeAttr(t("previewHolo"))}">`,
+    '        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="1" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="23"></line><line x1="1" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="23" y2="12"></line></svg>',
+    `        <span>${escapeHtml(t("holo"))}</span>`,
+    '      </button>',
+    '    </div>',
+    '  </div>',
+    '</div>'
+  ].join("");
+}
+
+export function updateColorPreviewDom(color) {
+  const img = document.getElementById("color-preview-image");
+  if (!img) return;
+  const sat = Math.max(0, (color?.saturation ?? 100) / 100);
+  const hue = color?.hue ?? 0;
+  const con = Math.max(0, (color?.contrast ?? 100) / 100);
+  const gam = Math.max(0, (color?.gamma ?? 100) / 100);
+  img.style.filter = `saturate(${sat}) hue-rotate(${hue}deg) contrast(${con}) brightness(${gam})`;
+}
+
 export function renderColorPage(appState, viewState, t) {
+  const preview = renderColorPreview(appState, viewState, t);
   const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState, t)).join("");
+
+  const fineTuningTitle = `<div class="card-title-with-icon">${icon("tune")}<span>${escapeHtml(t("fineTuning") || "Тонкая Настройка")}</span></div>`;
+  const templatesTitle = `<div class="card-title-with-icon">${icon("layers")}<span>${escapeHtml(t("templates") || "Шаблоны")}</span></div>`;
+
   return [
     '<div class="global-color-page">',
+    preview,
     '<div class="global-color-grid">',
-    '<div class="stack">',
-    card(t("controls"), controls),
-    `<div class="actions color-actions-single">${button(t("reset"), "rotate", "outline", "reset-color")}</div>`,
+    card(fineTuningTitle, controls, "color-controls-card"),
+    card(templatesTitle, renderTemplates(appState, viewState, t), "color-templates-card"),
     "</div>",
-    card(t("templates"), renderTemplates(viewState, t), "color-templates-card"),
-    "</div>",
+    viewState.editingTemplate ? renderTemplateConfigModal(appState, viewState, t) : "",
     "</div>"
   ].join("");
 }
@@ -332,12 +497,34 @@ export function updateSliderDom(field, appState) {
   const input = row.querySelector("[data-color-field]");
   const valueLabel = row.querySelector("[data-slider-value]");
   const track = row.querySelector(".slider-track");
+  const fill = row.querySelector(".slider-fill");
+  const thumb = row.querySelector(".slider-thumb");
   const value = Number(appState.color[field]);
+  const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
   if (input) input.value = String(value);
   if (valueLabel) valueLabel.textContent = formatSliderValue(field, value);
-  if (track) track.style.setProperty("--slider-percent", `${sliderPercent(field, value)}%`);
+  if (track) track.style.setProperty("--slider-percent", `${pct}%`);
+  if (thumb) thumb.style.left = `${pct}%`;
+  if (fill) fill.style.cssText = sliderFillStyle(field, value);
+  updateColorPreviewDom(appState.color);
+  updateTemplateActiveDom(appState);
+}
+
+export function updateBlackHoloDom(active) {
+  const row = document.querySelector(".black-holo-check-row");
+  if (!row) return;
+  row.classList.toggle("active", active);
+  row.setAttribute("aria-checked", String(active));
+  row.setAttribute("aria-pressed", String(active));
+  const sw = row.querySelector(".ios-switch");
+  if (sw) {
+    sw.classList.toggle("active", active);
+  }
 }
 
 export function syncAllSliders(appState) {
   Object.keys(sliderDefs).forEach((field) => updateSliderDom(field, appState));
+  updateBlackHoloDom(Number(appState.color.blackHolo || 0) > 0);
+  updateColorPreviewDom(appState.color);
+  updateTemplateActiveDom(appState);
 }

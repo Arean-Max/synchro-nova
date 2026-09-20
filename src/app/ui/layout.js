@@ -16,7 +16,6 @@ export function renderTitlebar(t) {
     "</div>",
     '<div class="window-controls">',
     `<button class="window-btn" type="button" data-action="window-minimize" title="${t("minimize")}">` + icon("minus") + "</button>",
-    `<button class="window-btn" type="button" data-action="window-maximize" title="${t("maximize")}">` + icon("square") + "</button>",
     `<button class="window-btn close" type="button" data-action="window-close" title="${t("close")}">` + icon("x") + "</button>",
     "</div>",
     "</div>"
@@ -24,6 +23,8 @@ export function renderTitlebar(t) {
 }
 
 export function renderSidebar(t, viewState) {
+  const isCollapsed = Boolean(viewState?.sidebarCollapsed);
+  const toggleTitle = isCollapsed ? t("expandSidebar") : t("collapseSidebar");
   const nav = pageOrder
     .map((key) => {
       const page = pageDefs[key];
@@ -42,7 +43,7 @@ export function renderSidebar(t, viewState) {
     '<span class="nav-indicator" aria-hidden="true"></span>',
     '<div class="nav-section-head">',
     `<span class="nav-label">${t("main")}</span>`,
-    `<button class="sidebar-toggle-btn" type="button" data-action="toggle-sidebar" title="${escapeHtml(t("main"))}" aria-label="${escapeHtml(t("main"))}">${icon("sidebar")}</button>`,
+    `<button class="sidebar-toggle-btn" type="button" data-action="toggle-sidebar" title="${escapeHtml(toggleTitle)}" aria-label="${escapeHtml(toggleTitle)}">${icon("sidebar")}</button>`,
     "</div>",
     `<nav class="nav-list">${nav}</nav>`,
     '<div class="sidebar-spacer"></div>',

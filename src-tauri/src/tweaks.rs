@@ -223,8 +223,18 @@ static REGISTRY_BACKUP_TARGETS: &[RegistryTarget] = &[
     reg_dword("HKCU", "Software\\Microsoft\\Windows\\CurrentVersion\\Search", "BingSearchEnabled"),
     reg_dword("HKCU", "Software\\Microsoft\\Windows\\CurrentVersion\\Search", "DisableSearchBoxSuggestions"),
     reg_dword("HKCU", "Software\\Microsoft\\Windows\\Windows Error Reporting", "Disabled"),
+    reg_dword("HKCU", "Software\\Microsoft\\Windows\\Windows Error Reporting", "DontShowUI"),
     reg_dword("HKCU", "System\\GameConfigStore", "GameDVR_FSEBehaviorMode"),
     reg_dword("HKCU", "System\\GameConfigStore", "GameDVR_HonorUserFSEBehaviorMode"),
+    reg_dword("HKCU", "System\\GameConfigStore", "GameDVR_DXGIHonorFSEWindowsCompatible"),
+    reg_dword("HKCU", "System\\GameConfigStore", "GameDVR_DSEBehavior"),
+    reg_dword("HKCU", "System\\GameConfigStore", "GameDVR_FSEBehavior"),
+    reg_dword("HKCU", "System\\GameConfigStore", "GameDVR_EFSEFeatureFlags"),
+    reg_text("HKCU", "Control Panel\\Keyboard", "KeyboardDelay"),
+    reg_text("HKCU", "Control Panel\\Keyboard", "KeyboardSpeed"),
+    reg_text("HKCU", "Control Panel\\Mouse", "MouseHoverTime"),
+    reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling", "PowerThrottlingOff"),
+    reg_dword("HKLM", "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions", "CpuPriorityClass"),
 ];
 
 fn registry_backup_targets() -> &'static [RegistryTarget] {
@@ -320,22 +330,27 @@ fn restore_registry_value(_entry: &TweakRegistrySnapshot) -> Result<(), String> 
 pub(crate) fn is_admin_tweak(id: &str) -> bool {
     matches!(
         id,
-        "disable-gamedvr"
+        "hags-on"
+            | "mpo-disable"
             | "mmcss-games-priority"
             | "system-responsiveness-10"
-            | "hags-on"
-            | "mpo-disable"
-            | "activity-history-off"
-            | "delivery-optimization-lan"
-            | "trim-enable"
-            | "ntfs-last-access-off"
+            | "network-throttle-off"
             | "hibernate-off"
+            | "ntfs-last-access-off"
+            | "trim-enable"
             | "rss-on"
             | "rsc-off"
             | "ecn-off"
-            | "winsock-reset"
-            | "network-throttle-off"
-            | "restore-point-first"
+            | "disable-gamedvr"
+            | "delivery-optimization-lan"
+            | "activity-history-off"
+            | "tcp-nodelay-ack"
+            | "nic-energy-saving-off"
+            | "tcp-heuristics-off"
+            | "cpu-unpark-cores"
+            | "power-throttling-off"
+            | "input-response-fast"
+            | "csrss-high-priority"
     )
 }
 
@@ -348,41 +363,63 @@ fn apply_one(id: &str) -> TweakApplyResult {
         };
     }
     match id {
-        "modern-flip-model-on" => apply_modern_flip_model(id),
-        "sticky-keys-off" => apply_sticky_keys_off(id),
-        "start-bing-search-off" => apply_start_bing_search_off(id),
-        "wer-off" => apply_wer_off(id),
-        "gamedvr-fse-mode" => apply_gamedvr_fse_mode(id),
+        // Group 1: Gaming & Latency
         "game-mode-on" => apply_game_mode(id),
-        "disable-gamedvr" => apply_disable_gamedvr(id),
-        "disable-bg-recording" => apply_disable_bg_recording(id),
-        "gamebar-startup-off" => apply_gamebar_startup_off(id),
-        "pointer-precision-off" => apply_pointer_precision_off(id),
-        "advertising-id-off" => apply_advertising_id_off(id),
-        "tailored-experiences-off" => apply_tailored_experiences_off(id),
-        "activity-history-off" => apply_activity_history_off(id),
-        "clipboard-cloud-off" => apply_clipboard_cloud_off(id),
-        "delivery-optimization-lan" => apply_delivery_optimization_lan(id),
+        "modern-flip-model-on" => apply_modern_flip_model(id),
+        "gamedvr-fse-mode" => apply_gamedvr_fse_mode(id),
+        "disable-fso-globally" => apply_disable_fso_globally(id),
+        "hags-on" => apply_hags(id),
+        "mpo-disable" => apply_mpo_disable(id),
+        "pcie-aspm-off" => apply_pcie_aspm_off(id),
+
+        // Group 2: CPU & Performance
         "power-plan-high" => run_powercfg(
             id,
             &["/setactive", "SCHEME_MIN"],
             "High performance power plan selected",
         ),
         "ultimate-performance-plan" => apply_ultimate_performance(id),
-        "dns-cache-flush" => {
-            run_command_result(id, "ipconfig", &["/flushdns"], "DNS cache refreshed")
-        }
-        "tcp-autotune-normal" => run_netsh(
+        "cpu-unpark-cores" => apply_cpu_unpark_cores(id),
+        "power-throttling-off" => apply_power_throttling_off(id),
+        "mmcss-games-priority" => apply_mmcss_games_priority(id),
+        "system-responsiveness-10" => apply_system_responsiveness(id),
+        "network-throttle-off" => apply_network_throttle_off(id),
+
+        // Group 3: Input & Responsiveness
+        "pointer-precision-off" => apply_pointer_precision_off(id),
+        "sticky-keys-off" => apply_sticky_keys_off(id),
+        "usb-selective-suspend-off" => apply_usb_selective_suspend(id),
+        "input-response-fast" => apply_input_response_fast(id),
+        "csrss-high-priority" => apply_csrss_high_priority(id),
+        "visual-effects-performance" => apply_visual_effects_performance(id),
+        "transparency-off" => apply_transparency_off(id),
+        "menu-show-delay-low" => apply_menu_show_delay_low(id),
+
+        // Group 4: Storage & Debloat
+        "clean-temp-junk" => apply_clean_temp_junk(id),
+        "hibernate-off" => run_command_result(
             id,
-            &[
-                "interface",
-                "tcp",
-                "set",
-                "global",
-                "autotuninglevel=normal",
-            ],
-            "TCP autotuning restored to normal",
+            "powercfg",
+            &["/hibernate", "off"],
+            "Hibernate disabled; Fast Startup also disabled",
         ),
+        "ntfs-last-access-off" => run_command_result(
+            id,
+            "fsutil",
+            &["behavior", "set", "disableLastAccess", "1"],
+            "NTFS last access updates disabled",
+        ),
+        "trim-enable" => run_command_result(
+            id,
+            "fsutil",
+            &["behavior", "set", "DisableDeleteNotify", "0"],
+            "TRIM notifications enabled",
+        ),
+
+        // Group 5: Network Latency
+        "tcp-nodelay-ack" => apply_tcp_nodelay_ack(id),
+        "nic-energy-saving-off" => apply_nic_energy_saving_off(id),
+        "tcp-heuristics-off" => apply_tcp_heuristics_off(id),
         "rss-on" => run_netsh(
             id,
             &["interface", "tcp", "set", "global", "rss=enabled"],
@@ -404,115 +441,276 @@ fn apply_one(id: &str) -> TweakApplyResult {
             ],
             "ECN disabled",
         ),
-        "hags-on" => apply_hags(id),
-        "mpo-disable" => apply_mpo_disable(id),
-        "network-throttle-off" => apply_network_throttle_off(id),
-        "mmcss-games-priority" => apply_mmcss_games_priority(id),
-        "system-responsiveness-10" => apply_system_responsiveness(id),
-        "usb-selective-suspend-off" => apply_usb_selective_suspend(id),
-        "visual-effects-performance" => apply_visual_effects_performance(id),
-        "transparency-off" => apply_transparency_off(id),
-        "startup-delay-off" => apply_startup_delay_off(id),
-        "menu-show-delay-low" => apply_menu_show_delay_low(id),
-        "flush-arp-cache" => run_command_result(
-            id,
-            "netsh",
-            &["interface", "ip", "delete", "arpcache"],
-            "ARP cache refreshed",
-        ),
-        "winsock-reset" => run_netsh(
-            id,
-            &["winsock", "reset"],
-            "Winsock reset requested; reboot required",
-        ),
-        "ntfs-last-access-off" => run_command_result(
-            id,
-            "fsutil",
-            &["behavior", "set", "disableLastAccess", "1"],
-            "NTFS last access updates disabled",
-        ),
-        "trim-enable" => run_command_result(
-            id,
-            "fsutil",
-            &["behavior", "set", "DisableDeleteNotify", "0"],
-            "TRIM notifications enabled",
-        ),
-        "hibernate-off" => run_command_result(
-            id,
-            "powercfg",
-            &["/hibernate", "off"],
-            "Hibernate disabled; Fast Startup also disabled",
-        ),
-        "restore-point-first" => apply_restore_point(id),
-        "memory-compression-keep" => skipped(id, "Memory compression left enabled"),
-        "firewall-keep-on" => skipped(id, "Firewall left enabled"),
-        "signed-driver-only" => skipped(id, "Driver signature policy left intact"),
-        "dynamic-tick-off" | "platform-tick-force" => blocked(
-            id,
-            "BCDEdit timer forcing is debug-oriented and was not applied automatically",
-        ),
-        "pagefile-off" | "memory-integrity-off" | "driver-msi-bulk" | "gpu-msi-mode" => blocked(
-            id,
-            "Risky system-wide change blocked by the safe apply engine",
-        ),
+        "dns-cache-flush" => {
+            run_command_result(id, "ipconfig", &["/flushdns"], "DNS cache refreshed")
+        }
+
+        // Group 6: Background & Privacy
+        "disable-gamedvr" => apply_disable_gamedvr(id),
+        "disable-bg-recording" => apply_disable_bg_recording(id),
+        "gamebar-startup-off" => apply_gamebar_startup_off(id),
+        "wer-off" => apply_wer_off(id),
+        "start-bing-search-off" => apply_start_bing_search_off(id),
+        "delivery-optimization-lan" => apply_delivery_optimization_lan(id),
+        "activity-history-off" => apply_activity_history_off(id),
+        "advertising-id-off" => apply_advertising_id_off(id),
+
         _ => skipped(
             id,
-            "This tweak is advisory or experimental and has no safe automatic action yet",
+            "This tweak has no active action",
         ),
     }
 }
 
 pub(crate) fn known_tweak_ids() -> &'static [&'static str] {
     &[
+        // Group 1: Gaming & Latency
         "game-mode-on",
+        "modern-flip-model-on",
+        "gamedvr-fse-mode",
+        "disable-fso-globally",
+        "hags-on",
+        "mpo-disable",
+        "pcie-aspm-off",
+
+        // Group 2: CPU & Performance
+        "power-plan-high",
+        "ultimate-performance-plan",
+        "cpu-unpark-cores",
+        "power-throttling-off",
+        "mmcss-games-priority",
+        "system-responsiveness-10",
+        "network-throttle-off",
+
+        // Group 3: Input & Responsiveness
+        "pointer-precision-off",
+        "sticky-keys-off",
+        "usb-selective-suspend-off",
+        "input-response-fast",
+        "csrss-high-priority",
+        "visual-effects-performance",
+        "transparency-off",
+        "menu-show-delay-low",
+
+        // Group 4: Storage & Debloat
+        "clean-temp-junk",
+        "hibernate-off",
+        "ntfs-last-access-off",
+        "trim-enable",
+
+        // Group 5: Network Latency
+        "tcp-nodelay-ack",
+        "nic-energy-saving-off",
+        "tcp-heuristics-off",
+        "rss-on",
+        "rsc-off",
+        "ecn-off",
+        "dns-cache-flush",
+
+        // Group 6: Background & Privacy
         "disable-gamedvr",
         "disable-bg-recording",
         "gamebar-startup-off",
-        "pointer-precision-off",
-        "advertising-id-off",
-        "tailored-experiences-off",
-        "activity-history-off",
-        "clipboard-cloud-off",
-        "delivery-optimization-lan",
-        "hags-on",
-        "mpo-disable",
-        "network-throttle-off",
-        "mmcss-games-priority",
-        "system-responsiveness-10",
-        "visual-effects-performance",
-        "transparency-off",
-        "startup-delay-off",
-        "menu-show-delay-low",
-        "modern-flip-model-on",
-        "sticky-keys-off",
-        "start-bing-search-off",
         "wer-off",
-        "gamedvr-fse-mode",
+        "start-bing-search-off",
+        "delivery-optimization-lan",
+        "activity-history-off",
+        "advertising-id-off",
     ]
+}
+
+fn active_power_scheme_text() -> String {
+    run_command_output("powercfg", &["/getactivescheme"])
+        .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
+        .unwrap_or_default()
+}
+
+fn hklm_tcp_nodelay_active() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        if let Ok(interfaces) = hklm.open_subkey("SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces") {
+            for subkey_name in interfaces.enum_keys().flatten() {
+                if let Ok(interface_key) = interfaces.open_subkey(&subkey_name) {
+                    if interface_key.get_value::<u32, _>("TcpAckFrequency").ok() == Some(1)
+                        && interface_key.get_value::<u32, _>("TCPNoDelay").ok() == Some(1)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+fn hklm_nic_energy_saving_off() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        if let Ok(class_key) = hklm.open_subkey("SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}") {
+            for subkey_name in class_key.enum_keys().flatten() {
+                if let Ok(adapter_key) = class_key.open_subkey(&subkey_name) {
+                    if adapter_key.get_value::<String, _>("*FlowControl").ok().as_deref() == Some("0") {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
 }
 
 fn is_tweak_applied(id: &str) -> bool {
     match id {
-        "sticky-keys-off" => {
-            hkcu_string("Control Panel\\Accessibility\\StickyKeys", "Flags").as_deref() == Some("506")
-        }
-        "start-bing-search-off" => {
-            hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "BingSearchEnabled") == Some(0)
-                && hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "DisableSearchBoxSuggestions") == Some(1)
-        }
-        "wer-off" => {
-            hkcu_dword("Software\\Microsoft\\Windows\\Windows Error Reporting", "Disabled") == Some(1)
-        }
-        "gamedvr-fse-mode" => {
-            hkcu_dword("System\\GameConfigStore", "GameDVR_FSEBehaviorMode") == Some(2)
-        }
+        // Group 1: Gaming & Latency
+        "game-mode-on" => hkcu_dword("Software\\Microsoft\\GameBar", "AutoGameModeEnabled") == Some(1),
         "modern-flip-model-on" => {
             hkcu_string("Software\\Microsoft\\DirectX\\UserGpuPreferences", "DirectXUserGlobalSettings")
                 .as_deref()
                 .map(|v| v.contains("SwapEffectUpgradeCache=1"))
                 .unwrap_or(false)
         }
-        "game-mode-on" => hkcu_dword("Software\\Microsoft\\GameBar", "AutoGameModeEnabled") == Some(1),
+        "gamedvr-fse-mode" => {
+            hkcu_dword("System\\GameConfigStore", "GameDVR_FSEBehaviorMode") == Some(2)
+        }
+        "disable-fso-globally" => {
+            hkcu_dword("System\\GameConfigStore", "GameDVR_DSEBehavior") == Some(2)
+        }
+        "hags-on" => hklm_dword("SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers", "HwSchMode") == Some(2),
+        "mpo-disable" => hklm_dword("SOFTWARE\\Microsoft\\Windows\\Dwm", "OverlayTestMode") == Some(5),
+        "pcie-aspm-off" => {
+            run_command_output("powercfg", &["/query", "SCHEME_CURRENT", "SUB_PCIEXPRESS", "ASPM"])
+                .map(|o| String::from_utf8_lossy(&o.stdout).contains("0x00000000"))
+                .unwrap_or(false)
+        }
+
+        // Group 2: CPU & Performance
+        "power-plan-high" => {
+            let scheme = active_power_scheme_text();
+            scheme.contains("8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c")
+                || scheme.to_lowercase().contains("high performance")
+                || scheme.contains("Высокая производительность")
+        }
+        "ultimate-performance-plan" => {
+            let scheme = active_power_scheme_text();
+            scheme.contains("e9a42b02-d5df-448d-aa00-03f14749eb61")
+                || scheme.to_lowercase().contains("ultimate performance")
+                || scheme.contains("Максимальная производительность")
+        }
+        "cpu-unpark-cores" => {
+            hklm_dword(
+                "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerSettings\\54533251-82be-4824-96c1-47b60b740d00\\0cc5b647-6429-45d6-8e05-69d96c744b5c",
+                "ValueMax",
+            ) == Some(0)
+        }
+        "power-throttling-off" => {
+            hklm_dword(
+                "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling",
+                "PowerThrottlingOff",
+            ) == Some(1)
+        }
+        "mmcss-games-priority" => {
+            hklm_dword(
+                "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
+                "GPU Priority",
+            ) == Some(8)
+        }
+        "system-responsiveness-10" => {
+            let val = hklm_dword(
+                "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+                "SystemResponsiveness",
+            );
+            val == Some(10) || val == Some(0)
+        }
+        "network-throttle-off" => {
+            hklm_dword(
+                "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
+                "NetworkThrottlingIndex",
+            ) == Some(0xffff_ffff)
+        }
+
+        // Group 3: Input & Responsiveness
+        "pointer-precision-off" => {
+            hkcu_string("Control Panel\\Mouse", "MouseSpeed").as_deref() == Some("0")
+                && hkcu_string("Control Panel\\Mouse", "MouseThreshold1").as_deref() == Some("0")
+                && hkcu_string("Control Panel\\Mouse", "MouseThreshold2").as_deref() == Some("0")
+        }
+        "sticky-keys-off" => {
+            hkcu_string("Control Panel\\Accessibility\\StickyKeys", "Flags").as_deref() == Some("506")
+        }
+        "usb-selective-suspend-off" => {
+            run_command_output("powercfg", &["/query", "SCHEME_CURRENT", "SUB_USB", "USBSELECTIVE"])
+                .map(|o| String::from_utf8_lossy(&o.stdout).contains("0x00000000"))
+                .unwrap_or(false)
+        }
+        "input-response-fast" => {
+            hkcu_string("Control Panel\\Keyboard", "KeyboardDelay").as_deref() == Some("0")
+                && hkcu_string("Control Panel\\Keyboard", "KeyboardSpeed").as_deref() == Some("31")
+        }
+        "csrss-high-priority" => {
+            hklm_dword(
+                "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions",
+                "CpuPriorityClass",
+            ) == Some(3)
+        }
+        "visual-effects-performance" => {
+            hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects", "VisualFXSetting")
+                == Some(2)
+        }
+        "transparency-off" => {
+            hkcu_dword(
+                "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                "EnableTransparency",
+            ) == Some(0)
+        }
+        "menu-show-delay-low" => hkcu_string("Control Panel\\Desktop", "MenuShowDelay").as_deref() == Some("100"),
+
+        // Group 4: Storage & Debloat
+        "clean-temp-junk" => false,
+        "hibernate-off" => {
+            !std::path::Path::new("C:\\hiberfil.sys").exists()
+                || hklm_dword("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power", "HiberbootEnabled") == Some(0)
+        }
+        "ntfs-last-access-off" => {
+            run_command_output("fsutil", &["behavior", "query", "disableLastAccess"])
+                .map(|o| String::from_utf8_lossy(&o.stdout).contains("DisableLastAccess = 1"))
+                .unwrap_or(false)
+        }
+        "trim-enable" => {
+            run_command_output("fsutil", &["behavior", "query", "DisableDeleteNotify"])
+                .map(|o| String::from_utf8_lossy(&o.stdout).contains("DisableDeleteNotify = 0"))
+                .unwrap_or(false)
+        }
+
+        // Group 5: Network Latency
+        "tcp-nodelay-ack" => hklm_tcp_nodelay_active(),
+        "nic-energy-saving-off" => hklm_nic_energy_saving_off(),
+        "tcp-heuristics-off" => {
+            run_command_output("netsh", &["interface", "tcp", "show", "heuristics"])
+                .map(|o| String::from_utf8_lossy(&o.stdout).contains("disabled"))
+                .unwrap_or(false)
+        }
+        "rss-on" => {
+            run_command_output("netsh", &["interface", "tcp", "show", "global"])
+                .map(|o| String::from_utf8_lossy(&o.stdout).contains("Receive-Side Scaling State          : enabled"))
+                .unwrap_or(false)
+        }
+        "rsc-off" => {
+            run_command_output("netsh", &["interface", "tcp", "show", "global"])
+                .map(|o| String::from_utf8_lossy(&o.stdout).contains("Receive Segment Coalescing State    : disabled"))
+                .unwrap_or(false)
+        }
+        "ecn-off" => {
+            run_command_output("netsh", &["interface", "tcp", "show", "global"])
+                .map(|o| String::from_utf8_lossy(&o.stdout).contains("ECN Capability                      : disabled"))
+                .unwrap_or(false)
+        }
+        "dns-cache-flush" => false,
+
+        // Group 6: Background & Privacy
         "disable-gamedvr" => {
             hkcu_dword("System\\GameConfigStore", "GameDVR_Enabled") == Some(0)
                 && hkcu_dword(
@@ -527,25 +725,12 @@ fn is_tweak_applied(id: &str) -> bool {
             ) == Some(0)
         }
         "gamebar-startup-off" => hkcu_dword("Software\\Microsoft\\GameBar", "ShowStartupPanel") == Some(0),
-        "pointer-precision-off" => {
-            hkcu_string("Control Panel\\Mouse", "MouseSpeed").as_deref() == Some("0")
-                && hkcu_string("Control Panel\\Mouse", "MouseThreshold1").as_deref() == Some("0")
-                && hkcu_string("Control Panel\\Mouse", "MouseThreshold2").as_deref() == Some("0")
+        "wer-off" => {
+            hkcu_dword("Software\\Microsoft\\Windows\\Windows Error Reporting", "Disabled") == Some(1)
         }
-        "advertising-id-off" => {
-            hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo", "Enabled") == Some(0)
-        }
-        "tailored-experiences-off" => {
-            hkcu_dword(
-                "Software\\Microsoft\\Windows\\CurrentVersion\\Privacy",
-                "TailoredExperiencesWithDiagnosticDataEnabled",
-            ) == Some(0)
-        }
-        "activity-history-off" => {
-            hklm_dword("SOFTWARE\\Policies\\Microsoft\\Windows\\System", "EnableActivityFeed") == Some(0)
-        }
-        "clipboard-cloud-off" => {
-            hkcu_dword("Software\\Microsoft\\Clipboard", "CloudClipboardAutomaticUpload") == Some(0)
+        "start-bing-search-off" => {
+            hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "BingSearchEnabled") == Some(0)
+                && hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "DisableSearchBoxSuggestions") == Some(1)
         }
         "delivery-optimization-lan" => {
             hklm_dword(
@@ -553,43 +738,13 @@ fn is_tweak_applied(id: &str) -> bool {
                 "DODownloadMode",
             ) == Some(1)
         }
-        "hags-on" => hklm_dword("SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers", "HwSchMode") == Some(2),
-        "mpo-disable" => hklm_dword("SOFTWARE\\Microsoft\\Windows\\Dwm", "OverlayTestMode") == Some(5),
-        "network-throttle-off" => {
-            hklm_dword(
-                "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
-                "NetworkThrottlingIndex",
-            ) == Some(0xffff_ffff)
+        "activity-history-off" => {
+            hklm_dword("SOFTWARE\\Policies\\Microsoft\\Windows\\System", "EnableActivityFeed") == Some(0)
         }
-        "mmcss-games-priority" => {
-            hklm_dword(
-                "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile\\Tasks\\Games",
-                "GPU Priority",
-            ) == Some(8)
+        "advertising-id-off" => {
+            hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo", "Enabled") == Some(0)
         }
-        "system-responsiveness-10" => {
-            hklm_dword(
-                "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
-                "SystemResponsiveness",
-            ) == Some(10)
-        }
-        "visual-effects-performance" => {
-            hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects", "VisualFXSetting")
-                == Some(2)
-        }
-        "transparency-off" => {
-            hkcu_dword(
-                "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                "EnableTransparency",
-            ) == Some(0)
-        }
-        "startup-delay-off" => {
-            hkcu_dword(
-                "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Serialize",
-                "StartupDelayInMSec",
-            ) == Some(0)
-        }
-        "menu-show-delay-low" => hkcu_string("Control Panel\\Desktop", "MenuShowDelay").as_deref() == Some("100"),
+
         _ => false,
     }
 }
@@ -652,6 +807,20 @@ fn apply_gamedvr_fse_mode(id: &str) -> TweakApplyResult {
             set_hkcu_dword("System\\GameConfigStore", "GameDVR_DXGIHonorFSEWindowsCompatible", 1),
         ],
         "DirectX Full Screen Exclusive (FSE) optimization mode enabled",
+    )
+}
+
+fn apply_disable_fso_globally(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [
+            set_hkcu_dword("System\\GameConfigStore", "GameDVR_DSEBehavior", 2),
+            set_hkcu_dword("System\\GameConfigStore", "GameDVR_FSEBehavior", 2),
+            set_hkcu_dword("System\\GameConfigStore", "GameDVR_EFSEFeatureFlags", 0),
+            set_hkcu_dword("System\\GameConfigStore", "GameDVR_DXGIHonorFSEWindowsCompatible", 1),
+            set_hkcu_dword("System\\GameConfigStore", "GameDVR_HonorUserFSEBehaviorMode", 1),
+        ],
+        "Fullscreen optimizations disabled globally (pure exclusive fullscreen honored)",
     )
 }
 
@@ -732,27 +901,55 @@ fn apply_pointer_precision_off(id: &str) -> TweakApplyResult {
     )
 }
 
-fn apply_advertising_id_off(id: &str) -> TweakApplyResult {
+fn apply_input_response_fast(id: &str) -> TweakApplyResult {
+    let r1 = set_hkcu_string("Control Panel\\Keyboard", "KeyboardDelay", "0");
+    let r2 = set_hkcu_string("Control Panel\\Keyboard", "KeyboardSpeed", "31");
+    let r3 = set_hkcu_string("Control Panel\\Mouse", "MouseHoverTime", "8");
+    let r4 = set_hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters",
+        "MouseDataQueueSize",
+        100,
+    );
+    let r5 = set_hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Services\\kbdclass\\Parameters",
+        "KeyboardDataQueueSize",
+        100,
+    );
     collect_result(
         id,
-        [set_hkcu_dword(
-            "Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
-            "Enabled",
-            0,
-        )],
-        "Advertising ID disabled",
+        [r1, r2, r3, r4, r5],
+        "Input response latency optimized (keyboard delay 0, instant mouse hover, high queue sizes)",
     )
 }
 
-fn apply_tailored_experiences_off(id: &str) -> TweakApplyResult {
+fn apply_csrss_high_priority(id: &str) -> TweakApplyResult {
     collect_result(
         id,
-        [set_hkcu_dword(
-            "Software\\Microsoft\\Windows\\CurrentVersion\\Privacy",
-            "TailoredExperiencesWithDiagnosticDataEnabled",
-            0,
+        [set_hklm_dword(
+            "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions",
+            "CpuPriorityClass",
+            3,
         )],
-        "Tailored experiences disabled",
+        "csrss.exe priority set to High (zero input latency under heavy CPU load)",
+    )
+}
+
+fn apply_advertising_id_off(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [
+            set_hkcu_dword(
+                "Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
+                "Enabled",
+                0,
+            ),
+            set_hkcu_dword(
+                "Software\\Microsoft\\Windows\\CurrentVersion\\Privacy",
+                "TailoredExperiencesWithDiagnosticDataEnabled",
+                0,
+            ),
+        ],
+        "Advertising ID and tailored diagnostic experiences disabled",
     )
 }
 
@@ -777,25 +974,6 @@ fn apply_activity_history_off(id: &str) -> TweakApplyResult {
             ),
         ],
         "Activity history policy disabled",
-    )
-}
-
-fn apply_clipboard_cloud_off(id: &str) -> TweakApplyResult {
-    collect_result(
-        id,
-        [
-            set_hkcu_dword(
-                "Software\\Microsoft\\Clipboard",
-                "EnableClipboardHistory",
-                0,
-            ),
-            set_hkcu_dword(
-                "Software\\Microsoft\\Clipboard",
-                "CloudClipboardAutomaticUpload",
-                0,
-            ),
-        ],
-        "Cloud clipboard disabled",
     )
 }
 
@@ -836,6 +1014,17 @@ fn apply_mpo_disable(id: &str) -> TweakApplyResult {
         ],
         "MPO disabled; reboot required",
     )
+}
+
+fn apply_pcie_aspm_off(id: &str) -> TweakApplyResult {
+    let r1 = run_command("powercfg", &["/setacvalueindex", "SCHEME_CURRENT", "SUB_PCIEXPRESS", "ASPM", "0"]);
+    let r2 = run_command("powercfg", &["/setdcvalueindex", "SCHEME_CURRENT", "SUB_PCIEXPRESS", "ASPM", "0"]);
+    let r3 = run_command("powercfg", &["/setactive", "SCHEME_CURRENT"]);
+    if r1.is_ok() || r2.is_ok() || r3.is_ok() {
+        applied(id, "PCIe Active State Power Management (ASPM) disabled (maximum PCIe bandwidth, zero link latency)")
+    } else {
+        failed(id, "Failed to update PCIe ASPM in current power plan; run Synchro as administrator")
+    }
 }
 
 fn apply_network_throttle_off(id: &str) -> TweakApplyResult {
@@ -946,18 +1135,6 @@ fn apply_transparency_off(id: &str) -> TweakApplyResult {
     )
 }
 
-fn apply_startup_delay_off(id: &str) -> TweakApplyResult {
-    collect_result(
-        id,
-        [set_hkcu_dword(
-            "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Serialize",
-            "StartupDelayInMSec",
-            0,
-        )],
-        "Startup app launch delay disabled",
-    )
-}
-
 fn apply_menu_show_delay_low(id: &str) -> TweakApplyResult {
     collect_result(
         id,
@@ -1012,19 +1189,210 @@ fn apply_ultimate_performance(id: &str) -> TweakApplyResult {
     )
 }
 
-fn apply_restore_point(id: &str) -> TweakApplyResult {
-    run_command_result(
+fn apply_cpu_unpark_cores(id: &str) -> TweakApplyResult {
+    let _ = run_command("powercfg", &["-setacvalueindex", "SCHEME_CURRENT", "SUB_PROCESSOR", "CPMINCORES", "100"]);
+    let _ = run_command("powercfg", &["-setacvalueindex", "SCHEME_CURRENT", "SUB_PROCESSOR", "CPMAXCORES", "100"]);
+    let _ = run_command("powercfg", &["-setactive", "SCHEME_CURRENT"]);
+    collect_result(
         id,
+        [
+            set_hklm_dword(
+                "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerSettings\\54533251-82be-4824-96c1-47b60b740d00\\0cc5b647-6429-45d6-8e05-69d96c744b5c",
+                "ValueMax",
+                0,
+            ),
+            set_hklm_dword(
+                "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerSettings\\54533251-82be-4824-96c1-47b60b740d00\\0cc5b647-6429-45d6-8e05-69d96c744b5c",
+                "ValueMin",
+                0,
+            ),
+        ],
+        "All CPU cores unparked (100% active, zero wake-up stutter)",
+    )
+}
+
+fn apply_power_throttling_off(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [set_hklm_dword(
+            "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling",
+            "PowerThrottlingOff",
+            1,
+        )],
+        "Windows Power Throttling globally disabled (sustained maximum CPU clocks)",
+    )
+}
+
+fn apply_clean_temp_junk(id: &str) -> TweakApplyResult {
+    let mut total_bytes_freed: u64 = 0;
+    let mut files_removed: usize = 0;
+
+    let mut paths_to_clean = Vec::new();
+
+    if let Ok(user_temp) = std::env::var("TEMP") {
+        paths_to_clean.push(std::path::PathBuf::from(user_temp));
+    }
+
+    if let Ok(system_root) = std::env::var("SystemRoot") {
+        paths_to_clean.push(std::path::PathBuf::from(system_root).join("Temp"));
+    }
+
+    if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
+        let local_path = std::path::PathBuf::from(local_app_data);
+        paths_to_clean.push(local_path.join("D3DSCache"));
+        paths_to_clean.push(local_path.join("CrashDumps"));
+        paths_to_clean.push(local_path.join("Microsoft").join("Windows").join("WER").join("ReportArchive"));
+        paths_to_clean.push(local_path.join("Microsoft").join("Windows").join("WER").join("ReportQueue"));
+    }
+
+    for dir in paths_to_clean {
+        if dir.is_dir() {
+            clean_directory_contents(&dir, &mut total_bytes_freed, &mut files_removed);
+        }
+    }
+
+    let mb_freed = total_bytes_freed as f64 / (1024.0 * 1024.0);
+    applied(
+        id,
+        &format!("Очищено {files_removed} временных файлов ({mb_freed:.1} МБ мусора и кэша шейдеров DirectX)"),
+    )
+}
+
+fn apply_tcp_nodelay_ack(id: &str) -> TweakApplyResult {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        let path = "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces";
+        if let Ok(interfaces) = hklm.open_subkey(path) {
+            let mut count = 0;
+            for subkey_name in interfaces.enum_keys().flatten() {
+                let full_path = format!("{path}\\{subkey_name}");
+                let _ = set_hklm_dword(&full_path, "TcpAckFrequency", 1);
+                let _ = set_hklm_dword(&full_path, "TCPNoDelay", 1);
+                let _ = set_hklm_dword(&full_path, "TcpDelAckTicks", 0);
+                count += 1;
+            }
+            if count > 0 {
+                return applied(
+                    id,
+                    &format!("TCP NoDelay & AckFrequency enabled on {count} network interfaces (Nagle algorithm disabled)"),
+                );
+            }
+        }
+        failed(id, "Could not open Tcpip Interfaces key; run Synchro as administrator")
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        applied(id, "TCP NoDelay & AckFrequency simulated")
+    }
+}
+
+fn apply_nic_energy_saving_off(id: &str) -> TweakApplyResult {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        let class_path = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}";
+        let mut count = 0;
+        if let Ok(class_key) = hklm.open_subkey(class_path) {
+            for subkey_name in class_key.enum_keys().flatten() {
+                let full_path = format!("{class_path}\\{subkey_name}");
+                if let Ok(adapter_key) = class_key.open_subkey(&subkey_name) {
+                    if adapter_key.get_value::<String, _>("DriverDesc").is_ok() {
+                        let _ = set_hklm_string(&full_path, "*EEE", "0");
+                        let _ = set_hklm_string(&full_path, "*FlowControl", "0");
+                        let _ = set_hklm_string(&full_path, "AutoPowerSaveModeEnabled", "0");
+                        let _ = set_hklm_string(&full_path, "SavePowerNowEnabled", "0");
+                        let _ = set_hklm_string(&full_path, "ReduceSpeedOnPowerDown", "0");
+                        let _ = set_hklm_string(&full_path, "GreenEthernet", "0");
+                        let _ = set_hklm_string(&full_path, "AdvancedEEE", "0");
+                        let _ = set_hklm_string(&full_path, "EnablePME", "0");
+                        count += 1;
+                    }
+                }
+            }
+        }
+        let _ = run_command(
+            "powershell.exe",
+            &[
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                "Get-NetAdapter -Physical | ForEach-Object { Disable-NetAdapterPowerManagement -Name $_.Name -ErrorAction SilentlyContinue }",
+            ],
+        );
+
+        if count > 0 {
+            applied(
+                id,
+                &format!("Energy-saving and flow control disabled for {count} network adapters (zero ping spikes)"),
+            )
+        } else {
+            applied(
+                id,
+                "Network adapter power saving disabled (zero ping spikes)",
+            )
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        applied(id, "NIC energy saving simulated")
+    }
+}
+
+fn apply_tcp_heuristics_off(id: &str) -> TweakApplyResult {
+    let r1 = run_command("netsh", &["interface", "tcp", "set", "heuristics", "disabled"]);
+    let r2 = run_command("netsh", &["interface", "tcp", "set", "global", "autotuninglevel=normal"]);
+    let _ = run_command("netsh", &["interface", "tcp", "set", "global", "timestamps", "disabled"]);
+    let _ = run_command("netsh", &["interface", "tcp", "set", "global", "chimney=disabled"]);
+    if r1.is_ok() || r2.is_ok() {
+        applied(
+            id,
+            "TCP heuristics disabled, timestamps disabled & autotuning optimized (minimal packet loss and jitter)",
+        )
+    } else {
+        failed(id, "Failed to apply TCP heuristics settings via netsh; run Synchro as administrator")
+    }
+}
+
+fn clean_directory_contents(dir: &std::path::Path, total_bytes: &mut u64, files_count: &mut usize) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                if let Ok(meta) = entry.metadata() {
+                    let len = meta.len();
+                    if std::fs::remove_file(&path).is_ok() {
+                        *total_bytes += len;
+                        *files_count += 1;
+                    }
+                }
+            } else if path.is_dir() {
+                clean_directory_contents(&path, total_bytes, files_count);
+                let _ = std::fs::remove_dir(&path);
+            }
+        }
+    }
+}
+
+pub(crate) fn create_system_restore_point(description: &str) {
+    let clean_desc = description.replace('\'', " ");
+    let cmd = format!(
+        "Checkpoint-Computer -Description '{}' -RestorePointType 'MODIFY_SETTINGS'",
+        clean_desc
+    );
+    let _ = run_command(
         "powershell.exe",
         &[
             "-NoProfile",
             "-ExecutionPolicy",
             "Bypass",
             "-Command",
-            "Checkpoint-Computer -Description 'Synchro tweak backup' -RestorePointType 'MODIFY_SETTINGS'",
+            &cmd,
         ],
-        "Restore point requested",
-    )
+    );
 }
 
 fn run_netsh(id: &str, args: &[&str], message: &str) -> TweakApplyResult {
@@ -1245,10 +1613,6 @@ fn applied(id: &str, message: &str) -> TweakApplyResult {
 
 fn skipped(id: &str, message: &str) -> TweakApplyResult {
     result(id, "skipped", message)
-}
-
-fn blocked(id: &str, message: &str) -> TweakApplyResult {
-    result(id, "blocked", message)
 }
 
 fn failed(id: &str, message: &str) -> TweakApplyResult {

@@ -24,6 +24,8 @@ mod live_metrics;
 mod settings;
 mod system_info;
 mod tweaks;
+mod rust_cfg;
+mod screenshot;
 pub mod ffi;
 
 use admin::{is_running_elevated, restart_as_admin as restart_current_process_as_admin};
@@ -35,7 +37,8 @@ use settings::set_autostart;
 use system_info::collect_system_characteristics;
 use tweaks::{
     apply_selected_tweaks, collect_tweak_registry_snapshot, collect_tweak_statuses,
-    restore_tweak_registry_snapshot, TweakApplyResult, TweakRegistrySnapshot, TweakStatus,
+    create_system_restore_point, restore_tweak_registry_snapshot, TweakApplyResult,
+    TweakRegistrySnapshot, TweakStatus,
 };
 
 const MAX_JSON_FILE_BYTES: u64 = 256 * 1024;
@@ -48,11 +51,12 @@ const RANDOM_SUFFIX_BYTES: usize = 6;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ColorSettings {
-    saturation: f32,
-    hue: f32,
-    contrast: f32,
-    gamma: f32,
-    enabled: bool,
+    pub(crate) saturation: f32,
+    pub(crate) hue: f32,
+    pub(crate) contrast: f32,
+    pub(crate) gamma: f32,
+    pub(crate) black_holo: f32,
+    pub(crate) enabled: bool,
 }
 
 impl Default for ColorSettings {
@@ -62,6 +66,7 @@ impl Default for ColorSettings {
             hue: 0.0,
             contrast: 100.0,
             gamma: 100.0,
+            black_holo: 0.0,
             enabled: true,
         }
     }
@@ -73,6 +78,7 @@ impl ColorSettings {
         self.hue = clamp_finite(self.hue, -180.0, 180.0, 0.0);
         self.contrast = clamp_finite(self.contrast, 50.0, 150.0, 100.0);
         self.gamma = clamp_finite(self.gamma, 50.0, 150.0, 100.0);
+        self.black_holo = clamp_finite(self.black_holo, 0.0, 100.0, 0.0);
         self
     }
 }
@@ -88,6 +94,8 @@ pub struct AppSettings {
     pub auto_backup_on_start: bool,
     pub accepted_agreement: bool,
     pub language: String,
+    pub show_on_recordings: bool,
+    pub accent_color: String,
 }
 
 impl Default for AppSettings {
@@ -101,6 +109,8 @@ impl Default for AppSettings {
             auto_backup_on_start: true,
             accepted_agreement: true,
             language: "en".to_string(),
+            show_on_recordings: true,
+            accent_color: "#2563eb".to_string(),
         }
     }
 }
@@ -109,6 +119,9 @@ impl AppSettings {
     fn sanitized(mut self) -> Self {
         if self.language != "ru" {
             self.language = "en".to_string();
+        }
+        if self.accent_color.trim().is_empty() {
+            self.accent_color = "#2563eb".to_string();
         }
         self
     }
@@ -176,6 +189,10 @@ pub struct DriverInfo {
     status: String,
     path: String,
     search_query: String,
+    hardware_id: String,
+    vendor: String,
+    is_outdated: bool,
+    official_url: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -213,6 +230,8 @@ struct SystemCache {
     updated_at: Option<Instant>,
 }
 
+use std::sync::Arc;
+
 struct RuntimeState {
     app_dir: PathBuf,
     settings_path: PathBuf,
@@ -221,7 +240,7 @@ struct RuntimeState {
     data: Mutex<PersistedState>,
     system_cache: Mutex<SystemCache>,
     cpu_sample: Mutex<Option<CpuSample>>,
-    exiting: AtomicBool,
+    exiting: Arc<AtomicBool>,
 }
 
 impl RuntimeState {
@@ -253,7 +272,7 @@ impl RuntimeState {
             data: Mutex::new(data),
             system_cache: Mutex::new(SystemCache::default()),
             cpu_sample: Mutex::new(None),
-            exiting: AtomicBool::new(false),
+            exiting: Arc::new(AtomicBool::new(false)),
         })
     }
 
@@ -284,7 +303,7 @@ fn apply_color_settings(
     let color = color.sanitized();
     let current = state.snapshot()?;
     if current.color != color {
-        apply_color_transform(&color)?;
+        apply_color_transform(&color, current.settings.show_on_recordings)?;
     }
 
     let mut data = state
@@ -302,6 +321,17 @@ fn apply_color_settings(
 }
 
 #[tauri::command]
+fn set_rust_black_holo(enabled: bool) -> rust_cfg::BlackHoloConfigResult {
+    rust_cfg::set_rust_holosight_black(enabled)
+}
+
+#[tauri::command]
+fn take_juicy_screenshot(state: State<'_, RuntimeState>) -> Result<screenshot::JuicyScreenshotResult, String> {
+    let current = state.snapshot()?;
+    screenshot::capture_juicy_screenshot(&current.color)
+}
+
+#[tauri::command]
 fn update_app_settings(
     app: AppHandle,
     settings: AppSettings,
@@ -311,6 +341,9 @@ fn update_app_settings(
     let current = state.snapshot()?;
     if current.settings.autostart_windows != settings.autostart_windows {
         set_autostart(&app, settings.autostart_windows)?;
+    }
+    if current.settings.show_on_recordings != settings.show_on_recordings {
+        let _ = apply_color_transform(&current.color, settings.show_on_recordings);
     }
 
     let mut data = state
@@ -380,6 +413,33 @@ fn apply_live_metrics(snapshot: &mut SystemCharacteristics, live: &LiveMetrics) 
 #[tauri::command]
 fn open_driver_search(query: String) -> Result<(), String> {
     open_driver_search_url(&query)
+}
+
+#[tauri::command]
+fn scan_drivers() -> Vec<DriverInfo> {
+    driver_info::collect_drivers()
+}
+
+#[tauri::command]
+fn open_official_driver_url(url: String) -> Result<(), String> {
+    if !url.starts_with("https://") {
+        return Err("Only secure HTTPS URLs are permitted".to_string());
+    }
+    crate::ffi::open_path_or_url(&url).map_err(|e| format!("Failed to open browser: {e}"))
+}
+
+#[tauri::command]
+fn open_windows_driver_updates() -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        crate::ffi::open_path_or_url("ms-settings:windowsupdate-optionalupdates")
+            .or_else(|_| crate::ffi::open_path_or_url("ms-settings:windowsupdate"))
+            .map_err(|e| format!("Failed to open Windows Update: {e}"))
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("Not supported on this OS".to_string())
+    }
 }
 
 #[tauri::command]
@@ -529,7 +589,7 @@ fn restore_backup(
     let current = state.snapshot()?;
     backup.state = backup.state.sanitized();
     backup.state.settings.accepted_agreement = current.settings.accepted_agreement;
-    apply_color_transform(&backup.state.color)?;
+    apply_color_transform(&backup.state.color, backup.state.settings.show_on_recordings)?;
     set_autostart(&app, backup.state.settings.autostart_windows)?;
     let _ = restore_tweak_registry_snapshot(&backup.tweak_registry);
 
@@ -603,7 +663,7 @@ fn apply_config(
         is_admin: current.is_admin,
     }
     .sanitized();
-    apply_color_transform(&snapshot.color)?;
+    apply_color_transform(&snapshot.color, snapshot.settings.show_on_recordings)?;
     set_autostart(&app, snapshot.settings.autostart_windows)?;
 
     let mut data = state
@@ -646,11 +706,8 @@ fn minimize_window(app: AppHandle) {
 #[tauri::command]
 fn toggle_window_maximize(app: AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
-        let maximized = window.is_maximized().unwrap_or(false);
-        if maximized {
+        if window.is_maximized().unwrap_or(false) {
             let _ = window.unmaximize();
-        } else {
-            let _ = window.maximize();
         }
     }
 }
@@ -721,6 +778,10 @@ fn create_backup_file(
         tweak_registry: collect_tweak_registry_snapshot(),
     };
     write_new_json_file(&path, &backup)?;
+    let restore_desc = format!("Synchro - {}", display_name);
+    std::thread::spawn(move || {
+        create_system_restore_point(&restore_desc);
+    });
     Ok(BackupEntry {
         id,
         name: display_name,
@@ -1132,6 +1193,27 @@ fn apply_process_hardening() {
     ffi::apply_process_hardening();
 }
 
+fn calculate_adaptive_window_size(screen_w: f64, screen_h: f64) -> (f64, f64) {
+    let base_w: f64 = if screen_w <= 1300.0 || screen_h <= 740.0 {
+        880.0
+    } else if screen_w <= 1600.0 || screen_h <= 900.0 {
+        940.0
+    } else if screen_w >= 2400.0 && screen_h >= 1350.0 {
+        1060.0
+    } else {
+        980.0
+    };
+
+    let base_h: f64 = (base_w / 1.58).round();
+    let max_w: f64 = (screen_w * 0.86).floor();
+    let max_h: f64 = (screen_h * 0.82).floor();
+
+    let final_w = base_w.min(max_w).max(860.0);
+    let final_h = base_h.min(max_h).max(540.0);
+
+    (final_w, final_h)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -1148,16 +1230,34 @@ pub fn run() {
                     initial.clone(),
                 );
             }
+
+            let exit_signal = Arc::clone(&runtime.exiting);
             app.manage(runtime);
 
-            let _ = apply_color_transform(&initial.color);
+            let _ = apply_color_transform(&initial.color, initial.settings.show_on_recordings);
             color::start_color_guard();
             let _ = set_autostart(app.handle(), initial.settings.autostart_windows);
             install_tray(app.handle())?;
 
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_resizable(true);
-                let _ = window.set_maximizable(true);
+                let _ = window.set_maximizable(false);
+
+                if let Some(monitor) = window
+                    .current_monitor()
+                    .ok()
+                    .flatten()
+                    .or_else(|| window.primary_monitor().ok().flatten())
+                {
+                    let scale_factor = monitor.scale_factor();
+                    let physical_size = monitor.size();
+                    let screen_w = physical_size.width as f64 / scale_factor;
+                    let screen_h = physical_size.height as f64 / scale_factor;
+
+                    let (target_w, target_h) = calculate_adaptive_window_size(screen_w, screen_h);
+                    let _ = window.set_size(tauri::LogicalSize::new(target_w, target_h));
+                }
+
                 let _ = window.center();
                 if initial.settings.start_minimized {
                     let _ = window.hide();
@@ -1169,21 +1269,24 @@ pub fn run() {
 
             trim_process_memory();
 
-            // Post-boot delayed working-set trims to reclaim initial WebView2 bootstrapping memory
-            std::thread::spawn(|| {
-                std::thread::sleep(Duration::from_millis(1500));
-                trim_process_memory();
-                std::thread::sleep(Duration::from_millis(2500));
-                trim_process_memory();
-            });
-
-            // Gentle open-state memory trimmer: keeps WebView2 RAM rock-bottom while menu is open
-            std::thread::spawn(|| {
-                loop {
-                    std::thread::sleep(Duration::from_secs(12));
+            // Coordinated background memory maintenance worker
+            std::thread::Builder::new()
+                .name("synchro-memory-trimmer".to_string())
+                .spawn(move || {
+                    // Initial post-boot trims to reclaim WebView2 bootstrapping memory
+                    std::thread::sleep(Duration::from_millis(2000));
                     trim_process_memory();
-                }
-            });
+                    std::thread::sleep(Duration::from_millis(3000));
+                    trim_process_memory();
+
+                    while !exit_signal.load(Ordering::Relaxed) {
+                        std::thread::sleep(Duration::from_secs(20));
+                        if !exit_signal.load(Ordering::Relaxed) {
+                            trim_process_memory();
+                        }
+                    }
+                })
+                .ok();
 
             Ok(())
         })
@@ -1193,12 +1296,6 @@ pub fn run() {
             }
 
             match event {
-                WindowEvent::Focused(true) => {
-                    std::thread::spawn(|| {
-                        std::thread::sleep(Duration::from_millis(500));
-                        trim_process_memory();
-                    });
-                }
                 WindowEvent::Focused(false) => {
                     trim_process_memory();
                 }
@@ -1251,7 +1348,12 @@ pub fn run() {
             rollback_last_tweaks,
             detect_installed_apps,
             restart_explorer,
-            restart_graphics_driver
+            restart_graphics_driver,
+            set_rust_black_holo,
+            take_juicy_screenshot,
+            scan_drivers,
+            open_official_driver_url,
+            open_windows_driver_updates
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Synchro");
@@ -1329,12 +1431,14 @@ mod tests {
             contrast: 999.0,
             gamma: -50.0,
             hue: f32::INFINITY,
+            black_holo: 999.0,
         };
         let sanitized = raw.sanitized();
         assert_eq!(sanitized.saturation, 100.0); // fallback for NaN
         assert_eq!(sanitized.contrast, 150.0);   // clamped max (50..150)
         assert_eq!(sanitized.gamma, 50.0);       // clamped min
         assert_eq!(sanitized.hue, 0.0);          // fallback for Inf
+        assert_eq!(sanitized.black_holo, 100.0); // clamped max (0..100)
     }
 
     #[test]

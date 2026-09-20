@@ -18,11 +18,44 @@ export function formatColorSummary(color) {
   return `S ${Math.round(color.saturation)} / H ${Math.round(color.hue)} / C ${Math.round(color.contrast)} / G ${Math.round(color.gamma)}`;
 }
 
+export function renderBackupNameModal(viewState, t) {
+  const isRu = lang() === "ru";
+  const now = new Date();
+  const defaultPlaceholder = isRu
+    ? `Бэкап ${now.toLocaleDateString("ru-RU")} ${now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`
+    : `Backup ${now.toLocaleDateString("en-US")} ${now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
+
+  return [
+    '<div class="backup-modal-backdrop" data-action="dismiss-backup-modal">',
+    '  <div class="backup-minimal-dialog" onclick="event.stopPropagation()">',
+    `    <input id="custom-backup-name-input" class="backup-minimal-input" type="text" data-field="backupName" value="${escapeAttr(viewState.backupName || "")}" placeholder="${escapeAttr(defaultPlaceholder)}" maxlength="50" spellcheck="false" autocomplete="off" autofocus>`,
+    '  </div>',
+    '</div>'
+  ].join("");
+}
+
 export function renderBackupsPage(viewState, t) {
+  const isSelected = Boolean(viewState.selectedBackup);
+  const restoreBtn = isSelected
+    ? button(t("restore"), "check", "primary restore-highlight-btn", "restore-backup")
+    : `<button class="btn btn-outline restore-dimmed" type="button" data-action="restore-backup" disabled title="${escapeAttr(t("selectBackupFirst") || "Сначала выберите бэкап")}">${icon("check")}<span>${escapeHtml(t("restore"))}</span></button>`;
+
   const rows = viewState.backups.length
     ? viewState.backups.map((item) => `<button class="config-row backup-row ${viewState.selectedBackup === item.id ? "selected" : ""}" type="button" data-backup-id="${escapeAttr(item.id)}"><span class="config-check">${viewState.selectedBackup === item.id ? icon("check") : ""}</span><span class="backup-name"><strong>${escapeHtml(item.name)}</strong><small>${formatDate(item.createdAt)}</small></span></button>`).join("")
     : `<div class="empty-state">${t("noBackups")}</div>`;
-  return `<section class="card backup-card"><h2>${t("backupManager")}</h2><div class="toolbar-row backup-tools"><input class="text-input wide" data-field="backupName" value="${escapeAttr(viewState.backupName)}" placeholder="${escapeAttr(t("backupName"))}" aria-label="${escapeAttr(t("backupName"))}">${button(t("createBackup"), "save", "primary", "create-backup")}${button(t("restore"), "check", "outline", "restore-backup")}${button(t("deleteBackup"), "trash", "outline", "delete-backup")}${button(t("openFolder"), "folder", "outline", "open-backups-folder")}</div><div class="config-list backup-list">${rows}</div></section>`;
+
+  return [
+    '<section class="card backup-card">',
+    `<h2>${t("backupManager")}</h2>`,
+    '<div class="toolbar-row backup-tools">',
+    button(t("createBackup"), "save", "outline", "create-backup"),
+    restoreBtn,
+    button(t("deleteBackup"), "trash", "outline", "delete-backup"),
+    button(t("openFolder"), "folder", "outline", "open-backups-folder"),
+    '</div>',
+    `<div class="config-list backup-list">${rows}</div>`,
+    '</section>'
+  ].join("");
 }
 
 export function renderConfigsPage(viewState, t) {

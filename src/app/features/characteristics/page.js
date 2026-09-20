@@ -1,321 +1,186 @@
-import { safeValue, escapeAttr, escapeHtml } from "../../core/html.js";
+import { escapeAttr, escapeHtml } from "../../core/html.js";
+import { lang } from "../../core/state.js";
 import { button } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
+import { getVendorLogo } from "./vendorLogos.js";
 
-function rawValue(value, fallback = "-") {
-  if (value === undefined || value === null || value === "") return fallback;
-  return String(value);
-}
-
-function numberValue(value) {
-  const number = Number.parseFloat(String(value || "").replace(",", "."));
-  return Number.isFinite(number) ? number : 0;
-}
-
-function clamp(value, min = 0, max = 100) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function gb(value) {
-  const number = numberValue(value);
-  return number ? `${number.toFixed(1)} GB` : "-";
-}
-
-function liveAttr(key) {
-  return key ? ` data-live="${escapeAttr(key)}"` : "";
-}
-
-function fillAttr(key) {
-  return key ? ` data-fill="${escapeAttr(key)}"` : "";
-}
-
-function compactName(value, fallback = "-") {
-  const name = rawValue(value, fallback).replace(/\s+/g, " ").trim();
-  return name.length > 46 ? `${name.slice(0, 43)}...` : name;
-}
-
-function percent(info) {
-  return clamp(numberValue(info.ramUsedPercent));
-}
-
-function smallMeter(label, value, width, key = "") {
-  return `<div class="mini-meter"><span>${escapeHtml(label)}</span><strong${liveAttr(key)}>${safeValue(value)}</strong><i><b${fillAttr(key)} style="width:${clamp(width)}%"></b></i></div>`;
-}
-
-function topMetric(type, body) {
-  return `<section class="character-metric metric-${escapeAttr(type)}">${body}</section>`;
-}
-
-function cpuGraphPoints(history) {
-  const values = [...(Array.isArray(history) ? history : [])];
-  while (values.length < 28) values.unshift(values[0] || 0);
-  const data = values.slice(-36);
-  return data.map((value, index) => {
-    const x = data.length <= 1 ? 0 : (index / (data.length - 1)) * 132;
-    const y = 64 - (clamp(value) / 100) * 56 - 4;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(" ");
-}
-
-function cpuGraph(history, current) {
-  const values = [...(Array.isArray(history) ? history : [])];
-  if (!values.length) values.push(current);
-  return `<svg class="cpu-graph" viewBox="0 0 132 64" preserveAspectRatio="none" aria-hidden="true"><path d="M0 16H132M0 32H132M0 48H132M33 0V64M66 0V64M99 0V64"></path><polyline points="${cpuGraphPoints(values)}"></polyline></svg>`;
-}
-
-function cpuMetric(info, history, t) {
-  const cpuUsage = clamp(numberValue(info.cpuUsagePercent));
-  const usageLabel = t ? t("cpuUsageLabel") : "usage";
-  const coresLabel = t ? t("logicalCores") : "Logical Cores";
-  return topMetric(
-    "cpu",
-    `<div class="metric-head">${icon("cpu")}<span>CPU</span></div><div class="metric-main"><strong>${safeValue(info.cpuCores || "--")}</strong><em data-live="cpu-usage">${cpuUsage}% ${escapeHtml(usageLabel)}</em></div>${cpuGraph(history, cpuUsage)}<h3>${safeValue(compactName(info.cpu))}</h3><p>${safeValue(info.cpuCores || "--")} ${escapeHtml(coresLabel)}</p>`
-  );
-}
-
-function vramTotalLabel(info, t) {
-  const total = numberValue(info.vramTotalGb);
-  return total ? `${total.toFixed(1)} GB` : (t ? t("notReported") : "Not reported");
-}
-
-function gpuMetric(info, t) {
-  const vramPercent = clamp(numberValue(info.vramUsedPercent));
-  const gpuUsage = clamp(numberValue(info.gpuUsagePercent));
-  const devicesLabel = t ? t("devices") : "Devices";
-  const usageLabel = t ? t("cpuUsageLabel") : "Usage";
-  return topMetric(
-    "gpu",
-    `<div class="metric-head">${icon("monitor")}<span>GPU</span></div><div class="metric-main"><strong>${safeValue(info.gpuCount || "--")}</strong><em>${escapeHtml(devicesLabel)}</em></div><div class="metric-stack">${smallMeter("VRAM", vramTotalLabel(info, t), vramPercent, "vram-total")}${smallMeter(usageLabel, `${gpuUsage}%`, gpuUsage, "gpu-usage")}</div><h3>${safeValue(compactName(info.gpu))}</h3>`
-  );
-}
-
-function ramMetric(info) {
-  const ramPercent = percent(info);
-  const total = gb(info.ramTotalGb || info.ram);
-  return topMetric(
-    "ram",
-    `<div class="metric-head">${icon("archive")}<span>RAM</span></div><div class="metric-main"><strong>${safeValue(total)}</strong></div><div class="ram-ring" data-ring="ram" style="--ram:${ramPercent}%"><strong data-live="ram-percent">${ramPercent}%</strong></div>`
-  );
-}
-
-function hzMetric(info, t) {
-  const syncTitle = t ? t("adaptiveSync") : "Adaptive Sync indicator";
-  const syncStatus = t ? t("statusUnavailable") : "Status unavailable";
-  return topMetric(
-    "hz",
-    `<div class="metric-head">${icon("video")}<span>Hz</span></div><div class="metric-main"><strong>${safeValue(info.refreshRateHz || "--")}</strong><em>${safeValue(info.colorDepth || "-")}</em></div><div class="screen-glyph"><span>Hz</span></div><h3>${escapeHtml(syncTitle)}</h3><p>${escapeHtml(syncStatus)}</p>`
-  );
-}
-
-function detailRow(label, value, key = "") {
-  return `<div class="spec-row"><span>${escapeHtml(label)}</span><strong${liveAttr(key)}>${safeValue(value)}</strong></div>`;
-}
-
-function progressRow(label, value, width, key = "") {
-  return `<div class="spec-progress"><div><span>${escapeHtml(label)}</span><strong${liveAttr(key)}>${safeValue(value)}</strong></div><i><b${fillAttr(key)} style="width:${clamp(width)}%"></b></i></div>`;
-}
-
-function panel(title, body, extra = "") {
-  return `<section class="character-panel ${extra}"><h2>${escapeHtml(title)}</h2>${body}</section>`;
-}
-
-function systemPanel(info, t) {
-  return panel(
-    t("system"),
-    [
-      detailRow("CPU", compactName(info.cpu, "-")),
-      detailRow("OS", compactName(info.os || "Windows", "-")),
-      detailRow(t("architecture"), info.architecture)
-    ].join("")
-  );
-}
-
-function memoryPanel(info, t) {
-  const ramPercent = percent(info);
-  const available = numberValue(info.ramAvailableGb || info.ramAvailable);
-  const total = numberValue(info.ramTotalGb || info.ram);
-  const availablePercent = total ? (available / total) * 100 : 0;
-  return panel(
-    t("memory"),
-    [
-      progressRow(t("memory"), gb(info.ramTotalGb || info.ram), 100),
-      progressRow(t("available"), gb(info.ramAvailableGb || info.ramAvailable), availablePercent, "ram-available"),
-      progressRow(t("used"), `${ramPercent}%`, ramPercent, "ram-used")
-    ].join("")
-  );
-}
-
-function displayPanel(info, t) {
-  const resLabel = t ? t("resolution") : "Resolution";
-  const hzLabel = t ? t("refreshRate") : "Refresh rate";
-  return panel(
-    t("display"),
-    `${detailRow(resLabel, info.display)}${detailRow(hzLabel, info.refreshRate)}<div class="resolution-tile"><span>${escapeHtml(resLabel)}</span><strong>${safeValue(info.display)}</strong></div>`
-  );
-}
-
-function graphicsPanel(info, t) {
-  const gpuList = Array.isArray(info.gpus) && info.gpus.length ? info.gpus : [info.gpu].filter(Boolean);
-  return panel(
-    t("graphics"),
-    [
-      detailRow(t("devices"), info.gpuCount),
-      detailRow(t("primaryDevice"), compactName(gpuList[0], "-"))
-    ].join("")
-  );
-}
-
-function driverKey(driver) {
-  return `${driver.className || ""}|${driver.name || ""}|${driver.version || ""}`.toLowerCase();
-}
-
-function normalizeDrivers(drivers) {
-  const seen = new Set();
-  return (Array.isArray(drivers) ? drivers : []).filter((driver) => {
-    const name = String(driver?.name || "").trim();
-    if (!name || name === "Unknown driver") return false;
-    const key = driverKey(driver);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function driverStatus(driver, t) {
-  const status = String(driver.status || "").toLowerCase();
-  const problemLabel = t ? t("driverProblem") : "Problem";
-  const manualLabel = t ? t("driverManual") : "Manual";
-  const detectedLabel = t ? t("driverDetected") : "Detected";
-  if (status.includes("disabled") || status.includes("problem") || status.includes("unknown")) return ["problem", problemLabel];
-  if (status.includes("demand")) return ["warn", manualLabel];
-  return ["ok", detectedLabel];
-}
-
-function driverKind(driver) {
-  const text = `${driver.name || ""} ${driver.provider || ""} ${driver.className || ""} ${driver.path || ""}`.toLowerCase();
-  if (text.includes("nvidia")) return { id: "nvidia" };
-  if (text.includes("amd") || text.includes("radeon")) return { id: "amd" };
-  if (text.includes("intel")) return { id: "intel" };
-  if (text.includes("realtek")) return { id: "realtek", icon: "volume" };
-  if (text.includes("bluetooth") || text.includes("bth")) return { id: "bluetooth", icon: "bluetooth" };
-  if (text.includes("audio") || text.includes("sound") || text.includes("hdaud")) return { id: "audio", icon: "volume" };
-  if (text.includes("usb") || text.includes("hid")) return { id: "usb", icon: "usb" };
-  if (text.includes("wifi") || text.includes("wi-fi") || text.includes("network") || text.includes("ndis") || text.includes("ethernet")) return { id: "network", icon: "network" };
-  if (text.includes("nvme") || text.includes("storage") || text.includes("disk") || text.includes("stor")) return { id: "storage", icon: "hardDrive" };
-  if (text.includes("display") || text.includes("graphics") || text.includes("directx") || text.includes("dxg")) return { id: "display", icon: "monitor" };
-  if (text.includes("keyboard") || text.includes("mouse") || text.includes("input")) return { id: "input", icon: "mouse" };
-  if (text.includes("microsoft") || text.includes("windows")) return { id: "windows", icon: "grid" };
-  return { id: "unknown", label: "?" };
-}
-
-function brandBadge(id) {
-  const badges = {
-    nvidia: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12c3.8-4.8 10.4-5.4 15.7-.9-4.1-1.4-7.6-.7-10.1 2.1 1.6-1 3.8-1.3 5.8-.3-1.4 2.2-4.4 3.3-7.2 1.8 2.8 3.5 7.8 3 12.8-2.7-5.1 8-13.8 7.1-17 0z"></path></svg>',
-    amd: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14h-5v-8H5z"></path><path d="M9 15h4v4H5v-8h4z"></path></svg>',
-    intel: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="3"></rect><path d="M9 9h6M9 12h6M9 15h4"></path></svg>'
-  };
-  return badges[id] || "";
-}
-
-function driverIcon(driver) {
-  const kind = driverKind(driver);
-  const body = brandBadge(kind.id) || (kind.icon ? icon(kind.icon) : escapeHtml(kind.label || "?"));
-  return `<span class="driver-logo driver-logo-${escapeAttr(kind.id)}">${body}</span>`;
-}
-
-function driverCategory(driver) {
-  const text = `${driver.name || ""} ${driver.provider || ""} ${driver.className || ""} ${driver.path || ""}`.toLowerCase();
-  if (text.includes("nvidia") || text.includes("radeon") || text.includes("display") || text.includes("graphics") || text.includes("directx") || text.includes("dxg") || text.includes("lddm")) return "graphics";
-  if (text.includes("audio") || text.includes("sound") || text.includes("hdaud") || text.includes("realtek")) return "audio";
-  if (text.includes("processor") || text.includes("cpu") || text.includes("intelppm") || text.includes("amdppm")) return "processor";
-  if (text.includes("chipset") || text.includes("pci") || text.includes("smbus") || text.includes("gpio") || text.includes("serial io") || text.includes("management engine") || text.includes("acpi")) return "chipset";
-  if (text.includes("network") || text.includes("ethernet") || text.includes("wi-fi") || text.includes("wifi") || text.includes("ndis")) return "network";
-  if (text.includes("nvme") || text.includes("storage") || text.includes("disk") || text.includes("stor")) return "storage";
-  return "other";
-}
-
-function driverRow(driver, t) {
-  const query = driver.searchQuery || `${driver.name || ""} ${driver.version || ""} driver latest version`;
-  const [state, label] = driverStatus(driver, t);
-  const details = [
-    detailRow(t("provider"), driver.provider),
-    detailRow(t("version"), driver.version),
-    detailRow(t("date"), driver.date),
-    detailRow(t("className"), driver.className),
-    detailRow(t("status"), driver.status),
-    detailRow(t("path"), driver.path)
-  ].join("");
-  return `<details class="driver-row driver-${escapeAttr(state)}"><summary>${driverIcon(driver)}<strong>${safeValue(driver.name)}</strong><em>${safeValue(driver.version)}</em><b>${escapeHtml(label)}</b></summary><div class="driver-details">${details}<button class="driver-search" type="button" data-driver-search="${escapeAttr(query)}">${t("driverLatestQuestion")}</button></div></details>`;
-}
-
-function driverGroup(title, drivers, t) {
-  const rows = drivers.length
-    ? drivers.map((driver) => driverRow(driver, t)).join("")
-    : `<div class="driver-empty">${t("waiting")}</div>`;
-  return `<div class="driver-group"><h3>${escapeHtml(title)}</h3>${rows}</div>`;
-}
-
-function driverPanel(info, t, showAll) {
-  const drivers = normalizeDrivers(info.drivers);
-  const by = (categories) => drivers.filter((driver) => categories.includes(driverCategory(driver)));
-  const groups = showAll
-    ? [
-        [t ? t("driverGroupGraphics") : "Graphics Drivers", by(["graphics"])],
-        [t ? t("driverGroupChipset") : "Chipset & Processor", by(["chipset", "processor"])],
-        [t ? t("driverGroupAudio") : "Audio Drivers", by(["audio"])],
-        [t ? t("driverGroupNetwork") : "Network & Storage", by(["network", "storage"])],
-        [t ? t("driverGroupOther") : "Other Drivers", by(["other"])]
-      ]
-    : [
-        [t ? t("driverGroupGraphics") : "Graphics Drivers", by(["graphics"])],
-        [t ? t("driverGroupChipset") : "Chipset & Processor", by(["chipset", "processor"])],
-        [t ? t("driverGroupAudio") : "Audio Drivers", by(["audio"])]
-      ];
-  const body = groups.map(([title, items]) => driverGroup(title, items, t)).join("");
-  const label = showAll ? t("showKeyDrivers") : `${t("viewAllDrivers")} ${drivers.length || 0} ${t("drivers")}`;
-  return `<section class="character-panel drivers-card"><h2>${t("drivers")}</h2><div class="drivers-body">${body}</div><button class="driver-view-all" type="button" data-action="toggle-all-drivers">${escapeHtml(label)}</button></section>`;
-}
+const DRIVER_CATEGORIES = [
+  {
+    id: "display",
+    titleEn: "Graphics & Display",
+    titleRu: "Видеокарта и дисплей",
+    icon: "video",
+    match: (cls) => cls.includes("display") || cls.includes("video") || cls.includes("graphics")
+  },
+  {
+    id: "media",
+    titleEn: "Audio & Sound",
+    titleRu: "Звуковые устройства",
+    icon: "volume",
+    match: (cls) => cls.includes("media") || cls.includes("audio") || cls.includes("sound")
+  },
+  {
+    id: "net",
+    titleEn: "Network & Connectivity",
+    titleRu: "Сетевые адаптеры",
+    icon: "network",
+    match: (cls) => cls.includes("net") || cls.includes("wifi") || cls.includes("lan")
+  },
+  {
+    id: "storage",
+    titleEn: "Storage & Drives",
+    titleRu: "Накопители и диски",
+    icon: "hardDrive",
+    match: (cls) => cls.includes("storage") || cls.includes("scsi") || cls.includes("disk")
+  },
+  {
+    id: "system",
+    titleEn: "Chipset & Processor",
+    titleRu: "Чипсет и процессор",
+    icon: "cpu",
+    match: (cls) => cls.includes("system") || cls.includes("processor") || cls.includes("chip")
+  },
+  {
+    id: "peripherals",
+    titleEn: "Peripherals & Input",
+    titleRu: "Периферия и устройства",
+    icon: "gamepad",
+    match: (cls) =>
+      cls.includes("peripheral") ||
+      cls.includes("mouse") ||
+      cls.includes("keyboard") ||
+      cls.includes("hid") ||
+      cls.includes("bluetooth")
+  }
+];
 
 export function renderCharacteristicsPage(viewState, t) {
-  const info = viewState.system || {};
-  const metrics = [cpuMetric(info, viewState.cpuHistory, t), gpuMetric(info, t), ramMetric(info), hzMetric(info, t)].join("");
-  const panels = [systemPanel(info, t), memoryPanel(info, t), displayPanel(info, t), graphicsPanel(info, t)].join("");
-  return `<div class="characteristics-page"><div class="characteristics-actions">${button(t("refresh"), "rotate", "outline", "refresh-characteristics")}</div><div class="character-summary">${metrics}</div><div class="characteristics-dashboard"><div class="characteristics-grid">${panels}</div>${driverPanel(info, t, viewState.showAllDrivers)}</div></div>`;
+  const isRu = lang() === "ru";
+  const rawDrivers = Array.isArray(viewState.drivers) && viewState.drivers.length
+    ? viewState.drivers
+    : (Array.isArray(viewState.system?.drivers) ? viewState.system.drivers : []);
+
+  const isScanning = Boolean(viewState.driversLoading);
+  const scanLabel = isScanning ? (t("scanningDrivers") || "Сканирование...") : (t("scanDrivers") || "Сканировать ПК");
+
+  // Keep meaningful hardware drivers only
+  const drivers = rawDrivers.filter((d) => d && d.name && d.name !== "Unknown");
+
+  if (isScanning && !drivers.length) {
+    return [
+      '<div class="drivers-page">',
+      '  <div class="scroll-panel">',
+      `    <div class="empty-state">${icon("rotate", "spin")} <span>${escapeHtml(t("scanningDrivers") || "Сканирование ПК...")}</span></div>`,
+      '  </div>',
+      '</div>'
+    ].join("");
+  }
+
+  // Render grouped sections (matching Tweaks cards layout)
+  const groupCards = DRIVER_CATEGORIES.map((cat) => {
+    const items = drivers.filter((d) => {
+      const cls = (d.className || d.class_name || "").toLowerCase();
+      return cat.match(cls);
+    });
+
+    if (!items.length) return "";
+
+    const title = isRu ? cat.titleRu : cat.titleEn;
+    const tiles = items.map((driver) => renderDriverTile(driver, t, isRu)).join("");
+
+    return [
+      '<section class="card driver-group">',
+      `  <h2 class="group-title">${icon(cat.icon)}<span>${escapeHtml(title)}</span><span class="group-count-badge">${items.length}</span></h2>`,
+      `  <div class="driver-grid">${tiles}</div>`,
+      '</section>'
+    ].join("");
+  }).filter(Boolean);
+
+  // Uncategorized if any
+  const categorized = new Set();
+  DRIVER_CATEGORIES.forEach((cat) => {
+    drivers.forEach((d) => {
+      const cls = (d.className || d.class_name || "").toLowerCase();
+      if (cat.match(cls)) categorized.add(d);
+    });
+  });
+  const remaining = drivers.filter((d) => !categorized.has(d));
+  if (remaining.length) {
+    const title = isRu ? "Прочие устройства" : "Other Hardware";
+    const tiles = remaining.map((driver) => renderDriverTile(driver, t, isRu)).join("");
+    groupCards.push([
+      '<section class="card driver-group">',
+      `  <h2 class="group-title">${icon("layers")}<span>${escapeHtml(title)}</span><span class="group-count-badge">${remaining.length}</span></h2>`,
+      `  <div class="driver-grid">${tiles}</div>`,
+      '</section>'
+    ].join(""));
+  }
+
+  const scrollContent = groupCards.length
+    ? groupCards.join("")
+    : `<div class="empty-state">${escapeHtml(t("noDriversFound") || "Устройства не обнаружены")}</div>`;
+
+  return [
+    '<div class="drivers-page">',
+    `  <div class="scroll-panel">${scrollContent}</div>`,
+    '  <div class="actions tweaks-actions drivers-actions">',
+    button(scanLabel, "rotate", "primary", "scan-drivers"),
+    button(
+      t("updateViaWindows") || (isRu ? "Обновить через Windows" : "Windows Update"),
+      "settings",
+      "outline",
+      "open-windows-update-drivers"
+    ),
+    '  </div>',
+    '</div>'
+  ].join("");
 }
 
-export function updateCharacteristicsLiveDom(viewState, t) {
-  const info = viewState.system || {};
-  const cpuUsage = clamp(numberValue(info.cpuUsagePercent));
-  const gpuUsage = clamp(numberValue(info.gpuUsagePercent));
-  const ramPercent = percent(info);
-  const available = numberValue(info.ramAvailableGb || info.ramAvailable);
-  const total = numberValue(info.ramTotalGb || info.ram);
-  const availablePercent = total ? (available / total) * 100 : 0;
-  const availableLabel = gb(info.ramAvailableGb || info.ramAvailable);
-  const vramPercent = clamp(numberValue(info.vramUsedPercent));
-  const usageLabel = t ? t("cpuUsageLabel") : "usage";
-  const setText = (key, value) => {
-    document.querySelectorAll(`[data-live="${key}"]`).forEach((element) => {
-      element.textContent = value;
-    });
-  };
-  const setFill = (key, value) => {
-    document.querySelectorAll(`[data-fill="${key}"]`).forEach((element) => {
-      element.style.width = `${clamp(value)}%`;
-    });
-  };
-  setText("cpu-usage", `${cpuUsage}% ${usageLabel}`);
-  const cpuLine = document.querySelector(".cpu-graph polyline");
-  if (cpuLine) cpuLine.setAttribute("points", cpuGraphPoints(viewState.cpuHistory));
-  setText("gpu-usage", `${gpuUsage}%`);
-  setFill("gpu-usage", gpuUsage);
-  setText("vram-total", vramTotalLabel(info, t));
-  setFill("vram-total", vramPercent);
-  setText("ram-percent", `${ramPercent}%`);
-  setText("ram-available", availableLabel);
-  setFill("ram-available", availablePercent);
-  setText("ram-used", `${ramPercent}%`);
-  setFill("ram-used", ramPercent);
-  const ring = document.querySelector('[data-ring="ram"]');
-  if (ring) ring.style.setProperty("--ram", `${ramPercent}%`);
+function renderDriverTile(driver, t, isRu) {
+  const isOutdated = Boolean(driver.isOutdated ?? driver.is_outdated);
+  const vendor = (driver.vendor || "generic").toLowerCase();
+  const className = driver.className || driver.class_name || "System";
+  const logo = getVendorLogo(vendor, className);
+  const officialUrl = driver.officialUrl || driver.official_url || "https://www.catalog.update.microsoft.com";
+
+  const statusLabel = isOutdated
+    ? (isRu ? "Обновление" : "Update Available")
+    : (isRu ? "Актуален" : "Up to Date");
+
+  const btnLabel = isOutdated
+    ? (isRu ? "Скачать обновление" : "Download Update")
+    : (isRu ? "Официальный сайт" : "Official Site");
+
+  const versionText = driver.version ? `v${driver.version}` : "-";
+  const dateText = driver.date || "-";
+  const providerText = driver.provider || "-";
+
+  return [
+    `<div class="driver-tile ${isOutdated ? "has-update" : "uptodate"}">`,
+    '  <div class="driver-tile-top">',
+    '    <div class="driver-vendor-box">',
+    `      ${logo}`,
+    '    </div>',
+    '    <div class="driver-tile-info">',
+    `      <span class="driver-tile-name" title="${escapeAttr(driver.name)}">${escapeHtml(driver.name)}</span>`,
+    `      <span class="driver-tile-provider">${escapeHtml(providerText)}</span>`,
+    '    </div>',
+    `    <span class="driver-tile-badge ${isOutdated ? "update" : "uptodate"}">`,
+    `      ${isOutdated ? icon("alert") : icon("check")}`,
+    `      <span>${escapeHtml(statusLabel)}</span>`,
+    '    </span>',
+    '  </div>',
+    '  <div class="driver-tile-specs">',
+    `    <div class="driver-spec-item"><span class="spec-label">${escapeHtml(t("version"))}:</span> <span class="spec-val version">${escapeHtml(versionText)}</span></div>`,
+    `    <div class="driver-spec-item"><span class="spec-label">${escapeHtml(t("date"))}:</span> <span class="spec-val">${escapeHtml(dateText)}</span></div>`,
+    '  </div>',
+    '  <div class="driver-tile-footer">',
+    `    <button class="btn ${isOutdated ? "btn-primary" : "btn-outline"} driver-tile-btn ${isOutdated ? "" : "is-uptodate"}" type="button" data-action="open-driver-url" data-url="${escapeAttr(officialUrl)}" title="${escapeAttr(driver.name)}">`,
+    `      ${isOutdated ? icon("zap") : icon("rotate")}`,
+    `      <span>${escapeHtml(btnLabel)}</span>`,
+    '    </button>',
+    '  </div>',
+    '</div>'
+  ].join("");
 }
+

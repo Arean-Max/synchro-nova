@@ -347,6 +347,7 @@ fn main() {
         if !synchro_lib::ffi::ensure_single_instance_retry(MUTEX_NAME, WINDOW_TITLE, is_restart) {
             std::process::exit(0);
         }
+
         prerequisites_check::ensure_runtime_prerequisites();
     }
 

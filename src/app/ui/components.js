@@ -9,8 +9,7 @@ export function button(label, iconName, variant, action) {
 
 export function checkbox(label, checked, key) {
   const pressed = checked ? "true" : "false";
-  const check = checked ? icon("check", "box-check") : "";
-  return `<button class="check-row checkbox-control" type="button" data-setting="${escapeAttr(key)}" aria-pressed="${pressed}"><span class="box ${checked ? "checked" : ""}">${check}</span><span class="checkbox-label">${label}</span></button>`;
+  return `<button class="check-row checkbox-control ${checked ? "active" : ""}" type="button" data-setting="${escapeAttr(key)}" aria-pressed="${pressed}" role="switch" aria-checked="${pressed}"><span class="checkbox-label">${label}</span><span class="ios-switch ${checked ? "active" : ""}" aria-hidden="true"><span class="ios-switch-thumb"></span></span></button>`;
 }
 
 export function card(title, body, extra) {
