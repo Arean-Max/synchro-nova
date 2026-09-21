@@ -42,7 +42,7 @@ Windows SmartScreen displays an "Unknown Publisher" warning on binaries that are
 ### SignPath Foundation (Open-Source Authenticode Roadmap)
 To provide free, verifiable Authenticode signatures for open-source releases without commercial certificate overhead ($400+/year), Synchro Nova's build pipeline is designed for integration with the [SignPath Foundation](https://signpath.org):
 1. **Prerequisites fulfilled**: OSI-approved MIT license, public source code, fully reproducible and automated GitHub Actions CI/CD.
-2. **Integration plan**: Following initial public releases (`v0.1.0+`), an application will be submitted to SignPath Foundation to enable cryptographic commit-bound signing via the `signpath/github-action` in `release.yml`.
+2. **Integration plan**: Following public releases (`v2.1+`), an application will be submitted to SignPath Foundation to enable cryptographic commit-bound signing via the `signpath/github-action` in `release.yml`.
 
 ### Signing Builds with a Custom / Organizational Certificate
 If you maintain a local CA or have an Authenticode certificate, you can sign the output binary using Microsoft `signtool.exe`:

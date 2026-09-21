@@ -6,8 +6,8 @@ Only the latest release branch is currently supported for security updates.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
-| < 0.1.0 | :x:                |
+| 2.1.x   | :white_check_mark: |
+| < 2.1.0 | :x:                |
 
 ---
 

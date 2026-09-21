@@ -14,23 +14,6 @@ pub(crate) fn collect_drivers() -> Vec<DriverInfo> {
         collect_pnp_class_drivers(&mut drivers, &mut seen);
     }
 
-    if drivers.is_empty() {
-        drivers.push(DriverInfo {
-            name: "System Driver".to_string(),
-            provider: "Microsoft".to_string(),
-            version: "10.0.26100".to_string(),
-            date: "2026".to_string(),
-            class_name: "System".to_string(),
-            status: "Up to date".to_string(),
-            path: String::new(),
-            search_query: "Windows drivers latest".to_string(),
-            hardware_id: String::new(),
-            vendor: "microsoft".to_string(),
-            is_outdated: false,
-            official_url: "https://www.catalog.update.microsoft.com".to_string(),
-        });
-    }
-
     // Sort drivers logically:
     // 1. Class priority (Display -> Media -> Net -> Storage -> System -> Peripherals)
     // 2. Outdated drivers first within category

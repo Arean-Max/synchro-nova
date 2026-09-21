@@ -10,16 +10,8 @@ export const standardTemplateNames = new Set([
   "Night", "Ночной"
 ]);
 
-const demoColorGames = [
-  { id: "demo-cs2", name: "Counter-Strike 2", source: "Demo", launchable: false },
-  { id: "demo-valorant", name: "Valorant", source: "Demo", launchable: false },
-  { id: "demo-dota2", name: "Dota 2", source: "Demo", launchable: false },
-  { id: "demo-cyberpunk", name: "Cyberpunk 2077", source: "Demo", launchable: false },
-  { id: "demo-apex", name: "Apex Legends", source: "Demo", launchable: false }
-];
-
 export function fallbackColorGames() {
-  return demoColorGames.map((game) => ({ ...game }));
+  return [];
 }
 
 export function colorGames(viewState) {

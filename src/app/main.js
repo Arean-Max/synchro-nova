@@ -17,7 +17,6 @@ import {
 import { translate } from "./core/i18n.js";
 import {
   ensureColorGameSelection,
-  fallbackColorGames,
   renderGameColorPage,
   renderColorPage,
   selectColorGame,
@@ -568,16 +567,8 @@ async function loadLists() {
 
 async function loadColorGames() {
   const games = await invokeCommand("list_installed_games");
-  if (Array.isArray(games)) {
-    viewState.colorGames = games;
-    viewState.colorGamesDemo = false;
-  } else if (!nativeInvoke) {
-    viewState.colorGames = fallbackColorGames();
-    viewState.colorGamesDemo = true;
-  } else {
-    viewState.colorGames = [];
-    viewState.colorGamesDemo = false;
-  }
+  viewState.colorGames = Array.isArray(games) ? games : [];
+  viewState.colorGamesDemo = false;
   viewState.colorGamesLoaded = true;
   ensureColorGameSelection(viewState);
   if (activePage === "gameColor") updateMain();
