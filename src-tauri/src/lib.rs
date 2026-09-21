@@ -1307,7 +1307,12 @@ pub fn run() {
 
                 let target_size = tauri::LogicalSize::new(target_w, target_h);
                 let _ = window.set_size(target_size);
-                let _ = window.set_resizable(false);
+                let _ = window.set_shadow(false);
+
+                #[cfg(target_os = "windows")]
+                if let Ok(hwnd) = window.hwnd() {
+                    ffi::eliminate_window_borders(hwnd.0 as isize);
+                }
 
                 let _ = window.center();
                 if initial.settings.start_minimized {

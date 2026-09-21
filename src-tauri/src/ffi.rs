@@ -1056,4 +1056,101 @@ pub fn create_native_system_restore_point(_description: &str) -> bool {
     false
 }
 
+#[cfg(target_os = "windows")]
+pub fn eliminate_window_borders(hwnd: isize) {
+    if hwnd == 0 {
+        return;
+    }
+
+    #[link(name = "dwmapi")]
+    extern "system" {
+        fn DwmSetWindowAttribute(
+            hwnd: isize,
+            dw_attribute: u32,
+            pv_attribute: *const std::ffi::c_void,
+            cb_attribute: u32,
+        ) -> i32;
+    }
+
+    #[link(name = "comctl32")]
+    extern "system" {
+        fn SetWindowSubclass(
+            hwnd: isize,
+            pfn_subclass: unsafe extern "system" fn(isize, u32, usize, isize, usize, usize) -> isize,
+            u_id_subclass: usize,
+            dw_ref_data: usize,
+        ) -> i32;
+        fn DefSubclassProc(
+            hwnd: isize,
+            u_msg: u32,
+            w_param: usize,
+            l_param: isize,
+        ) -> isize;
+    }
+
+    unsafe {
+        // 1. Force dark mode on window frame (attribute 20: DWMWA_USE_IMMERSIVE_DARK_MODE)
+        let dark_mode: i32 = 1;
+        let _ = DwmSetWindowAttribute(
+            hwnd,
+            20,
+            &dark_mode as *const _ as _,
+            std::mem::size_of::<i32>() as u32,
+        );
+
+        // 2. Suppress DWM border rendering on Windows 11 (attribute 34: DWMWA_BORDER_COLOR = DWMWA_COLOR_NONE 0xFFFFFFFE)
+        let no_border: u32 = 0xFFFF_FFFE;
+        let _ = DwmSetWindowAttribute(
+            hwnd,
+            34,
+            &no_border as *const _ as _,
+            std::mem::size_of::<u32>() as u32,
+        );
+
+        // 3. Caption / title background color matching app background (#141414 -> 0x00141414)
+        let caption_color: u32 = 0x0014_1414;
+        let _ = DwmSetWindowAttribute(
+            hwnd,
+            35,
+            &caption_color as *const _ as _,
+            std::mem::size_of::<u32>() as u32,
+        );
+
+        // 4. Subclass window to prevent edge resize dragging without stripping WS_THICKFRAME
+        unsafe extern "system" fn non_resizable_subclass(
+            hwnd: isize,
+            msg: u32,
+            wparam: usize,
+            lparam: isize,
+            _id: usize,
+            _data: usize,
+        ) -> isize {
+            const WM_NCHITTEST: u32 = 0x0084;
+            const HTCLIENT: isize = 1;
+            const HTLEFT: isize = 10;
+            const HTRIGHT: isize = 11;
+            const HTTOP: isize = 12;
+            const HTTOPLEFT: isize = 13;
+            const HTTOPRIGHT: isize = 14;
+            const HTBOTTOM: isize = 15;
+            const HTBOTTOMLEFT: isize = 16;
+            const HTBOTTOMRIGHT: isize = 17;
+
+            if msg == WM_NCHITTEST {
+                let hit = DefSubclassProc(hwnd, msg, wparam, lparam);
+                if (HTLEFT..=HTBOTTOMRIGHT).contains(&hit) {
+                    return HTCLIENT;
+                }
+                return hit;
+            }
+            DefSubclassProc(hwnd, msg, wparam, lparam)
+        }
+
+        let _ = SetWindowSubclass(hwnd, non_resizable_subclass, 0x53594E43, 0);
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn eliminate_window_borders(_hwnd: isize) {}
+
 

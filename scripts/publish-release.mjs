@@ -90,6 +90,7 @@ async function run() {
       '## Synchro Nova v2.1',
       '',
       '### Changes & Improvements',
+      '- **Window Border & Artifact Elimination**: Completely eliminated white non-client stripes and DWM borders around the borderless window via `"shadow": false`, immersive dark mode (`DWMWA_USE_IMMERSIVE_DARK_MODE`), border suppression (`DWMWA_BORDER_COLOR`), and subclassed non-resizable hit testing (`WM_NCHITTEST`). WindowRect and ClientRect now match 940x595 with zero offset.',
       '- **Anti-Cheat Immunity & Process Isolation**: Completely eliminated synthetic keystrokes (`keybd_event`) and process hooks. Display calibration operates strictly via Windows Desktop Window Manager (DWM) compositor shaders and monitor hardware LUTs, guaranteeing 100% immunity to anti-cheat bans (unlike Tactical Vision).',
       '- **Windows System Restore Points**: Every backup creation now automatically commits a native Windows System Restore point (`SRSetRestorePointW` two-phase commit + PowerShell override) alongside `.reg` snapshots.',
       '- **Adaptive RGB Contrast & White Default**: Fixed text invisibility when setting RGB `0 0 0` (`#000000`) with perceived luminance calculation, white outline borders, and contrast text fallbacks. The default interface accent is now White (`#ffffff`).',
@@ -166,6 +167,8 @@ async function run() {
 
   const setupPath = path.resolve('dist-artifacts/Synchro.Nova_2.1.0_x64-setup.exe');
   const zipPath = path.resolve('dist-artifacts/Synchro-Nova-2.1.0-Portable.zip');
+  const exePath = path.resolve('dist-artifacts/synchro.exe');
+  const shaPath = path.resolve('dist-artifacts/SHA256SUMS.txt');
 
   if (fs.existsSync(setupPath)) {
     console.log('4. Uploading Synchro.Nova_2.1.0_x64-setup.exe...');
@@ -181,6 +184,18 @@ async function run() {
     console.log('Synchro-Nova-2.1.0-Portable.zip upload status:', resZip.status);
   } else {
     console.warn('Portable zip file not found:', zipPath);
+  }
+
+  if (fs.existsSync(exePath)) {
+    console.log('6. Uploading synchro.exe...');
+    const resExe = await uploadAsset(release.upload_url, exePath, 'synchro.exe', 'application/vnd.microsoft.portable-executable');
+    console.log('synchro.exe upload status:', resExe.status);
+  }
+
+  if (fs.existsSync(shaPath)) {
+    console.log('7. Uploading SHA256SUMS.txt...');
+    const resSha = await uploadAsset(release.upload_url, shaPath, 'SHA256SUMS.txt', 'text/plain');
+    console.log('SHA256SUMS.txt upload status:', resSha.status);
   }
 
   console.log('6. Verifying published release...');
