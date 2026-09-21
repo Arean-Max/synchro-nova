@@ -1307,8 +1307,7 @@ pub fn run() {
 
                 let target_size = tauri::LogicalSize::new(target_w, target_h);
                 let _ = window.set_size(target_size);
-                let _ = window.set_min_size(Some(target_size));
-                let _ = window.set_max_size(Some(target_size));
+                let _ = window.set_resizable(false);
 
                 let _ = window.center();
                 if initial.settings.start_minimized {

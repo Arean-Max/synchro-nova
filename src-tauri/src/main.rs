@@ -215,17 +215,11 @@ fn main() {
         }
         std::env::set_var("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0xFF121214");
 
-        // Optimize WebView2 runtime: eliminate telemetry, background network chatter, and minimize RAM
+        // Optimize WebView2 runtime: eliminate telemetry, background network chatter, and minimize RAM safely
         if std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").is_err() {
             std::env::set_var(
                 "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
-                "--renderer-process-limit=1 \
-                 --enable-low-end-device-mode \
-                 --force-gpu-mem-available-mb=16 \
-                 --disable-gpu-shader-disk-cache \
-                 --disk-cache-size=1 \
-                 --media-cache-size=1 \
-                 --disable-background-networking \
+                "--disable-background-networking \
                  --disable-component-update \
                  --disable-domain-reliability \
                  --disable-sync \
@@ -238,15 +232,11 @@ fn main() {
                  --no-crash-upload \
                  --disable-speech-api \
                  --disable-speech-synthesis-api \
-                 --disable-databases \
                  --disable-notifications \
-                 --disable-dev-shm-usage \
-                 --disable-shared-workers \
-                 --disable-service-workers \
                  --disable-wake-on-wifi \
-                 --disable-hang-monitor \
-                 --disable-features=AudioServiceOutOfProcess,IsolateOrigins,site-per-process,MediaRouter,OptimizationHints,Translate,InterestFeedContentSuggestions,AutofillServerCommunication,CertificateTransparencyComponentUpdater,SpeechSynthesis,BackgroundFetch,SafeBrowsing \
-                 --js-flags=--max-old-space-size=16,--max-semi-space-size=1",
+                 --disable-features=Translate,OptimizationHints,MediaRouter,DialMediaRouteProvider,InterestFeedContentSuggestions,SpeechSynthesis \
+                 --disk-cache-size=16777216 \
+                 --media-cache-size=8388608",
             );
         }
 

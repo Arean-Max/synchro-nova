@@ -37,10 +37,10 @@ codegen-units = 4
 debug = false
 incremental = false
 lto = false
-opt-level = 3
+opt-level = 2
 overflow-checks = true
 panic = "abort"
-strip = true
+strip = false
 
 [profile.release.build-override]
 debug = false

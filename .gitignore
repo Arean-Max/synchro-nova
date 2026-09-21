@@ -10,3 +10,4 @@ dist/
 *.exe
 *.zip
 *.txt
+dist-artifacts/
