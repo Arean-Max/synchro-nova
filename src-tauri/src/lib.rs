@@ -106,11 +106,11 @@ impl Default for AppSettings {
             autostart_windows: false,
             close_to_tray: true,
             start_minimized: false,
-            auto_backup_on_start: true,
+            auto_backup_on_start: false,
             accepted_agreement: true,
             language: "en".to_string(),
             show_on_recordings: true,
-            accent_color: "#2563eb".to_string(),
+            accent_color: "#ffffff".to_string(),
         }
     }
 }
@@ -121,7 +121,7 @@ impl AppSettings {
             self.language = "en".to_string();
         }
         if self.accent_color.trim().is_empty() {
-            self.accent_color = "#2563eb".to_string();
+            self.accent_color = "#ffffff".to_string();
         }
         self
     }
@@ -1289,7 +1289,7 @@ pub fn run() {
                 let _ = window.set_resizable(true);
                 let _ = window.set_maximizable(false);
 
-                if let Some(monitor) = window
+                let (target_w, target_h) = if let Some(monitor) = window
                     .current_monitor()
                     .ok()
                     .flatten()
@@ -1300,9 +1300,15 @@ pub fn run() {
                     let screen_w = physical_size.width as f64 / scale_factor;
                     let screen_h = physical_size.height as f64 / scale_factor;
 
-                    let (target_w, target_h) = calculate_adaptive_window_size(screen_w, screen_h);
-                    let _ = window.set_size(tauri::LogicalSize::new(target_w, target_h));
-                }
+                    calculate_adaptive_window_size(screen_w, screen_h)
+                } else {
+                    (980.0, 620.0)
+                };
+
+                let target_size = tauri::LogicalSize::new(target_w, target_h);
+                let _ = window.set_size(target_size);
+                let _ = window.set_min_size(Some(target_size));
+                let _ = window.set_max_size(Some(target_size));
 
                 let _ = window.center();
                 if initial.settings.start_minimized {
@@ -1348,11 +1354,13 @@ pub fn run() {
                     }
                     trim_process_memory();
 
+                    // Continuous periodic memory trimming every 30s to guarantee minimal RAM footprint
                     while !*lock {
-                        lock = match trimmer_sync.condvar.wait(lock) {
+                        let (new_lock, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_secs(30)) {
                             Ok(res) => res,
                             Err(e) => e.into_inner(),
                         };
+                        lock = new_lock;
                         if *lock {
                             break;
                         }

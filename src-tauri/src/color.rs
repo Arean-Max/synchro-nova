@@ -2,7 +2,7 @@ use crate::ColorSettings;
 use std::sync::{Arc, Condvar, Mutex, OnceLock};
 
 struct ColorGuardState {
-    active: Option<ColorSettings>,
+    active: Option<(ColorSettings, bool)>,
     exiting: bool,
 }
 
@@ -39,19 +39,15 @@ pub(crate) fn start_color_guard() {
                         break;
                     }
 
-                    let has_custom_gamma = state
-                        .active
-                        .as_ref()
-                        .map(|c| c.enabled && (c.gamma - 100.0).abs() > 0.5)
-                        .unwrap_or(false);
+                    let is_active = state.active.as_ref().map(|(c, _)| c.enabled).unwrap_or(false);
 
-                    if !has_custom_gamma {
+                    if !is_active {
                         state = match cvar.wait(state) {
                             Ok(g) => g,
                             Err(e) => e.into_inner(),
                         };
                     } else {
-                        let (new_state, _) = match cvar.wait_timeout(state, std::time::Duration::from_secs(4)) {
+                        let (new_state, _) = match cvar.wait_timeout(state, std::time::Duration::from_secs(3)) {
                             Ok(res) => res,
                             Err(e) => e.into_inner(),
                         };
@@ -62,9 +58,11 @@ pub(crate) fn start_color_guard() {
                         break;
                     }
 
-                    if let Some(ref color) = state.active {
-                        if color.enabled && (color.gamma - 100.0).abs() > 0.5 {
-                            let _ = apply_gamma_ramp(color.gamma);
+                    if let Some((ref color, show_on_recordings)) = state.active {
+                        if color.enabled {
+                            let ramp_success = apply_gamma_ramp(color.gamma).is_ok();
+                            let include_matrix_gamma = show_on_recordings || !ramp_success;
+                            let _ = apply_magnification_color(color, include_matrix_gamma);
                         }
                     }
                 }
@@ -84,7 +82,7 @@ pub(crate) fn stop_color_guard() {
     }
 }
 
-fn set_active_color(color: Option<ColorSettings>) {
+fn set_active_color(color: Option<(ColorSettings, bool)>) {
     let sync = get_guard_sync();
     if let Ok(mut lock) = sync.0.lock() {
         lock.active = color;
@@ -99,7 +97,7 @@ pub(crate) fn apply_color_transform(color: &ColorSettings, show_on_recordings: b
         return reset_color_transform();
     }
 
-    set_active_color(Some(color.clone()));
+    set_active_color(Some((color.clone(), show_on_recordings)));
 
     // Try hardware LUT gamma ramp first (optimal for standard SDR monitors)
     let ramp_success = apply_gamma_ramp(color.gamma).is_ok();
@@ -126,6 +124,7 @@ pub(crate) fn reset_color_transform() -> Result<(), String> {
     };
 
     unsafe {
+        let _ = crate::ffi::winapi::MagInitialize();
         let _ = crate::ffi::winapi::MagSetFullscreenColorEffect(&effect);
     }
     let _ = apply_gamma_ramp(100.0);

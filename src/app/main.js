@@ -49,6 +49,27 @@ function clearImpactBannerTimer() {
   }
 }
 
+function startImpactBannerTimer(delay = 3000) {
+  clearImpactBannerTimer();
+  impactBannerTimer = window.setTimeout(() => {
+    dismissNotificationBanner();
+  }, delay);
+}
+
+function attachBannerHoverListeners() {
+  const bannerEl = document.querySelector(".ios-banner");
+  if (!bannerEl) return;
+  bannerEl.onmouseenter = () => {
+    clearImpactBannerTimer();
+  };
+  bannerEl.onmouseleave = () => {
+    clearImpactBannerTimer();
+    impactBannerTimer = window.setTimeout(() => {
+      dismissNotificationBanner();
+    }, 600);
+  };
+}
+
 function dismissNotificationBanner(immediate = false) {
   clearImpactBannerTimer();
   const banners = document.querySelectorAll(".ios-banner");
@@ -89,6 +110,7 @@ function renderNotificationBannerDom() {
       containers[i].remove();
     }
   }
+  attachBannerHoverListeners();
 }
 
 function renderBackupModalDom() {
@@ -165,9 +187,7 @@ function showToastBanner(title, impactText, category = "safe") {
     impactText
   };
   renderNotificationBannerDom();
-  impactBannerTimer = window.setTimeout(() => {
-    dismissNotificationBanner();
-  }, 5000);
+  startImpactBannerTimer(3000);
 }
 
 function showTweakImpactBanner(tweakId) {
@@ -189,10 +209,7 @@ function showTweakImpactBanner(tweakId) {
     impactText: details.impactText
   };
   renderNotificationBannerDom();
-
-  impactBannerTimer = window.setTimeout(() => {
-    dismissNotificationBanner();
-  }, 5000);
+  startImpactBannerTimer(3000);
 }
 
 function showRiskWarningBanner(tweak) {
@@ -209,10 +226,7 @@ function showRiskWarningBanner(tweak) {
       : "It is recommended to create a backup before applying this tweak."
   };
   renderNotificationBannerDom();
-
-  impactBannerTimer = window.setTimeout(() => {
-    dismissNotificationBanner();
-  }, 5000);
+  startImpactBannerTimer(3000);
 }
 
 function showBackupNotificationBanner() {
@@ -226,10 +240,7 @@ function showBackupNotificationBanner() {
     impactText: t("backupNotificationMsg") || (isRu ? "Нажмите здесь, чтобы задать имя бэкапа" : "Click here to set custom backup name")
   };
   renderNotificationBannerDom();
-
-  impactBannerTimer = window.setTimeout(() => {
-    dismissNotificationBanner();
-  }, 5000);
+  startImpactBannerTimer(3000);
 }
 
 function showAdminNotificationBanner() {
@@ -243,10 +254,7 @@ function showAdminNotificationBanner() {
     impactText: t("adminNotificationMsg") || (isRu ? "Нажмите здесь для перезапуска Synchro с правами админа" : "Click here to restart Synchro as administrator")
   };
   renderNotificationBannerDom();
-
-  impactBannerTimer = window.setTimeout(() => {
-    dismissNotificationBanner();
-  }, 5000);
+  startImpactBannerTimer(3000);
 }
 
 function scheduleTrimMemory(delay = 400) {

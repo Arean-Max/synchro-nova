@@ -6,11 +6,11 @@ export const defaultState = {
     autostartWindows: false,
     closeToTray: true,
     startMinimized: false,
-    autoBackupOnStart: true,
+    autoBackupOnStart: false,
     acceptedAgreement: true,
     language: "en",
     showOnRecordings: true,
-    accentColor: "#2563eb",
+    accentColor: "#ffffff",
     templateOverrides: {}
   },
   isAdmin: false
@@ -99,26 +99,54 @@ export function lang() {
 }
 
 export function applyInterfaceAccent(color) {
-  const accent = color || "#2563eb";
+  const accent = color || "#ffffff";
   if (typeof document === "undefined" || !document.documentElement) return;
-  document.documentElement.style.setProperty("--ui-accent", accent);
+
   const hex = accent.replace("#", "");
   let r = 255, g = 255, b = 255;
   if (hex.length === 6) {
-    r = parseInt(hex.slice(0, 2), 16) || 255;
-    g = parseInt(hex.slice(2, 4), 16) || 255;
-    b = parseInt(hex.slice(4, 6), 16) || 255;
+    const pr = parseInt(hex.slice(0, 2), 16);
+    const pg = parseInt(hex.slice(2, 4), 16);
+    const pb = parseInt(hex.slice(4, 6), 16);
+    r = Number.isFinite(pr) ? pr : 255;
+    g = Number.isFinite(pg) ? pg : 255;
+    b = Number.isFinite(pb) ? pb : 255;
   } else if (hex.length === 3) {
-    r = parseInt(hex[0] + hex[0], 16) || 255;
-    g = parseInt(hex[1] + hex[1], 16) || 255;
-    b = parseInt(hex[2] + hex[2], 16) || 255;
+    const pr = parseInt(hex[0] + hex[0], 16);
+    const pg = parseInt(hex[1] + hex[1], 16);
+    const pb = parseInt(hex[2] + hex[2], 16);
+    r = Number.isFinite(pr) ? pr : 255;
+    g = Number.isFinite(pg) ? pg : 255;
+    b = Number.isFinite(pb) ? pb : 255;
   }
+
+  // Rec. 601 perceived luminance
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  const textColor = brightness > 155 ? "#111113" : "#ffffff";
-  const thumbColor = brightness > 200 ? "#141416" : "#ffffff";
+
+  // If accent is light (e.g. #ffffff), text on accent background is dark (#111113).
+  // If accent is dark (e.g. #000000), text on accent background is bright white (#ffffff).
+  const textColor = brightness > 140 ? "#111113" : "#ffffff";
+  const thumbColor = brightness > 190 ? "#141416" : "#ffffff";
+
+  // For text/icons tinted with the accent against the dark app background (#141414),
+  // if the accent is very dark (e.g. #000000), ensure it never becomes invisible.
+  const fgAccent = brightness < 65 ? "#ffffff" : accent;
+
+  // Subtle border outline for dark accents on dark backgrounds
+  const accentBorder = brightness < 65 ? "rgba(255, 255, 255, 0.28)" : "transparent";
+
+  // Glow definition
+  const glowR = brightness < 65 ? 255 : r;
+  const glowG = brightness < 65 ? 255 : g;
+  const glowB = brightness < 65 ? 255 : b;
+  const glowAlpha = brightness < 65 ? 0.18 : 0.32;
+
+  document.documentElement.style.setProperty("--ui-accent", accent);
+  document.documentElement.style.setProperty("--ui-accent-fg", fgAccent);
   document.documentElement.style.setProperty("--ui-accent-text", textColor);
   document.documentElement.style.setProperty("--ui-accent-thumb", thumbColor);
-  document.documentElement.style.setProperty("--ui-accent-glow", `rgba(${r}, ${g}, ${b}, 0.28)`);
+  document.documentElement.style.setProperty("--ui-accent-glow", `rgba(${glowR}, ${glowG}, ${glowB}, ${glowAlpha})`);
+  document.documentElement.style.setProperty("--ui-accent-border", accentBorder);
 }
 
 export function mergeState(state) {

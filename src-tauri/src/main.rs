@@ -170,6 +170,7 @@ mod prerequisites_check {
         false
     }
 
+    #[allow(dead_code)]
     pub(crate) fn is_authenticode_valid(path: &Path) -> bool {
         if !path.is_file() {
             return false;
@@ -214,21 +215,38 @@ fn main() {
         }
         std::env::set_var("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0xFF121214");
 
-        // Optimize WebView2 runtime: eliminate telemetry, background network chatter, and limit memory cache
+        // Optimize WebView2 runtime: eliminate telemetry, background network chatter, and minimize RAM
         if std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").is_err() {
             std::env::set_var(
                 "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
-                "--disable-background-networking \
+                "--renderer-process-limit=1 \
+                 --enable-low-end-device-mode \
+                 --force-gpu-mem-available-mb=16 \
+                 --disable-gpu-shader-disk-cache \
+                 --disk-cache-size=1 \
+                 --media-cache-size=1 \
+                 --disable-background-networking \
                  --disable-component-update \
                  --disable-domain-reliability \
                  --disable-sync \
                  --no-pings \
                  --disable-client-side-phishing-detection \
+                 --safebrowsing-disable-auto-update \
+                 --disable-default-apps \
+                 --disable-extensions \
                  --disable-breakpad \
+                 --no-crash-upload \
                  --disable-speech-api \
-                 --disable-features=Translate,OptimizationHints,MediaRouter,DialMediaRouteProvider,InterestFeedContentSuggestions \
-                 --disk-cache-size=33554432 \
-                 --media-cache-size=16777216",
+                 --disable-speech-synthesis-api \
+                 --disable-databases \
+                 --disable-notifications \
+                 --disable-dev-shm-usage \
+                 --disable-shared-workers \
+                 --disable-service-workers \
+                 --disable-wake-on-wifi \
+                 --disable-hang-monitor \
+                 --disable-features=AudioServiceOutOfProcess,IsolateOrigins,site-per-process,MediaRouter,OptimizationHints,Translate,InterestFeedContentSuggestions,AutofillServerCommunication,CertificateTransparencyComponentUpdater,SpeechSynthesis,BackgroundFetch,SafeBrowsing \
+                 --js-flags=--max-old-space-size=16,--max-semi-space-size=1",
             );
         }
 

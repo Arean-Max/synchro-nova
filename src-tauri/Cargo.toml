@@ -33,10 +33,10 @@ debug = false
 strip = false
 
 [profile.release]
-codegen-units = 1
+codegen-units = 4
 debug = false
 incremental = false
-lto = true
+lto = false
 opt-level = 3
 overflow-checks = true
 panic = "abort"

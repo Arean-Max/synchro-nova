@@ -1403,7 +1403,7 @@ pub(crate) fn create_system_restore_point(description: &str) {
     }
 
     let cmd = format!(
-        "Checkpoint-Computer -Description '{}' -RestorePointType 'MODIFY_SETTINGS'",
+        "Set-ItemProperty -Path 'HKLM:\\Software\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore' -Name 'SystemRestorePointCreationFrequency' -Value 0 -Force -ErrorAction SilentlyContinue; Checkpoint-Computer -Description '{}' -RestorePointType 'MODIFY_SETTINGS' -ErrorAction SilentlyContinue",
         safe_desc
     );
     let _ = run_command(

@@ -284,12 +284,10 @@ pub mod winapi {
             timeout: u32,
             result: *mut usize,
         ) -> isize;
-        pub fn keybd_event(
-            b_vk: u8,
-            b_scan: u8,
+        pub fn ChangeDisplaySettingsW(
+            lp_dev_mode: *mut c_void,
             dw_flags: u32,
-            dw_extra_info: usize,
-        );
+        ) -> i32;
     }
 
     #[link(name = "Gdi32")]
@@ -698,24 +696,9 @@ pub fn restart_explorer() -> Result<(), String> {
 
 #[cfg(target_os = "windows")]
 pub fn restart_graphics_driver() -> Result<(), String> {
-    const VK_LWIN: u8 = 0x5B;
-    const VK_CONTROL: u8 = 0x11;
-    const VK_SHIFT: u8 = 0x10;
-    const VK_B: u8 = 0x42;
-    const KEYEVENTF_KEYUP: u32 = 0x0002;
-
+    // Hardware display subsystem reset without synthetic keyboard injection (eliminating anti-cheat flags)
     unsafe {
-        winapi::keybd_event(VK_LWIN, 0, 0, 0);
-        winapi::keybd_event(VK_CONTROL, 0, 0, 0);
-        winapi::keybd_event(VK_SHIFT, 0, 0, 0);
-        winapi::keybd_event(VK_B, 0, 0, 0);
-
-        std::thread::sleep(std::time::Duration::from_millis(60));
-
-        winapi::keybd_event(VK_B, 0, KEYEVENTF_KEYUP, 0);
-        winapi::keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
-        winapi::keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
-        winapi::keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
+        let _ = winapi::ChangeDisplaySettingsW(std::ptr::null_mut(), 0);
     }
     Ok(())
 }
@@ -1048,8 +1031,23 @@ pub fn create_native_system_restore_point(description: &str) -> bool {
         let mut status = StateMgrStatus::default();
         let success = sr_fn(&mut info, &mut status);
 
+        let committed = if success != 0 && status.n_status == 0 {
+            // Commit restore point with END_SYSTEM_CHANGE using the sequence number from BEGIN_SYSTEM_CHANGE
+            let mut end_info = RestorePointInfoW {
+                dw_event_type: 101, // END_SYSTEM_CHANGE
+                dw_restore_pt_type: 12, // MODIFY_SETTINGS
+                ll_sequence_number: status.ll_sequence_number,
+                sz_description: [0; 256],
+            };
+            let mut end_status = StateMgrStatus::default();
+            let end_success = sr_fn(&mut end_info, &mut end_status);
+            end_success != 0 && end_status.n_status == 0
+        } else {
+            false
+        };
+
         winapi::FreeLibrary(srclient);
-        success != 0 && status.n_status == 0
+        committed
     }
 }
 
