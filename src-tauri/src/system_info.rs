@@ -312,7 +312,7 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
 
     // 6. Steam
     let has_steam = pf_dirs.iter().any(|dir| dir.join("Steam").exists())
-        || crate::games::steam_install_root().is_some();
+        || crate::domain::games::steam_install_root().is_some();
     apps.push(DetectedAppConflictInfo {
         id: "steam".to_string(),
         name: "Steam".to_string(),

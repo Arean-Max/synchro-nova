@@ -14,7 +14,7 @@ pub struct LiveMetrics {
 }
 
 #[derive(Debug, Clone, Copy, Default)]
-pub(crate) struct CpuSample {
+pub struct CpuSample {
     idle: u64,
     kernel: u64,
     user: u64,
@@ -101,7 +101,7 @@ fn cpu_percent(previous: CpuSample, current: CpuSample) -> u64 {
 
 #[cfg(target_os = "windows")]
 fn read_cpu_sample() -> Option<CpuSample> {
-    let (idle, kernel, user) = crate::ffi::read_system_times()?;
+    let (idle, kernel, user) = super::ffi::read_system_times()?;
     Some(CpuSample {
         idle: filetime_to_u64(idle),
         kernel: filetime_to_u64(kernel),
@@ -110,13 +110,13 @@ fn read_cpu_sample() -> Option<CpuSample> {
 }
 
 #[cfg(target_os = "windows")]
-fn filetime_to_u64(value: crate::ffi::FileTime) -> u64 {
+fn filetime_to_u64(value: super::ffi::FileTime) -> u64 {
     ((value.high as u64) << 32) | value.low as u64
 }
 
 #[cfg(target_os = "windows")]
 fn read_memory_info() -> MemoryInfo {
-    if let Some(status) = crate::ffi::read_memory_status_ex() {
+    if let Some(status) = super::ffi::read_memory_status_ex() {
         MemoryInfo {
             total_bytes: status.ull_total_phys,
             available_bytes: status.ull_avail_phys,

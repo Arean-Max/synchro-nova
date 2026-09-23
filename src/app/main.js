@@ -27,14 +27,26 @@ import {
   syncAllTemplateSliders,
   updateBlackHoloDom,
   updateSliderDom,
-  updateTemplateSliderDom
+  updateTemplateSliderDom,
+  colorFeature
 } from "./features/color/page.js";
 import { allTweaks, isSafeTweak, tweakCategory, tweakTitle } from "./features/tweaks/catalog.js";
-import { getTweakImpactDetails, renderIosNotification } from "./features/tweaks/page.js";
-import { renderBackupNameModal } from "./features/storage/page.js";
+import { getTweakImpactDetails, renderIosNotification, tweaksFeature } from "./features/tweaks/page.js";
+import { renderBackupNameModal, backupsFeature } from "./features/storage/page.js";
+import { characteristicsFeature } from "./features/characteristics/page.js";
+import { settingsFeature } from "./features/settings/page.js";
+import { router } from "./core/router.js";
 import { renderApplyModal } from "./features/tweaks/applyModal.js";
 import { icon } from "./ui/icons.js";
 import { renderMain, renderShell, renderPageBody } from "./ui/layout.js";
+
+router.register("color", colorFeature);
+router.register("gameColor", colorFeature);
+router.register("tweaks", tweaksFeature);
+router.register("characteristics", characteristicsFeature);
+router.register("backups", backupsFeature);
+router.register("configs", backupsFeature);
+router.register("settings", settingsFeature);
 
 let applyTimer = 0;
 let carouselStepAt = 0;
@@ -294,9 +306,14 @@ function updateMain() {
     subtitle.textContent = t(page.subtitle);
     body.className = `page-body page-${activePage}`;
     body.innerHTML = renderPageBody(viewState, t);
+    router.mount(activePage, body, { appState, viewState });
   } else {
     const main = document.querySelector(".main-panel");
-    if (main) main.outerHTML = renderMain(viewState, t);
+    if (main) {
+      main.outerHTML = renderMain(viewState, t);
+      const nextBody = document.querySelector(".page-body");
+      if (nextBody) router.mount(activePage, nextBody, { appState, viewState });
+    }
   }
   syncAllSliders(appState);
   updateNavState();
@@ -1113,9 +1130,14 @@ async function handleClick(event) {
   if (navItem) {
     const nextPage = navItem.getAttribute("data-page");
     if (!nextPage || !pageDefs[nextPage] || nextPage === activePage) return;
-    setActivePage(nextPage);
-    updateMain();
-    syncCharacteristicsMonitor();
+    router.navigate(nextPage, {
+      onNavigate: () => {
+        updateMain();
+        syncCharacteristicsMonitor();
+      },
+      appState,
+      viewState
+    });
     if (nextPage === "gameColor" && !viewState.colorGamesLoaded) {
       loadColorGames();
     } else if (nextPage === "tweaks") {

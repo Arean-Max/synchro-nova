@@ -22,7 +22,7 @@ pub struct BlackHoloConfigResult {
 #[cfg(target_os = "windows")]
 pub fn is_rust_process_running() -> bool {
     unsafe {
-        use crate::ffi::{winapi, ProcessEntry32W, TH32CS_SNAPPROCESS};
+        use crate::platform::ffi::{winapi, ProcessEntry32W, TH32CS_SNAPPROCESS};
         let snapshot = winapi::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
         if snapshot == -1 as _ {
             return false;
@@ -59,9 +59,9 @@ pub fn is_rust_process_running() -> bool {
 
 pub fn find_rust_client_cfg() -> Option<PathBuf> {
     // 1. Check Steam library folders
-    if let Some(steam_root) = crate::games::steam_install_root() {
+    if let Some(steam_root) = super::detector::steam_install_root() {
         let mut libraries = vec![steam_root.clone()];
-        libraries.extend(crate::games::read_steam_libraries(&steam_root));
+        libraries.extend(super::detector::read_steam_libraries(&steam_root));
         for lib in libraries {
             let candidate = lib
                 .join("steamapps")
@@ -97,7 +97,7 @@ pub fn find_rust_client_cfg() -> Option<PathBuf> {
     None
 }
 
-fn parse_holosight_colour(content: &str) -> Option<String> {
+pub(crate) fn parse_holosight_colour(content: &str) -> Option<String> {
     for line in content.lines() {
         let trimmed = line.trim();
         if trimmed.to_lowercase().starts_with("accessibility.holosightcolour") {

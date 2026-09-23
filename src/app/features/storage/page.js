@@ -65,3 +65,13 @@ export function renderConfigsPage(viewState, t) {
     : `<div class="empty-state">${t("noConfigs")}</div>`;
   return `<section class="card configs-card"><h2>${t("savedConfigs")}</h2><div class="toolbar-row config-name-row"><input class="text-input wide" data-field="configName" value="${escapeAttr(viewState.configName)}" placeholder="${escapeAttr(t("configName"))}" aria-label="${escapeAttr(t("configName"))}">${button(t("saveConfig"), "save", "primary", "save-config")}</div><div class="toolbar-row config-tools">${button(t("loadConfig"), "folder", "outline", "load-config")}${button(t("applyConfig"), "check", "outline", "apply-config")}${button(t("deleteConfig"), "trash", "outline", "delete-config")}${button(t("openFolder"), "folder", "outline", "open-configs-folder")}</div><div class="config-list">${rows}</div></section>`;
 }
+
+export const backupsFeature = {
+  render: renderBackupsPage,
+  mount(container, context) {
+    if (context?.loadLists) {
+      context.loadLists();
+    }
+  },
+  unmount() {}
+};

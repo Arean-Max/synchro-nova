@@ -186,3 +186,15 @@ function renderDriverTile(driver, t, isRu) {
   ].join("");
 }
 
+export const characteristicsFeature = {
+  render: renderCharacteristicsPage,
+  mount(container, context) {
+    if (context?.triggerScanDrivers) {
+      context.triggerScanDrivers();
+    }
+  },
+  unmount() {
+    // Release references
+  }
+};
+

@@ -167,3 +167,16 @@ export function renderTweaksPage(viewState, t) {
     '</div>'
   ].join("");
 }
+
+export const tweaksFeature = {
+  render: renderTweaksPage,
+  mount(container, context) {
+    if (context?.loadTweakStatuses) {
+      context.loadTweakStatuses();
+    }
+  },
+  unmount() {
+    // Clean up references
+  }
+};
+

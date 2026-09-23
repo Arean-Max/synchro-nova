@@ -1,7 +1,18 @@
+use std::fs::{self, File};
+use std::io::{BufWriter, Write};
+use std::path::PathBuf;
+use crate::app::state::ColorSettings;
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JuicyScreenshotResult {
+    pub success: bool,
+    pub message: String,
+    pub file_path: Option<String>,
+}
+
 #[cfg(target_os = "windows")]
 use std::ffi::c_void;
-use std::path::PathBuf;
-use crate::ColorSettings;
 
 #[cfg(target_os = "windows")]
 #[link(name = "User32")]
@@ -81,14 +92,6 @@ struct BITMAPINFOHEADER {
 struct BITMAPINFO {
     bmi_header: BITMAPINFOHEADER,
     bmi_colors: [u32; 1],
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct JuicyScreenshotResult {
-    pub success: bool,
-    pub message: String,
-    pub file_path: Option<String>,
 }
 
 struct ReleaseDcGuard {
@@ -203,7 +206,7 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
             return Err("Failed to retrieve screen bitmap bits".to_string());
         }
 
-        // Apply color calibration transform:
+        // Apply color calibration transform in-place
         let saturation = (color.saturation / 100.0).max(0.0);
         let contrast = (color.contrast / 100.0).max(0.0);
         let gamma = (color.gamma / 100.0).clamp(0.5, 2.0);
@@ -215,7 +218,6 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
             let mut g = chunk[1] as f32 / 255.0;
             let mut r = chunk[2] as f32 / 255.0;
 
-            // Black Holo: transform bright green reticle pixels to deep black
             if black_holo && g > 0.35 && g > r * 1.30 && g > b * 1.30 {
                 let green_ratio = (g - r.max(b)) / g;
                 let factor = (1.0 - green_ratio * 0.95).max(0.04);
@@ -224,7 +226,6 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
                 b *= factor;
             }
 
-            // Saturation:
             if (saturation - 1.0).abs() > 0.005 {
                 let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
                 r = lum + (r - lum) * saturation;
@@ -232,14 +233,12 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
                 b = lum + (b - lum) * saturation;
             }
 
-            // Contrast:
             if (contrast - 1.0).abs() > 0.005 {
                 r = (r - 0.5) * contrast + 0.5;
                 g = (g - 0.5) * contrast + 0.5;
                 b = (b - 0.5) * contrast + 0.5;
             }
 
-            // Gamma:
             if (gamma - 1.0).abs() > 0.005 {
                 r = r.max(0.0).powf(gamma_exp);
                 g = g.max(0.0).powf(gamma_exp);
@@ -251,10 +250,10 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
             chunk[2] = (r.clamp(0.0, 1.0) * 255.0).round() as u8;
         }
 
-        // Copy to Windows Clipboard (CF_DIB)
         let header_size = std::mem::size_of::<BITMAPINFOHEADER>();
         let total_size = header_size + pixels.len();
 
+        // 1. Copy to Windows Clipboard (CF_DIB)
         let h_global = GlobalAlloc(GMEM_MOVEABLE, total_size);
         if !h_global.is_null() {
             let p_mem = GlobalLock(h_global) as *mut u8;
@@ -281,36 +280,56 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
             }
         }
 
-        // Also save to Pictures\Screenshots folder
+        // 2. Stream directly to file without allocating a secondary buffer (Zero-Duplicate Memory Optimization)
         let mut saved_path_str = None;
         if let Some(user_profile) = std::env::var_os("USERPROFILE") {
             let screenshots_dir = PathBuf::from(user_profile).join("Pictures").join("Screenshots");
-            let _ = std::fs::create_dir_all(&screenshots_dir);
-            let timestamp = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_secs())
-                .unwrap_or(0);
-            let target_file = screenshots_dir.join(format!("Synchro_{}.bmp", timestamp));
+            if let Err(e) = fs::create_dir_all(&screenshots_dir) {
+                eprintln!("[Screenshot] Failed to create screenshot directory: {}", e);
+            } else {
+                let timestamp = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_secs())
+                    .unwrap_or(0);
+                let target_file = screenshots_dir.join(format!("Synchro_{}.bmp", timestamp));
 
-            // Write 24/32-bit BMP
-            let mut bmp_data = Vec::with_capacity(14 + total_size);
-            // BMP File Header (14 bytes)
-            bmp_data.extend_from_slice(b"BM");
-            let file_size = (14 + total_size) as u32;
-            bmp_data.extend_from_slice(&file_size.to_le_bytes());
-            bmp_data.extend_from_slice(&[0, 0, 0, 0]); // reserved
-            let offset = (14 + header_size) as u32;
-            bmp_data.extend_from_slice(&offset.to_le_bytes());
+                if let Ok(file) = File::create(&target_file) {
+                    let mut writer = BufWriter::with_capacity(64 * 1024, file);
+                    let mut write_success = true;
 
-            // DIB Header + Pixels
-            let header_slice = std::slice::from_raw_parts(&header as *const _ as *const u8, header_size);
-            bmp_data.extend_from_slice(header_slice);
-            bmp_data.extend_from_slice(&pixels);
+                    // BMP 14-byte File Header
+                    let file_size = (14 + total_size) as u32;
+                    let offset = (14 + header_size) as u32;
+                    let mut bmp_file_header = [0u8; 14];
+                    bmp_file_header[0] = b'B';
+                    bmp_file_header[1] = b'M';
+                    bmp_file_header[2..6].copy_from_slice(&file_size.to_le_bytes());
+                    bmp_file_header[10..14].copy_from_slice(&offset.to_le_bytes());
 
-            if std::fs::write(&target_file, bmp_data).is_ok() {
-                saved_path_str = Some(target_file.to_string_lossy().to_string());
+                    if writer.write_all(&bmp_file_header).is_err() {
+                        write_success = false;
+                    }
+
+                    // DIB Header
+                    let header_bytes = std::slice::from_raw_parts(&header as *const _ as *const u8, header_size);
+                    if write_success && writer.write_all(header_bytes).is_err() {
+                        write_success = false;
+                    }
+
+                    // Pixel bits directly from `pixels`
+                    if write_success && writer.write_all(&pixels).is_err() {
+                        write_success = false;
+                    }
+
+                    if write_success && writer.flush().is_ok() {
+                        saved_path_str = Some(target_file.to_string_lossy().to_string());
+                    }
+                }
             }
         }
+
+        // Explicitly drop large pixel buffer immediately
+        drop(pixels);
 
         Ok(JuicyScreenshotResult {
             success: true,

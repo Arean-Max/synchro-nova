@@ -435,7 +435,7 @@ export function renderColorPreview(appState, viewState, t) {
 
   return [
     '<div class="color-preview-viewport">',
-    `  <img id="color-preview-image" class="color-preview-img" src="${imgSrc}" alt="Preview" style="${filterStyle}">`,
+    `  <img id="color-preview-image" class="color-preview-img" src="${imgSrc}" alt="Preview" loading="lazy" decoding="async" style="${filterStyle}">`,
     '  <div class="color-preview-overlay">',
     '    <div class="color-preview-switch">',
     `      <button class="preview-mode-btn ${mode === "day" ? "active" : ""}" type="button" data-action="set-color-preview-mode" data-mode="day" title="${escapeAttr(t("previewDay"))}">`,
@@ -529,3 +529,19 @@ export function syncAllSliders(appState) {
   updateColorPreviewDom(appState.color);
   updateTemplateActiveDom(appState);
 }
+
+export const colorFeature = {
+  render: renderColorPage,
+  mount(container, context) {
+    if (context?.appState) {
+      syncAllSliders(context.appState);
+    }
+  },
+  unmount() {
+    // Release decoded preview bitmap from memory immediately on leaving tab
+    const img = document.getElementById("color-preview-image");
+    if (img) {
+      img.src = "";
+    }
+  }
+};

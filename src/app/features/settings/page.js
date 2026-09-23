@@ -95,3 +95,10 @@ export function renderSettingsPage(appState, _viewState, t) {
     '</div>'
   ].join("");
 }
+
+export const settingsFeature = {
+  render: renderSettingsPage,
+  mount(container, context) {},
+  unmount() {}
+};
+

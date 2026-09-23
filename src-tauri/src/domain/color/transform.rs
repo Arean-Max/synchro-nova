@@ -1,4 +1,4 @@
-use crate::ColorSettings;
+use crate::app::state::ColorSettings;
 use std::sync::{Arc, Condvar, Mutex, OnceLock};
 
 struct ColorGuardState {
@@ -21,7 +21,7 @@ fn get_guard_sync() -> &'static Arc<(Mutex<ColorGuardState>, Condvar)> {
 }
 
 #[cfg(target_os = "windows")]
-pub(crate) fn start_color_guard() {
+pub fn start_color_guard() {
     static STARTED: OnceLock<()> = OnceLock::new();
     STARTED.get_or_init(|| {
         let sync = Arc::clone(get_guard_sync());
@@ -72,9 +72,9 @@ pub(crate) fn start_color_guard() {
 }
 
 #[cfg(not(target_os = "windows"))]
-pub(crate) fn start_color_guard() {}
+pub fn start_color_guard() {}
 
-pub(crate) fn stop_color_guard() {
+pub fn stop_color_guard() {
     let sync = get_guard_sync();
     if let Ok(mut lock) = sync.0.lock() {
         lock.exiting = true;
@@ -91,7 +91,7 @@ fn set_active_color(color: Option<(ColorSettings, bool)>) {
 }
 
 #[cfg(target_os = "windows")]
-pub(crate) fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) -> Result<(), String> {
+pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) -> Result<(), String> {
     if !color.enabled {
         set_active_color(None);
         return reset_color_transform();
@@ -119,13 +119,13 @@ pub(crate) fn apply_color_transform(_color: &ColorSettings, _show_on_recordings:
 #[cfg(target_os = "windows")]
 pub(crate) fn reset_color_transform() -> Result<(), String> {
     set_active_color(None);
-    let effect = crate::ffi::MagColorEffect {
+    let effect = crate::platform::ffi::MagColorEffect {
         transform: identity_matrix(),
     };
 
     unsafe {
-        let _ = crate::ffi::winapi::MagInitialize();
-        let _ = crate::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+        let _ = crate::platform::ffi::winapi::MagInitialize();
+        let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
     }
     let _ = apply_gamma_ramp(100.0);
     Ok(())
@@ -139,13 +139,13 @@ pub(crate) fn reset_color_transform() -> Result<(), String> {
 #[cfg(target_os = "windows")]
 fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) -> Result<(), String> {
     let matrix = build_color_matrix(color, include_matrix_gamma);
-    let effect = crate::ffi::MagColorEffect { transform: matrix };
+    let effect = crate::platform::ffi::MagColorEffect { transform: matrix };
 
     static MAGNIFICATION_READY: OnceLock<Result<(), String>> = OnceLock::new();
 
     MAGNIFICATION_READY
         .get_or_init(|| unsafe {
-            if crate::ffi::winapi::MagInitialize() == 0 {
+            if crate::platform::ffi::winapi::MagInitialize() == 0 {
                 Err("Windows Magnification API initialization failed".to_string())
             } else {
                 Ok(())
@@ -154,7 +154,7 @@ fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) 
         .clone()?;
 
     unsafe {
-        if crate::ffi::winapi::MagSetFullscreenColorEffect(&effect) == 0 {
+        if crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect) == 0 {
             return Err("Windows Magnification API color effect failed".to_string());
         }
     }
@@ -166,7 +166,7 @@ fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) 
 fn apply_gamma_ramp(gamma_percent: f32) -> Result<(), String> {
     let gamma = (gamma_percent / 100.0).clamp(0.5, 1.5);
     let exponent = 1.0 / gamma;
-    let mut ramp = crate::ffi::GammaRamp::default();
+    let mut ramp = crate::platform::ffi::GammaRamp::default();
 
     for index in 0..256 {
         let normalized = index as f32 / 255.0;
@@ -177,13 +177,13 @@ fn apply_gamma_ramp(gamma_percent: f32) -> Result<(), String> {
     }
 
     unsafe {
-        let hdc = crate::ffi::winapi::GetDC(std::ptr::null_mut());
+        let hdc = crate::platform::ffi::winapi::GetDC(std::ptr::null_mut());
         if hdc.is_null() {
             return Err("Failed to acquire display device context".to_string());
         }
 
-        let result = crate::ffi::winapi::SetDeviceGammaRamp(hdc, &ramp);
-        let _ = crate::ffi::winapi::ReleaseDC(std::ptr::null_mut(), hdc);
+        let result = crate::platform::ffi::winapi::SetDeviceGammaRamp(hdc, &ramp);
+        let _ = crate::platform::ffi::winapi::ReleaseDC(std::ptr::null_mut(), hdc);
 
         if result == 0 {
             return Err("Display driver rejected gamma ramp".to_string());
@@ -203,7 +203,7 @@ pub(crate) fn gamma_fallback_matrix(gamma_percent: f32) -> [f32; 25] {
     m
 }
 
-fn build_color_matrix(color: &ColorSettings, include_matrix_gamma: bool) -> [f32; 25] {
+pub(crate) fn build_color_matrix(color: &ColorSettings, include_matrix_gamma: bool) -> [f32; 25] {
     let saturation = color.saturation / 100.0;
     let contrast = color.contrast / 100.0;
     let hue = color.hue.to_radians();
