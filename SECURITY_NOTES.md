@@ -17,7 +17,7 @@ Synchro Nova operates under the following security assumptions:
 
 ## 2. Process & OS Mitigations
 
-During startup in `src-tauri/src/ffi.rs`, the native process configures several Win32 security policies:
+During startup in `src-tauri/src/platform/ffi/security.rs`, the native process configures several Win32 security policies:
 
 ### Data Execution Prevention (DEP)
 ```rust
@@ -28,15 +28,21 @@ Enforces permanent DEP for the process lifetime, preventing execution of code in
 ### DLL Search Order Hijacking Protection
 ```rust
 winapi::SetSearchPathMode(BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT);
-winapi::SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+winapi::SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 ```
-Portable binaries running from user directories (`Desktop`, `Downloads`) are vulnerable to DLL preloading attacks if an attacker places a rogue DLL in the current working directory. `SetDefaultDllDirectories(0x00000800)` restricts library resolution exclusively to `%SystemRoot%\System32`.
+Portable binaries running from user directories (`Desktop`, `Downloads`) are vulnerable to DLL preloading attacks if an attacker places a rogue DLL in the current working directory. `SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)` (0x00001000) restricts library resolution exclusively to `%SystemRoot%\System32` and the application's own directory, strictly eliminating the current working directory (CWD) and user `PATH` from the search order.
+
+### Authenticode Signature Verification (WinVerifyTrust)
+All auxiliary dynamic libraries (such as `WebView2Loader.dll`) and detected Edge WebView2 runtime executables are cryptographically validated prior to loading:
+- Validation is performed in-process via `WinVerifyTrust` (`WINTRUST_ACTION_GENERIC_VERIFY_V2`) against the Windows Trust Provider.
+- Unsigned, modified, or tampered binaries are rejected before any `LoadLibraryW` call can occur.
+- This neutralizes DLL sideloading and local privilege escalation (LPE) vectors when the application restarts as an administrator.
 
 ### Heap Corruption Defense
 ```rust
 winapi::HeapSetInformation(heap, HeapEnableTerminationOnCorruption, NULL, 0);
 ```
-Enables immediate process termination if the Windows heap manager detects corruption in internal metadata structures, neutralizing heap-based buffer overflow exploitation.
+Enforces immediate process termination if the Windows heap manager detects corruption in internal metadata structures, neutralizing heap-based buffer overflow exploitation.
 
 ### Compiler Flags
 Release binaries are built with:
@@ -53,7 +59,7 @@ The WebView2 container enforces a locked-down CSP:
 ```
 default-src 'self';
 script-src 'self';
-style-src 'self';
+style-src 'self' 'unsafe-inline';
 img-src 'self' data: asset: asset://localhost http://asset.localhost https://asset.localhost;
 font-src 'self';
 connect-src 'self';
@@ -62,8 +68,12 @@ base-uri 'none';
 frame-ancestors 'none';
 form-action 'none';
 ```
-- Remote scripts (`<script src="https://...">`) and inline executable strings (`eval`, `setTimeout(string)`) are prohibited.
-- Sub-frames, plugins (`<object>`, `<embed>`), and form posts are blocked.
+- **Scripts**: `script-src 'self'` strictly blocks remote scripts (`<script src="https://...">`) and inline executable strings (`eval`, `setTimeout(string)`).
+- **Styles**: `style-src 'self' 'unsafe-inline'` is scoped to allow dynamic DOM styling computed in JavaScript (such as user-selected RGB accent colors, theme variables, and gamma ramp slider fills).
+- **Boundaries**: Sub-frames, plugins (`<object>`, `<embed>`), and form posts are completely disabled.
+
+### Scoped Asset Protocol
+The custom asset protocol (`asset:`) is restricted in `tauri.conf.json` strictly to `$APPDATA/**`, `$LOCALAPPDATA/**`, and `$RESOURCE/**`. Blanket filesystem wildcards (`**/*.png`, etc.) are disallowed. Specific game banners and icons discovered by the backend game detector are dynamically whitelisted via `app.asset_protocol_scope().allow_file()` on demand, preventing arbitrary disk reads.
 
 ### HTML and Attribute Escaping
 All dynamic content rendered in the DOM passes through `escapeHtml()` in `src/app/core/html.js`, escaping all five XML/HTML entities (`&`, `<`, `>`, `"`, `'`). This prevents DOM-based cross-site scripting when rendering local file paths or game titles.
@@ -90,6 +100,9 @@ Tweaks that require administrative access (e.g. HKLM policies, `powercfg`, `nets
 
 ### Audit Logging
 All tweak executions, rollbacks, and failures are recorded in `%APPDATA%\app.synchro.performance\tweaks_audit.log`. The log automatically rolls over when reaching 512 KB.
+
+### NSIS Installation Hardening
+The official NSIS setup installer specifies `installMode: "perMachine"`, requiring UAC elevation during installation and deploying exclusively into `%ProgramFiles%\Synchro Nova`. This ensures all installed files and directories are governed by Windows Access Control Lists (ACLs), preventing unprivileged local users or malicious processes from modifying application binaries, configurations, or dependencies.
 
 ---
 

@@ -112,12 +112,14 @@ mod prerequisites_check {
         if let Ok(current_exe) = std::env::current_exe() {
             if let Some(parent) = current_exe.parent() {
                 let local_wv = parent.join("webview2");
-                if has_webview2_in_dir(&local_wv) || local_wv.join("msedgewebview2.exe").exists() {
+                let local_exe = local_wv.join("msedgewebview2.exe");
+                if has_webview2_in_dir(&local_wv) || (local_exe.is_file() && is_authenticode_valid(&local_exe)) {
                     std::env::set_var("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", &local_wv);
                     return true;
                 }
                 let runtimes_wv = parent.join("runtimes").join("webview2");
-                if has_webview2_in_dir(&runtimes_wv) || runtimes_wv.join("msedgewebview2.exe").exists() {
+                let runtimes_exe = runtimes_wv.join("msedgewebview2.exe");
+                if has_webview2_in_dir(&runtimes_wv) || (runtimes_exe.is_file() && is_authenticode_valid(&runtimes_exe)) {
                     std::env::set_var("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", &runtimes_wv);
                     return true;
                 }
@@ -161,7 +163,9 @@ mod prerequisites_check {
                 if entry.path().is_dir() {
                     let exe = entry.path().join("msedgewebview2.exe");
                     let edge = entry.path().join("msedge.exe");
-                    if exe.exists() || edge.exists() {
+                    if (exe.is_file() && is_authenticode_valid(&exe))
+                        || (edge.is_file() && is_authenticode_valid(&edge))
+                    {
                         return true;
                     }
                 }
@@ -170,7 +174,6 @@ mod prerequisites_check {
         false
     }
 
-    #[allow(dead_code)]
     pub(crate) fn is_authenticode_valid(path: &Path) -> bool {
         if !path.is_file() {
             return false;

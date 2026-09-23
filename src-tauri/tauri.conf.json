@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Synchro Nova",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "identifier": "app.synchro.performance",
   "build": {
     "frontendDist": "../src"
@@ -34,13 +34,8 @@
         "scope": {
           "allow": [
             "$APPDATA/**",
-            "$RESOURCE/**",
-            "**/*.png",
-            "**/*.jpg",
-            "**/*.jpeg",
-            "**/*.ico",
-            "**/*.bmp",
-            "**/*.webp"
+            "$LOCALAPPDATA/**",
+            "$RESOURCE/**"
           ]
         }
       }
@@ -58,6 +53,7 @@
         "type": "downloadBootstrapper"
       },
       "nsis": {
+        "installMode": "perMachine",
         "installerHooks": "nsis-hooks.nsi"
       }
     }

@@ -47,13 +47,7 @@ mod webview2_link {
             let dll_path = manifest_dir.join(arch).join("WebView2Loader.dll");
             if dll_path.exists() {
                 let raw_bytes = fs::read(&dll_path)?;
-                // Mask the DLL bytes with a deterministic transformation so no raw PE header (MZ) exists in .rdata
-                let masked: Vec<u8> = raw_bytes
-                    .iter()
-                    .enumerate()
-                    .map(|(i, &b)| b ^ ((i as u8).wrapping_mul(37) ^ 0xA5))
-                    .collect();
-                fs::write(out_dir.join(bin_name), &masked)?;
+                fs::write(out_dir.join(bin_name), &raw_bytes)?;
             }
         }
 
