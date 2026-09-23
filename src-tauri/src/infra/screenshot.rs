@@ -343,3 +343,37 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
 pub fn capture_juicy_screenshot(_color: &ColorSettings) -> Result<JuicyScreenshotResult, String> {
     Err("Screenshots only supported on Windows".to_string())
 }
+
+#[cfg(target_os = "windows")]
+pub fn start_global_screenshot_listener() {
+    static LISTENER_STARTED: std::sync::OnceLock<()> = std::sync::OnceLock::new();
+    LISTENER_STARTED.get_or_init(|| {
+        std::thread::Builder::new()
+            .name("synchro-screenshot-hotkey".to_string())
+            .spawn(move || {
+                let mut was_pressed = false;
+                loop {
+                    std::thread::sleep(std::time::Duration::from_millis(35));
+                    let state = unsafe { crate::platform::ffi::winapi::GetAsyncKeyState(0x2C) };
+                    let is_pressed = (state as u16 & 0x8000) != 0;
+                    if is_pressed && !was_pressed {
+                        was_pressed = true;
+                        if let Some(color) = crate::domain::color::get_active_color() {
+                            if color.enabled {
+                                std::thread::sleep(std::time::Duration::from_millis(25));
+                                let _ = capture_juicy_screenshot(&color);
+                            }
+                        }
+                    } else if !is_pressed {
+                        was_pressed = false;
+                    }
+                }
+            })
+            .ok();
+    });
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn start_global_screenshot_listener() {}
+
+

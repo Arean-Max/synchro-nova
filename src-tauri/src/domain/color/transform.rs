@@ -90,6 +90,15 @@ fn set_active_color(color: Option<(ColorSettings, bool)>) {
     }
 }
 
+pub fn get_active_color() -> Option<ColorSettings> {
+    let sync = get_guard_sync();
+    if let Ok(lock) = sync.0.lock() {
+        lock.active.as_ref().map(|(c, _)| c.clone())
+    } else {
+        None
+    }
+}
+
 #[cfg(target_os = "windows")]
 pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) -> Result<(), String> {
     if !color.enabled {
@@ -141,19 +150,8 @@ fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) 
     let matrix = build_color_matrix(color, include_matrix_gamma);
     let effect = crate::platform::ffi::MagColorEffect { transform: matrix };
 
-    static MAGNIFICATION_READY: OnceLock<Result<(), String>> = OnceLock::new();
-
-    MAGNIFICATION_READY
-        .get_or_init(|| unsafe {
-            if crate::platform::ffi::winapi::MagInitialize() == 0 {
-                Err("Windows Magnification API initialization failed".to_string())
-            } else {
-                Ok(())
-            }
-        })
-        .clone()?;
-
     unsafe {
+        let _ = crate::platform::ffi::winapi::MagInitialize();
         if crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect) == 0 {
             return Err("Windows Magnification API color effect failed".to_string());
         }

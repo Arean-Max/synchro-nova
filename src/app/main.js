@@ -38,7 +38,8 @@ import { settingsFeature } from "./features/settings/page.js";
 import { router } from "./core/router.js";
 import { renderApplyModal } from "./features/tweaks/applyModal.js";
 import { icon } from "./ui/icons.js";
-import { renderMain, renderShell, renderPageBody } from "./ui/layout.js";
+import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget } from "./ui/layout.js";
+
 
 router.register("color", colorFeature);
 router.register("gameColor", colorFeature);
@@ -389,6 +390,7 @@ async function switchLanguage(nextLang) {
     const span = exitBtn.querySelector("span");
     if (span) span.textContent = t("exit");
   }
+  updateSidebarUpdateWidgetDom();
 
   // 3. Update Page Header
   const page = pageDefs[activePage];
@@ -434,6 +436,95 @@ async function switchLanguage(nextLang) {
 
   // Save setting to backend
   await saveSettings();
+}
+
+function updateSidebarUpdateWidgetDom() {
+  const container = document.getElementById("sidebar-update-wrapper");
+  if (!container) return;
+  const temp = document.createElement("div");
+  temp.innerHTML = renderSidebarUpdateWidget(t, viewState);
+  const newEl = temp.firstElementChild;
+  if (newEl) {
+    container.className = newEl.className;
+    container.innerHTML = newEl.innerHTML;
+  }
+}
+
+let updatePollTimer = 0;
+
+async function checkForUpdates() {
+  try {
+    const res = await invokeCommand("check_for_updates");
+    if (res && res.updateAvailable) {
+      viewState.updateStatus = "available";
+      viewState.latestVersion = res.latestVersion;
+      viewState.downloadUrl = res.downloadUrl;
+      viewState.assetSize = res.assetSize;
+      updateSidebarUpdateWidgetDom();
+
+      if (appState.settings.autoUpdate) {
+        startUpdateDownload();
+      }
+    }
+  } catch (err) {
+    console.warn("Check for updates failed:", err);
+  }
+}
+
+async function startUpdateDownload() {
+  if (viewState.updateStatus === "downloading") return;
+  viewState.updateStatus = "downloading";
+  viewState.updatePercent = 0;
+  updateSidebarUpdateWidgetDom();
+
+  try {
+    await invokeCommand("download_update", {
+      url: viewState.downloadUrl || null,
+      size: viewState.assetSize || null
+    });
+
+    if (updatePollTimer) window.clearInterval(updatePollTimer);
+    updatePollTimer = window.setInterval(async () => {
+      try {
+        const progress = await invokeCommand("get_update_progress");
+        if (!progress) return;
+
+        viewState.updatePercent = progress.percent || 0;
+
+        const pctEl = document.querySelector("#sidebar-update-wrapper .update-progress-pct");
+        if (pctEl) pctEl.textContent = `${progress.percent}%`;
+        const barFill = document.querySelector("#sidebar-update-wrapper .update-progress-bar-fill");
+        if (barFill) barFill.style.width = `${progress.percent}%`;
+
+        if (progress.status === "ready") {
+          window.clearInterval(updatePollTimer);
+          updatePollTimer = 0;
+          viewState.updateStatus = "ready";
+          viewState.updatePercent = 100;
+          updateSidebarUpdateWidgetDom();
+        } else if (progress.status === "error") {
+          window.clearInterval(updatePollTimer);
+          updatePollTimer = 0;
+          viewState.updateStatus = "error";
+          updateSidebarUpdateWidgetDom();
+        }
+      } catch (err) {
+        console.warn("Error polling update progress:", err);
+      }
+    }, 100);
+  } catch (err) {
+    console.error("Start download failed:", err);
+    viewState.updateStatus = "error";
+    updateSidebarUpdateWidgetDom();
+  }
+}
+
+async function applyUpdateInstall() {
+  try {
+    await invokeCommand("install_update");
+  } catch (err) {
+    console.error("Apply update failed:", err);
+  }
 }
 
 function updateColorPage(options = {}) {
@@ -1282,6 +1373,24 @@ async function handleClick(event) {
     return;
   }
 
+  const updateDownloadBtn = target.closest("[data-action='start-update-download']");
+  if (updateDownloadBtn) {
+    startUpdateDownload();
+    return;
+  }
+
+  const updateInstallBtn = target.closest("[data-action='apply-update-install']");
+  if (updateInstallBtn) {
+    applyUpdateInstall();
+    return;
+  }
+
+  const manualDownloadBtn = target.closest("[data-action='open-manual-download']");
+  if (manualDownloadBtn) {
+    invokeCommand("open_external_url", { url: "https://github.com/Arean-Max/synchro-nova/releases" });
+    return;
+  }
+
   const scopeApplyBtn = target.closest(".scope-apply-btn");
   if (scopeApplyBtn) {
     scopeApplyBtn.classList.add("applied");
@@ -1634,6 +1743,7 @@ async function boot() {
   await loadLists();
   render();
   loadColorGames();
+  checkForUpdates();
   if (activePage === "tweaks") {
     loadTweakStatuses().then(updateMain);
   }

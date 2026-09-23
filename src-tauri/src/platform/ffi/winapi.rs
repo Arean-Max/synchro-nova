@@ -110,6 +110,7 @@ unsafe extern "system" {
         lp_dev_mode: *mut c_void,
         dw_flags: u32,
     ) -> i32;
+    pub fn GetAsyncKeyState(v_key: i32) -> i16;
 }
 
 #[cfg(target_os = "windows")]

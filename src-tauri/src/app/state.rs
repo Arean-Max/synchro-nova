@@ -70,6 +70,7 @@ pub struct AppSettings {
     pub language: String,
     pub show_on_recordings: bool,
     pub accent_color: String,
+    pub auto_update: bool,
 }
 
 impl Default for AppSettings {
@@ -85,6 +86,7 @@ impl Default for AppSettings {
             language: "en".to_string(),
             show_on_recordings: true,
             accent_color: "#ffffff".to_string(),
+            auto_update: false,
         }
     }
 }

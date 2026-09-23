@@ -37,8 +37,7 @@ export function renderSettingsPage(appState, _viewState, t) {
     `<input type="color" class="accent-color-input" data-action="pick-accent-color" value="${currentAccent}">`,
     `<span class="accent-custom-icon"></span>`,
     '</label>',
-    '</div>',
-    `<p class="settings-hint-text accent-hint-text">${t("interfaceAccentDesc")}</p>`
+    '</div>'
   ].join("");
 
   const communityList = [
@@ -49,7 +48,7 @@ export function renderSettingsPage(appState, _viewState, t) {
     icon("github"),
     '    </div>',
     '    <div class="tall-card-content">',
-    `      <span class="tall-card-title">${t("weOnGithubCaps")}</span>`,
+    `      <span class="tall-card-title">${t("sourceCodeCaps")}</span>`,
     '      <span class="tall-card-sub">github.com/Arean-Max</span>',
     '    </div>',
     '  </button>',
@@ -70,7 +69,8 @@ export function renderSettingsPage(appState, _viewState, t) {
     checkbox(t("closeToTray"), appState.settings.closeToTray, "closeToTray"),
     checkbox(t("startMinimized"), appState.settings.startMinimized, "startMinimized"),
     checkbox(t("autoBackupOnStart"), appState.settings.autoBackupOnStart, "autoBackupOnStart"),
-    checkbox(t("showOnRecordings"), Boolean(appState.settings.showOnRecordings), "showOnRecordings")
+    checkbox(t("showOnRecordings"), Boolean(appState.settings.showOnRecordings), "showOnRecordings"),
+    checkbox(t("autoUpdate"), Boolean(appState.settings.autoUpdate), "autoUpdate")
   ].join("");
 
   const unifiedCardBody = [

@@ -80,27 +80,21 @@ async function run() {
     }
   });
 
-  let release = Array.isArray(rels.data) ? rels.data.find(r => r.tag_name === 'v2.1') : null;
+  let release = Array.isArray(rels.data) ? rels.data.find(r => r.tag_name === 'v2.2.2') : null;
 
   const releaseBody = {
-    tag_name: 'v2.1',
+    tag_name: 'v2.2.2',
     target_commitish: 'main',
-    name: 'Synchro Nova v2.1',
+    name: 'Synchro Nova v2.2.2',
     body: [
-      '## Synchro Nova v2.1',
+      '## Synchro Nova v2.2.2',
       '',
       '### Changes & Improvements',
-      '- **Window Border & Artifact Elimination**: Completely eliminated white non-client stripes and DWM borders around the borderless window via `"shadow": false`, immersive dark mode (`DWMWA_USE_IMMERSIVE_DARK_MODE`), border suppression (`DWMWA_BORDER_COLOR`), and subclassed non-resizable hit testing (`WM_NCHITTEST`). WindowRect and ClientRect now match 940x595 with zero offset.',
-      '- **Anti-Cheat Immunity & Process Isolation**: Completely eliminated synthetic keystrokes (`keybd_event`) and process hooks. Display calibration operates strictly via Windows Desktop Window Manager (DWM) compositor shaders and monitor hardware LUTs, guaranteeing 100% immunity to anti-cheat bans (unlike Tactical Vision).',
-      '- **Windows System Restore Points**: Every backup creation now automatically commits a native Windows System Restore point (`SRSetRestorePointW` two-phase commit + PowerShell override) alongside `.reg` snapshots.',
-      '- **Adaptive RGB Contrast & White Default**: Fixed text invisibility when setting RGB `0 0 0` (`#000000`) with perceived luminance calculation, white outline borders, and contrast text fallbacks. The default interface accent is now White (`#ffffff`).',
-      '- **Clean First-Run Defaults**: Automatic backup on startup is now disabled by default (`autoBackupOnStart = false`).',
-      '- **Security & Runtime Hardening**: Removed deprecated `URLDownloadToFileW` and background installer drops. All color calibration maintains persistent streaming/recording support on Discord and OBS.',
-      '- **Unified Apple-Grade Settings UI**: Unified preferences, multilingual support, and community channels into a polished, responsive single view.',
-      '',
-      '### Downloads',
-      '- **Synchro-Nova-2.1.0-Portable.zip** — Standalone portable archive.',
-      '- **Synchro.Nova_2.1.0_x64-setup.exe** — Windows installer package with Start Menu shortcut and clean uninstaller.'
+      '- **Built-In Self-Updater Engine**: Added native background updater powered by `curl.exe` with real-time percentage progress bar, manual download fallback link, smooth transition to "Install", and seamless in-place binary upgrade upon restart.',
+      '- **EAC-Safe Global Screenshot Vibrancy**: Integrated background PrintScreen monitor (`GetAsyncKeyState`). Any screenshot taken in games (CS2, Apex, Rust, Fortnite, Valorant) or desktop is instantly color-calibrated in memory with full saturation, contrast, hue, and gamma, and placed directly into Windows Clipboard (CF_DIB) — 100% immune to Easy Anti-Cheat / BattlEye bans with zero game hooking or DLL injection.',
+      '- **DWM Screen Recording & Discord Stream Calibration**: Color transformation operates at the Windows Desktop Window Manager (DWM) level via `MagSetFullscreenColorEffect`, ensuring OBS Display Capture and Discord Entire Screen shares broadcast vibrant calibrated colors without injecting into game processes.',
+      '- **Settings Menu Smooth Scrolling**: Fixed scroll locking in Preferences (`overflow-y: auto`, `scrollbar-gutter: stable`), allowing effortless access to all toggles and links on any window resolution.',
+      '- **Localization & UI Polish**: Full Russian and English localization across the entire updater and settings surfaces, dynamic language hot-reloading without layout jitter, added Auto-update toggle (default: off), updated "SOURCE CODE" link, and cleaned up RGB hint subtitles.'
     ].join('\n'),
     draft: false,
     prerelease: false,
@@ -108,7 +102,7 @@ async function run() {
   };
 
   if (!release) {
-    console.log('2. Creating Release v2.1 on GitHub...');
+    console.log('2. Creating Release v2.2.2 on GitHub...');
     const created = await request({
       hostname: 'api.github.com',
       path: `/repos/${owner}/${repo}/releases`,
@@ -124,7 +118,7 @@ async function run() {
     console.log('Release creation status:', created.status);
     release = created.data;
   } else {
-    console.log('Release v2.1 already exists with ID:', release.id, '- updating body and name...');
+    console.log('Release v2.2.2 already exists with ID:', release.id, '- updating body and name...');
     const updated = await request({
       hostname: 'api.github.com',
       path: `/repos/${owner}/${repo}/releases/${release.id}`,
@@ -165,23 +159,27 @@ async function run() {
     }
   }
 
-  const setupPath = path.resolve('dist-artifacts/Synchro.Nova_2.1.0_x64-setup.exe');
-  const zipPath = path.resolve('dist-artifacts/Synchro-Nova-2.1.0-Portable.zip');
+  const artifacts = fs.existsSync('dist-artifacts') ? fs.readdirSync('dist-artifacts') : [];
+  const setupName = artifacts.find(f => f.endsWith('-setup.exe')) || 'Synchro.Nova_2.2.2_x64-setup.exe';
+  const zipName = artifacts.find(f => f.endsWith('-Portable.zip')) || 'Synchro-Nova-2.2.2-Portable.zip';
+
+  const setupPath = path.resolve('dist-artifacts', setupName);
+  const zipPath = path.resolve('dist-artifacts', zipName);
   const exePath = path.resolve('dist-artifacts/synchro.exe');
   const shaPath = path.resolve('dist-artifacts/SHA256SUMS.txt');
 
   if (fs.existsSync(setupPath)) {
-    console.log('4. Uploading Synchro.Nova_2.1.0_x64-setup.exe...');
-    const resSetup = await uploadAsset(release.upload_url, setupPath, 'Synchro.Nova_2.1.0_x64-setup.exe', 'application/vnd.microsoft.portable-executable');
-    console.log('Synchro.Nova_2.1.0_x64-setup.exe upload status:', resSetup.status);
+    console.log(`4. Uploading ${setupName}...`);
+    const resSetup = await uploadAsset(release.upload_url, setupPath, setupName, 'application/vnd.microsoft.portable-executable');
+    console.log(`${setupName} upload status:`, resSetup.status);
   } else {
     console.warn('Setup file not found:', setupPath);
   }
 
   if (fs.existsSync(zipPath)) {
-    console.log('5. Uploading Synchro-Nova-2.1.0-Portable.zip...');
-    const resZip = await uploadAsset(release.upload_url, zipPath, 'Synchro-Nova-2.1.0-Portable.zip', 'application/zip');
-    console.log('Synchro-Nova-2.1.0-Portable.zip upload status:', resZip.status);
+    console.log(`5. Uploading ${zipName}...`);
+    const resZip = await uploadAsset(release.upload_url, zipPath, zipName, 'application/zip');
+    console.log(`${zipName} upload status:`, resZip.status);
   } else {
     console.warn('Portable zip file not found:', zipPath);
   }

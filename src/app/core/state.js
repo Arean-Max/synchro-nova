@@ -11,6 +11,7 @@ export const defaultState = {
     language: "en",
     showOnRecordings: true,
     accentColor: "#ffffff",
+    autoUpdate: false,
     templateOverrides: {}
   },
   isAdmin: false
@@ -38,6 +39,11 @@ export const viewState = {
   backupName: "",
   configName: "",
   cpuHistory: [],
+  updateStatus: "hidden",
+  updatePercent: 0,
+  latestVersion: "",
+  downloadUrl: "",
+  assetSize: 0,
   showAllDrivers: false,
   drivers: [],
   driversLoading: false,

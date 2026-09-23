@@ -63,6 +63,7 @@ pub fn run() {
 
             let _ = domain::color::apply_color_transform(&initial.color, initial.settings.show_on_recordings);
             domain::color::start_color_guard();
+            infra::screenshot::start_global_screenshot_listener();
             let _ = settings::set_autostart(app.handle(), initial.settings.autostart_windows);
             app::tray::install_tray(app.handle())?;
 
@@ -176,6 +177,10 @@ pub fn run() {
             commands::open_official_driver_url,
             commands::open_external_url,
             commands::open_windows_driver_updates,
+            commands::check_for_updates,
+            commands::download_update,
+            commands::get_update_progress,
+            commands::install_update,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Synchro");
@@ -235,6 +240,17 @@ mod tests {
         assert!(commands::system::validate_external_url("http://insecure.com").is_err());
         assert!(commands::system::validate_external_url("https://bad site.com").is_err());
         assert!(commands::system::validate_external_url("https://test.com/path?arg=1&evil=true").is_err());
+    }
+
+    #[test]
+    fn test_updater_version_comparison() {
+        use domain::updater::client::is_newer_version;
+        assert!(is_newer_version("v2.2.3", "2.2.2"));
+        assert!(is_newer_version("v3.0.0", "2.2.2"));
+        assert!(is_newer_version("2.3.0", "2.2.2"));
+        assert!(!is_newer_version("v2.2.2", "2.2.2"));
+        assert!(!is_newer_version("v2.2.1", "2.2.2"));
+        assert!(!is_newer_version("v1.9.9", "2.2.2"));
     }
 
     #[test]

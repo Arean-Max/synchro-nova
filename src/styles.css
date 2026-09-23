@@ -3432,19 +3432,23 @@ button.check-row:active {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   align-items: stretch;
+  box-sizing: border-box;
 }
 
 .settings-unified-card {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
+  min-height: min-content;
   flex: 1 1 auto;
   margin: 0;
   padding: 16px 22px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
   box-sizing: border-box;
 }
 
@@ -5452,3 +5456,182 @@ button.check-row:active {
 .settings-tall-card-btn:hover .tall-card-sub {
   color: var(--text-secondary, #94a3b8);
 }
+
+/* Sidebar Updater Widget */
+.sidebar-update-wrapper {
+  margin: 0 10px 8px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-update-wrapper.hidden {
+  display: none;
+}
+
+.update-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.update-action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.update-action-btn .icon {
+  width: 14px;
+  height: 14px;
+  stroke: var(--ui-accent, #38bdf8);
+  flex-shrink: 0;
+}
+
+.update-btn-label {
+  flex: 1 1 auto;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.update-version-tag {
+  font-size: 9.5px;
+  font-family: ui-monospace, monospace;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: var(--ui-accent, #38bdf8);
+  letter-spacing: 0.02em;
+}
+
+.update-action-btn.install-ready-btn {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.25);
+  animation: pulseReady 2s infinite ease-in-out;
+}
+
+.update-action-btn.install-ready-btn .icon {
+  stroke: #4ade80;
+}
+
+@keyframes pulseReady {
+  0%, 100% { box-shadow: 0 0 8px rgba(34, 197, 94, 0.2); }
+  50% { box-shadow: 0 0 16px rgba(34, 197, 94, 0.45); }
+}
+
+/* Progress State */
+.update-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.update-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.update-progress-title {
+  font-size: 11px;
+  color: #e2e8f0;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.update-progress-pct {
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  color: var(--ui-accent, #38bdf8);
+  font-weight: 600;
+}
+
+.manual-download-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 9.5px;
+  color: #38bdf8;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.85;
+  transition: opacity 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+
+.manual-download-link:hover {
+  opacity: 1;
+  color: #60a5fa;
+}
+
+.update-progress-bar-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.update-progress-bar-fill {
+  height: 100%;
+  background: var(--ui-accent, #38bdf8);
+  border-radius: 3px;
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 8px var(--ui-accent, #38bdf8);
+}
+
+.update-error-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 8px 10px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 8px;
+}
+
+.update-error-text {
+  font-size: 10.5px;
+  color: #f87171;
+  white-space: nowrap;
+}
+
+.sidebar-collapsed .sidebar-update-wrapper {
+  margin: 0 6px 8px;
+}
+
+.sidebar-collapsed .sidebar-update-wrapper .update-btn-label,
+.sidebar-collapsed .sidebar-update-wrapper .update-version-tag,
+.sidebar-collapsed .sidebar-update-wrapper .update-progress-header {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-update-wrapper .update-action-btn {
+  justify-content: center;
+  padding: 8px;
+}
+
