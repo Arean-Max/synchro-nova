@@ -136,4 +136,95 @@ pub struct GammaRamp {
     pub green: [u16; 256],
     pub blue: [u16; 256],
 }
-
+
+impl Default for GammaRamp {
+    fn default() -> Self {
+        unsafe { std::mem::zeroed() }
+    }
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Default)]
+pub struct VsFixedFileInfo {
+    pub dw_signature: u32,
+    pub dw_struc_version: u32,
+    pub dw_file_version_ms: u32,
+    pub dw_file_version_ls: u32,
+    pub dw_product_version_ms: u32,
+    pub dw_product_version_ls: u32,
+    pub dw_file_flags_mask: u32,
+    pub dw_file_flags: u32,
+    pub dw_file_os: u32,
+    pub dw_file_type: u32,
+    pub dw_file_subtype: u32,
+    pub dw_file_date_ms: u32,
+    pub dw_file_date_ls: u32,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct ProcessEntry32W {
+    pub dw_size: u32,
+    pub cnt_usage: u32,
+    pub th32_process_id: u32,
+    pub th32_default_heap_id: usize,
+    pub th32_module_id: u32,
+    pub cnt_threads: u32,
+    pub th32_parent_process_id: u32,
+    pub pc_pri_class_base: i32,
+    pub dw_flags: u32,
+    pub sz_exe_file: [u16; 260],
+}
+
+impl Default for ProcessEntry32W {
+    fn default() -> Self {
+        let mut entry: Self = unsafe { std::mem::zeroed() };
+        entry.dw_size = std::mem::size_of::<Self>() as u32;
+        entry
+    }
+}
+
+pub const MB_OKCANCEL: u32 = 0x0000_0001;
+pub const MB_ICONWARNING: u32 = 0x0000_0030;
+pub const MB_ICONINFORMATION: u32 = 0x0000_0040;
+pub const MB_SETFOREGROUND: u32 = 0x0001_0000;
+pub const MB_TOPMOST: u32 = 0x0004_0000;
+pub const IDOK: i32 = 1;
+pub const SW_SHOWNORMAL: i32 = 1;
+pub const ENUM_CURRENT_SETTINGS: u32 = 0xFFFF_FFFF;
+pub const SM_CXSCREEN: i32 = 0;
+pub const SM_CYSCREEN: i32 = 1;
+pub const TH32CS_SNAPPROCESS: u32 = 0x0000_0002;
+pub const ERROR_ALREADY_EXISTS: u32 = 183;
+pub const ERROR_CANCELLED: u32 = 1223;
+pub const SW_RESTORE: i32 = 9;
+pub const SYNCHRONIZE: u32 = 0x0010_0000;
+pub const SEE_MASK_NOCLOSEPROCESS: u32 = 0x0000_0040;
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct ShellExecuteInfoW {
+    pub cb_size: u32,
+    pub f_mask: u32,
+    pub hwnd: *mut c_void,
+    pub lp_verb: *const u16,
+    pub lp_file: *const u16,
+    pub lp_parameters: *const u16,
+    pub lp_directory: *const u16,
+    pub n_show: i32,
+    pub h_inst_app: *mut c_void,
+    pub lp_id_list: *mut c_void,
+    pub lp_class: *const u16,
+    pub hkey_class: *mut c_void,
+    pub dw_hot_key: u32,
+    pub h_icon: *mut c_void,
+    pub h_process: *mut c_void,
+}
+
+impl Default for ShellExecuteInfoW {
+    fn default() -> Self {
+        let mut s: Self = unsafe { std::mem::zeroed() };
+        s.cb_size = std::mem::size_of::<Self>() as u32;
+        s
+    }
+}
