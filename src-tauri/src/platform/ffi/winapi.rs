@@ -69,4 +69,120 @@ unsafe extern "system" {
         directory: *const u16,
         show_cmd: i32,
     ) -> isize;
-
+
+    pub fn ShellExecuteExW(p_exec_info: *mut ShellExecuteInfoW) -> i32;
+    pub fn ExtractIconExW(
+        lpsz_file: *const u16,
+        n_icon_index: i32,
+        phicon_large: *mut *mut c_void,
+        phicon_small: *mut *mut c_void,
+        n_icons: u32,
+    ) -> u32;
+}
+
+#[cfg(target_os = "windows")]
+#[link(name = "User32")]
+unsafe extern "system" {
+    pub fn MessageBoxW(
+        hwnd: *mut c_void,
+        text: *const u16,
+        caption: *const u16,
+        utype: u32,
+    ) -> i32;
+    pub fn FindWindowW(class_name: *const u16, window_name: *const u16) -> *mut c_void;
+    pub fn ShowWindow(hwnd: *mut c_void, cmd_show: i32) -> i32;
+    pub fn SetForegroundWindow(hwnd: *mut c_void) -> i32;
+    pub fn EnumDisplayDevicesW(
+        device_name: *const u16,
+        dev_num: u32,
+        display_device: *mut DisplayDeviceW,
+        flags: u32,
+    ) -> i32;
+    pub fn EnumDisplaySettingsW(
+        device_name: *const u16,
+        mode_num: u32,
+        dev_mode: *mut DevModeW,
+    ) -> i32;
+    pub fn GetSystemMetrics(index: i32) -> i32;
+    pub fn GetDC(hwnd: *mut c_void) -> *mut c_void;
+    pub fn ReleaseDC(hwnd: *mut c_void, hdc: *mut c_void) -> i32;
+    pub fn SendMessageTimeoutW(
+        hwnd: *mut c_void,
+        msg: u32,
+        w_param: usize,
+        l_param: isize,
+        flags: u32,
+        timeout: u32,
+        result: *mut usize,
+    ) -> isize;
+    pub fn ChangeDisplaySettingsW(
+        lp_dev_mode: *mut c_void,
+        dw_flags: u32,
+    ) -> i32;
+    pub fn RegisterHotKey(hwnd: *mut c_void, id: i32, fs_modifiers: u32, vk: u32) -> i32;
+    pub fn UnregisterHotKey(hwnd: *mut c_void, id: i32) -> i32;
+    pub fn PostThreadMessageW(id_thread: u32, msg: u32, w_param: usize, l_param: isize) -> i32;
+    pub fn GetMessageW(
+        msg: *mut MSG,
+        hwnd: *mut c_void,
+        msg_filter_min: u32,
+        msg_filter_max: u32,
+    ) -> i32;
+    pub fn TranslateMessage(msg: *const MSG) -> i32;
+    pub fn DispatchMessageW(msg: *const MSG) -> isize;
+    pub fn SendMessageW(hwnd: *mut c_void, msg: u32, w_param: usize, l_param: isize) -> isize;
+    pub fn SetClassLongPtrW(hwnd: *mut c_void, n_index: i32, dw_new_long: isize) -> isize;
+    pub fn LoadIconW(hinstance: *mut c_void, lp_icon_name: *const u16) -> *mut c_void;
+    pub fn PeekMessageW(
+        msg: *mut MSG,
+        hwnd: *mut c_void,
+        msg_filter_min: u32,
+        msg_filter_max: u32,
+        remove_msg: u32,
+    ) -> i32;
+}
+
+#[cfg(target_os = "windows")]
+#[link(name = "Gdi32")]
+unsafe extern "system" {
+    pub fn SetDeviceGammaRamp(hdc: *mut c_void, ramp: *const GammaRamp) -> i32;
+}
+
+#[cfg(target_os = "windows")]
+#[link(name = "Magnification")]
+unsafe extern "system" {
+    pub fn MagInitialize() -> i32;
+    pub fn MagSetFullscreenColorEffect(effect: *const MagColorEffect) -> i32;
+}
+
+#[cfg(target_os = "windows")]
+pub unsafe fn mag_uninitialize() -> i32 {
+    let wide_name: Vec<u16> = "Magnification.dll\0".encode_utf16().collect();
+    let mod_handle = LoadLibraryW(wide_name.as_ptr());
+    if mod_handle.is_null() {
+        return 0;
+    }
+    let proc = GetProcAddress(mod_handle, b"MagUninitialize\0".as_ptr());
+    if proc.is_null() {
+        return 0;
+    }
+    let func: unsafe extern "system" fn() -> i32 = std::mem::transmute(proc);
+    func()
+}
+
+#[cfg(target_os = "windows")]
+#[link(name = "Advapi32")]
+unsafe extern "system" {
+    pub fn OpenProcessToken(
+        process_handle: *mut c_void,
+        desired_access: u32,
+        token_handle: *mut *mut c_void,
+    ) -> i32;
+    pub fn GetTokenInformation(
+        token_handle: *mut c_void,
+        token_information_class: u32,
+        token_information: *mut c_void,
+        token_information_length: u32,
+        return_length: *mut u32,
+    ) -> i32;
+}
