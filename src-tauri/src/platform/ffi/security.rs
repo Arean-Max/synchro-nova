@@ -327,4 +327,162 @@ pub fn verify_embedded_signature(path: &Path) -> bool {
         dw_ui_context: u32,
         p_signature_settings: *mut c_void,
     }
-
+
+    const WTD_UI_NONE: u32 = 2;
+    const WTD_REVOKE_NONE: u32 = 0;
+    const WTD_CHOICE_FILE: u32 = 1;
+    const WTD_STATEACTION_VERIFY: u32 = 1;
+    const WTD_STATEACTION_CLOSE: u32 = 2;
+    const WTD_SAFER_FLAG: u32 = 0x0000_0100;
+    const WTD_REVOCATION_CHECK_NONE: u32 = 0x0000_0010;
+    const WTD_CACHE_ONLY_URL_RETRIEVAL: u32 = 0x0000_1000;
+
+    let path_w = wide_null(&path.to_string_lossy());
+    let mut file_info = WinTrustFileInfo {
+        cb_struct: std::mem::size_of::<WinTrustFileInfo>() as u32,
+        pcwsz_file_path: path_w.as_ptr(),
+        h_file: std::ptr::null_mut(),
+        pg_known_subject: std::ptr::null_mut(),
+    };
+
+    let mut trust_data = WinTrustData {
+        cb_struct: std::mem::size_of::<WinTrustData>() as u32,
+        p_policy_callback_data: std::ptr::null_mut(),
+        p_sip_client_data: std::ptr::null_mut(),
+        dw_ui_choice: WTD_UI_NONE,
+        fdw_revocation_checks: WTD_REVOKE_NONE,
+        dw_union_choice: WTD_CHOICE_FILE,
+        p_file: &mut file_info,
+        dw_state_action: WTD_STATEACTION_VERIFY,
+        h_wvt_state_data: std::ptr::null_mut(),
+        pwsz_url_reference: std::ptr::null_mut(),
+        dw_prov_flags: WTD_SAFER_FLAG | WTD_REVOCATION_CHECK_NONE | WTD_CACHE_ONLY_URL_RETRIEVAL,
+        dw_ui_context: 0,
+        p_signature_settings: std::ptr::null_mut(),
+    };
+
+    let action_guid = Guid {
+        data1: 0x00aa_c56b,
+        data2: 0xcd44,
+        data3: 0x11d0,
+        data4: [0x8c, 0xc2, 0x00, 0xc0, 0x4f, 0xc2, 0x95, 0xee],
+    };
+
+    unsafe {
+        let wintrust_dll = winapi::LoadLibraryW(wide_null("wintrust.dll").as_ptr());
+        if wintrust_dll.is_null() {
+            return false;
+        }
+
+        type WinVerifyTrustFn = unsafe extern "system" fn(
+            *mut c_void,
+            *const Guid,
+            *mut WinTrustData,
+        ) -> i32;
+
+        let proc = winapi::GetProcAddress(wintrust_dll, b"WinVerifyTrust\0".as_ptr());
+        if proc.is_null() {
+            winapi::FreeLibrary(wintrust_dll);
+            return false;
+        }
+
+        let verify_fn: WinVerifyTrustFn = std::mem::transmute(proc);
+        let status = verify_fn(std::ptr::null_mut(), &action_guid, &mut trust_data);
+
+        trust_data.dw_state_action = WTD_STATEACTION_CLOSE;
+        let _ = verify_fn(std::ptr::null_mut(), &action_guid, &mut trust_data);
+
+        winapi::FreeLibrary(wintrust_dll);
+        status == 0
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn verify_embedded_signature(_path: &Path) -> bool {
+    true
+}
+
+#[repr(C)]
+struct RestorePointInfoW {
+    dw_event_type: u32,
+    dw_restore_pt_type: u32,
+    ll_sequence_number: i64,
+    sz_description: [u16; 256],
+}
+
+#[repr(C)]
+#[derive(Default)]
+struct StateMgrStatus {
+    n_status: u32,
+    ll_sequence_number: i64,
+}
+
+#[cfg(target_os = "windows")]
+pub fn create_native_system_restore_point(description: &str) -> bool {
+    unsafe {
+        let srclient = winapi::LoadLibraryW(wide_null("srclient.dll").as_ptr());
+        if srclient.is_null() {
+            return false;
+        }
+
+        type SRSetRestorePointWFn = unsafe extern "system" fn(
+            *mut RestorePointInfoW,
+            *mut StateMgrStatus,
+        ) -> i32;
+
+        let proc = winapi::GetProcAddress(srclient, b"SRSetRestorePointW\0".as_ptr());
+        if proc.is_null() {
+            winapi::FreeLibrary(srclient);
+            return false;
+        }
+
+        let sr_fn: SRSetRestorePointWFn = std::mem::transmute(proc);
+
+        let mut info = RestorePointInfoW {
+            dw_event_type: 100,
+            dw_restore_pt_type: 12,
+            ll_sequence_number: 0,
+            sz_description: [0; 256],
+        };
+
+        let clean: Vec<u16> = description
+            .chars()
+            .filter(|c| !c.is_control() && *c != '\0')
+            .take(255)
+            .flat_map(|c| {
+                let mut buf = [0u16; 2];
+                c.encode_utf16(&mut buf);
+                buf.into_iter().take_while(|&u| u != 0).collect::<Vec<_>>()
+            })
+            .collect();
+
+        for (i, &ch) in clean.iter().enumerate().take(255) {
+            info.sz_description[i] = ch;
+        }
+
+        let mut status = StateMgrStatus::default();
+        let success = sr_fn(&mut info, &mut status);
+
+        let committed = if success != 0 && status.n_status == 0 {
+            let mut end_info = RestorePointInfoW {
+                dw_event_type: 101,
+                dw_restore_pt_type: 12,
+                ll_sequence_number: status.ll_sequence_number,
+                sz_description: [0; 256],
+            };
+            let mut end_status = StateMgrStatus::default();
+            let end_success = sr_fn(&mut end_info, &mut end_status);
+            end_success != 0 && end_status.n_status == 0
+        } else {
+            false
+        };
+
+        winapi::FreeLibrary(srclient);
+        committed
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn create_native_system_restore_point(_description: &str) -> bool {
+    false
+}
