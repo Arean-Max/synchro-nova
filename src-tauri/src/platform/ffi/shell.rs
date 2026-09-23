@@ -95,4 +95,66 @@ pub fn runas_executable_with_args(_path: &Path, _args: Option<&str>) -> Result<(
 pub fn runas_executable_with_hwnd_and_args(_path: &Path, _hwnd: isize, _args: Option<&str>) -> Result<(), String> {
     Ok(())
 }
-
+
+#[cfg(target_os = "windows")]
+pub fn restart_explorer() -> Result<(), String> {
+    use std::process::Command;
+    use std::os::windows::process::CommandExt;
+
+    let system_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
+
+    let taskkill_exe = std::path::PathBuf::from(&system_root).join("System32").join("taskkill.exe");
+    let mut kill_cmd = Command::new(&taskkill_exe);
+    kill_cmd.args(["/F", "/IM", "explorer.exe"]);
+    kill_cmd.creation_flags(0x0800_0000);
+    let _ = kill_cmd.status();
+
+    std::thread::sleep(std::time::Duration::from_millis(350));
+
+    unsafe {
+        let env_w = wide_null("Environment");
+        let mut result: usize = 0;
+        let _ = winapi::SendMessageTimeoutW(
+            0xFFFF as *mut std::ffi::c_void,
+            0x001A,
+            0,
+            env_w.as_ptr() as isize,
+            2,
+            1000,
+            &mut result,
+        );
+    }
+
+    let explorer_exe = std::path::PathBuf::from(&system_root).join("explorer.exe");
+
+    let mut start_cmd = Command::new(&explorer_exe);
+    start_cmd.creation_flags(0x0800_0000);
+    start_cmd
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("Failed to restart explorer: {e}"))
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn restart_explorer() -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+pub fn show_message_box(caption: &str, text: &str, utype: u32) -> i32 {
+    let text_w = wide_null(text);
+    let cap_w = wide_null(caption);
+    unsafe {
+        winapi::MessageBoxW(
+            std::ptr::null_mut(),
+            text_w.as_ptr(),
+            cap_w.as_ptr(),
+            utype,
+        )
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn show_message_box(_caption: &str, _text: &str, _utype: u32) -> i32 {
+    1
+}
