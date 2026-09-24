@@ -102,7 +102,7 @@ async function run() {
   };
 
   if (!release) {
-    console.log('2. Creating Release v2.2.2 on GitHub...');
+    console.log(`2. Creating Release ${releaseBody.tag_name} on GitHub...`);
     const created = await request({
       hostname: 'api.github.com',
       path: `/repos/${owner}/${repo}/releases`,
@@ -118,7 +118,7 @@ async function run() {
     console.log('Release creation status:', created.status);
     release = created.data;
   } else {
-    console.log('Release v2.2.2 already exists with ID:', release.id, '- updating body and name...');
+    console.log(`Release ${releaseBody.tag_name} already exists with ID:`, release.id, '- updating body and name...');
     const updated = await request({
       hostname: 'api.github.com',
       path: `/repos/${owner}/${repo}/releases/${release.id}`,

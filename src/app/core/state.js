@@ -29,7 +29,6 @@ export const viewState = {
   configs: [],
   colorGames: [],
   colorGamesLoaded: false,
-  colorGamesDemo: false,
   selectedColorGame: "",
   colorGamePanelOpen: false,
   colorTemplateName: "",
@@ -85,15 +84,10 @@ export const pageDefs = {
 export const pageOrder = ["color", "tweaks", "characteristics", "backups", "settings"];
 
 export let activePage = "color";
-export let booting = false;
 export let appState = cloneState(defaultState);
 
 export function setActivePage(page) {
   activePage = pageDefs[page] ? page : "color";
-}
-
-export function setBooting(value) {
-  booting = Boolean(value);
 }
 
 export function cloneState(state) {

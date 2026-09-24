@@ -131,10 +131,6 @@ export function tweakCategory(tweak) {
   return "safe";
 }
 
-export function isSafeTweak(tweak) {
-  return !tweakBadges(tweak).includes("ADMIN");
-}
-
 export function allTweaks() {
   return tweakCatalog.flatMap((group) => group.tweaks);
 }

@@ -10,10 +10,6 @@ export const standardTemplateNames = new Set([
   "Night", "Ночной"
 ]);
 
-export function fallbackColorGames() {
-  return [];
-}
-
 export function colorGames(viewState) {
   return Array.isArray(viewState.colorGames) ? viewState.colorGames : [];
 }

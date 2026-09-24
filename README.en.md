@@ -22,31 +22,19 @@
 
 ## Overview
 
-Synchro Nova was designed as a lightweight, clean alternative to bloated game overlays and utilities that clutter memory, hook graphics libraries, and cause conflicts with anti-cheat software.
-
-The application combines hardware Digital Vibrance, monitor LUT gamma calibration, GPU driver auditing, and transparent system tweaks in a single offline tool with zero ads, zero telemetry, and zero background services.
+Synchro Nova is a lightweight, offline utility designed as a clean alternative to bloated game overlays and tweak scripts. It combines hardware-accelerated Digital Vibrance, monitor LUT gamma calibration, GPU driver auditing, and transparent Windows system tweaks in a single package with zero ads, zero telemetry, and zero background services.
 
 ---
 
-## 🛡️ Anti-Cheat Safety Architecture (Why Bans Like Tactical Vision Are Impossible)
+## 🛡️ Anti-Cheat Safety & Architecture
 
-Many competitive players (Valorant, CS2, Fortnite, Warzone, Apex Legends, Rainbow Six Siege) have suffered bans from third-party tools such as **Tactical Vision**.
+Synchro Nova is built from the ground up for full compatibility with competitive gaming and kernel-level anti-cheat engines (Easy Anti-Cheat, BattlEye, Riot Vanguard, Ricochet, VAC):
 
-### Why did anti-cheats ban Tactical Vision and similar utilities?
-1. **Process Memory Injection**: Tactical Vision injected dynamic-link libraries (`CreateRemoteThread`, `LoadLibrary`) directly into the address space of running games.
-2. **DirectX / Vulkan SwapChain Interception**: Tactical Vision hooked internal graphics pipeline methods such as `Present` / `Present1` in `dxgi.dll` and `d3d11.dll` to draw over game frames. Kernel-level anti-cheats (Riot Vanguard, Easy Anti-Cheat, BattlEye, Valve Anti-Cheat, Ricochet) flag any DirectX swapchain hooks as Wallhack / ESP / Shader Chams.
-3. **Synthetic Input Simulation**: Synthetic keystroke/mouse simulation using `keybd_event`, `mouse_event`, or `SendInput`, which trigger macro and aimbot heuristics.
-4. **Foreign Memory Access**: Opening game process handles with `PROCESS_VM_READ` or `PROCESS_VM_WRITE`.
-
-### Why Synchro Nova is 100% Ban-Proof and Safe:
-- **Strict Process Isolation (Zero Process Injection)**: Synchro Nova runs exclusively in User Mode as an independent desktop application. It never opens handles to game processes and never touches game memory (0 calls to `PROCESS_VM_READ` or `PROCESS_VM_WRITE`).
-- **Zero DirectX / Vulkan Hooks**: Synchro Nova does not hook `dxgi.dll`, `d3d11.dll`, `d3d12.dll`, or `vulkan-1.dll`. The game rendering pipeline remains 100% untouched.
-- **Zero Synthetic Input**: The codebase contains zero calls to `keybd_event`, `mouse_event`, or `SendInput`.
-- **Operating via Windows DWM & Monitor Hardware LUT**:
-  - Color vibrance, saturation, and contrast adjustments are applied via the official Windows Desktop Window Manager compositor API (`MagSetFullscreenColorEffect` in `magnification.dll`).
-  - Gamma curves are written directly into GPU hardware tables (`SetDeviceGammaRamp` in `gdi32.dll`).
-  - Kernel anti-cheats monitor game memory and do not restrict Windows desktop compositor shaders — exactly like changing Digital Vibrance in NVIDIA Control Panel, AMD Software, or using Windows Night Light / f.lux.
-- **Native Process Hardening**: Synchro Nova enables Data Execution Prevention (DEP), Safe Search Mode (preventing CWD DLL hijacking), and heap termination on corruption at launch.
+- **Strict Process Isolation**: Operates entirely in user mode as an independent desktop process. It never opens handles to game processes and never touches external process memory (0 calls to `PROCESS_VM_READ` or `PROCESS_VM_WRITE`).
+- **Zero Graphics Hooks**: Synchro Nova does not intercept graphics pipelines (DirectX / Vulkan SwapChain hooks) and does not inject dynamic libraries into running games.
+- **No Synthetic Input**: The codebase contains zero keystroke or mouse simulation calls (`SendInput`, `keybd_event`, global window hooks).
+- **Native Windows Interfaces**: Display calibration utilizes official Desktop Window Manager compositor shaders (`MagSetFullscreenColorEffect`) and hardware GPU LUT tables (`SetDeviceGammaRamp`), operating identically to standard display control panels (NVIDIA Control Panel, AMD Software).
+- **Native Process Hardening**: Permanent Data Execution Prevention (DEP), safe DLL search mode (eliminating CWD DLL preloading), and heap corruption termination are enforced at startup.
 
 ---
 
@@ -54,25 +42,25 @@ Many competitive players (Valorant, CS2, Fortnite, Warzone, Apex Legends, Rainbo
 
 ### 1. Hardware Display Calibration
 - **Windows GDI & Magnification API**: Real-time digital vibrance, saturation, gamma, contrast, and color balance adjustments with zero frame lag and zero input latency.
-- **Black Holo Mode**: Smart dynamic range enhancement for competitive shooters (CS2, Rust, Apex, Tarkov), lifting dark shadowy spots without overblowing highlights.
-- **Per-Game Color Profiles**: Link custom calibration parameters to specific game titles.
-- **Accent Customization**: Full RGB color selection with automatic Rec. 601 perceived luminance calculation and adaptive high-contrast readability.
+- **Black Holo Mode**: Dynamic range enhancement for competitive titles, lifting dark shadow detail without overblowing highlights.
+- **Game Profiles**: Link custom calibration parameters to specific games with automatic profile switching.
+- **Adaptive UI Accent**: Full RGB accent color support with real-time text contrast calculation.
 
-### 2. System Tweaks & Latency Reduction (System Tweaks)
-- **Verified Parameters**: System timer configuration, Multimedia Class Scheduler (MMCSS) priorities, Fullscreen Optimizations (FSO), telemetry suppression, and TCP network stack autotuning.
-- **Windows System Restore Points & Registry Backups**: Every backup creation automatically commits a Windows System Restore Point (`SRSetRestorePointW` / `Checkpoint-Computer`) alongside a `.reg` snapshot, ensuring reliable rollback.
-- **Total Transparency**: No hidden batch scripts. Every registry key and command is clearly explained in the UI and in the [Tweaks Reference Documentation](docs/TWEAKS_REFERENCE.md).
+### 2. System Tweaks & Latency Optimization
+- **Verified Parameters**: System timer configuration, MMCSS task priorities, Fullscreen Optimizations (FSO), telemetry suppression, and TCP network autotuning.
+- **Windows System Restore Points & Registry Backups**: Creates a Windows System Restore Point (`SRSetRestorePointW`) alongside a `.reg` snapshot before applying changes, ensuring reliable rollback.
+- **Safety & Elevation Guard**: Every setting is documented in the [Tweaks Reference Documentation](docs/TWEAKS_REFERENCE.md). System tweaks are protected by an administrative lock and frosted blur until elevated via UAC.
 
 ### 3. Hardware & Driver Inspector
-- Detects installed graphics cards, active driver version, and release date.
-- Checks driver status for NVIDIA, AMD, Intel with direct official vendor download links.
+- Detects installed graphics hardware, active driver version, and release date.
+- Checks driver status for NVIDIA, AMD, and Intel with direct vendor download links.
 - Real-time CPU and memory monitoring via native Windows Performance Data Helper (PDH).
 
 ---
 
-## Performance and Resources
+## Performance & Resource Utilization
 
-| Metric | Synchro Nova v2.1 | Typical Electron Utility |
+| Metric | Synchro Nova | Typical Electron Utility |
 |---|:---:|:---:|
 | **RAM usage in tray** | **~1.5 – 3 MB** | 120 – 350 MB |
 | **CPU usage at idle** | **0.0% (0 timer interrupts)** | 0.5 – 2.5% |
@@ -83,13 +71,13 @@ Many competitive players (Valorant, CS2, Fortnite, Warzone, Apex Legends, Rainbo
 
 ## Download & Installation
 
-Latest builds are always available on the [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) page:
+Official release packages are available on the [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) page:
 
-- **Portable Version (`Synchro-Nova-2.1.0-Portable.zip`)** — standalone `synchro.exe` executable, runs immediately from any folder or USB stick without installation.
-- **Installer (`Synchro.Nova_2.1.0_x64-setup.exe`)** — standard Windows installer with desktop shortcut, Windows search indexing, and a clean uninstaller.
+- **Portable Version (`Synchro-Nova-2.2.3-Portable.zip`)** — standalone `synchro.exe` executable, runs immediately from any folder without installation.
+- **Installer (`Synchro.Nova_2.2.3_x64-setup.exe`)** — standard Windows installer with desktop shortcuts, Windows search indexing, and a clean uninstaller.
 
 ### Verify SHA-256 Checksum
-To verify the integrity of the downloaded file in PowerShell:
+To verify the integrity of the downloaded binary in PowerShell:
 ```powershell
 Get-FileHash .\synchro.exe -Algorithm SHA256
 ```
@@ -115,21 +103,21 @@ npm install
 # 3. Launch in development mode
 npm run dev
 
-# 4. Build portable executable
+# 4. Build portable binary
 npm run build:portable
 
 # 5. Build release installer
 npm run build
 ```
 
-The compiled binary will be placed in `src-tauri/target/release/synchro.exe`, and the NSIS installer in `src-tauri/target/release/bundle/nsis/`.
+Compiled executables are located in `src-tauri/target/release/synchro.exe` and `src-tauri/target/release/bundle/nsis/`.
 
 ---
 
 ## Community & Support
 
-- **Official Telegram**: [t.me/synchronova](https://t.me/synchronova) — announcements, discussions, and direct support.
-- **GitHub Issues**: found a bug or have a suggestion? [Open an issue](https://github.com/Arean-Max/synchro-nova/issues).
+- **Official Telegram**: [t.me/synchronova](https://t.me/synchronova) — announcements, updates, and community discussion.
+- **GitHub Issues**: bug reports and feature requests — [Open an issue](https://github.com/Arean-Max/synchro-nova/issues).
 
 ---
 

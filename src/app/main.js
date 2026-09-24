@@ -30,7 +30,7 @@ import {
   updateTemplateSliderDom,
   colorFeature
 } from "./features/color/page.js";
-import { allTweaks, isSafeTweak, tweakCategory, tweakTitle } from "./features/tweaks/catalog.js";
+import { allTweaks, tweakCategory, tweakTitle } from "./features/tweaks/catalog.js";
 import { getTweakImpactDetails, renderIosNotification, tweaksFeature } from "./features/tweaks/page.js";
 import { renderBackupNameModal, backupsFeature } from "./features/storage/page.js";
 import { characteristicsFeature } from "./features/characteristics/page.js";
@@ -688,7 +688,6 @@ async function loadLists() {
 async function loadColorGames() {
   const games = await invokeCommand("list_installed_games");
   viewState.colorGames = Array.isArray(games) ? games : [];
-  viewState.colorGamesDemo = false;
   viewState.colorGamesLoaded = true;
   ensureColorGameSelection(viewState);
   if (activePage === "gameColor") updateMain();
