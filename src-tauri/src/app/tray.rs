@@ -7,8 +7,17 @@ use tauri::{
 use super::state::RuntimeState;
 
 pub fn install_tray(app: &AppHandle) -> tauri::Result<()> {
-    let show = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
-    let exit = MenuItem::with_id(app, "exit", "Exit", true, None::<&str>)?;
+    let lang = app
+        .try_state::<RuntimeState>()
+        .and_then(|s| s.data.lock().ok().map(|d| d.settings.language.clone()))
+        .unwrap_or_else(|| "en".to_string());
+    let (show_text, exit_text) = if lang == "ru" {
+        ("Открыть", "Выход")
+    } else {
+        ("Show", "Exit")
+    };
+    let show = MenuItem::with_id(app, "show", show_text, true, None::<&str>)?;
+    let exit = MenuItem::with_id(app, "exit", exit_text, true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &exit])?;
 
     let mut tray = TrayIconBuilder::new()

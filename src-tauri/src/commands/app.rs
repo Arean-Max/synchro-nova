@@ -73,8 +73,9 @@ pub fn exit_app(app: AppHandle, state: State<'_, RuntimeState>) {
 #[tauri::command]
 pub fn restart_as_admin(app: AppHandle, state: State<'_, RuntimeState>) -> Result<(), String> {
     state.signal_shutdown();
-    let _ = app;
-    restart_current_process_as_admin()
+    restart_current_process_as_admin()?;
+    app.exit(0);
+    Ok(())
 }
 
 #[tauri::command]

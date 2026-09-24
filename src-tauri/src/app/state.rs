@@ -267,6 +267,7 @@ impl RuntimeState {
             self.trimmer_sync.condvar.notify_all();
         }
         color::stop_color_guard();
+        let _ = color::reset_color_transform();
     }
 
     pub fn snapshot(&self) -> Result<PersistedState, String> {

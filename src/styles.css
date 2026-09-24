@@ -2260,6 +2260,15 @@ button.check-row:active {
   gap: 14px;
 }
 
+.tweaks-page.admin-locked .scroll-panel,
+.tweaks-page.admin-locked .tweaks-actions {
+  filter: blur(6px);
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.25s ease, opacity 0.25s ease;
+}
+
 .scroll-panel {
   min-height: 0;
   overflow-y: auto;
@@ -2792,6 +2801,16 @@ button.check-row:active {
     transform: translate3d(0, -26px, 0) scale(0.92);
     filter: blur(8px);
   }
+}
+
+@keyframes bannerShake {
+  0%, 100% { transform: translateX(-50%); }
+  20%, 60% { transform: translateX(calc(-50% - 6px)); }
+  40%, 80% { transform: translateX(calc(-50% + 6px)); }
+}
+
+.ios-banner-container.pulse-hint {
+  animation: bannerShake 360ms ease-in-out;
 }
 
 /* Backup Minimal Input Dialog */

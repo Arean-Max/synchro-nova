@@ -24,6 +24,14 @@ unsafe extern "system" {
     fn CloseClipboard() -> i32;
     fn EmptyClipboard() -> i32;
     fn SetClipboardData(format: u32, handle: *mut c_void) -> *mut c_void;
+    fn GetForegroundWindow() -> *mut c_void;
+    fn GetCursorPos(point: *mut POINT) -> i32;
+    fn MonitorFromWindow(hwnd: *mut c_void, flags: u32) -> *mut c_void;
+    fn MonitorFromPoint(point: POINT, flags: u32) -> *mut c_void;
+    fn GetMonitorInfoW(hmonitor: *mut c_void, info: *mut MONITORINFO) -> i32;
+    fn RegisterHotKey(hwnd: *mut c_void, id: i32, fs_modifiers: u32, vk: u32) -> i32;
+    fn UnregisterHotKey(hwnd: *mut c_void, id: i32) -> i32;
+    fn GetMessageW(msg: *mut MSG, hwnd: *mut c_void, msg_filter_min: u32, msg_filter_max: u32) -> i32;
 }
 
 #[cfg(target_os = "windows")]
@@ -67,10 +75,45 @@ unsafe extern "system" {
 
 const SM_CXSCREEN: i32 = 0;
 const SM_CYSCREEN: i32 = 1;
+const MONITOR_DEFAULTTONEAREST: u32 = 2;
 const SRCCOPY: u32 = 0x00CC_0020;
 const DIB_RGB_COLORS: u32 = 0;
 const CF_DIB: u32 = 8;
 const GMEM_MOVEABLE: u32 = 0x0002;
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Default)]
+struct POINT {
+    pub x: i32,
+    pub y: i32,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Default)]
+struct RECT {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
+
+#[repr(C)]
+struct MONITORINFO {
+    pub cb_size: u32,
+    pub rc_monitor: RECT,
+    pub rc_work: RECT,
+    pub dw_flags: u32,
+}
+
+#[repr(C)]
+struct MSG {
+    pub hwnd: *mut c_void,
+    pub message: u32,
+    pub w_param: usize,
+    pub l_param: isize,
+    pub time: u32,
+    pub pt: POINT,
+}
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Default)]
@@ -134,8 +177,51 @@ impl Drop for DeleteObjectGuard {
 #[cfg(target_os = "windows")]
 pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshotResult, String> {
     unsafe {
-        let width = GetSystemMetrics(SM_CXSCREEN);
-        let height = GetSystemMetrics(SM_CYSCREEN);
+        let mut x_src = 0;
+        let mut y_src = 0;
+        let mut width = 0;
+        let mut height = 0;
+
+        let fg_hwnd = GetForegroundWindow();
+        let hmon = if !fg_hwnd.is_null() {
+            MonitorFromWindow(fg_hwnd, MONITOR_DEFAULTTONEAREST)
+        } else {
+            std::ptr::null_mut()
+        };
+
+        let hmon = if !hmon.is_null() {
+            hmon
+        } else {
+            let mut pt = POINT::default();
+            GetCursorPos(&mut pt);
+            MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST)
+        };
+
+        if !hmon.is_null() {
+            let mut mi = MONITORINFO {
+                cb_size: std::mem::size_of::<MONITORINFO>() as u32,
+                rc_monitor: RECT::default(),
+                rc_work: RECT::default(),
+                dw_flags: 0,
+            };
+            if GetMonitorInfoW(hmon, &mut mi) != 0 {
+                let mon_w = mi.rc_monitor.right - mi.rc_monitor.left;
+                let mon_h = mi.rc_monitor.bottom - mi.rc_monitor.top;
+                if mon_w > 0 && mon_h > 0 {
+                    x_src = mi.rc_monitor.left;
+                    y_src = mi.rc_monitor.top;
+                    width = mon_w;
+                    height = mon_h;
+                }
+            }
+        }
+
+        if width <= 0 || height <= 0 {
+            width = GetSystemMetrics(SM_CXSCREEN);
+            height = GetSystemMetrics(SM_CYSCREEN);
+            x_src = 0;
+            y_src = 0;
+        }
 
         if width <= 0 || height <= 0 {
             return Err("Invalid screen metrics".to_string());
@@ -163,7 +249,7 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
         let _hbm_guard = DeleteObjectGuard(hbm);
 
         let old_hbm = SelectObject(hdc_mem, hbm);
-        let blt_res = BitBlt(hdc_mem, 0, 0, width, height, hdc_screen, 0, 0, SRCCOPY);
+        let blt_res = BitBlt(hdc_mem, 0, 0, width, height, hdc_screen, x_src, y_src, SRCCOPY);
         SelectObject(hdc_mem, old_hbm);
 
         if blt_res == 0 {
@@ -351,21 +437,42 @@ pub fn start_global_screenshot_listener() {
         std::thread::Builder::new()
             .name("synchro-screenshot-hotkey".to_string())
             .spawn(move || {
-                let mut was_pressed = false;
-                loop {
-                    std::thread::sleep(std::time::Duration::from_millis(35));
-                    let state = unsafe { crate::platform::ffi::winapi::GetAsyncKeyState(0x2C) };
-                    let is_pressed = (state as u16 & 0x8000) != 0;
-                    if is_pressed && !was_pressed {
-                        was_pressed = true;
-                        if let Some(color) = crate::domain::color::get_active_color() {
-                            if color.enabled {
-                                std::thread::sleep(std::time::Duration::from_millis(25));
-                                let _ = capture_juicy_screenshot(&color);
+                const HOTKEY_ID: i32 = 0x534E; // 'SN'
+                const VK_SNAPSHOT: u32 = 0x2C;
+                const WM_HOTKEY: u32 = 0x0312;
+
+                let registered = unsafe {
+                    RegisterHotKey(std::ptr::null_mut(), HOTKEY_ID, 0, VK_SNAPSHOT)
+                };
+
+                if registered != 0 {
+                    let mut msg = unsafe { std::mem::zeroed::<MSG>() };
+                    while unsafe { GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) } > 0 {
+                        if msg.message == WM_HOTKEY {
+                            if let Some(color) = crate::domain::color::get_active_color() {
+                                if color.enabled {
+                                    let _ = capture_juicy_screenshot(&color);
+                                }
                             }
                         }
-                    } else if !is_pressed {
-                        was_pressed = false;
+                    }
+                    unsafe { UnregisterHotKey(std::ptr::null_mut(), HOTKEY_ID) };
+                } else {
+                    let mut was_pressed = false;
+                    loop {
+                        std::thread::sleep(std::time::Duration::from_millis(60));
+                        let state = unsafe { crate::platform::ffi::winapi::GetAsyncKeyState(VK_SNAPSHOT as i32) };
+                        let is_pressed = (state as u16 & 0x8000) != 0;
+                        if is_pressed && !was_pressed {
+                            was_pressed = true;
+                            if let Some(color) = crate::domain::color::get_active_color() {
+                                if color.enabled {
+                                    let _ = capture_juicy_screenshot(&color);
+                                }
+                            }
+                        } else if !is_pressed {
+                            was_pressed = false;
+                        }
                     }
                 }
             })

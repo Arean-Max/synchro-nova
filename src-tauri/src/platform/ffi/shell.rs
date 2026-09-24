@@ -76,8 +76,11 @@ pub fn restart_explorer() -> Result<(), String> {
     use std::process::Command;
     use std::os::windows::process::CommandExt;
 
+    let system_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
+
     // 1. Terminate existing explorer instances cleanly
-    let mut kill_cmd = Command::new("taskkill");
+    let taskkill_exe = std::path::PathBuf::from(&system_root).join("System32").join("taskkill.exe");
+    let mut kill_cmd = Command::new(&taskkill_exe);
     kill_cmd.args(["/F", "/IM", "explorer.exe"]);
     kill_cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
     let _ = kill_cmd.status();
@@ -101,11 +104,7 @@ pub fn restart_explorer() -> Result<(), String> {
     }
 
     // 4. Launch fresh explorer.exe from SystemRoot
-    let explorer_exe = if let Ok(root) = std::env::var("SystemRoot") {
-        std::path::PathBuf::from(root).join("explorer.exe")
-    } else {
-        std::path::PathBuf::from("explorer.exe")
-    };
+    let explorer_exe = std::path::PathBuf::from(&system_root).join("explorer.exe");
 
     let mut start_cmd = Command::new(&explorer_exe);
     start_cmd.creation_flags(0x0800_0000);

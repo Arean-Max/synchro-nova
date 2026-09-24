@@ -62,6 +62,7 @@ function clearImpactBannerTimer() {
 }
 
 function startImpactBannerTimer(delay = 3000) {
+  if (viewState.activeImpactBanner?.isAdminPrompt) return;
   clearImpactBannerTimer();
   impactBannerTimer = window.setTimeout(() => {
     dismissNotificationBanner();
@@ -75,6 +76,7 @@ function attachBannerHoverListeners() {
     clearImpactBannerTimer();
   };
   bannerEl.onmouseleave = () => {
+    if (viewState.activeImpactBanner?.isAdminPrompt) return;
     clearImpactBannerTimer();
     impactBannerTimer = window.setTimeout(() => {
       dismissNotificationBanner();
@@ -266,7 +268,17 @@ function showAdminNotificationBanner() {
     impactText: t("adminNotificationMsg") || (isRu ? "Нажмите здесь для перезапуска Synchro с правами админа" : "Click here to restart Synchro as administrator")
   };
   renderNotificationBannerDom();
-  startImpactBannerTimer(3000);
+}
+
+function highlightAdminBanner() {
+  const container = document.querySelector(".ios-banner-container");
+  if (container) {
+    container.classList.remove("pulse-hint");
+    void container.offsetWidth;
+    container.classList.add("pulse-hint");
+  } else {
+    showAdminNotificationBanner();
+  }
 }
 
 function scheduleTrimMemory(delay = 400) {
@@ -885,7 +897,7 @@ async function handleAction(action) {
   }
   if (action === "dismiss-impact-banner") {
     if (viewState.activeImpactBanner?.isAdminPrompt) {
-      viewState.dismissedAdminPrompt = true;
+      return null;
     }
     dismissNotificationBanner();
     return null;
@@ -910,6 +922,10 @@ async function handleAction(action) {
     return null;
   }
   if (action === "rollback-from-apply-modal") {
+    if (!appState.isAdmin) {
+      highlightAdminBanner();
+      return null;
+    }
     if (viewState.applyingTweaks) return null;
     viewState.applyingTweaks = true;
     viewState.applyModal = {
@@ -966,6 +982,10 @@ async function handleAction(action) {
     return null;
   }
   if (action === "apply-tweaks") {
+    if (!appState.isAdmin) {
+      highlightAdminBanner();
+      return null;
+    }
     if (viewState.applyingTweaks) return null;
     const ids = Array.from(viewState.installedTweaks);
     if (!ids.length) {
@@ -1032,6 +1052,10 @@ async function handleAction(action) {
     return null;
   }
   if (action === "rollback-tweaks") {
+    if (!appState.isAdmin) {
+      highlightAdminBanner();
+      return null;
+    }
     return handleAction("rollback-from-apply-modal");
   }
   if (action === "reset-color") {
@@ -1221,6 +1245,9 @@ async function handleClick(event) {
   if (navItem) {
     const nextPage = navItem.getAttribute("data-page");
     if (!nextPage || !pageDefs[nextPage] || nextPage === activePage) return;
+    if (nextPage !== "tweaks" && viewState.activeImpactBanner?.isAdminPrompt) {
+      dismissNotificationBanner(true);
+    }
     router.navigate(nextPage, {
       onNavigate: () => {
         updateMain();
@@ -1232,7 +1259,7 @@ async function handleClick(event) {
     if (nextPage === "gameColor" && !viewState.colorGamesLoaded) {
       loadColorGames();
     } else if (nextPage === "tweaks") {
-      if (!appState.isAdmin && !viewState.dismissedAdminPrompt) {
+      if (!appState.isAdmin) {
         showAdminNotificationBanner();
       }
       if (!viewState.detectedApps.length) {
@@ -1496,6 +1523,15 @@ async function handleClick(event) {
     return;
   }
 
+  if (!appState.isAdmin && (activePage === "tweaks" || target.closest(".tweaks-page"))) {
+    if (target.closest("[data-tweak-id]") || target.closest("[data-action='apply-tweaks']") || target.closest("[data-action='rollback-tweaks']") || target.closest(".tweaks-page.admin-locked")) {
+      event.preventDefault();
+      event.stopPropagation();
+      highlightAdminBanner();
+      return;
+    }
+  }
+
   const tweak = target.closest("[data-tweak-id]");
   if (tweak) {
     event.preventDefault();
@@ -1648,6 +1684,7 @@ function handleKeydown(event) {
     }
   }
   if (viewState.activeImpactBanner && event.key === "Escape") {
+    if (viewState.activeImpactBanner.isAdminPrompt) return;
     event.preventDefault();
     dismissNotificationBanner();
     return;
@@ -1745,6 +1782,9 @@ async function boot() {
   loadColorGames();
   checkForUpdates();
   if (activePage === "tweaks") {
+    if (!appState.isAdmin) {
+      showAdminNotificationBanner();
+    }
     loadTweakStatuses().then(updateMain);
   }
   if (activePage === "characteristics") {

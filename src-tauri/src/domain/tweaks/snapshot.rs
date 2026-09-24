@@ -188,6 +188,10 @@ pub static REGISTRY_BACKUP_TARGETS: &[RegistryTarget] = &[
     reg_text("HKCU", "Control Panel\\Mouse", "MouseHoverTime"),
     reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling", "PowerThrottlingOff"),
     reg_dword("HKLM", "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions", "CpuPriorityClass"),
+    reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerSettings\\54533251-82be-4824-96c1-47b60b740d00\\0cc5b647-6429-45d6-8e05-69d96c744b5c", "ValueMax"),
+    reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerSettings\\54533251-82be-4824-96c1-47b60b740d00\\0cc5b647-6429-45d6-8e05-69d96c744b5c", "ValueMin"),
+    reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters", "MouseDataQueueSize"),
+    reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Services\\kbdclass\\Parameters", "KeyboardDataQueueSize"),
 ];
 
 pub fn registry_backup_targets() -> &'static [RegistryTarget] {
@@ -195,7 +199,7 @@ pub fn registry_backup_targets() -> &'static [RegistryTarget] {
 }
 
 pub fn collect_tweak_registry_snapshot() -> Vec<TweakRegistrySnapshot> {
-    registry_backup_targets()
+    let mut snapshots: Vec<TweakRegistrySnapshot> = registry_backup_targets()
         .iter()
         .map(|target| TweakRegistrySnapshot {
             hive: target.hive.to_string(),
@@ -203,7 +207,29 @@ pub fn collect_tweak_registry_snapshot() -> Vec<TweakRegistrySnapshot> {
             name: target.name.to_string(),
             value: read_registry_value(target),
         })
-        .collect()
+        .collect();
+
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        let base_path = "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces";
+        if let Ok(interfaces) = hklm.open_subkey(base_path) {
+            for subkey_name in interfaces.enum_keys().flatten() {
+                let full_path = format!("{base_path}\\{subkey_name}");
+                for val_name in ["TcpAckFrequency", "TCPNoDelay", "TcpDelAckTicks"] {
+                    snapshots.push(TweakRegistrySnapshot {
+                        hive: "HKLM".to_string(),
+                        path: full_path.clone(),
+                        name: val_name.to_string(),
+                        value: read_registry_raw("HKLM", &full_path, val_name, RegistryValueKind::Dword),
+                    });
+                }
+            }
+        }
+    }
+
+    snapshots
 }
 
 pub fn restore_tweak_registry_snapshot(snapshot: &[TweakRegistrySnapshot]) -> Vec<String> {
@@ -214,28 +240,33 @@ pub fn restore_tweak_registry_snapshot(snapshot: &[TweakRegistrySnapshot]) -> Ve
 }
 
 #[cfg(target_os = "windows")]
-pub fn read_registry_value(target: &RegistryTarget) -> Option<TweakRegistryValue> {
+pub fn read_registry_raw(hive: &str, path: &str, name: &str, kind: RegistryValueKind) -> Option<TweakRegistryValue> {
     use winreg::{
         enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE},
         RegKey,
     };
 
-    let root = match target.hive {
+    let root = match hive {
         "HKCU" => RegKey::predef(HKEY_CURRENT_USER),
         "HKLM" => RegKey::predef(HKEY_LOCAL_MACHINE),
         _ => return None,
     };
-    let key = root.open_subkey(target.path).ok()?;
-    match target.value_kind {
+    let key = root.open_subkey(path).ok()?;
+    match kind {
         RegistryValueKind::Dword => key
-            .get_value(target.name)
+            .get_value(name)
             .ok()
             .map(TweakRegistryValue::Dword),
         RegistryValueKind::Text => key
-            .get_value(target.name)
+            .get_value(name)
             .ok()
             .map(TweakRegistryValue::Text),
     }
+}
+
+#[cfg(target_os = "windows")]
+pub fn read_registry_value(target: &RegistryTarget) -> Option<TweakRegistryValue> {
+    read_registry_raw(target.hive, target.path, target.name, target.value_kind)
 }
 
 #[cfg(not(target_os = "windows"))]

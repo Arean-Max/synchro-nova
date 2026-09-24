@@ -126,7 +126,7 @@ pub(crate) fn apply_color_transform(_color: &ColorSettings, _show_on_recordings:
 }
 
 #[cfg(target_os = "windows")]
-pub(crate) fn reset_color_transform() -> Result<(), String> {
+pub fn reset_color_transform() -> Result<(), String> {
     set_active_color(None);
     let effect = crate::platform::ffi::MagColorEffect {
         transform: identity_matrix(),
@@ -141,7 +141,7 @@ pub(crate) fn reset_color_transform() -> Result<(), String> {
 }
 
 #[cfg(not(target_os = "windows"))]
-pub(crate) fn reset_color_transform() -> Result<(), String> {
+pub fn reset_color_transform() -> Result<(), String> {
     Ok(())
 }
 

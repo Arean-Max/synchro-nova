@@ -1,5 +1,5 @@
 import { escapeAttr, escapeHtml } from "../../core/html.js";
-import { lang } from "../../core/state.js";
+import { appState, lang } from "../../core/state.js";
 import { button } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
 import {
@@ -150,18 +150,21 @@ export function renderIosNotification(viewState, t) {
     `      <div class="ios-banner-title">${escapeHtml(banner.title)}</div>`,
     `      <div class="ios-banner-message">${escapeHtml(banner.impactText)}</div>`,
     '    </div>',
-    `    <button class="ios-banner-close" type="button" data-action="dismiss-impact-banner" title="${escapeAttr(t("close"))}">${icon("x")}</button>`,
+    banner.isAdminPrompt
+      ? ""
+      : `    <button class="ios-banner-close" type="button" data-action="dismiss-impact-banner" title="${escapeAttr(t("close"))}">${icon("x")}</button>`,
     '  </div>',
     '</div>'
   ].join("");
 }
 
 export function renderTweaksPage(viewState, t) {
+  const isLocked = !appState.isAdmin;
   const groups = tweakCatalog.map((group) => tweakGroup(group, viewState, t)).join("");
   const applyLabel = viewState.applyingTweaks ? t("loading") : t("applySelected");
 
   return [
-    '<div class="tweaks-page">',
+    `<div class="tweaks-page ${isLocked ? "admin-locked" : ""}">`,
     `<div class="scroll-panel">${tweakResults(viewState, t)}${groups}</div>`,
     `<div class="actions tweaks-actions">${button(applyLabel, "check", "primary", "apply-tweaks")}${button(t("rollbackTweaks"), "rotate", "outline", "rollback-tweaks")}</div>`,
     '</div>'

@@ -1,6 +1,6 @@
 [package]
 name = "synchro"
-version = "2.2.2"
+version = "2.2.3"
 description = "Windows display calibration and system performance optimization utility"
 authors = ["Arean-Max"]
 license = "MIT"

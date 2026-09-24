@@ -80,21 +80,21 @@ async function run() {
     }
   });
 
-  let release = Array.isArray(rels.data) ? rels.data.find(r => r.tag_name === 'v2.2.2') : null;
+  let release = Array.isArray(rels.data) ? rels.data.find(r => r.tag_name === 'v2.2.3') : null;
 
   const releaseBody = {
-    tag_name: 'v2.2.2',
+    tag_name: 'v2.2.3',
     target_commitish: 'main',
-    name: 'Synchro Nova v2.2.2',
+    name: 'Synchro Nova v2.2.3',
     body: [
-      '## Synchro Nova v2.2.2',
+      '## Synchro Nova v2.2.3',
       '',
       '### Changes & Improvements',
-      '- **Built-In Self-Updater Engine**: Added native background updater powered by `curl.exe` with real-time percentage progress bar, manual download fallback link, smooth transition to "Install", and seamless in-place binary upgrade upon restart.',
-      '- **EAC-Safe Global Screenshot Vibrancy**: Integrated background PrintScreen monitor (`GetAsyncKeyState`). Any screenshot taken in games (CS2, Apex, Rust, Fortnite, Valorant) or desktop is instantly color-calibrated in memory with full saturation, contrast, hue, and gamma, and placed directly into Windows Clipboard (CF_DIB) — 100% immune to Easy Anti-Cheat / BattlEye bans with zero game hooking or DLL injection.',
-      '- **DWM Screen Recording & Discord Stream Calibration**: Color transformation operates at the Windows Desktop Window Manager (DWM) level via `MagSetFullscreenColorEffect`, ensuring OBS Display Capture and Discord Entire Screen shares broadcast vibrant calibrated colors without injecting into game processes.',
-      '- **Settings Menu Smooth Scrolling**: Fixed scroll locking in Preferences (`overflow-y: auto`, `scrollbar-gutter: stable`), allowing effortless access to all toggles and links on any window resolution.',
-      '- **Localization & UI Polish**: Full Russian and English localization across the entire updater and settings surfaces, dynamic language hot-reloading without layout jitter, added Auto-update toggle (default: off), updated "SOURCE CODE" link, and cleaned up RGB hint subtitles.'
+      '- **Administrator Tweak Lock & Frosted Blur**: Tweaks are safely locked and frosted-blurred when running without administrator privileges. Prevents unauthorized system modifications, with a persistent top notification banner to elevate via UAC on demand.',
+      '- **Multi-Monitor Screenshot Capture**: Enhanced PrintScreen capture to detect active window monitor and cursor coordinates across multi-monitor display configurations.',
+      '- **Cryptographic Integrity & SHA-256 Check**: Integrated native SHA-256 hash verification to validate downloaded binaries against release checksums prior to installation.',
+      '- **Process Lifecycle & Deadlock Fixes**: Resolved elevation mutex deadlock on restart, ensured clean exit, and added safe color ramp restoration on system shutdown.',
+      '- **Localization Polish**: Dynamic RU/EN system tray menu localization and updater UI refinements.'
     ].join('\n'),
     draft: false,
     prerelease: false,
@@ -160,8 +160,8 @@ async function run() {
   }
 
   const artifacts = fs.existsSync('dist-artifacts') ? fs.readdirSync('dist-artifacts') : [];
-  const setupName = artifacts.find(f => f.endsWith('-setup.exe')) || 'Synchro.Nova_2.2.2_x64-setup.exe';
-  const zipName = artifacts.find(f => f.endsWith('-Portable.zip')) || 'Synchro-Nova-2.2.2-Portable.zip';
+  const setupName = artifacts.find(f => f.endsWith('-setup.exe')) || 'Synchro.Nova_2.2.3_x64-setup.exe';
+  const zipName = artifacts.find(f => f.endsWith('-Portable.zip')) || 'Synchro-Nova-2.2.3-Portable.zip';
 
   const setupPath = path.resolve('dist-artifacts', setupName);
   const zipPath = path.resolve('dist-artifacts', zipName);

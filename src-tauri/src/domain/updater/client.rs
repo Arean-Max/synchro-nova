@@ -3,12 +3,16 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
 use std::time::Duration;
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
 const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+static LATEST_SHA_URL: Mutex<Option<String>> = Mutex::new(None);
+static IS_DOWNLOADING: AtomicBool = AtomicBool::new(false);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -19,6 +23,16 @@ pub struct UpdateCheckResult {
     pub download_url: Option<String>,
     pub asset_size: u64,
     pub changelog: String,
+}
+
+fn get_curl_cmd() -> Command {
+    let system_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
+    let curl_exe = std::path::PathBuf::from(system_root).join("System32").join("curl.exe");
+    if curl_exe.exists() {
+        Command::new(curl_exe)
+    } else {
+        Command::new("curl.exe")
+    }
 }
 
 pub fn is_newer_version(latest_tag: &str, current_version: &str) -> bool {
@@ -52,7 +66,7 @@ pub fn get_update_file_path() -> PathBuf {
 pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
     let current_version = env!("CARGO_PKG_VERSION").to_string();
 
-    let mut cmd = Command::new("curl.exe");
+    let mut cmd = get_curl_cmd();
     cmd.args([
         "-s",
         "-H",
@@ -89,22 +103,27 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
 
     let mut download_url = None;
     let mut asset_size: u64 = 0;
+    let mut sha256_url = None;
 
     if let Some(assets) = json.get("assets").and_then(|v| v.as_array()) {
-        // Prefer synchro.exe for portable/in-place binary swap
         for asset in assets {
             let name = asset.get("name").and_then(|v| v.as_str()).unwrap_or("");
+            if name.eq_ignore_ascii_case("SHA256SUMS.txt") {
+                sha256_url = asset
+                    .get("browser_download_url")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+            }
             if name == "synchro.exe" {
                 download_url = asset
                     .get("browser_download_url")
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string());
                 asset_size = asset.get("size").and_then(|v| v.as_u64()).unwrap_or(0);
-                break;
             }
         }
 
-        // Fallback to setup.exe or any .exe if synchro.exe not found
+        // Fallback to any .exe if synchro.exe not found directly
         if download_url.is_none() {
             for asset in assets {
                 let name = asset.get("name").and_then(|v| v.as_str()).unwrap_or("");
@@ -120,6 +139,10 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
         }
     }
 
+    if let Ok(mut lock) = LATEST_SHA_URL.lock() {
+        *lock = sha256_url;
+    }
+
     let update_available = is_newer_version(tag_name, &current_version);
 
     Ok(UpdateCheckResult {
@@ -131,8 +154,6 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
         changelog: body,
     })
 }
-
-static IS_DOWNLOADING: AtomicBool = AtomicBool::new(false);
 
 pub fn spawn_download_worker(
     download_url: String,
@@ -163,7 +184,7 @@ pub fn spawn_download_worker(
     std::thread::Builder::new()
         .name("synchro-downloader".to_string())
         .spawn(move || {
-            let mut cmd = Command::new("curl.exe");
+            let mut cmd = get_curl_cmd();
             cmd.args([
                 "-L",
                 "--fail",
@@ -218,23 +239,95 @@ pub fn spawn_download_worker(
                                 .map(|m| m.len())
                                 .unwrap_or(0);
 
-                            if actual_size > 500_000 {
-                                super::set_progress(super::UpdateProgress {
-                                    status: "ready".to_string(),
-                                    downloaded_bytes: actual_size,
-                                    total_bytes: actual_size,
-                                    percent: 100,
-                                    error: None,
-                                });
-                            } else {
+                            if actual_size < 500_000 {
+                                let _ = fs::remove_file(&target_file);
                                 super::set_progress(super::UpdateProgress {
                                     status: "error".to_string(),
                                     downloaded_bytes: actual_size,
                                     total_bytes: expected_size,
                                     percent: 0,
-                                    error: Some("Downloaded file size is too small or corrupted".to_string()),
+                                    error: Some("Downloaded file size is too small or incomplete".to_string()),
                                 });
+                                break;
                             }
+
+                            // Verify valid PE header
+                            let mut header_buf = [0u8; 2];
+                            let is_valid_pe = if let Ok(mut file) = fs::File::open(&target_file) {
+                                use std::io::Read;
+                                file.read_exact(&mut header_buf).is_ok() && &header_buf == b"MZ"
+                            } else {
+                                false
+                            };
+
+                            if !is_valid_pe {
+                                let _ = fs::remove_file(&target_file);
+                                super::set_progress(super::UpdateProgress {
+                                    status: "error".to_string(),
+                                    downloaded_bytes: actual_size,
+                                    total_bytes: expected_size,
+                                    percent: 0,
+                                    error: Some("Downloaded file is not a valid Windows executable".to_string()),
+                                });
+                                break;
+                            }
+
+                            // Verify SHA-256 against release SHA256SUMS.txt if available
+                            let sha_url = LATEST_SHA_URL.lock().ok().and_then(|g| g.clone());
+                            if let Some(sha_url) = sha_url {
+                                let sha_file = target_dir.join("SHA256SUMS.txt");
+                                let mut sha_cmd = get_curl_cmd();
+                                sha_cmd.args(["-L", "--fail", "--silent", "-o"]);
+                                sha_cmd.arg(&sha_file);
+                                sha_cmd.arg(&sha_url);
+                                #[cfg(target_os = "windows")]
+                                sha_cmd.creation_flags(CREATE_NO_WINDOW);
+
+                                if let Ok(sha_status) = sha_cmd.status() {
+                                    if sha_status.success() {
+                                        if let Ok(contents) = fs::read_to_string(&sha_file) {
+                                            let mut expected_hash = None;
+                                            for line in contents.lines() {
+                                                let parts: Vec<&str> = line.split_whitespace().collect();
+                                                if parts.len() >= 2 {
+                                                    let hash = parts[0].trim().to_lowercase();
+                                                    let file = parts[1].trim().trim_start_matches('*');
+                                                    if file == "synchro.exe" || download_url.ends_with(file) {
+                                                        expected_hash = Some(hash);
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
+                                            if let Some(expected) = expected_hash {
+                                                let actual_hash = crate::infra::hash::sha256_file(&target_file).unwrap_or_default();
+                                                if actual_hash.to_lowercase() != expected {
+                                                    let _ = fs::remove_file(&target_file);
+                                                    super::set_progress(super::UpdateProgress {
+                                                        status: "error".to_string(),
+                                                        downloaded_bytes: actual_size,
+                                                        total_bytes: expected_size,
+                                                        percent: 0,
+                                                        error: Some(format!(
+                                                            "SHA-256 verification failed (expected {}, got {})",
+                                                            expected, actual_hash
+                                                        )),
+                                                    });
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            super::set_progress(super::UpdateProgress {
+                                status: "ready".to_string(),
+                                downloaded_bytes: actual_size,
+                                total_bytes: actual_size,
+                                percent: 100,
+                                error: None,
+                            });
                         } else {
                             super::set_progress(super::UpdateProgress {
                                 status: "error".to_string(),
