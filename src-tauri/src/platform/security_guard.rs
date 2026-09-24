@@ -80,3 +80,61 @@ pub fn verify_process_access_safety(target_name: &str, requested_access: u32) ->
 
     Ok(())
 }
+
+pub fn verify_registry_write_safety(key_path: &str) -> Result<(), String> {
+    let lower = key_path.to_lowercase();
+    if lower.contains("image file execution options") {
+        for blocked in BLOCKED_PROCESS_TARGETS {
+            if lower.contains(blocked) {
+                record_incident(
+                    key_path,
+                    "Attempted IFEO modification of game executable",
+                    "BLOCKED_REGISTRY_IFEO_TAMPER",
+                );
+                return Err(format!(
+                    "Security Guard blocked IFEO modification on '{}'. Registry hijacking of games is blocked to prevent bans.",
+                    key_path
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+pub fn record_incident(target: &str, reason: &str, action: &str) {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+
+    let incident = SecurityIncident {
+        timestamp: now,
+        target: target.to_string(),
+        reason: reason.to_string(),
+        action_taken: action.to_string(),
+    };
+
+    if let Ok(mut lock) = incidents_store().lock() {
+        if lock.len() >= 100 {
+            lock.remove(0);
+        }
+        lock.push(incident);
+    }
+}
+
+pub fn get_security_guard_status() -> SecurityGuardStatus {
+    let incidents = if let Ok(lock) = incidents_store().lock() {
+        lock.clone()
+    } else {
+        Vec::new()
+    };
+
+    SecurityGuardStatus {
+        memory_shield_active: true,
+        anticheat_safe_mode: true,
+        injection_blocker_active: true,
+        ifeo_tamper_blocker_active: true,
+        blocked_incidents_count: incidents.len(),
+        recent_incidents: incidents.into_iter().rev().take(10).collect(),
+    }
+}
