@@ -250,4 +250,160 @@ fn read_pdh_counter_sum(counter: isize) -> f64 {
     thread_local! {
         static PDH_BUFFER: RefCell<Vec<u64>> = RefCell::new(Vec::with_capacity(512));
     }
-
+
+    const ERROR_SUCCESS: u32 = 0;
+    const PDH_MORE_DATA: u32 = 0x8000_07D2;
+    const PDH_FMT_DOUBLE: u32 = 0x0000_0200;
+
+    if counter == 0 {
+        return 0.0;
+    }
+
+    let mut buffer_size = 0u32;
+    let mut item_count = 0u32;
+    let first = unsafe {
+        PdhGetFormattedCounterArrayW(
+            counter,
+            PDH_FMT_DOUBLE,
+            &mut buffer_size,
+            &mut item_count,
+            std::ptr::null_mut(),
+        )
+    };
+    if first != PDH_MORE_DATA || buffer_size == 0 || item_count == 0 {
+        return 0.0;
+    }
+
+    PDH_BUFFER.with(|buf_cell| {
+        let mut buffer = buf_cell.borrow_mut();
+        let needed_words = (buffer_size as usize + 7) / 8;
+        if buffer.len() < needed_words {
+            buffer.resize(needed_words, 0);
+        }
+        let items = buffer.as_mut_ptr() as *mut PdhFmtCounterValueItemW;
+        let mut current_size = (buffer.len() * 8) as u32;
+        let second = unsafe {
+            PdhGetFormattedCounterArrayW(
+                counter,
+                PDH_FMT_DOUBLE,
+                &mut current_size,
+                &mut item_count,
+                items,
+            )
+        };
+
+        let item_size = std::mem::size_of::<PdhFmtCounterValueItemW>();
+        let max_items_fit = if item_size > 0 {
+            (buffer.len() * 8) / item_size
+        } else {
+            0
+        };
+
+        if second == ERROR_SUCCESS && (item_count as usize) <= max_items_fit {
+            let values = unsafe { std::slice::from_raw_parts(items, item_count as usize) };
+            values
+                .iter()
+                .filter(|item| item.value.c_status == ERROR_SUCCESS)
+                .map(|item| item.value.double_value.max(0.0))
+                .sum()
+        } else {
+            0.0
+        }
+    })
+}
+
+#[cfg(target_os = "windows")]
+fn read_display_vram_total() -> u64 {
+    static TOTAL_VRAM: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let cached = TOTAL_VRAM.load(std::sync::atomic::Ordering::Relaxed);
+    if cached > 0 {
+        return cached;
+    }
+
+    #[repr(C)]
+    struct DisplayDeviceW {
+        cb: u32,
+        device_name: [u16; 32],
+        device_string: [u16; 128],
+        state_flags: u32,
+        device_id: [u16; 128],
+        device_key: [u16; 128],
+    }
+
+    #[link(name = "User32")]
+    unsafe extern "system" {
+        fn EnumDisplayDevicesW(
+            device_name: *const u16,
+            dev_num: u32,
+            display_device: *mut DisplayDeviceW,
+            flags: u32,
+        ) -> i32;
+    }
+
+    let mut best = 0;
+    for index in 0..16 {
+        let mut device = DisplayDeviceW {
+            cb: std::mem::size_of::<DisplayDeviceW>() as u32,
+            device_name: [0; 32],
+            device_string: [0; 128],
+            state_flags: 0,
+            device_id: [0; 128],
+            device_key: [0; 128],
+        };
+
+        let ok = unsafe { EnumDisplayDevicesW(std::ptr::null(), index, &mut device, 0) != 0 };
+        if !ok {
+            break;
+        }
+
+        let path = registry_machine_path(&crate::utf16z_to_string(&device.device_key));
+        if let Some(bytes) = registry_vram_bytes(&path) {
+            best = best.max(bytes);
+        }
+    }
+
+    if best > 0 {
+        TOTAL_VRAM.store(best, std::sync::atomic::Ordering::Relaxed);
+    }
+    best
+}
+
+#[cfg(target_os = "windows")]
+fn registry_machine_path(path: &str) -> String {
+    path.trim()
+        .trim_start_matches("\\Registry\\Machine\\")
+        .trim_start_matches("Registry\\Machine\\")
+        .to_string()
+}
+
+#[cfg(target_os = "windows")]
+fn registry_vram_bytes(path: &str) -> Option<u64> {
+    use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+
+    let key = RegKey::predef(HKEY_LOCAL_MACHINE).open_subkey(path).ok()?;
+    read_reg_u64(&key, "HardwareInformation.qwMemorySize")
+        .or_else(|| read_reg_u64(&key, "HardwareInformation.MemorySize"))
+}
+
+#[cfg(target_os = "windows")]
+fn read_reg_u64(key: &winreg::RegKey, name: &str) -> Option<u64> {
+    key.get_value::<u64, _>(name).ok().or_else(|| {
+        let raw = key.get_raw_value(name).ok()?;
+        if raw.bytes.len() >= 8 {
+            let mut buffer = [0u8; 8];
+            buffer.copy_from_slice(&raw.bytes[..8]);
+            Some(u64::from_le_bytes(buffer))
+        } else if raw.bytes.len() >= 4 {
+            let mut buffer = [0u8; 4];
+            buffer.copy_from_slice(&raw.bytes[..4]);
+            Some(u32::from_le_bytes(buffer) as u64)
+        } else {
+            None
+        }
+    })
+}
+
+#[cfg(target_os = "windows")]
+fn wide_null(value: &str) -> Vec<u16> {
+    value.encode_utf16().chain(std::iter::once(0)).collect()
+}
