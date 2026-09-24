@@ -147,7 +147,7 @@ pub fn ensure_single_instance(mutex_name: &str, window_title: &str) -> bool {
 
 #[cfg(target_os = "windows")]
 pub fn ensure_single_instance_retry(mutex_name: &str, window_title: &str, is_restart: bool) -> bool {
-    let max_attempts = if is_restart { 30 } else { 1 };
+    let max_attempts = if is_restart { 50 } else { 1 };
     let name_w = wide_null(mutex_name);
 
     for attempt in 0..max_attempts {
@@ -166,28 +166,32 @@ pub fn ensure_single_instance_retry(mutex_name: &str, window_title: &str, is_res
             }
 
             if attempt + 1 < max_attempts {
-                std::thread::sleep(std::time::Duration::from_millis(150));
+                std::thread::sleep(std::time::Duration::from_millis(100));
                 continue;
             }
 
-            let title_w = wide_null(window_title);
-            let hwnd = unsafe {
-                winapi::FindWindowW(std::ptr::null(), title_w.as_ptr())
-            };
-            if !hwnd.is_null() {
-                unsafe {
-                    winapi::ShowWindow(hwnd, SW_RESTORE);
-                    winapi::SetForegroundWindow(hwnd);
+            if !is_restart {
+                let title_w = wide_null(window_title);
+                let hwnd = unsafe {
+                    winapi::FindWindowW(std::ptr::null(), title_w.as_ptr())
+                };
+                if !hwnd.is_null() {
+                    unsafe {
+                        winapi::ShowWindow(hwnd, SW_RESTORE);
+                        winapi::SetForegroundWindow(hwnd);
+                    }
                 }
+                return false;
+            } else {
+                return true;
             }
-            return false;
         }
 
         SINGLE_INSTANCE_MUTEX_HANDLE.store(handle, std::sync::atomic::Ordering::SeqCst);
         return true;
     }
 
-    false
+    true
 }
 
 #[cfg(not(target_os = "windows"))]

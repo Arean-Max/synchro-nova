@@ -38,10 +38,16 @@ pub fn runas_executable(path: &Path) -> Result<(), String> {
 #[cfg(target_os = "windows")]
 pub fn runas_executable_with_args(path: &Path, args: Option<&str>) -> Result<(), String> {
     let operation = wide_null("runas");
-    let file = wide_null(&path.to_string_lossy());
+    let path_str = path.to_string_lossy();
+    let clean_path = path_str.strip_prefix(r"\\?\").unwrap_or(&path_str);
+    let file = wide_null(clean_path);
     let params = args.map(wide_null);
     let params_ptr = params.as_ref().map(|p| p.as_ptr()).unwrap_or(std::ptr::null());
-    let dir = path.parent().map(|p| wide_null(&p.to_string_lossy()));
+    let dir_buf = path.parent().map(|p| {
+        let s = p.to_string_lossy();
+        s.strip_prefix(r"\\?\").unwrap_or(&s).to_string()
+    });
+    let dir = dir_buf.as_deref().map(wide_null);
     let dir_ptr = dir.as_ref().map(|d| d.as_ptr()).unwrap_or(std::ptr::null());
 
     let result = unsafe {
@@ -55,7 +61,7 @@ pub fn runas_executable_with_args(path: &Path, args: Option<&str>) -> Result<(),
         )
     };
     if result <= 32 {
-        Err("Failed to execute process with elevated privileges".to_string())
+        Err(format!("Failed to execute process with elevated privileges (code {result})"))
     } else {
         Ok(())
     }

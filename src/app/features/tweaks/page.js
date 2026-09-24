@@ -174,6 +174,9 @@ export function renderTweaksPage(viewState, t) {
 export const tweaksFeature = {
   render: renderTweaksPage,
   mount(container, context) {
+    if (!appState.isAdmin && typeof context?.showAdminBanner === "function") {
+      context.showAdminBanner();
+    }
     if (context?.loadTweakStatuses) {
       context.loadTweakStatuses();
     }

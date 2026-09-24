@@ -72,8 +72,16 @@ pub fn exit_app(app: AppHandle, state: State<'_, RuntimeState>) {
 
 #[tauri::command]
 pub fn restart_as_admin(app: AppHandle, state: State<'_, RuntimeState>) -> Result<(), String> {
+    crate::ffi::release_single_instance();
+    if let Err(err) = restart_current_process_as_admin() {
+        crate::ffi::ensure_single_instance("Local\\SynchroNovaSingleInstanceMutex", "Synchro Nova");
+        return Err(err);
+    }
     state.signal_shutdown();
-    restart_current_process_as_admin()?;
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(150));
+        std::process::exit(0);
+    });
     app.exit(0);
     Ok(())
 }

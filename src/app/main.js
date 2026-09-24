@@ -119,7 +119,27 @@ function renderNotificationBannerDom() {
       parent.appendChild(temp.firstElementChild);
     }
   } else {
-    containers[0].outerHTML = html;
+    const existingBanner = containers[0].querySelector(".ios-banner");
+    const isSameAdmin =
+      existingBanner?.getAttribute("data-action") === "restart-as-admin" &&
+      viewState.activeImpactBanner?.isAdminPrompt;
+
+    if (isSameAdmin) {
+      const appEl = existingBanner.querySelector(".ios-banner-app");
+      const titleEl = existingBanner.querySelector(".ios-banner-title");
+      const msgEl = existingBanner.querySelector(".ios-banner-message");
+      if (appEl && viewState.activeImpactBanner?.appName) {
+        appEl.textContent = viewState.activeImpactBanner.appName;
+      }
+      if (titleEl && viewState.activeImpactBanner?.title) {
+        titleEl.textContent = viewState.activeImpactBanner.title;
+      }
+      if (msgEl && viewState.activeImpactBanner?.impactText) {
+        msgEl.textContent = viewState.activeImpactBanner.impactText;
+      }
+    } else {
+      containers[0].outerHTML = html;
+    }
     for (let i = 1; i < containers.length; i++) {
       containers[i].remove();
     }
@@ -314,24 +334,33 @@ function updateMain() {
   const title = document.querySelector(".page-header h1");
   const subtitle = document.querySelector(".page-header p");
   const body = document.querySelector(".page-body");
+  const mountContext = {
+    appState,
+    viewState,
+    showAdminBanner: showAdminNotificationBanner,
+    loadTweakStatuses
+  };
   if (title && subtitle && body) {
     title.textContent = t(page.title);
     subtitle.textContent = t(page.subtitle);
     body.className = `page-body page-${activePage}`;
     body.innerHTML = renderPageBody(viewState, t);
-    router.mount(activePage, body, { appState, viewState });
+    router.mount(activePage, body, mountContext);
   } else {
     const main = document.querySelector(".main-panel");
     if (main) {
       main.outerHTML = renderMain(viewState, t);
       const nextBody = document.querySelector(".page-body");
-      if (nextBody) router.mount(activePage, nextBody, { appState, viewState });
+      if (nextBody) router.mount(activePage, nextBody, mountContext);
     }
   }
   syncAllSliders(appState);
   updateNavState();
   renderBackupModalDom();
   renderApplyModalDom();
+  if (activePage === "tweaks" && !appState.isAdmin) {
+    showAdminNotificationBanner();
+  }
   window.requestAnimationFrame(syncNavIndicator);
   scheduleTrimMemory(350);
 }
@@ -795,8 +824,18 @@ async function handleAction(action) {
     try {
       localStorage.setItem("synchro_pending_nav", "tweaks");
     } catch {}
-    dismissNotificationBanner(true);
-    return invokeCommand("restart_as_admin");
+    const banner = document.querySelector(".ios-banner");
+    if (banner) banner.style.pointerEvents = "none";
+    try {
+      return await invokeCommand("restart_as_admin");
+    } catch (err) {
+      console.error("restart_as_admin failed or cancelled:", err);
+      if (banner) banner.style.pointerEvents = "auto";
+      if (!appState.isAdmin && activePage === "tweaks") {
+        showAdminNotificationBanner();
+      }
+      return null;
+    }
   }
   if (action === "apply-color") return applyColor();
   if (action === "toggle-sidebar") {
@@ -1253,7 +1292,9 @@ async function handleClick(event) {
         syncCharacteristicsMonitor();
       },
       appState,
-      viewState
+      viewState,
+      showAdminBanner: showAdminNotificationBanner,
+      loadTweakStatuses
     });
     if (nextPage === "gameColor" && !viewState.colorGamesLoaded) {
       loadColorGames();
@@ -1757,6 +1798,9 @@ function render() {
   updateNavState();
   renderBackupModalDom();
   renderApplyModalDom();
+  if (activePage === "tweaks" && !appState.isAdmin) {
+    showAdminNotificationBanner();
+  }
   window.requestAnimationFrame(syncNavIndicator);
 }
 

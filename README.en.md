@@ -26,7 +26,7 @@ Synchro Nova is a lightweight, offline utility designed as a clean alternative t
 
 ---
 
-## 🛡️ Anti-Cheat Safety & Architecture
+## Anti-Cheat Safety & Architecture
 
 Synchro Nova is built from the ground up for full compatibility with competitive gaming and kernel-level anti-cheat engines (Easy Anti-Cheat, BattlEye, Riot Vanguard, Ricochet, VAC):
 
