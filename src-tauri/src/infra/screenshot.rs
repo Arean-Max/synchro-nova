@@ -162,4 +162,301 @@ impl Drop for DeleteDcGuard {
         }
     }
 }
-
+
+struct DeleteObjectGuard(*mut c_void);
+impl Drop for DeleteObjectGuard {
+    fn drop(&mut self) {
+        if !self.0.is_null() {
+            unsafe {
+                DeleteObject(self.0);
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshotResult, String> {
+    unsafe {
+        let mut x_src = 0;
+        let mut y_src = 0;
+        let mut width = 0;
+        let mut height = 0;
+
+        let fg_hwnd = GetForegroundWindow();
+        let hmon = if !fg_hwnd.is_null() {
+            MonitorFromWindow(fg_hwnd, MONITOR_DEFAULTTONEAREST)
+        } else {
+            std::ptr::null_mut()
+        };
+
+        let hmon = if !hmon.is_null() {
+            hmon
+        } else {
+            let mut pt = POINT::default();
+            GetCursorPos(&mut pt);
+            MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST)
+        };
+
+        if !hmon.is_null() {
+            let mut mi = MONITORINFO {
+                cb_size: std::mem::size_of::<MONITORINFO>() as u32,
+                rc_monitor: RECT::default(),
+                rc_work: RECT::default(),
+                dw_flags: 0,
+            };
+            if GetMonitorInfoW(hmon, &mut mi) != 0 {
+                let mon_w = mi.rc_monitor.right - mi.rc_monitor.left;
+                let mon_h = mi.rc_monitor.bottom - mi.rc_monitor.top;
+                if mon_w > 0 && mon_h > 0 {
+                    x_src = mi.rc_monitor.left;
+                    y_src = mi.rc_monitor.top;
+                    width = mon_w;
+                    height = mon_h;
+                }
+            }
+        }
+
+        if width <= 0 || height <= 0 {
+            width = GetSystemMetrics(SM_CXSCREEN);
+            height = GetSystemMetrics(SM_CYSCREEN);
+            x_src = 0;
+            y_src = 0;
+        }
+
+        if width <= 0 || height <= 0 {
+            return Err("Invalid screen metrics".to_string());
+        }
+
+        let hdc_screen = GetDC(std::ptr::null_mut());
+        if hdc_screen.is_null() {
+            return Err("Failed to get screen DC".to_string());
+        }
+        let _screen_guard = ReleaseDcGuard {
+            hwnd: std::ptr::null_mut(),
+            hdc: hdc_screen,
+        };
+
+        let hdc_mem = CreateCompatibleDC(hdc_screen);
+        if hdc_mem.is_null() {
+            return Err("Failed to create memory DC".to_string());
+        }
+        let _dc_guard = DeleteDcGuard(hdc_mem);
+
+        let hbm = CreateCompatibleBitmap(hdc_screen, width, height);
+        if hbm.is_null() {
+            return Err("Failed to create compatible bitmap".to_string());
+        }
+        let _hbm_guard = DeleteObjectGuard(hbm);
+
+        let old_hbm = SelectObject(hdc_mem, hbm);
+        let blt_res = BitBlt(hdc_mem, 0, 0, width, height, hdc_screen, x_src, y_src, SRCCOPY);
+        SelectObject(hdc_mem, old_hbm);
+
+        if blt_res == 0 {
+            return Err("BitBlt screen capture failed".to_string());
+        }
+
+        let header = BITMAPINFOHEADER {
+            bi_size: std::mem::size_of::<BITMAPINFOHEADER>() as u32,
+            bi_width: width,
+            bi_height: height,
+            bi_planes: 1,
+            bi_bit_count: 32,
+            bi_compression: 0,
+            bi_size_image: (width * height * 4) as u32,
+            bi_x_pels_per_meter: 3780,
+            bi_y_pels_per_meter: 3780,
+            bi_clr_used: 0,
+            bi_clr_important: 0,
+        };
+
+        let mut bmi = BITMAPINFO {
+            bmi_header: header,
+            bmi_colors: [0; 1],
+        };
+
+        let num_pixels = (width * height) as usize;
+        let mut pixels: Vec<u8> = vec![0; num_pixels * 4];
+
+        let get_dib_res = GetDIBits(
+            hdc_mem,
+            hbm,
+            0,
+            height as u32,
+            pixels.as_mut_ptr() as *mut c_void,
+            &mut bmi,
+            DIB_RGB_COLORS,
+        );
+
+        if get_dib_res == 0 {
+            return Err("Failed to retrieve screen bitmap bits".to_string());
+        }
+
+        let saturation = (color.saturation / 100.0).max(0.0);
+        let contrast = (color.contrast / 100.0).max(0.0);
+        let gamma = (color.gamma / 100.0).clamp(0.5, 2.0);
+        let gamma_exp = 1.0 / gamma;
+        let black_holo = color.black_holo > 0.0;
+
+        for chunk in pixels.chunks_exact_mut(4) {
+            let mut b = chunk[0] as f32 / 255.0;
+            let mut g = chunk[1] as f32 / 255.0;
+            let mut r = chunk[2] as f32 / 255.0;
+
+            if black_holo && g > 0.35 && g > r * 1.30 && g > b * 1.30 {
+                let green_ratio = (g - r.max(b)) / g;
+                let factor = (1.0 - green_ratio * 0.95).max(0.04);
+                r *= factor;
+                g *= factor;
+                b *= factor;
+            }
+
+            if (saturation - 1.0).abs() > 0.005 {
+                let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                r = lum + (r - lum) * saturation;
+                g = lum + (g - lum) * saturation;
+                b = lum + (b - lum) * saturation;
+            }
+
+            if (contrast - 1.0).abs() > 0.005 {
+                r = (r - 0.5) * contrast + 0.5;
+                g = (g - 0.5) * contrast + 0.5;
+                b = (b - 0.5) * contrast + 0.5;
+            }
+
+            if (gamma - 1.0).abs() > 0.005 {
+                r = r.max(0.0).powf(gamma_exp);
+                g = g.max(0.0).powf(gamma_exp);
+                b = b.max(0.0).powf(gamma_exp);
+            }
+
+            chunk[0] = (b.clamp(0.0, 1.0) * 255.0).round() as u8;
+            chunk[1] = (g.clamp(0.0, 1.0) * 255.0).round() as u8;
+            chunk[2] = (r.clamp(0.0, 1.0) * 255.0).round() as u8;
+        }
+
+        let header_size = std::mem::size_of::<BITMAPINFOHEADER>();
+        let total_size = header_size + pixels.len();
+
+        let h_global = GlobalAlloc(GMEM_MOVEABLE, total_size);
+        if !h_global.is_null() {
+            let p_mem = GlobalLock(h_global) as *mut u8;
+            if !p_mem.is_null() {
+                std::ptr::copy_nonoverlapping(&header as *const _ as *const u8, p_mem, header_size);
+                std::ptr::copy_nonoverlapping(pixels.as_ptr(), p_mem.add(header_size), pixels.len());
+                GlobalUnlock(h_global);
+
+                let mut clipboard_success = false;
+                if OpenClipboard(std::ptr::null_mut()) != 0 {
+                    EmptyClipboard();
+                    let set_res = SetClipboardData(CF_DIB, h_global);
+                    if !set_res.is_null() {
+                        clipboard_success = true;
+                    }
+                    CloseClipboard();
+                }
+
+                if !clipboard_success {
+                    GlobalFree(h_global);
+                }
+            } else {
+                GlobalFree(h_global);
+            }
+        }
+
+        let mut saved_path_str = None;
+        if let Some(user_profile) = std::env::var_os("USERPROFILE") {
+            let screenshots_dir = PathBuf::from(user_profile).join("Pictures").join("Screenshots");
+            if let Err(e) = fs::create_dir_all(&screenshots_dir) {
+                eprintln!("[Screenshot] Failed to create screenshot directory: {}", e);
+            } else {
+                let timestamp = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_secs())
+                    .unwrap_or(0);
+                let target_file = screenshots_dir.join(format!("Synchro_{}.bmp", timestamp));
+
+                if let Ok(file) = File::create(&target_file) {
+                    let mut writer = BufWriter::with_capacity(64 * 1024, file);
+                    let mut write_success = true;
+
+                    let file_size = (14 + total_size) as u32;
+                    let offset = (14 + header_size) as u32;
+                    let mut bmp_file_header = [0u8; 14];
+                    bmp_file_header[0] = b'B';
+                    bmp_file_header[1] = b'M';
+                    bmp_file_header[2..6].copy_from_slice(&file_size.to_le_bytes());
+                    bmp_file_header[10..14].copy_from_slice(&offset.to_le_bytes());
+
+                    if writer.write_all(&bmp_file_header).is_err() {
+                        write_success = false;
+                    }
+
+                    let header_bytes = std::slice::from_raw_parts(&header as *const _ as *const u8, header_size);
+                    if write_success && writer.write_all(header_bytes).is_err() {
+                        write_success = false;
+                    }
+
+                    if write_success && writer.write_all(&pixels).is_err() {
+                        write_success = false;
+                    }
+
+                    if write_success && writer.flush().is_ok() {
+                        saved_path_str = Some(target_file.to_string_lossy().to_string());
+                    }
+                }
+            }
+        }
+
+        drop(pixels);
+
+        Ok(JuicyScreenshotResult {
+            success: true,
+            message: "Juicy screenshot copied to clipboard (Ctrl+V)!".to_string(),
+            file_path: saved_path_str,
+        })
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn capture_juicy_screenshot(_color: &ColorSettings) -> Result<JuicyScreenshotResult, String> {
+    Err("Screenshots only supported on Windows".to_string())
+}
+
+#[cfg(target_os = "windows")]
+pub fn start_global_screenshot_listener() {
+    static LISTENER_STARTED: std::sync::OnceLock<()> = std::sync::OnceLock::new();
+    LISTENER_STARTED.get_or_init(|| {
+        std::thread::Builder::new()
+            .name("synchro-screenshot-hotkey".to_string())
+            .spawn(move || {
+                const HOTKEY_ID: i32 = 0x534E;
+                const VK_SNAPSHOT: u32 = 0x2C;
+                const WM_HOTKEY: u32 = 0x0312;
+
+                let registered = unsafe {
+                    RegisterHotKey(std::ptr::null_mut(), HOTKEY_ID, 0, VK_SNAPSHOT)
+                };
+
+                if registered != 0 {
+                    let mut msg = unsafe { std::mem::zeroed::<MSG>() };
+                    while unsafe { GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) } > 0 {
+                        if msg.message == WM_HOTKEY {
+                            if let Some(color) = crate::domain::color::get_active_color() {
+                                if color.enabled {
+                                    let _ = capture_juicy_screenshot(&color);
+                                }
+                            }
+                        }
+                    }
+                    unsafe { UnregisterHotKey(std::ptr::null_mut(), HOTKEY_ID) };
+                }
+            })
+            .ok();
+    });
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn start_global_screenshot_listener() {}
+
+
