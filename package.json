@@ -4,7 +4,7 @@
   "private": true,
   "description": "Windows display calibration and system performance optimization utility",
   "author": "Arean-Max",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "https://github.com/Arean-Max/synchro-nova.git"

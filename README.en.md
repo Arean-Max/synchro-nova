@@ -6,7 +6,7 @@
 
 [![Telegram](https://img.shields.io/badge/Telegram-Channel-229ED9?style=flat-square&logo=telegram&logoColor=white)](https://t.me/synchronova)
 [![Releases](https://img.shields.io/github/v/release/Arean-Max/synchro-nova?style=flat-square&color=emerald)](https://github.com/Arean-Max/synchro-nova/releases)
-[![License](https://img.shields.io/badge/License-MIT-white?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20(x64)-informational?style=flat-square)](https://microsoft.com/windows)
 
 **Desktop utility for hardware display color calibration, input latency reduction, and clean Windows tuning.**  
@@ -123,4 +123,6 @@ Compiled executables are located in `src-tauri/target/release/synchro.exe` and `
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+The source code is licensed under the [GNU Affero General Public License v3 (AGPL-3.0)](LICENSE).
+
+For commercial use, proprietary integrations, or closed-source products without AGPLv3 copyleft requirements, commercial licensing is available. For buyout inquiries: **Telegram: [https://t.me/vkmef](https://t.me/vkmef)**.

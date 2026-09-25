@@ -6,7 +6,7 @@
 
 [![Telegram](https://img.shields.io/badge/Telegram-Channel-229ED9?style=flat-square&logo=telegram&logoColor=white)](https://t.me/synchronova)
 [![Releases](https://img.shields.io/github/v/release/Arean-Max/synchro-nova?style=flat-square&color=emerald)](https://github.com/Arean-Max/synchro-nova/releases)
-[![License](https://img.shields.io/badge/License-MIT-white?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20(x64)-informational?style=flat-square)](https://microsoft.com/windows)
 
 **Десктопная утилита для аппаратной цветокоррекции монитора, оптимизации задержки ввода и тонкой настройки Windows.**  
@@ -123,4 +123,6 @@ npm run build
 
 ## Лицензия
 
-Проект распространяется под лицензией [MIT](LICENSE).
+Исходный код распространяется под копилефт-лицензией [GNU Affero General Public License v3 (AGPL-3.0)](LICENSE).
+
+Для использования в коммерческих, проприетарных или закрытых проектах без требований AGPLv3 доступно приобретение коммерческой лицензии. Связь по вопросам выкупа: **Telegram: [https://t.me/vkmef](https://t.me/vkmef)**.
