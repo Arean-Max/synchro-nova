@@ -245,4 +245,133 @@ pub(crate) fn build_color_matrix(color: &ColorSettings, include_matrix_gamma: bo
     }
     matrix
 }
-
+
+fn channel_gain_matrix(r: f32, g: f32, b: f32) -> [f32; 25] {
+    let mut m = identity_matrix();
+    m[0] = r;
+    m[6] = g;
+    m[12] = b;
+    m
+}
+
+fn shadow_bias_matrix(r_off: f32, g_off: f32, b_off: f32) -> [f32; 25] {
+    let mut m = identity_matrix();
+    m[20] = r_off;
+    m[21] = g_off;
+    m[22] = b_off;
+    m
+}
+
+fn black_holo_matrix(strength: f32) -> [f32; 25] {
+    let k = strength.clamp(0.0, 1.0);
+    let r_to_g = 0.5 * k;
+    let g_to_g = 1.0 - k;
+    let b_to_g = 0.5 * k;
+
+    [
+        1.0,    r_to_g, 0.0, 0.0, 0.0,
+        0.0,    g_to_g, 0.0, 0.0, 0.0,
+        0.0,    b_to_g, 1.0, 0.0, 0.0,
+        0.0,    0.0,    0.0, 1.0, 0.0,
+        0.0,    0.0,    0.0, 0.0, 1.0,
+    ]
+}
+
+fn identity_matrix() -> [f32; 25] {
+    [
+        1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+    ]
+}
+
+fn saturation_matrix(saturation: f32) -> [f32; 25] {
+    let rw = 0.2126;
+    let gw = 0.7152;
+    let bw = 0.0722;
+    let inv = 1.0 - saturation;
+
+    [
+        inv * rw + saturation,
+        inv * rw,
+        inv * rw,
+        0.0,
+        0.0,
+        inv * gw,
+        inv * gw + saturation,
+        inv * gw,
+        0.0,
+        0.0,
+        inv * bw,
+        inv * bw,
+        inv * bw + saturation,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    ]
+}
+
+fn hue_matrix(angle: f32) -> [f32; 25] {
+    let cos = angle.cos();
+    let sin = angle.sin();
+
+    [
+        0.213 + cos * 0.787 - sin * 0.213,
+        0.213 - cos * 0.213 + sin * 0.143,
+        0.213 - cos * 0.213 - sin * 0.787,
+        0.0,
+        0.0,
+        0.715 - cos * 0.715 - sin * 0.715,
+        0.715 + cos * 0.285 + sin * 0.140,
+        0.715 - cos * 0.715 + sin * 0.715,
+        0.0,
+        0.0,
+        0.072 - cos * 0.072 + sin * 0.928,
+        0.072 - cos * 0.072 - sin * 0.283,
+        0.072 + cos * 0.928 + sin * 0.072,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    ]
+}
+
+fn contrast_matrix(contrast: f32) -> [f32; 25] {
+    let offset = 0.5 * (1.0 - contrast);
+    [
+        contrast, 0.0, 0.0, 0.0, 0.0, 0.0, contrast, 0.0, 0.0, 0.0, 0.0, 0.0, contrast, 0.0, 0.0,
+        0.0, 0.0, 0.0, 1.0, 0.0, offset, offset, offset, 0.0, 1.0,
+    ]
+}
+
+fn multiply_matrix(left: [f32; 25], right: [f32; 25]) -> [f32; 25] {
+    let mut result = [0.0; 25];
+
+    for row in 0..5 {
+        for column in 0..5 {
+            let mut value = 0.0;
+            for index in 0..5 {
+                value += left[row * 5 + index] * right[index * 5 + column];
+            }
+            result[row * 5 + column] = value;
+        }
+    }
+
+    result
+}
