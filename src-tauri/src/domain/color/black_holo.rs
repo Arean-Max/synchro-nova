@@ -146,4 +146,84 @@ fn ensure_cleanup_handlers_registered() {
         }
     });
 }
-
+
+pub fn stop_ramp_watchdog() {
+    WATCHDOG_RUNNING.store(false, Ordering::SeqCst);
+}
+
+#[cfg(target_os = "windows")]
+pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
+    ensure_cleanup_handlers_registered();
+    let (vendor, gpu_name) = detect_gpu_vendor();
+
+    if enabled {
+        let _ = restore_original_system_ramp();
+        IS_ACTIVE.store(true, Ordering::SeqCst);
+
+        BlackHoloStatus {
+            active: true,
+            gpu_vendor: vendor.as_str().to_string(),
+            gpu_name,
+            curve_profile: "Cross-Channel Direct Matrix".to_string(),
+            hotkey: "".to_string(),
+            rust_synced: false,
+            error: None,
+        }
+    } else {
+        let res = restore_original_system_ramp();
+        IS_ACTIVE.store(false, Ordering::SeqCst);
+
+        let err = match res {
+            Ok(_) => None,
+            Err(e) => Some(e),
+        };
+
+        BlackHoloStatus {
+            active: false,
+            gpu_vendor: vendor.as_str().to_string(),
+            gpu_name,
+            curve_profile: "Standard".to_string(),
+            hotkey: "".to_string(),
+            rust_synced: false,
+            error: err,
+        }
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn set_hardware_black_holo(_enabled: bool) -> BlackHoloStatus {
+    let (vendor, gpu_name) = detect_gpu_vendor();
+    BlackHoloStatus {
+        active: false,
+        gpu_vendor: vendor.as_str().to_string(),
+        gpu_name,
+        curve_profile: vendor.curve_profile_name().to_string(),
+        hotkey: "".to_string(),
+        rust_synced: false,
+        error: Some("Hardware Black Holo is only supported on Windows".to_string()),
+    }
+}
+
+pub fn is_black_holo_active() -> bool {
+    IS_ACTIVE.load(Ordering::SeqCst)
+}
+
+pub fn get_hardware_black_holo_status() -> BlackHoloStatus {
+    let (vendor, gpu_name) = detect_gpu_vendor();
+    BlackHoloStatus {
+        active: IS_ACTIVE.load(Ordering::SeqCst),
+        gpu_vendor: vendor.as_str().to_string(),
+        gpu_name,
+        curve_profile: vendor.curve_profile_name().to_string(),
+        hotkey: "".to_string(),
+        rust_synced: false,
+        error: None,
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn start_black_holo_hotkey_listener(_app_handle: Option<tauri::AppHandle>) {
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn start_black_holo_hotkey_listener(_app_handle: Option<tauri::AppHandle>) {}
