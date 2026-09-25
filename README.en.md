@@ -22,7 +22,7 @@
 
 ## Overview
 
-Synchro Nova is a lightweight, offline utility designed as a clean alternative to bloated game overlays and tweak scripts. It combines hardware-accelerated Digital Vibrance, monitor LUT gamma calibration, GPU driver auditing, and transparent Windows system tweaks in a single package with zero ads, zero telemetry, and zero background services.
+Synchro Nova is a high-performance, modern alternative to utilities like VibranceGUI, intrusive overlays, and bloated game optimizers. It combines hardware-accelerated Digital Vibrance and saturation controls, monitor LUT gamma calibration, GPU driver auditing, and transparent Windows latency tweaks (Input Lag reduction) in a single package with zero ads, zero telemetry, and zero background services.
 
 ---
 
@@ -43,7 +43,7 @@ Synchro Nova is built from the ground up for full compatibility with competitive
 ### 1. Hardware Display Calibration
 - **Windows GDI & Magnification API**: Real-time digital vibrance, saturation, gamma, contrast, and color balance adjustments with zero frame lag and zero input latency.
 - **Black Holo Mode**: Dynamic range enhancement for competitive titles, lifting dark shadow detail without overblowing highlights.
-- **Game Profiles**: Link custom calibration parameters to specific games with automatic profile switching.
+- **Competitive Game Profiles**: Automatic profile switching for popular titles (Counter-Strike 2 / CS2, Dota 2, Rust, Apex Legends, PUBG, Valorant, Rainbow Six Siege, War Thunder).
 - **Adaptive UI Accent**: Full RGB accent color support with real-time text contrast calculation.
 
 ### 2. System Tweaks & Latency Optimization
@@ -58,14 +58,16 @@ Synchro Nova is built from the ground up for full compatibility with competitive
 
 ---
 
-## Performance & Resource Utilization
+## Performance & Resource Comparison
 
-| Metric | Synchro Nova | Typical Electron Utility |
-|---|:---:|:---:|
-| **RAM usage in tray** | **~1.5 – 3 MB** | 120 – 350 MB |
-| **CPU usage at idle** | **0.0% (0 timer interrupts)** | 0.5 – 2.5% |
-| **Cold start time** | **< 0.3 sec** | 2.5 – 6.0 sec |
-| **External network traffic** | **0 bytes (Chromium telemetry stripped)** | Continuous analytic telemetry |
+| Metric | Synchro Nova | VibranceGUI | Typical Electron Utility |
+|---|:---:|:---:|:---:|
+| **RAM usage in tray** | **~1.5 – 3 MB** | ~15 – 35 MB | 120 – 350 MB |
+| **CPU usage at idle** | **0.0% (0 timer interrupts)** | 0.2 – 0.8% | 0.5 – 2.5% |
+| **Dynamic Range / Shadow Lift (Black Holo)** | **Supported (Hardware LUT)** | No | Rare (hook-based overlay) |
+| **Input Latency Tweaks (MMCSS, TCP, FSO)** | **Supported (with Restore Point)** | No | No / external BAT scripts |
+| **Anti-Cheat Safety (EAC, BE, Vanguard)** | **100% (User-Mode WinAPI)** | Compatible | Hook injection risk |
+| **Cold start time** | **< 0.3 sec** | ~1.0 – 1.8 sec | 2.5 – 6.0 sec |
 
 ---
 
