@@ -8,7 +8,7 @@ Thank you for your interest in contributing to Synchro Nova! We welcome bug repo
 
 1. **Safety First**: Any modifications to the Windows registry, system settings, or hardware controls must include explicit verification, sanitization, and automated rollback support.
 2. **Anti-Cheat Integrity**: Synchro Nova must never inject code, hook third-party processes, or tamper with external memory. Contributions that violate this rule will be rejected.
-3. **100% Offline & Private**: Zero telemetry, analytics, or background outbound network calls. The application must remain functional in completely air-gapped environments.
+3. **100% Offline & Private**: Zero telemetry, analytics, or unsolicited network calls. The application functions in completely air-gapped environments; release updates are strictly opt-in and check GitHub only when manually clicked or when the auto-update setting is explicitly enabled.
 
 ---
 

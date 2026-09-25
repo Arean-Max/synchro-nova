@@ -1,6 +1,6 @@
 use super::runner::{
-    hkcu_dword, hkcu_string, hklm_dword, run_command, run_command_output, set_hkcu_dword,
-    set_hkcu_string, set_hklm_dword,
+    delete_hklm_value, hkcu_dword, hkcu_string, run_command, run_command_output,
+    set_hkcu_dword, set_hkcu_string, set_hklm_dword,
 };
 use super::types::{collect_result, TweakApplyResult};
 
@@ -101,23 +101,11 @@ pub fn is_input_response_fast_applied() -> bool {
         && hkcu_string("Control Panel\\Keyboard", "KeyboardSpeed").as_deref() == Some("31")
 }
 
-pub fn apply_csrss_high_priority(id: &str) -> TweakApplyResult {
-    collect_result(
-        id,
-        [set_hklm_dword(
-            "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions",
-            "CpuPriorityClass",
-            3,
-        )],
-        "csrss.exe priority set to High (zero input latency under heavy CPU load)",
-    )
-}
-
-pub fn is_csrss_high_priority_applied() -> bool {
-    hklm_dword(
+pub fn clean_legacy_csrss_override() {
+    let _ = delete_hklm_value(
         "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions",
         "CpuPriorityClass",
-    ) == Some(3)
+    );
 }
 
 pub fn apply_visual_effects_performance(id: &str) -> TweakApplyResult {

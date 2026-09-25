@@ -299,4 +299,23 @@ mod tests {
         );
         assert!(result.is_err(), "Expected error when reading non-existent registry key");
     }
+
+    #[test]
+    fn test_update_url_validation() {
+        use commands::updater::validate_update_url;
+        assert!(validate_update_url("https://github.com/Arean-Max/synchro-nova/releases/download/v2.2.3/synchro.exe").is_ok());
+        assert!(validate_update_url("https://objects.githubusercontent.com/production/synchro.exe").is_ok());
+        assert!(validate_update_url("https://evil-site.com/synchro.exe").is_err());
+        assert!(validate_update_url("http://github.com/Arean-Max/synchro-nova/releases/download/v2.2.3/synchro.exe").is_err());
+        assert!(validate_update_url("https://github.com/attacker/repo/releases/download/bad.exe").is_err());
+    }
+
+    #[test]
+    fn test_installer_nonexistent_file() {
+        let temp_dir = domain::updater::client::get_update_dir();
+        let target_file = temp_dir.join("synchro_latest.exe");
+        let _ = std::fs::remove_file(&target_file);
+        let res = domain::updater::installer::apply_install();
+        assert!(res.is_err(), "Expected apply_install to fail when update file does not exist");
+    }
 }

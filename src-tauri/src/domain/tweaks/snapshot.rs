@@ -187,7 +187,6 @@ pub static REGISTRY_BACKUP_TARGETS: &[RegistryTarget] = &[
     reg_text("HKCU", "Control Panel\\Keyboard", "KeyboardSpeed"),
     reg_text("HKCU", "Control Panel\\Mouse", "MouseHoverTime"),
     reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling", "PowerThrottlingOff"),
-    reg_dword("HKLM", "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions", "CpuPriorityClass"),
     reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerSettings\\54533251-82be-4824-96c1-47b60b740d00\\0cc5b647-6429-45d6-8e05-69d96c744b5c", "ValueMax"),
     reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerSettings\\54533251-82be-4824-96c1-47b60b740d00\\0cc5b647-6429-45d6-8e05-69d96c744b5c", "ValueMin"),
     reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters", "MouseDataQueueSize"),

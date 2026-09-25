@@ -15,6 +15,7 @@ pub fn apply_selected_tweaks(ids: Vec<String>) -> Vec<TweakApplyResult> {
 }
 
 pub fn collect_tweak_statuses() -> Vec<TweakStatus> {
+    system::clean_legacy_csrss_override();
     known_tweak_ids()
         .iter()
         .map(|id| TweakStatus {
@@ -47,7 +48,6 @@ pub(crate) fn is_admin_tweak(id: &str) -> bool {
             | "cpu-unpark-cores"
             | "power-throttling-off"
             | "input-response-fast"
-            | "csrss-high-priority"
     )
 }
 
@@ -87,7 +87,7 @@ fn apply_one(id: &str) -> TweakApplyResult {
         "sticky-keys-off" => system::apply_sticky_keys_off(id),
         "usb-selective-suspend-off" => system::apply_usb_selective_suspend(id),
         "input-response-fast" => system::apply_input_response_fast(id),
-        "csrss-high-priority" => system::apply_csrss_high_priority(id),
+        "csrss-high-priority" => skipped(id, "Tweak deprecated for system stability"),
         "visual-effects-performance" => system::apply_visual_effects_performance(id),
         "transparency-off" => system::apply_transparency_off(id),
         "menu-show-delay-low" => system::apply_menu_show_delay_low(id),
@@ -184,7 +184,6 @@ pub fn known_tweak_ids() -> &'static [&'static str] {
         "sticky-keys-off",
         "usb-selective-suspend-off",
         "input-response-fast",
-        "csrss-high-priority",
         "visual-effects-performance",
         "transparency-off",
         "menu-show-delay-low",
@@ -241,7 +240,7 @@ pub fn is_tweak_applied(id: &str) -> bool {
         "sticky-keys-off" => system::is_sticky_keys_off_applied(),
         "usb-selective-suspend-off" => system::is_usb_selective_suspend_applied(),
         "input-response-fast" => system::is_input_response_fast_applied(),
-        "csrss-high-priority" => system::is_csrss_high_priority_applied(),
+        "csrss-high-priority" => false,
         "visual-effects-performance" => system::is_visual_effects_performance_applied(),
         "transparency-off" => system::is_transparency_off_applied(),
         "menu-show-delay-low" => system::is_menu_show_delay_low_applied(),

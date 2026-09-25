@@ -37,7 +37,6 @@ export const tweakCatalog = [
     tweaks: [
       { id: "pointer-precision-off", title: "Disable pointer precision", description: "Turns off Windows mouse acceleration for consistent 1:1 raw aim feel.", badges: ["SAFE", "VERIFIED"] },
       { id: "input-response-fast", title: "Ultra-fast Input Queue", description: "Minimizes keyboard repeat delay, sets instant mouse hover time, and expands mouse/keyboard driver buffer queues.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "csrss-high-priority", title: "csrss.exe High Priority", description: "Sets csrss.exe (Client Server Runtime Subsystem) priority to High for instant input event dispatching even under 100% CPU load.", badges: ["ADMIN", "VERIFIED"] },
       { id: "sticky-keys-off", title: "Disable Sticky Keys", description: "Disables Shift x5 Sticky Keys and Filter Keys shortcut popups during gaming.", badges: ["SAFE", "VERIFIED"] },
       { id: "usb-selective-suspend-off", title: "USB selective suspend off", description: "Prevents USB devices from entering selective suspend to eliminate wake latency.", badges: ["SAFE", "VERIFIED"] },
       { id: "visual-effects-performance", title: "Visual effects performance", description: "Switches Explorer visual effects to the Windows performance profile.", badges: ["SAFE", "VERIFIED"], note: "Some window animations and visual polish will be reduced." },
@@ -431,14 +430,6 @@ export const tweakAppImpacts = {
     appNameRu: "Буферы ввода мыши и клавиатуры",
     impactEn: "Sets zero repeat delay for keys, 8ms mouse hover responsiveness, and enlarges mouse/keyboard buffer queues for high polling rate devices (1000-8000Hz).",
     impactRu: "Убирает задержку повтора клавиш (0 мс), снижает задержку мыши до 8 мс и увеличивает буфер пакетов ввода для мышей с частотой 1000-8000 Гц."
-  },
-  "csrss-high-priority": {
-    appId: "csrss_subsystem",
-    appName: "csrss.exe Input Subsystem",
-    appNameEn: "csrss.exe Input Subsystem",
-    appNameRu: "Подсистема ввода csrss.exe",
-    impactEn: "Raises csrss.exe process priority to High so raw mouse and keyboard events are dispatched immediately without hitching even under 100% CPU load.",
-    impactRu: "Повышает приоритет процесса csrss.exe до Высокого: события мыши и клавиатуры обрабатываются мгновенно даже при 100% нагрузке на процессор."
   },
   "tcp-nodelay-ack": {
     appId: "network_nodelay",

@@ -69,6 +69,8 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
     let mut cmd = get_curl_cmd();
     cmd.args([
         "-s",
+        "--max-time",
+        "30",
         "-H",
         "User-Agent: Synchro-Nova-Updater",
         "-H",
@@ -190,6 +192,8 @@ pub fn spawn_download_worker(
                 "--fail",
                 "--silent",
                 "--show-error",
+                "--max-time",
+                "300",
                 "-o",
             ]);
             cmd.arg(&target_file);
@@ -212,8 +216,24 @@ pub fn spawn_download_worker(
                 }
             };
 
+            let start_time = std::time::Instant::now();
+            let max_download_duration = Duration::from_secs(360);
+
             loop {
                 std::thread::sleep(Duration::from_millis(70));
+
+                if start_time.elapsed() > max_download_duration {
+                    let _ = child.kill();
+                    let _ = fs::remove_file(&target_file);
+                    super::set_progress(super::UpdateProgress {
+                        status: "error".to_string(),
+                        downloaded_bytes: 0,
+                        total_bytes: expected_size,
+                        percent: 0,
+                        error: Some("Download timed out after 360 seconds".to_string()),
+                    });
+                    break;
+                }
 
                 if let Ok(meta) = fs::metadata(&target_file) {
                     let downloaded = meta.len();
@@ -251,13 +271,14 @@ pub fn spawn_download_worker(
                                 break;
                             }
 
-                            // Verify valid PE header
+                            // Verify valid PE header (fail-closed)
                             let mut header_buf = [0u8; 2];
-                            let is_valid_pe = if let Ok(mut file) = fs::File::open(&target_file) {
-                                use std::io::Read;
-                                file.read_exact(&mut header_buf).is_ok() && &header_buf == b"MZ"
-                            } else {
-                                false
+                            let is_valid_pe = match fs::File::open(&target_file) {
+                                Ok(mut file) => {
+                                    use std::io::Read;
+                                    file.read_exact(&mut header_buf).is_ok() && &header_buf == b"MZ"
+                                }
+                                Err(_) => false,
                             };
 
                             if !is_valid_pe {
@@ -267,57 +288,140 @@ pub fn spawn_download_worker(
                                     downloaded_bytes: actual_size,
                                     total_bytes: expected_size,
                                     percent: 0,
-                                    error: Some("Downloaded file is not a valid Windows executable".to_string()),
+                                    error: Some("Downloaded file is not a valid Windows executable (missing MZ signature)".to_string()),
                                 });
                                 break;
                             }
 
-                            // Verify SHA-256 against release SHA256SUMS.txt if available
+                            // Verify SHA-256 against release SHA256SUMS.txt (mandatory fail-closed)
                             let sha_url = LATEST_SHA_URL.lock().ok().and_then(|g| g.clone());
-                            if let Some(sha_url) = sha_url {
-                                let sha_file = target_dir.join("SHA256SUMS.txt");
-                                let mut sha_cmd = get_curl_cmd();
-                                sha_cmd.args(["-L", "--fail", "--silent", "-o"]);
-                                sha_cmd.arg(&sha_file);
-                                sha_cmd.arg(&sha_url);
-                                #[cfg(target_os = "windows")]
-                                sha_cmd.creation_flags(CREATE_NO_WINDOW);
+                            let sha_url = match sha_url {
+                                Some(url) => url,
+                                None => {
+                                    let _ = fs::remove_file(&target_file);
+                                    super::set_progress(super::UpdateProgress {
+                                        status: "error".to_string(),
+                                        downloaded_bytes: actual_size,
+                                        total_bytes: expected_size,
+                                        percent: 0,
+                                        error: Some("Release manifest missing SHA256SUMS.txt; rejecting unverified update (fail-closed)".to_string()),
+                                    });
+                                    break;
+                                }
+                            };
 
-                                if let Ok(sha_status) = sha_cmd.status() {
-                                    if sha_status.success() {
-                                        if let Ok(contents) = fs::read_to_string(&sha_file) {
-                                            let mut expected_hash = None;
-                                            for line in contents.lines() {
-                                                let parts: Vec<&str> = line.split_whitespace().collect();
-                                                if parts.len() >= 2 {
-                                                    let hash = parts[0].trim().to_lowercase();
-                                                    let file = parts[1].trim().trim_start_matches('*');
-                                                    if file == "synchro.exe" || download_url.ends_with(file) {
-                                                        expected_hash = Some(hash);
-                                                        break;
-                                                    }
-                                                }
-                                            }
+                            let sha_file = target_dir.join("SHA256SUMS.txt");
+                            let mut sha_cmd = get_curl_cmd();
+                            sha_cmd.args(["-L", "--fail", "--silent", "--max-time", "30", "-o"]);
+                            sha_cmd.arg(&sha_file);
+                            sha_cmd.arg(&sha_url);
+                            #[cfg(target_os = "windows")]
+                            sha_cmd.creation_flags(CREATE_NO_WINDOW);
 
-                                            if let Some(expected) = expected_hash {
-                                                let actual_hash = crate::infra::hash::sha256_file(&target_file).unwrap_or_default();
-                                                if actual_hash.to_lowercase() != expected {
-                                                    let _ = fs::remove_file(&target_file);
-                                                    super::set_progress(super::UpdateProgress {
-                                                        status: "error".to_string(),
-                                                        downloaded_bytes: actual_size,
-                                                        total_bytes: expected_size,
-                                                        percent: 0,
-                                                        error: Some(format!(
-                                                            "SHA-256 verification failed (expected {}, got {})",
-                                                            expected, actual_hash
-                                                        )),
-                                                    });
-                                                    break;
-                                                }
-                                            }
-                                        }
+                            let sha_downloaded = match sha_cmd.status() {
+                                Ok(sha_status) => sha_status.success(),
+                                Err(_) => false,
+                            };
+
+                            if !sha_downloaded {
+                                let _ = fs::remove_file(&target_file);
+                                super::set_progress(super::UpdateProgress {
+                                    status: "error".to_string(),
+                                    downloaded_bytes: actual_size,
+                                    total_bytes: expected_size,
+                                    percent: 0,
+                                    error: Some("Failed to download SHA256SUMS.txt checksum manifest".to_string()),
+                                });
+                                break;
+                            }
+
+                            let contents = match fs::read_to_string(&sha_file) {
+                                Ok(c) => c,
+                                Err(e) => {
+                                    let _ = fs::remove_file(&target_file);
+                                    super::set_progress(super::UpdateProgress {
+                                        status: "error".to_string(),
+                                        downloaded_bytes: actual_size,
+                                        total_bytes: expected_size,
+                                        percent: 0,
+                                        error: Some(format!("Failed to read SHA256SUMS.txt: {}", e)),
+                                    });
+                                    break;
+                                }
+                            };
+
+                            let mut expected_hash = None;
+                            for line in contents.lines() {
+                                let parts: Vec<&str> = line.split_whitespace().collect();
+                                if parts.len() >= 2 {
+                                    let hash = parts[0].trim().to_lowercase();
+                                    let file = parts[1].trim().trim_start_matches('*');
+                                    if file == "synchro.exe" || download_url.ends_with(file) {
+                                        expected_hash = Some(hash);
+                                        break;
                                     }
+                                }
+                            }
+
+                            let expected = match expected_hash {
+                                Some(h) => h,
+                                None => {
+                                    let _ = fs::remove_file(&target_file);
+                                    super::set_progress(super::UpdateProgress {
+                                        status: "error".to_string(),
+                                        downloaded_bytes: actual_size,
+                                        total_bytes: expected_size,
+                                        percent: 0,
+                                        error: Some("SHA-256 hash for binary not found in release manifest".to_string()),
+                                    });
+                                    break;
+                                }
+                            };
+
+                            let actual_hash = match crate::infra::hash::sha256_file(&target_file) {
+                                Ok(h) => h.to_lowercase(),
+                                Err(e) => {
+                                    let _ = fs::remove_file(&target_file);
+                                    super::set_progress(super::UpdateProgress {
+                                        status: "error".to_string(),
+                                        downloaded_bytes: actual_size,
+                                        total_bytes: expected_size,
+                                        percent: 0,
+                                        error: Some(format!("Failed to compute update file SHA-256: {}", e)),
+                                    });
+                                    break;
+                                }
+                            };
+
+                            if actual_hash != expected {
+                                let _ = fs::remove_file(&target_file);
+                                super::set_progress(super::UpdateProgress {
+                                    status: "error".to_string(),
+                                    downloaded_bytes: actual_size,
+                                    total_bytes: expected_size,
+                                    percent: 0,
+                                    error: Some(format!(
+                                        "SHA-256 verification failed (expected {}, got {})",
+                                        expected, actual_hash
+                                    )),
+                                });
+                                break;
+                            }
+
+                            // Verify Authenticode if running binary is signed
+                            if let Ok(current_path) = std::env::current_exe() {
+                                if crate::platform::ffi::verify_embedded_signature(&current_path)
+                                    && !crate::platform::ffi::verify_embedded_signature(&target_file)
+                                {
+                                    let _ = fs::remove_file(&target_file);
+                                    super::set_progress(super::UpdateProgress {
+                                        status: "error".to_string(),
+                                        downloaded_bytes: actual_size,
+                                        total_bytes: expected_size,
+                                        percent: 0,
+                                        error: Some("Update binary is missing valid Authenticode signature".to_string()),
+                                    });
+                                    break;
                                 }
                             }
 

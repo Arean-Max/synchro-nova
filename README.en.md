@@ -10,7 +10,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20(x64)-informational?style=flat-square)](https://microsoft.com/windows)
 
 **Desktop utility for hardware display color calibration, input latency reduction, and clean Windows tuning.**  
-*Engineered in Rust & Tauri v2. Consumes ~2 MB RAM in tray, 0% CPU at idle, and operates strictly external to game processes.*
+*Engineered in Rust & Tauri v2. Consumes ~2–8 MB RAM in tray (trimmed working set), 0% CPU at idle, and operates strictly external to game processes.*
 
 <br>
 
@@ -62,7 +62,7 @@ Synchro Nova is built from the ground up for full compatibility with competitive
 
 | Metric | Synchro Nova | VibranceGUI | Typical Electron Utility |
 |---|:---:|:---:|:---:|
-| **RAM usage in tray** | **~1.5 – 3 MB** | ~15 – 35 MB | 120 – 350 MB |
+| **RAM usage in tray** | **~2 – 8 MB** | ~15 – 35 MB | 120 – 350 MB |
 | **CPU usage at idle** | **0.0% (0 timer interrupts)** | 0.2 – 0.8% | 0.5 – 2.5% |
 | **Dynamic Range / Shadow Lift (Black Holo)** | **Supported (Hardware LUT)** | No | Rare (hook-based overlay) |
 | **Input Latency Tweaks (MMCSS, TCP, FSO)** | **Supported (with Restore Point)** | No | No / external BAT scripts |

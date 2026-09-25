@@ -96,14 +96,14 @@ pub fn validate_external_url(url: &str) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn open_official_driver_url(url: String) -> Result<(), String> {
+pub fn open_external_url(url: String) -> Result<(), String> {
     validate_external_url(&url)?;
     crate::platform::ffi::open_path_or_url(&url).map_err(|e| format!("Failed to open browser: {e}"))
 }
 
 #[tauri::command]
-pub fn open_external_url(url: String) -> Result<(), String> {
-    open_official_driver_url(url)
+pub fn open_official_driver_url(url: String) -> Result<(), String> {
+    open_external_url(url)
 }
 
 #[tauri::command]

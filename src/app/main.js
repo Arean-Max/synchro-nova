@@ -1609,7 +1609,7 @@ async function handleClick(event) {
     const url = openDriverUrl.getAttribute("data-url");
     if (url) {
       try {
-        await invokeCommand("open_official_driver_url", { url });
+        await invokeCommand("open_external_url", { url });
       } catch (e) {
         console.error("Failed to open driver URL:", e);
       }
@@ -1823,7 +1823,9 @@ async function boot() {
   await loadLists();
   render();
   loadColorGames();
-  checkForUpdates();
+  if (appState.settings && appState.settings.autoUpdate) {
+    checkForUpdates();
+  }
   if (activePage === "tweaks") {
     if (!appState.isAdmin) {
       showAdminNotificationBanner();
@@ -1843,20 +1845,11 @@ document.addEventListener("error", handleImageError, true);
 document.addEventListener("wheel", handleWheel, { passive: false });
 document.addEventListener("keydown", handleKeydown);
 window.addEventListener("resize", syncNavIndicator);
-window.addEventListener("blur", () => scheduleTrimMemory(2000));
 window.addEventListener("visibilitychange", () => {
   if (document.hidden) {
-    scheduleTrimMemory(100);
+    scheduleTrimMemory(150);
   }
 });
-
-let idleTrimTimer = 0;
-function resetIdleTrimTimer() {
-  window.clearTimeout(idleTrimTimer);
-  idleTrimTimer = window.setTimeout(() => scheduleTrimMemory(100), 20000);
-}
-document.addEventListener("pointerdown", resetIdleTrimTimer, { passive: true });
-document.addEventListener("keydown", resetIdleTrimTimer, { passive: true });
 window.addEventListener("keydown", async (event) => {
   if (event.key === "PrintScreen" || (event.ctrlKey && event.shiftKey && event.key?.toLowerCase() === "s")) {
     try {

@@ -40,17 +40,12 @@ pub fn spawn_memory_trimmer(trimmer_sync: Arc<TrimmerSync>) {
             }
             trim_process_memory();
 
-            // Continuous periodic memory trimming every 30s to guarantee minimal RAM footprint
+            // Passive wait until shutdown signal - no continuous periodic trimming to avoid micro-stutters during gameplay
             while !*lock {
-                let (new_lock, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_secs(30)) {
-                    Ok(res) => res,
+                lock = match trimmer_sync.condvar.wait(lock) {
+                    Ok(l) => l,
                     Err(e) => e.into_inner(),
                 };
-                lock = new_lock;
-                if *lock {
-                    break;
-                }
-                trim_process_memory();
             }
         })
         .ok();
