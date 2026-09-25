@@ -121,4 +121,86 @@ impl SafeRegistry {
             }
         })
     }
-
+
+    pub fn set_dword(root: RootKey, path: &str, name: &str, value: u32) -> Result<(), RegistryError> {
+        if let Err(msg) = crate::platform::security_guard::verify_registry_write_safety(path) {
+            return Err(RegistryError::SetValueFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                name: name.to_string(),
+                source: std::io::Error::new(std::io::ErrorKind::PermissionDenied, msg),
+            });
+        }
+        let hkey = RegKey::predef(root.to_hkey());
+        let (key, _) = hkey.create_subkey(path).map_err(|source| {
+            RegistryError::CreateKeyFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                source,
+            }
+        })?;
+        key.set_value(name, &value).map_err(|source| {
+            RegistryError::SetValueFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                name: name.to_string(),
+                source,
+            }
+        })
+    }
+
+    pub fn set_string(root: RootKey, path: &str, name: &str, value: &str) -> Result<(), RegistryError> {
+        if let Err(msg) = crate::platform::security_guard::verify_registry_write_safety(path) {
+            return Err(RegistryError::SetValueFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                name: name.to_string(),
+                source: std::io::Error::new(std::io::ErrorKind::PermissionDenied, msg),
+            });
+        }
+        let hkey = RegKey::predef(root.to_hkey());
+        let (key, _) = hkey.create_subkey(path).map_err(|source| {
+            eprintln!("[SafeRegistry] Failed to create/open subkey {}\\{}: {}", root.as_str(), path, source);
+            RegistryError::CreateKeyFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                source,
+            }
+        })?;
+        key.set_value(name, &value).map_err(|source| {
+            eprintln!("[SafeRegistry] Failed to set string {}\\{}\\{} = '{}': {}", root.as_str(), path, name, value, source);
+            RegistryError::SetValueFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                name: name.to_string(),
+                source,
+            }
+        })
+    }
+
+    pub fn delete_value(root: RootKey, path: &str, name: &str) -> Result<(), RegistryError> {
+        let hkey = RegKey::predef(root.to_hkey());
+        let key = hkey.open_subkey_with_flags(path, KEY_WRITE).map_err(|source| {
+            RegistryError::OpenKeyFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                source,
+            }
+        })?;
+        key.delete_value(name).map_err(|source| {
+            eprintln!("[SafeRegistry] Failed to delete value {}\\{}\\{}: {}", root.as_str(), path, name, source);
+            RegistryError::DeleteValueFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                name: name.to_string(),
+                source,
+            }
+        })
+    }
+
+    pub fn delete_tree(root: RootKey, path: &str) -> Result<(), RegistryError> {
+        let hkey = RegKey::predef(root.to_hkey());
+        let _ = hkey.delete_subkey_all(path);
+        Ok(())
+    }
+}
