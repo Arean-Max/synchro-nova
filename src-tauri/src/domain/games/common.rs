@@ -210,4 +210,136 @@ pub fn find_best_logo(name: &str, roots: &[PathBuf]) -> Option<String> {
 
     best.map(|(_, _, path)| path.to_string_lossy().into_owned())
 }
-
+
+pub fn scan_image_dir(
+    path: &Path,
+    depth: usize,
+    visited: &mut usize,
+    best: &mut Option<(u64, PathBuf)>,
+) {
+    if depth > MAX_IMAGE_SCAN_DEPTH || *visited >= MAX_IMAGE_SCAN_ENTRIES || !path.is_dir() {
+        return;
+    }
+
+    let Ok(entries) = fs::read_dir(path) else {
+        return;
+    };
+
+    for entry in entries.flatten() {
+        if *visited >= MAX_IMAGE_SCAN_ENTRIES {
+            return;
+        }
+        *visited += 1;
+        let path = entry.path();
+        if path.is_dir() {
+            scan_image_dir(&path, depth + 1, visited, best);
+            continue;
+        }
+        if !is_image_file(&path) || !is_screenshotish_path(&path) {
+            continue;
+        }
+        let size = fs::metadata(&path).map(|metadata| metadata.len()).unwrap_or(0);
+        if size > best.as_ref().map(|(best_size, _)| *best_size).unwrap_or(0) {
+            *best = Some((size, path));
+        }
+    }
+}
+
+pub fn scan_logo_dir(
+    path: &Path,
+    depth: usize,
+    visited: &mut usize,
+    best: &mut Option<(i32, u64, PathBuf)>,
+    clean_name: &str,
+) {
+    if depth > MAX_LOGO_SCAN_DEPTH || *visited >= MAX_LOGO_SCAN_ENTRIES || !path.is_dir() {
+        return;
+    }
+    if is_screenshotish_path(path) {
+        return;
+    }
+
+    let Ok(entries) = fs::read_dir(path) else {
+        return;
+    };
+
+    for entry in entries.flatten() {
+        if *visited >= MAX_LOGO_SCAN_ENTRIES {
+            return;
+        }
+        *visited += 1;
+        let path = entry.path();
+        if path.is_dir() {
+            scan_logo_dir(&path, depth + 1, visited, best, clean_name);
+            continue;
+        }
+        if !is_logo_image_file(&path) {
+            continue;
+        }
+        let score = logo_path_score(&path, clean_name);
+        if score <= 0 {
+            continue;
+        }
+        let size = fs::metadata(&path).map(|metadata| metadata.len()).unwrap_or(0);
+        if best
+            .as_ref()
+            .map(|(best_score, best_size, _)| score > *best_score || (score == *best_score && size > *best_size))
+            .unwrap_or(true)
+        {
+            *best = Some((score, size, path));
+        }
+    }
+}
+
+pub fn logo_path_score(path: &Path, clean_name: &str) -> i32 {
+    let value = path.to_string_lossy().to_lowercase();
+    if is_screenshotish_path(path)
+        || value.contains("uninstall")
+        || value.contains("setup")
+        || value.contains("cursor")
+        || value.contains("loading")
+    {
+        return 0;
+    }
+
+    let file_name = path
+        .file_stem()
+        .and_then(|name| name.to_str())
+        .unwrap_or_default()
+        .to_lowercase();
+    let mut score = 0;
+    for (needle, points) in [
+        ("logo", 120),
+        ("logotype", 120),
+        ("icon", 88),
+        ("banner", 68),
+        ("header", 60),
+        ("capsule", 54),
+        ("library", 48),
+        ("cover", 34),
+        ("poster", 28),
+        ("splash", 24),
+    ] {
+        if value.contains(needle) {
+            score = score.max(points);
+        }
+    }
+    if !clean_name.is_empty() && fileish_name(&file_name).to_lowercase().contains(clean_name) {
+        score += 12;
+    }
+    score
+}
+
+pub fn user_game_image_roots(name: &str) -> Vec<PathBuf> {
+    let mut roots = Vec::new();
+    let Some(home) = env_path("USERPROFILE") else {
+        return roots;
+    };
+    let clean = fileish_name(name);
+    roots.push(home.join("Documents").join("My Games").join(name));
+    roots.push(home.join("Documents").join("My Games").join(&clean));
+    roots.push(home.join("Documents").join(name));
+    roots.push(home.join("Pictures").join(name));
+    roots.push(home.join("Videos").join(name));
+    roots
+}
