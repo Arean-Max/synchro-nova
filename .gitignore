@@ -10,4 +10,5 @@ dist/
 *.exe
 *.zip
 *.txt
+*.dll
 dist-artifacts/

@@ -80,21 +80,32 @@ async function run() {
     }
   });
 
-  let release = Array.isArray(rels.data) ? rels.data.find(r => r.tag_name === 'v2.2.3') : null;
+  let release = Array.isArray(rels.data) ? rels.data.find(r => r.tag_name === 'v2.2.4') : null;
 
   const releaseBody = {
-    tag_name: 'v2.2.3',
+    tag_name: 'v2.2.4',
     target_commitish: 'main',
-    name: 'Synchro Nova v2.2.3',
+    name: 'Synchro Nova v2.2.4',
     body: [
-      '## Synchro Nova v2.2.3',
+      '# Synchro Nova v2.2.4',
       '',
-      '### Changes & Improvements',
-      '- **Administrator Tweak Lock & Frosted Blur**: Tweaks are safely locked and frosted-blurred when running without administrator privileges. Prevents unauthorized system modifications, with a persistent top notification banner to elevate via UAC on demand.',
-      '- **Multi-Monitor Screenshot Capture**: Enhanced PrintScreen capture to detect active window monitor and cursor coordinates across multi-monitor display configurations.',
-      '- **Cryptographic Integrity & SHA-256 Check**: Integrated native SHA-256 hash verification to validate downloaded binaries against release checksums prior to installation.',
-      '- **Process Lifecycle & Deadlock Fixes**: Resolved elevation mutex deadlock on restart, ensured clean exit, and added safe color ramp restoration on system shutdown.',
-      '- **Localization Polish**: Dynamic RU/EN system tray menu localization and updater UI refinements.'
+      '[🌐 Read in English (English version)](https://github.com/Arean-Max/synchro-nova/blob/main/CHANGELOG.en.md)',
+      '',
+      '### Изменения и улучшения (v2.2.4)',
+      '- **Индикатор видеокарты**: Аппаратный векторный значок вендора графического ускорителя (NVIDIA / AMD) в строке Black Holosight.',
+      '- **Устойчивый запуск**: Устранена блокировка старта приложения одиночным мьютексом при отсутствии видимого окна на рабочем столе.',
+      '- **Перезапуск от имени администратора**: Интеграция `ShellExecuteExW` с модальным родительским окном UAC, защита от самозакрытия при отмене UAC и сохранение открытой вкладки твиков.',
+      '- **Изоляция профиля**: Выделен отдельный каталог пользовательских данных `EBWebView_Admin` для исключения конфликтов блокировки SQLite между уровнями прав Windows.',
+      '- **Анимация тумблера**: Доработан плавный сдвиг ползунка Black Holo и мгновенный отклик интерфейса.',
+      '',
+      '---',
+      '',
+      '### Changes & Improvements (English)',
+      '- **GPU Vendor Indicator**: Dynamic hardware GPU indicator (NVIDIA / AMD) displayed next to the Black Holo toggle switch.',
+      '- **Reliable Startup**: Resolved single-instance mutex locks preventing application startup when no desktop window is active.',
+      '- **Administrator Elevation**: Native `ShellExecuteExW` with modal UAC dialog parenting, error recovery on UAC cancellation, and automatic navigation back to the tweaks tab.',
+      '- **Profile Isolation**: Separate `EBWebView_Admin` user data directory to eliminate SQLite database contention and Windows integrity level mismatch.',
+      '- **Switch Animation**: Fixed sliding animation and optimistic UI responsiveness for the Black Holo switch.'
     ].join('\n'),
     draft: false,
     prerelease: false,
@@ -160,8 +171,8 @@ async function run() {
   }
 
   const artifacts = fs.existsSync('dist-artifacts') ? fs.readdirSync('dist-artifacts') : [];
-  const setupName = artifacts.find(f => f.endsWith('-setup.exe')) || 'Synchro.Nova_2.2.3_x64-setup.exe';
-  const zipName = artifacts.find(f => f.endsWith('-Portable.zip')) || 'Synchro-Nova-2.2.3-Portable.zip';
+  const setupName = artifacts.find(f => f.endsWith('-setup.exe')) || 'Synchro.Nova_2.2.4_x64-setup.exe';
+  const zipName = artifacts.find(f => f.endsWith('-Portable.zip')) || 'Synchro-Nova-2.2.4-Portable.zip';
 
   const setupPath = path.resolve('dist-artifacts', setupName);
   const zipPath = path.resolve('dist-artifacts', zipName);

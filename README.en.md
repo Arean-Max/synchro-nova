@@ -75,8 +75,8 @@ Synchro Nova is built from the ground up for full compatibility with competitive
 
 Official release packages are available on the [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) page:
 
-- **Portable Version (`Synchro-Nova-2.2.3-Portable.zip`)** — standalone `synchro.exe` executable, runs immediately from any folder without installation.
-- **Installer (`Synchro.Nova_2.2.3_x64-setup.exe`)** — standard Windows installer with desktop shortcuts, Windows search indexing, and a clean uninstaller.
+- **Portable Version (`Synchro-Nova-2.2.4-Portable.zip`)** — standalone `synchro.exe` executable, runs immediately from any folder without installation.
+- **Installer (`Synchro.Nova_2.2.4_x64-setup.exe`)** — standard Windows installer with desktop shortcuts, Windows search indexing, and a clean uninstaller.
 
 ### Verify SHA-256 Checksum
 To verify the integrity of the downloaded binary in PowerShell:

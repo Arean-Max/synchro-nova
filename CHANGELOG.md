@@ -1,102 +1,121 @@
-# Changelog
+# История изменений (Changelog)
 
-All notable changes to Synchro Nova are documented in this file.
+[🌐 Read this in English (English version)](CHANGELOG.en.md)
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Все значимые изменения проекта Synchro Nova документируются в этом файле.
+
+Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/),
+и проект придерживается [Семантического версионирования](https://semver.org/lang/ru/).
+
+---
+
+## [2.2.4] - 2026-09-26
+
+### Добавлено
+- Аппаратный векторный индикатор активного вендора видеокарты (NVIDIA / AMD) рядом с тумблером Black Holosight.
+- Модальное родительское окно (`HWND`) при запросе прав администратора через системный `ShellExecuteExW`.
+- Автоматическая маршрутизация (`--navigate-to tweaks`) для плавного возврата на вкладку твиков после повышенного перезапуска.
+- Флаги безопасного делегирования дочерних процессов в Job Object (`JOB_OBJECT_LIMIT_BREAKAWAY_OK` и `SILENT_BREAKAWAY`) для изоляции песочницы WebView2.
+
+### Исправлено
+- Проблема с запуском приложения (`synchro.exe`), вызванная блокировкой мьютекса при отсутствии активного окна на рабочем столе.
+- Сбой перезапуска от имени администратора, приводивший к одновременному закрытию исходного и нового процессов.
+- Визуальная анимация тумблера Black Holosight и мгновенный оптимистичный отклик интерфейса.
+- Изолирован каталог данных браузера (`EBWebView_Admin`) для сессий администратора во избежание конфликтов SQLite и уровней доступа Windows.
+- Удалены лишние подсказки и устаревшая маркировка горячей клавиши F11.
 
 ---
 
 ## [2.2.3] - 2026-09-24
 
-### Added
-- Tweak page blur effect and interaction lock when running without administrator privileges.
-- Persistent administrator elevation notification banner with 1-click UAC restart.
-- Multi-monitor support for saturated screenshot capture based on active window and cursor position.
-- Dynamic localization for system tray context menu (RU/EN).
+### Добавлено
+- Эффект матового размытия и блокировка взаимодействия со страницей твиков при отсутствии прав администратора.
+- Закрепленный верхний баннер уведомления с перезапуском через UAC в один клик.
+- Поддержка нескольких мониторов для захвата насыщенных скриншотов с учетом позиции курсора и активного экрана.
+- Динамическая локализация контекстного меню системного трея (RU/EN).
 
-### Security
-- Pre-execution elevation checks for privileged tweak application and rollback commands.
-- Streaming SHA-256 integrity verification against release checksums prior to applying updates.
-- PE signature header verification before executing downloaded update packages.
+### Безопасность
+- Предварительная проверка прав администратора перед применением или откатом системных твиков.
+- Потоковая проверка целостности SHA-256 по контрольным суммам релиза перед установкой обновлений.
+- Валидация сигнатур PE-заголовков перед запуском загруженных пакетов обновлений.
 
-### Fixed
-- Mutual exclusion deadlock during elevated restart sequence.
-- Desktop color ramp restoration on application exit and system shutdown.
+### Исправлено
+- Взаимная блокировка мьютекса в процессе перезапуска от имени администратора.
+- Надежное восстановление стандартной гаммы рабочего стола при выходе из приложения и выключении системы.
 
 ---
 
 ## [2.2.2] - 2026-09-23
 
-### Added
-- Integrated background updater with GitHub release discovery and progress tracking.
-- EAC-safe desktop screenshot capture with embedded vibrance processing.
+### Добавлено
+- Встроенный модуль фонового обновления с поиском релизов GitHub и отслеживанием прогресса загрузки.
+- Безопасный для античитов захват игровых скриншотов с повышенной насыщенностью цветов.
 
-### Fixed
-- Progress reporting edge cases in download stream handler.
-- Sizing and alignment of manual download indicator in updater modal.
+### Исправлено
+- Краевые случаи отображения прогресса в потоковом загрузчике обновлений.
+- Размеры и позиционирование индикатора ручной загрузки в окне обновления.
 
 ---
 
 ## [2.2.1] - 2026-09-22
 
-### Security
-- In-process Authenticode verification via `WinVerifyTrust` for loaded runtime libraries.
-- Hardened Tauri custom asset protocol scope to prevent unauthorized directory traversal.
-- Enabled Data Execution Prevention (DEP) and restricted DLL search path mode at startup.
+### Безопасность
+- Проверка встроенных цифровых подписей Authenticode через WinAPI `WinVerifyTrust` без создания дочерних процессов.
+- Усиление изоляции протокола пользовательских ассетов Tauri для предотвращения обхода директорий.
+- Включение аппаратного DEP (Data Execution Prevention) и безопасного режима поиска DLL при старте программы.
 
 ---
 
 ## [2.2.0] - 2026-09-22
 
-### Changed
-- Refactored monolithic backend into domain-driven modules (`app`, `domain`, `infra`, `platform`, `commands`).
-- Enforced strict module boundaries and reduced source file complexity.
+### Изменено
+- Архитектурный рефакторинг монолитного бэкенда на модули предметной области (`app`, `domain`, `infra`, `platform`, `commands`).
+- Строгое разграничение модулей и снижение цикломатической сложности исходного кода.
 
 ---
 
 ## [2.1.0] - 2026-09-21
 
-### Added
-- System Restore Point integration via `SRSetRestorePointW` and PowerShell fallback before applying tweaks.
-- Deep uninstaller in NSIS package removing configuration, cache, and registry keys.
-- Adaptive luminance contrast algorithm for custom RGB accent selection.
+### Добавлено
+- Автоматическое создание точек восстановления системы через `SRSetRestorePointW` перед применением оптимизаций.
+- Глубокий деинсталлятор в пакете NSIS для полного удаления конфигураций, кэша и ключей реестра.
+- Адаптивный алгоритм контрастности интерфейса для любого выбранного акцентного цвета.
 
-### Fixed
-- Window initialization crash (`0xC00000FD`) caused by recursive position updates on frameless window.
-- White border artifacts by removing native DWM window shadow and managing border color attributes.
-- Standalone portable execution by bundling and dynamically loading `WebView2Loader.dll`.
+### Исправлено
+- Падение окна (`0xC00000FD`) из-за рекурсивного обновления позиции безрамочного окна.
+- Артефакты белых рамок путём отключения нативной тени DWM и корректировки атрибутов цвета границы.
+- Автономный запуск портативной версии за счёт комплектации и динамической загрузки `WebView2Loader.dll`.
 
 ---
 
 ## [2.0.0] - 2026-09-20
 
-### Added
-- Event-driven thread synchronization using condition variables to achieve 0% idle CPU usage.
-- Graceful process termination with atomic shutdown signaling.
-- Black Holo dynamic range mode for enhanced shadow visibility.
-- Rust game configuration optimizer for input latency reduction.
+### Добавлено
+- Событийная синхронизация потоков на условных переменных (condvar), снизившая фоновую нагрузку CPU до 0%.
+- Корректное завершение всех фоновых процессов с атомарной передачей сигнала остановки.
+- Режим Black Holosight для высветления глубоких теней в соревновательных играх.
+- Оптимизатор конфигурационного файла игры Rust для минимизации задержки ввода.
 
-### Changed
-- Isolated WebView2 user data directory and optimized browser process flags.
-- Memory working set compaction reducing idle footprint to ~2 MB RAM.
+### Изменено
+- Изолирована папка данных WebView2 и оптимизированы аргументы браузерного движка.
+- Принудительная компактизация памяти, снизившая потребление ОЗУ в простое до ~2 МБ.
 
 ---
 
 ## [0.1.1] - 2026-09-19
 
-### Fixed
-- UI responsiveness during tweak execution using protected async blocks.
-- Localization coverage across all display presets.
-- Input field reset behavior after configuration saves.
+### Исправлено
+- Отзывчивость интерфейса при длительном выполнении твиков с помощью защищенных асинхронных блоков.
+- Полнота локализации названий всех пресетов цветокоррекции.
+- Корректный сброс полей ввода после сохранения конфигурации.
 
 ---
 
 ## [0.1.0] - 2026-09-17
 
-### Added
-- Initial release with hardware LUT display calibration.
-- Core system tweaks engine with automated `.reg` snapshot backups and 1-click rollback.
-- Hardware telemetry for CPU and memory via Windows PDH.
-- GPU and driver information inspector.
-- Game library detection for Steam and Epic Games.
+### Добавлено
+- Первый стабильный релиз с аппаратной калибровкой гаммы LUT.
+- Движок системных твиков с автоматическим созданием `.reg`-бэкапов и восстановлением в 1 клик.
+- Сбор телеметрии оборудования (CPU и RAM) через интерфейс Windows PDH.
+- Модуль анализа видеокарты и версии графического драйвера.
+- Автоматическое сканирование установленных игр в Steam и Epic Games.
