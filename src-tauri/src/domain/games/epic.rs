@@ -90,4 +90,55 @@ pub fn epic_games() -> Vec<GameEntry> {
 
     games
 }
-
+
+pub fn read_json_value(path: &Path) -> Option<Value> {
+    fs::read_to_string(path)
+        .ok()
+        .and_then(|raw| serde_json::from_str(&raw).ok())
+}
+
+pub fn json_string<'a>(value: &'a Value, key: &str) -> Option<&'a str> {
+    value.get(key).and_then(Value::as_str).filter(|value| !value.trim().is_empty())
+}
+
+pub fn split_command_line(value: &str) -> Vec<String> {
+    let mut args = Vec::new();
+    let mut current = String::new();
+    let mut in_quotes = false;
+    let mut escaped = false;
+
+    for ch in value.chars() {
+        if escaped {
+            current.push(ch);
+            escaped = false;
+            continue;
+        }
+        if ch == '\\' && in_quotes {
+            escaped = true;
+            continue;
+        }
+        if ch == '"' {
+            in_quotes = !in_quotes;
+            continue;
+        }
+        if ch.is_whitespace() && !in_quotes {
+            if !current.is_empty() {
+                args.push(current.clone());
+                current.clear();
+            }
+            continue;
+        }
+        current.push(ch);
+    }
+
+    if !current.is_empty() {
+        args.push(current);
+    }
+    args
+}
+
+pub fn install_location_key(path: &Option<PathBuf>) -> String {
+    path.as_ref()
+        .map(|path| path.to_string_lossy().into_owned())
+        .unwrap_or_default()
+}
