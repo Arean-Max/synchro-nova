@@ -237,4 +237,118 @@ fn steam_library_image_path(steam_root: &Path, app_id: &str) -> Option<String> {
 
     None
 }
-
+
+fn steam_library_logo_path(steam_root: &Path, app_id: &str) -> Option<String> {
+    let cache = steam_root.join("appcache").join("librarycache");
+    let app_dir = cache.join(app_id);
+
+    let candidates = [
+        app_dir.join("logo.png"),
+        app_dir.join("logo.webp"),
+        app_dir.join("logo.jpg"),
+        cache.join(format!("{app_id}_logo.png")),
+        cache.join(format!("{app_id}_logo.webp")),
+        cache.join(format!("{app_id}_logo.jpg")),
+        app_dir.join("icon.png"),
+        app_dir.join("icon.jpg"),
+        app_dir.join("icon.ico"),
+        cache.join(format!("{app_id}_icon.png")),
+        cache.join(format!("{app_id}_icon.jpg")),
+    ];
+
+    for path in candidates {
+        if path.is_file() {
+            return Some(path.to_string_lossy().into_owned());
+        }
+    }
+
+    if app_dir.is_dir() {
+        if let Ok(entries) = fs::read_dir(&app_dir) {
+            for entry in entries.flatten() {
+                let p = entry.path();
+                if p.is_dir() {
+                    let sub_candidates = [
+                        p.join("logo.png"),
+                        p.join("logo.webp"),
+                        p.join("logo.jpg"),
+                        p.join("icon.png"),
+                        p.join("icon.ico"),
+                    ];
+                    for sub in sub_candidates {
+                        if sub.is_file() {
+                            return Some(sub.to_string_lossy().into_owned());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    None
+}
+
+#[cfg(target_os = "windows")]
+pub fn steam_install_root() -> Option<PathBuf> {
+    use winreg::{
+        enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE},
+        RegKey,
+    };
+
+    let roots = [
+        (
+            RegKey::predef(HKEY_CURRENT_USER),
+            "Software\\Valve\\Steam",
+        ),
+        (
+            RegKey::predef(HKEY_LOCAL_MACHINE),
+            "SOFTWARE\\Valve\\Steam",
+        ),
+        (
+            RegKey::predef(HKEY_LOCAL_MACHINE),
+            "SOFTWARE\\WOW6432Node\\Valve\\Steam",
+        ),
+    ];
+
+    for (root, subkey) in roots {
+        let Ok(key) = root.open_subkey(subkey) else {
+            continue;
+        };
+        if let Some(root) = steam_root_from_key(&key) {
+            return Some(root);
+        }
+    }
+
+    if let Some(path) = env_path("ProgramFiles(x86)").map(|p| p.join("Steam")) {
+        if path.exists() {
+            return Some(path);
+        }
+    }
+    if let Some(path) = env_path("ProgramFiles").map(|p| p.join("Steam")) {
+        if path.exists() {
+            return Some(path);
+        }
+    }
+    None
+}
+
+#[cfg(target_os = "windows")]
+fn steam_root_from_key(key: &winreg::RegKey) -> Option<PathBuf> {
+    if let Ok(path) = key.get_value::<String, _>("SteamPath") {
+        let root = PathBuf::from(path);
+        if root.exists() {
+            return Some(root);
+        }
+    }
+    if let Ok(exe) = key.get_value::<String, _>("SteamExe") {
+        let root = PathBuf::from(exe).parent().map(Path::to_path_buf)?;
+        if root.exists() {
+            return Some(root);
+        }
+    }
+    None
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn steam_install_root() -> Option<PathBuf> {
+    None
+}
