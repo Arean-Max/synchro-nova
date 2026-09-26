@@ -1931,81 +1931,95 @@ button.check-row:active {
 .black-holo-check-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 14px;
   width: 100%;
   padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.025);
   border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   text-align: left;
-  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
   user-select: none;
+  box-sizing: border-box;
 }
 
 .black-holo-check-row:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-0.5px);
 }
 
 .black-holo-check-row:active {
-  transform: scale(0.98);
+  transform: scale(0.988);
 }
 
 .black-holo-check-row.active {
-  background: rgba(37, 99, 235, 0.08);
-  border-color: var(--ui-accent, #2563eb);
-  box-shadow: 0 0 16px var(--ui-accent-glow, rgba(37, 99, 235, 0.2));
+  background: rgba(255, 255, 255, 0.045);
+  border-color: var(--ui-accent-border, rgba(255, 255, 255, 0.22));
+  box-shadow: 0 0 16px var(--ui-accent-glow, rgba(255, 255, 255, 0.18));
 }
 
-.black-holo-check-info {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.black-holo-check-title {
+.black-holo-left {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 9px;
   font-size: 13.5px;
   font-weight: 650;
   color: #f4f4f5;
   letter-spacing: -0.01em;
 }
 
-.black-holo-check-title svg {
+.black-holo-target-icon {
   color: var(--ui-accent-fg, var(--ui-accent, #ffffff));
+  flex-shrink: 0;
 }
 
-.black-holo-check-hint {
-  font-size: 11.5px;
-  color: var(--text-muted, #8e8e93);
-  line-height: 1.3;
-}
-
-.black-holo-header {
+.black-holo-right {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
+  gap: 14px;
+  margin-left: auto;
 }
 
-.black-holo-title {
-  display: flex;
+.holo-gpu-icon-slot {
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  font-size: 13px;
-  font-weight: 650;
-  color: #f1f5f9;
-  letter-spacing: -0.01em;
+  justify-content: center;
 }
 
-.black-holo-title svg {
-  color: var(--ui-accent-fg, var(--ui-accent, #ffffff));
+.holo-gpu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: filter 180ms ease, transform 180ms ease;
+}
+
+.holo-gpu-icon.nvidia {
+  color: #76b900;
+  filter: drop-shadow(0 0 7px rgba(118, 185, 0, 0.45));
+}
+
+.holo-gpu-icon.amd {
+  color: #ed1c24;
+  filter: drop-shadow(0 0 7px rgba(237, 28, 36, 0.5));
+}
+
+.holo-gpu-icon.intel {
+  color: #38bdf8;
+  filter: drop-shadow(0 0 7px rgba(56, 189, 248, 0.45));
+}
+
+.holo-gpu-icon.unknown {
+  color: #a1a1aa;
+}
+
+.black-holo-check-row .ios-switch {
+  pointer-events: none;
 }
 
 /* Authentic Apple iOS Switch Toggle */
@@ -2027,10 +2041,12 @@ button.check-row:active {
   outline: none;
 }
 
-.ios-switch.active {
-  background-color: var(--ui-accent, #ffffff);
-  border: 1px solid var(--ui-accent-border, rgba(255, 255, 255, 0.16));
-  box-shadow: 0 0 14px var(--ui-accent-glow, rgba(255, 255, 255, 0.45));
+.ios-switch.active,
+.black-holo-check-row.active .ios-switch,
+.check-row.active .ios-switch {
+  background-color: var(--ui-accent, #ffffff) !important;
+  border: 1px solid var(--ui-accent-border, rgba(255, 255, 255, 0.16)) !important;
+  box-shadow: 0 0 14px var(--ui-accent-glow, rgba(255, 255, 255, 0.45)) !important;
 }
 
 .ios-switch-thumb {
@@ -2044,10 +2060,12 @@ button.check-row:active {
   flex-shrink: 0;
 }
 
-.ios-switch.active .ios-switch-thumb {
-  transform: translate3d(18px, 0, 0);
-  background: var(--ui-accent-thumb, #ffffff);
-  box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.35), 0 0 1px rgba(0, 0, 0, 0.2);
+.ios-switch.active .ios-switch-thumb,
+.black-holo-check-row.active .ios-switch-thumb,
+.check-row.active .ios-switch-thumb {
+  transform: translate3d(18px, 0, 0) !important;
+  background: var(--ui-accent-thumb, #141416) !important;
+  box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.35), 0 0 1px rgba(0, 0, 0, 0.2) !important;
 }
 
 .ios-switch:active .ios-switch-thumb {

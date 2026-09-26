@@ -62,7 +62,16 @@ export const viewState = {
   dismissedAdminPrompt: false,
   showBackupNameModal: false,
   applyModal: null,
-  colorPreviewMode: "day"
+  colorPreviewMode: "day",
+  blackHoloStatus: {
+    active: false,
+    gpuVendor: "unknown",
+    gpuName: "",
+    curveProfile: "",
+    hotkey: "F11",
+    rustSynced: true,
+    error: null
+  }
 };
 
 

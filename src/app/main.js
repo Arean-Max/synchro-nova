@@ -354,7 +354,7 @@ function updateMain() {
       if (nextBody) router.mount(activePage, nextBody, mountContext);
     }
   }
-  syncAllSliders(appState);
+  syncAllSliders(appState, viewState);
   updateNavState();
   renderBackupModalDom();
   renderApplyModalDom();
@@ -580,7 +580,7 @@ function updateColorPage(options = {}) {
   body.innerHTML = activePage === "gameColor"
     ? renderGameColorPage(appState, viewState, t)
     : renderColorPage(appState, viewState, t);
-  syncAllSliders(appState);
+  syncAllSliders(appState, viewState);
   if (viewState.editingTemplate && viewState.editingTemplateColor) {
     syncAllTemplateSliders(viewState.editingTemplateColor);
   }
@@ -685,6 +685,21 @@ async function syncRustBlackHolo(enabled) {
     }
   } catch (err) {
     console.error("Failed to sync Rust black holo cfg:", err);
+  }
+}
+
+async function loadBlackHoloStatus() {
+  try {
+    const status = await invokeCommand("get_black_holo_status");
+    if (status) {
+      viewState.blackHoloStatus = status;
+      if (status.active && (!appState?.color?.blackHolo || appState.color.blackHolo === 0)) {
+        appState.color.blackHolo = 100;
+      }
+      updateBlackHoloDom(status.active, status);
+    }
+  } catch (err) {
+    console.warn("Failed to load black holo status:", err);
   }
 }
 
@@ -827,7 +842,14 @@ async function handleAction(action) {
     const banner = document.querySelector(".ios-banner");
     if (banner) banner.style.pointerEvents = "none";
     try {
-      return await invokeCommand("restart_as_admin");
+      const res = await invokeCommand("restart_as_admin");
+      if (res === null && !appState.isAdmin) {
+        if (banner) banner.style.pointerEvents = "auto";
+        if (activePage === "tweaks") {
+          showAdminNotificationBanner();
+        }
+      }
+      return res;
     } catch (err) {
       console.error("restart_as_admin failed or cancelled:", err);
       if (banner) banner.style.pointerEvents = "auto";
@@ -1391,10 +1413,18 @@ async function handleClick(event) {
 
   const toggleBlackHolo = target.closest("[data-action='toggle-black-holo']");
   if (toggleBlackHolo) {
-    const isCurrentlyActive = Number(appState.color.blackHolo || 0) > 0;
-    const nextVal = isCurrentlyActive ? 0 : 100;
+    const isCurrentlyActive = toggleBlackHolo.classList.contains("active") || Number(appState.color.blackHolo || 0) > 0;
+    const nextActive = !isCurrentlyActive;
+    const nextVal = nextActive ? 100 : 0;
     appState.color.blackHolo = nextVal;
-    updateBlackHoloDom(nextVal > 0);
+
+    // Synchronous optimistic UI update for instant visual feedback:
+    toggleBlackHolo.classList.toggle("active", nextActive);
+    toggleBlackHolo.setAttribute("aria-checked", String(nextActive));
+    toggleBlackHolo.setAttribute("aria-pressed", String(nextActive));
+    const sw = toggleBlackHolo.querySelector(".ios-switch");
+    if (sw) sw.classList.toggle("active", nextActive);
+
     if (nextVal > 0) {
       viewState.colorPreviewMode = "holo";
       const img = document.getElementById("color-preview-image");
@@ -1414,8 +1444,37 @@ async function handleClick(event) {
         btn.classList.toggle("active", btn.getAttribute("data-mode") === "day");
       });
     }
+
+    try {
+      const status = await invokeCommand("toggle_hardware_black_holo", { enabled: nextActive });
+      if (status) {
+        viewState.blackHoloStatus = status;
+        updateBlackHoloDom(status.active, status);
+        const isRu = lang() === "ru";
+        if (status.error) {
+          showToastBanner(t("blackHolo"), status.error, "danger");
+        } else if (status.active) {
+          showToastBanner(
+            t("blackHolo"),
+            isRu ? "Black Holosight включен" : "Black Holosight enabled",
+            "safe"
+          );
+        } else {
+          showToastBanner(
+            t("blackHolo"),
+            isRu ? "Гамма монитора восстановлена" : "Hardware gamma restored",
+            "safe"
+          );
+        }
+      } else {
+        updateBlackHoloDom(nextVal > 0, viewState.blackHoloStatus);
+      }
+    } catch (err) {
+      console.error("Hardware black holo toggle error:", err);
+      updateBlackHoloDom(nextVal > 0, viewState.blackHoloStatus);
+    }
+
     scheduleApplyColor();
-    syncRustBlackHolo(nextVal > 0);
     return;
   }
 
@@ -1794,7 +1853,7 @@ function render() {
   applyInterfaceAccent(appState.settings.accentColor);
   app.className = "app-shell";
   app.innerHTML = renderShell(viewState, t);
-  syncAllSliders(appState);
+  syncAllSliders(appState, viewState);
   updateNavState();
   renderBackupModalDom();
   renderApplyModalDom();
@@ -1814,13 +1873,15 @@ async function boot() {
     }
   } catch {}
   try {
-    const pendingNav = localStorage.getItem("synchro_pending_nav");
+    const cliNav = await invokeCommand("get_pending_navigation");
+    const pendingNav = cliNav || localStorage.getItem("synchro_pending_nav");
     if (pendingNav && pageDefs[pendingNav]) {
-      localStorage.removeItem("synchro_pending_nav");
+      try { localStorage.removeItem("synchro_pending_nav"); } catch {}
       setActivePage(pendingNav);
     }
   } catch {}
   await loadLists();
+  await loadBlackHoloStatus();
   render();
   loadColorGames();
   if (appState.settings && appState.settings.autoUpdate) {
@@ -1868,5 +1929,32 @@ window.addEventListener("keydown", async (event) => {
     }
   }
 });
+
+if (window.__TAURI__?.event?.listen) {
+  window.__TAURI__.event.listen("black-holo-toggled", (e) => {
+    const status = e?.payload;
+    if (!status) return;
+    viewState.blackHoloStatus = status;
+    const isAct = Boolean(status.active);
+    appState.color.blackHolo = isAct ? 100 : 0;
+    updateBlackHoloDom(isAct, status);
+    const isRu = lang() === "ru";
+    if (status.error) {
+      showToastBanner(t("blackHolo"), status.error, "danger");
+    } else if (isAct) {
+      showToastBanner(
+        t("blackHolo"),
+        isRu ? "Black Holosight включен" : "Black Holosight enabled",
+        "safe"
+      );
+    } else {
+      showToastBanner(
+        t("blackHolo"),
+        isRu ? "Гамма монитора восстановлена" : "Hardware gamma restored",
+        "safe"
+      );
+    }
+  });
+}
 
 boot();

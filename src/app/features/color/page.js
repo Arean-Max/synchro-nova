@@ -259,6 +259,20 @@ function templateItem(id, label, t, active = false) {
   ].join("");
 }
 
+export function renderGpuVendorIcon(vendor) {
+  const v = (vendor || "unknown").toLowerCase();
+  if (v === "nvidia") {
+    return '<span class="holo-gpu-icon nvidia" title="NVIDIA GeForce"><svg width="24" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M8.948 8.798v-1.43a6.7 6.7 0 0 1 .424-.018c3.922-.124 6.493 3.374 6.493 3.374s-2.774 3.851-5.75 3.851c-.398 0-.787-.062-1.158-.185v-4.346c1.528.185 1.837.857 2.747 2.385l2.04-1.714s-1.492-1.952-4-1.952a6.016 6.016 0 0 0-.796.035m0-4.735v2.138l.424-.027c5.45-.185 9.01 4.47 9.01 4.47s-4.08 4.964-8.33 4.964c-.37 0-.733-.035-1.095-.097v1.325c.3.035.61.062.91.062 3.957 0 6.82-2.023 9.593-4.408.459.371 2.34 1.263 2.73 1.652-2.633 2.208-8.772 3.984-12.253 3.984-.335 0-.653-.018-.971-.053v1.864H24V4.063zm0 10.326v1.131c-3.657-.654-4.673-4.46-4.673-4.46s1.758-1.944 4.673-2.262v1.237H8.94c-1.528-.186-2.73 1.245-2.73 1.245s.68 2.412 2.739 3.11M2.456 10.9s2.164-3.197 6.5-3.533V6.201C4.153 6.59 0 10.653 0 10.653s2.35 6.802 8.948 7.42v-1.237c-4.84-.6-6.492-5.936-6.492-5.936z"/></svg></span>';
+  }
+  if (v === "amd") {
+    return '<span class="holo-gpu-icon amd" title="AMD Radeon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M22.002 2l-7.002 7.002h4.596l-7.596 7.596v-4.596l-7.002 7.002h17.004v-17.004zm-19.998 0v16.002l5.002-5.002v-6.004h6.004l5.002-4.996h-16.008z"/></svg></span>';
+  }
+  if (v === "intel") {
+    return '<span class="holo-gpu-icon intel" title="Intel Graphics"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 8h2v8H9zm4 3h2v5h-2zm0-3h2v2h-2z"/></svg></span>';
+  }
+  return '<span class="holo-gpu-icon nvidia" title="NVIDIA GeForce"><svg width="24" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M8.948 8.798v-1.43a6.7 6.7 0 0 1 .424-.018c3.922-.124 6.493 3.374 6.493 3.374s-2.774 3.851-5.75 3.851c-.398 0-.787-.062-1.158-.185v-4.346c1.528.185 1.837.857 2.747 2.385l2.04-1.714s-1.492-1.952-4-1.952a6.016 6.016 0 0 0-.796.035m0-4.735v2.138l.424-.027c5.45-.185 9.01 4.47 9.01 4.47s-4.08 4.964-8.33 4.964c-.37 0-.733-.035-1.095-.097v1.325c.3.035.61.062.91.062 3.957 0 6.82-2.023 9.593-4.408.459.371 2.34 1.263 2.73 1.652-2.633 2.208-8.772 3.984-12.253 3.984-.335 0-.653-.018-.971-.053v1.864H24V4.063zm0 10.326v1.131c-3.657-.654-4.673-4.46-4.673-4.46s1.758-1.944 4.673-2.262v1.237H8.94c-1.528-.186-2.73 1.245-2.73 1.245s.68 2.412 2.739 3.11M2.456 10.9s2.164-3.197 6.5-3.533V6.201C4.153 6.59 0 10.653 0 10.653s2.35 6.802 8.948 7.42v-1.237c-4.84-.6-6.492-5.936-6.492-5.936z"/></svg></span>';
+}
+
 function renderTemplates(appState, viewState, t) {
   const defaultLabels = {
     balanced: t("balanced"),
@@ -278,7 +292,9 @@ function renderTemplates(appState, viewState, t) {
     })
     .join("");
 
-  const isHoloActive = Number(appState.color.blackHolo || 0) > 0;
+  const isHoloActive = Number(appState?.color?.blackHolo || 0) > 0;
+  const holoStatus = viewState?.blackHoloStatus || {};
+  const vendor = (holoStatus.gpuVendor || "unknown").toLowerCase();
 
   return [
     '<div class="color-template-section">',
@@ -287,13 +303,16 @@ function renderTemplates(appState, viewState, t) {
     '</div>',
     '<div class="black-holo-section">',
     `  <button type="button" class="check-row checkbox-control black-holo-check-row ${isHoloActive ? "active" : ""}" data-action="toggle-black-holo" role="switch" aria-checked="${isHoloActive}" aria-pressed="${isHoloActive}" title="${escapeAttr(t("blackHolo"))}">`,
-    '    <div class="black-holo-check-title">',
-    '      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="1" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="23"></line><line x1="1" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="23" y2="12"></line></svg>',
+    '    <div class="black-holo-left">',
+    '      <svg class="black-holo-target-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="1" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="23"></line><line x1="1" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="23" y2="12"></line></svg>',
     `      <strong>${escapeHtml(t("blackHolo"))}</strong>`,
     '    </div>',
-    `    <span class="ios-switch ${isHoloActive ? "active" : ""}" aria-hidden="true">`,
-    '      <span class="ios-switch-thumb"></span>',
-    '    </span>',
+    '    <div class="black-holo-right">',
+    `      <span class="holo-gpu-icon-slot">${renderGpuVendorIcon(vendor)}</span>`,
+    `      <span class="ios-switch ${isHoloActive ? "active" : ""}" aria-hidden="true">`,
+    '        <span class="ios-switch-thumb"></span>',
+    '      </span>',
+    '    </div>',
     '  </button>',
     '</div>'
   ].join("");
@@ -507,22 +526,29 @@ export function updateSliderDom(field, appState) {
   updateTemplateActiveDom(appState);
 }
 
-export function updateBlackHoloDom(active) {
+export function updateBlackHoloDom(active, holoStatus) {
   const row = document.querySelector(".black-holo-check-row");
   if (!row) return;
-  row.classList.toggle("active", active);
-  row.setAttribute("aria-checked", String(active));
-  row.setAttribute("aria-pressed", String(active));
+  const isAct = Boolean(active);
+  row.classList.toggle("active", isAct);
+  row.setAttribute("aria-checked", String(isAct));
+  row.setAttribute("aria-pressed", String(isAct));
   const sw = row.querySelector(".ios-switch");
   if (sw) {
-    sw.classList.toggle("active", active);
+    sw.classList.toggle("active", isAct);
+  }
+  if (holoStatus?.gpuVendor) {
+    const iconSlot = row.querySelector(".holo-gpu-icon-slot");
+    if (iconSlot) {
+      iconSlot.innerHTML = renderGpuVendorIcon(holoStatus.gpuVendor);
+    }
   }
 }
 
-export function syncAllSliders(appState) {
+export function syncAllSliders(appState, viewState) {
   Object.keys(sliderDefs).forEach((field) => updateSliderDom(field, appState));
-  updateBlackHoloDom(Number(appState.color.blackHolo || 0) > 0);
-  updateColorPreviewDom(appState.color);
+  updateBlackHoloDom(Number(appState?.color?.blackHolo || 0) > 0, viewState?.blackHoloStatus);
+  updateColorPreviewDom(appState?.color);
   updateTemplateActiveDom(appState);
 }
 
@@ -530,7 +556,7 @@ export const colorFeature = {
   render: renderColorPage,
   mount(container, context) {
     if (context?.appState) {
-      syncAllSliders(context.appState);
+      syncAllSliders(context.appState, context.viewState);
     }
   },
   unmount() {
