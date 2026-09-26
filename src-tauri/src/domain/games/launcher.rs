@@ -122,4 +122,56 @@ fn shell_execute(
             1,
         )
     };
-
+
+    if result <= 32 {
+        Err(error_message.to_string())
+    } else {
+        Ok(())
+    }
+}
+
+pub(crate) fn quote_windows_arg(arg: &str) -> String {
+    let clean: String = arg.chars().filter(|ch| !ch.is_control()).collect();
+    if clean.is_empty() {
+        return "\"\"".to_string();
+    }
+    if clean.chars().all(|ch| !ch.is_whitespace() && ch != '"') {
+        return clean;
+    }
+
+    let mut result = String::with_capacity(clean.len() + 8);
+    result.push('"');
+
+    let mut backslash_count = 0;
+    for ch in clean.chars() {
+        if ch == '\\' {
+            backslash_count += 1;
+        } else if ch == '"' {
+            for _ in 0..(backslash_count * 2 + 1) {
+                result.push('\\');
+            }
+            result.push('"');
+            backslash_count = 0;
+        } else {
+            for _ in 0..backslash_count {
+                result.push('\\');
+            }
+            backslash_count = 0;
+            result.push(ch);
+        }
+    }
+
+    for _ in 0..(backslash_count * 2) {
+        result.push('\\');
+    }
+    result.push('"');
+
+    result
+}
+
+fn join_command_args(args: &[String]) -> String {
+    args.iter()
+        .map(|arg| quote_windows_arg(arg))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
