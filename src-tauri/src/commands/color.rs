@@ -36,3 +36,13 @@ pub fn take_juicy_screenshot(
     let current = state.snapshot()?;
     capture_juicy_screenshot(&current.color)
 }
+
+#[tauri::command]
+pub fn get_black_holo_status() -> crate::domain::color::BlackHoloStatus {
+    crate::domain::color::get_hardware_black_holo_status()
+}
+
+#[tauri::command]
+pub fn toggle_hardware_black_holo(enabled: bool) -> crate::domain::color::BlackHoloStatus {
+    crate::domain::color::set_hardware_black_holo(enabled)
+}

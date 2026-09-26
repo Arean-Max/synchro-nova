@@ -1,1 +1,1 @@
-{"default":{"identifier":"default","description":"Synchro desktop backend with private IPC commands and no plugin permissions.","local":true,"windows":["main"],"permissions":[]}}
+{"default":{"identifier":"default","description":"Synchro desktop backend with private IPC commands and no plugin permissions.","local":true,"windows":["main"],"permissions":["core:event:default"]}}

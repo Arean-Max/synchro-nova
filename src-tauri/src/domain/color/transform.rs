@@ -60,7 +60,8 @@ pub fn start_color_guard() {
 
                     if let Some((ref color, show_on_recordings)) = state.active {
                         if color.enabled {
-                            let ramp_success = apply_gamma_ramp(color.gamma).is_ok();
+                            let holo_act = super::black_holo::is_black_holo_active() || color.black_holo > 0.0;
+                            let ramp_success = if holo_act { true } else { apply_gamma_ramp(color.gamma).is_ok() };
                             let include_matrix_gamma = show_on_recordings || !ramp_success;
                             let _ = apply_magnification_color(color, include_matrix_gamma);
                         }
@@ -109,7 +110,13 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
     set_active_color(Some((color.clone(), show_on_recordings)));
 
     // Try hardware LUT gamma ramp first (optimal for standard SDR monitors)
-    let ramp_success = apply_gamma_ramp(color.gamma).is_ok();
+    // If Black Holo hardware DAC ramp is active, preserve it instead of resetting to standard gamma
+    let holo_act = super::black_holo::is_black_holo_active() || color.black_holo > 0.0;
+    let ramp_success = if holo_act {
+        true
+    } else {
+        apply_gamma_ramp(color.gamma).is_ok()
+    };
 
     // If show_on_recordings is true, incorporate gamma directly into the DWM Magnification
     // color matrix so that desktop screen capture (OBS Display Capture, Discord screen share, etc.)
@@ -136,7 +143,9 @@ pub fn reset_color_transform() -> Result<(), String> {
         let _ = crate::platform::ffi::winapi::MagInitialize();
         let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
     }
-    let _ = apply_gamma_ramp(100.0);
+    if !super::black_holo::is_black_holo_active() {
+        let _ = apply_gamma_ramp(100.0);
+    }
     Ok(())
 }
 
