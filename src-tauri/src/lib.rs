@@ -108,6 +108,9 @@ pub fn run() {
             trim_process_memory();
             app::workers::spawn_memory_trimmer(trimmer_sync);
 
+            #[cfg(target_os = "windows")]
+            domain::color::black_holo::start_black_holo_hotkey_listener(Some(app.handle().clone()));
+
             Ok(())
         })
         .on_window_event(|window, event| {
@@ -172,11 +175,13 @@ pub fn run() {
             commands::restart_explorer,
             commands::restart_graphics_driver,
             commands::set_rust_black_holo,
+            commands::get_black_holo_status,
+            commands::toggle_hardware_black_holo,
             commands::take_juicy_screenshot,
             commands::scan_drivers,
             commands::open_official_driver_url,
             commands::open_external_url,
-            commands::open_windows_driver_updates,
+            commands::get_pending_navigation,
             commands::check_for_updates,
             commands::download_update,
             commands::get_update_progress,
@@ -303,10 +308,10 @@ mod tests {
     #[test]
     fn test_update_url_validation() {
         use commands::updater::validate_update_url;
-        assert!(validate_update_url("https://github.com/Arean-Max/synchro-nova/releases/download/v2.2.3/synchro.exe").is_ok());
+        assert!(validate_update_url("https://github.com/Arean-Max/synchro-nova/releases/download/v2.2.4/synchro.exe").is_ok());
         assert!(validate_update_url("https://objects.githubusercontent.com/production/synchro.exe").is_ok());
         assert!(validate_update_url("https://evil-site.com/synchro.exe").is_err());
-        assert!(validate_update_url("http://github.com/Arean-Max/synchro-nova/releases/download/v2.2.3/synchro.exe").is_err());
+        assert!(validate_update_url("http://github.com/Arean-Max/synchro-nova/releases/download/v2.2.4/synchro.exe").is_err());
         assert!(validate_update_url("https://github.com/attacker/repo/releases/download/bad.exe").is_err());
     }
 

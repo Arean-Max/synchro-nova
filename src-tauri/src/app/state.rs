@@ -268,6 +268,8 @@ impl RuntimeState {
         }
         color::stop_color_guard();
         let _ = color::reset_color_transform();
+        let _ = color::black_holo::restore_original_system_ramp();
+        color::black_holo::stop_ramp_watchdog();
     }
 
     pub fn snapshot(&self) -> Result<PersistedState, String> {

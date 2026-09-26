@@ -195,6 +195,9 @@ fn main() {
                     restarted_from_pid = Some(pid);
                 }
             }
+            if args[i] == "--navigate-to" && i + 1 < args.len() {
+                synchro_lib::commands::set_pending_navigation(args[i + 1].clone());
+            }
         }
 
         if let Some(old_pid) = restarted_from_pid {
@@ -208,11 +211,15 @@ fn main() {
             std::process::exit(0);
         }
 
-        // Isolate WebView2 browser user data and prevent white flash on window create
+        // Isolate WebView2 browser user data and prevent white flash on window create.
+        // Elevated instance uses EBWebView_Admin to completely prevent SQLite lock contention
+        // and integrity level conflicts with standard user instance.
+        let is_admin = synchro_lib::ffi::is_user_admin();
         if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
+            let folder_name = if is_admin { "EBWebView_Admin" } else { "EBWebView" };
             let webview_cache = std::path::PathBuf::from(local_app_data)
                 .join("SynchroNova")
-                .join("EBWebView");
+                .join(folder_name);
             let _ = std::fs::create_dir_all(&webview_cache);
             std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", webview_cache);
         }

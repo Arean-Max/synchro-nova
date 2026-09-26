@@ -56,6 +56,10 @@ unsafe extern "system" {
     pub fn LoadLibraryW(lib_file_name: *const u16) -> *mut c_void;
     pub fn GetProcAddress(module: *mut c_void, proc_name: *const u8) -> *mut c_void;
     pub fn FreeLibrary(module: *mut c_void) -> i32;
+    pub fn SetConsoleCtrlHandler(
+        handler_routine: Option<unsafe extern "system" fn(u32) -> i32>,
+        add: i32,
+    ) -> i32;
 }
 
 #[cfg(target_os = "windows")]
@@ -69,6 +73,8 @@ unsafe extern "system" {
         directory: *const u16,
         show_cmd: i32,
     ) -> isize;
+
+    pub fn ShellExecuteExW(p_exec_info: *mut ShellExecuteInfoW) -> i32;
 }
 
 #[cfg(target_os = "windows")]
@@ -111,12 +117,21 @@ unsafe extern "system" {
         dw_flags: u32,
     ) -> i32;
     pub fn GetAsyncKeyState(v_key: i32) -> i16;
+    pub fn RegisterHotKey(hwnd: *mut c_void, id: i32, fs_modifiers: u32, vk: u32) -> i32;
+    pub fn UnregisterHotKey(hwnd: *mut c_void, id: i32) -> i32;
+    pub fn GetMessageW(
+        msg: *mut MSG,
+        hwnd: *mut c_void,
+        msg_filter_min: u32,
+        msg_filter_max: u32,
+    ) -> i32;
 }
 
 #[cfg(target_os = "windows")]
 #[link(name = "Gdi32")]
 unsafe extern "system" {
     pub fn SetDeviceGammaRamp(hdc: *mut c_void, ramp: *const GammaRamp) -> i32;
+    pub fn GetDeviceGammaRamp(hdc: *mut c_void, ramp: *mut GammaRamp) -> i32;
 }
 
 #[cfg(target_os = "windows")]

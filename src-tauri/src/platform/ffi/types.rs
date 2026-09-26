@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+pub use std::ffi::c_void;
+
 pub fn wide_null(value: &str) -> Vec<u16> {
     value.encode_utf16().chain(std::iter::once(0)).collect()
 }
@@ -66,6 +68,19 @@ pub struct PointL {
     pub x: i32,
     pub y: i32,
 }
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct Msg {
+    pub hwnd: *mut std::ffi::c_void,
+    pub message: u32,
+    pub w_param: usize,
+    pub l_param: isize,
+    pub time: u32,
+    pub pt: PointL,
+}
+
+pub type MSG = Msg;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
@@ -182,5 +197,35 @@ pub const SM_CXSCREEN: i32 = 0;
 pub const SM_CYSCREEN: i32 = 1;
 pub const TH32CS_SNAPPROCESS: u32 = 0x0000_0002;
 pub const ERROR_ALREADY_EXISTS: u32 = 183;
+pub const ERROR_CANCELLED: u32 = 1223;
 pub const SW_RESTORE: i32 = 9;
 pub const SYNCHRONIZE: u32 = 0x0010_0000;
+pub const SEE_MASK_NOCLOSEPROCESS: u32 = 0x0000_0040;
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct ShellExecuteInfoW {
+    pub cb_size: u32,
+    pub f_mask: u32,
+    pub hwnd: *mut c_void,
+    pub lp_verb: *const u16,
+    pub lp_file: *const u16,
+    pub lp_parameters: *const u16,
+    pub lp_directory: *const u16,
+    pub n_show: i32,
+    pub h_inst_app: *mut c_void,
+    pub lp_id_list: *mut c_void,
+    pub lp_class: *const u16,
+    pub hkey_class: *mut c_void,
+    pub dw_hot_key: u32,
+    pub h_icon: *mut c_void,
+    pub h_process: *mut c_void,
+}
+
+impl Default for ShellExecuteInfoW {
+    fn default() -> Self {
+        let mut s: Self = unsafe { std::mem::zeroed() };
+        s.cb_size = std::mem::size_of::<Self>() as u32;
+        s
+    }
+}

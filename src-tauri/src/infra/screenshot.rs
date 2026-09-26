@@ -460,7 +460,7 @@ pub fn start_global_screenshot_listener() {
                 } else {
                     let mut was_pressed = false;
                     loop {
-                        std::thread::sleep(std::time::Duration::from_millis(60));
+                        std::thread::sleep(std::time::Duration::from_millis(250));
                         let state = unsafe { crate::platform::ffi::winapi::GetAsyncKeyState(VK_SNAPSHOT as i32) };
                         let is_pressed = (state as u16 & 0x8000) != 0;
                         if is_pressed && !was_pressed {

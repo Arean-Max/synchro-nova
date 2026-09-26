@@ -59,9 +59,12 @@ pub fn init_process_tree_job() {
 
             const JOB_OBJECT_EXTENDED_LIMIT_INFORMATION: i32 = 9;
             const JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE: u32 = 0x0000_2000;
+            const JOB_OBJECT_LIMIT_BREAKAWAY_OK: u32 = 0x0000_0800;
+            const JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK: u32 = 0x0000_1000;
 
             let mut info = JobObjectExtendedLimitInformation::default();
-            info.basic_limit_information.limit_flags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+            info.basic_limit_information.limit_flags =
+                JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE | JOB_OBJECT_LIMIT_BREAKAWAY_OK | JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
 
             let _ = winapi::SetInformationJobObject(
                 job,
@@ -177,6 +180,7 @@ pub fn apply_process_hardening() {
     const PROCESS_DEP_ENABLE: u32 = 0x0000_0001;
     const BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE: u32 = 0x0000_0001;
     const BASE_SEARCH_PATH_PERMANENT: u32 = 0x0000_8000;
+    const LOAD_LIBRARY_SEARCH_APPLICATION_DIR: u32 = 0x0000_0200;
     const LOAD_LIBRARY_SEARCH_DEFAULT_DIRS: u32 = 0x0000_1000;
     const HEAP_ENABLE_TERMINATION_ON_CORRUPTION: i32 = 1;
 
@@ -185,7 +189,9 @@ pub fn apply_process_hardening() {
         let _ = winapi::SetSearchPathMode(
             BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT,
         );
-        let _ = winapi::SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+        let _ = winapi::SetDefaultDllDirectories(
+            LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_APPLICATION_DIR,
+        );
         let heap = winapi::GetProcessHeap();
         if !heap.is_null() {
             let _ = winapi::HeapSetInformation(
