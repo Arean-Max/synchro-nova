@@ -125,4 +125,86 @@ fn launcher_source(name: &str, publisher: &str) -> Option<String> {
 fn reg_string(key: &winreg::RegKey, name: &str) -> Option<String> {
     key.get_value::<String, _>(name).ok().filter(|value| !value.trim().is_empty())
 }
-
+
+pub fn display_icon_path(value: &str) -> Option<PathBuf> {
+    let trimmed = value.trim().trim_matches('"');
+    let without_index = trimmed
+        .split_once(".exe,")
+        .map(|(path, _)| format!("{path}.exe"))
+        .unwrap_or_else(|| trimmed.split(',').next().unwrap_or(trimmed).to_string());
+    let path = PathBuf::from(without_index.trim().trim_matches('"'));
+    if path.extension().and_then(|ext| ext.to_str()).is_some() {
+        Some(path)
+    } else {
+        None
+    }
+}
+
+pub fn find_launch_executable(root: &Path, name: &str) -> Option<PathBuf> {
+    if !root.is_dir() {
+        return None;
+    }
+
+    let normalized_name = fileish_name(name).to_lowercase();
+    let mut best: Option<(u8, u64, PathBuf)> = None;
+    let mut visited = 0_usize;
+    scan_executables(root, 0, &normalized_name, &mut visited, &mut best);
+    best.map(|(_, _, path)| path)
+}
+
+fn scan_executables(
+    path: &Path,
+    depth: usize,
+    normalized_name: &str,
+    visited: &mut usize,
+    best: &mut Option<(u8, u64, PathBuf)>,
+) {
+    if depth > 4 || *visited >= 1_200 || !path.is_dir() {
+        return;
+    }
+
+    let Ok(entries) = fs::read_dir(path) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        if *visited >= 1_200 {
+            return;
+        }
+        *visited += 1;
+        let path = entry.path();
+        if path.is_dir() {
+            scan_executables(&path, depth + 1, normalized_name, visited, best);
+            continue;
+        }
+        if path.extension().and_then(|ext| ext.to_str()).map(|ext| ext.eq_ignore_ascii_case("exe")) != Some(true)
+            || ignored_executable_name(&path)
+        {
+            continue;
+        }
+
+        let file_stem = path
+            .file_stem()
+            .and_then(|stem| stem.to_str())
+            .unwrap_or_default()
+            .to_lowercase();
+        let score = if !normalized_name.is_empty() && normalized_name.contains(&file_stem) {
+            4
+        } else if depth <= 1 {
+            3
+        } else if path.to_string_lossy().to_lowercase().contains("win64")
+            || path.to_string_lossy().to_lowercase().contains("x64")
+        {
+            2
+        } else {
+            1
+        };
+        let size = fs::metadata(&path).map(|metadata| metadata.len()).unwrap_or(0);
+        if best
+            .as_ref()
+            .map(|(best_score, best_size, _)| score > *best_score || score == *best_score && size > *best_size)
+            .unwrap_or(true)
+        {
+            *best = Some((score, size, path));
+        }
+    }
+}
