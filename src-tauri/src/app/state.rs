@@ -237,12 +237,13 @@ impl RuntimeState {
             .map_err(|error| format!("Failed to create configs directory: {error}"))?;
 
         let settings_path = app_dir.join("settings.json");
-        let data = if settings_path.exists() {
+        let mut data = if settings_path.exists() {
             read_json_file::<PersistedState>(&settings_path).unwrap_or_default()
         } else {
             PersistedState::default()
         }
         .sanitized();
+        data.is_admin = is_running_elevated();
 
         Ok(Self {
             app_dir,

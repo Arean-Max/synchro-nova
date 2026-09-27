@@ -153,14 +153,17 @@ pub fn restore_backup(
     set_autostart(&app, backup.state.settings.autostart_windows)?;
     let _ = restore_tweak_registry_snapshot(&backup.tweak_registry);
 
-    let mut data = state
-        .data
-        .lock()
-        .map_err(|_| "Settings lock poisoned".to_string())?;
-    *data = backup.state;
-    let snapshot = data.clone();
-    state.save(&snapshot)?;
-    Ok(snapshot)
+    {
+        let mut data = state
+            .data
+            .lock()
+            .map_err(|_| "Settings lock poisoned".to_string())?;
+        *data = backup.state;
+        data.is_admin = current.is_admin;
+        let snapshot = data.clone();
+        state.save(&snapshot)?;
+    }
+    state.snapshot()
 }
 
 #[tauri::command]
@@ -226,14 +229,17 @@ pub fn apply_config(
     apply_color_transform(&snapshot.color, snapshot.settings.show_on_recordings)?;
     set_autostart(&app, snapshot.settings.autostart_windows)?;
 
-    let mut data = state
-        .data
-        .lock()
-        .map_err(|_| "Settings lock poisoned".to_string())?;
-    *data = snapshot;
-    let stored = data.clone();
-    state.save(&stored)?;
-    Ok(stored)
+    {
+        let mut data = state
+            .data
+            .lock()
+            .map_err(|_| "Settings lock poisoned".to_string())?;
+        *data = snapshot;
+        data.is_admin = current.is_admin;
+        let stored = data.clone();
+        state.save(&stored)?;
+    }
+    state.snapshot()
 }
 
 #[tauri::command]

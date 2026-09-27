@@ -44,15 +44,18 @@ pub fn update_app_settings(
         let _ = crate::domain::color::apply_color_transform(&current.color, settings.show_on_recordings);
     }
 
-    let mut data = state
-        .data
-        .lock()
-        .map_err(|_| "Settings lock poisoned".to_string())?;
-    data.settings = settings;
-    let snapshot = data.clone();
-    state.save(&snapshot)?;
+    {
+        let mut data = state
+            .data
+            .lock()
+            .map_err(|_| "Settings lock poisoned".to_string())?;
+        data.settings = settings;
+        data.is_admin = current.is_admin;
+        let snapshot = data.clone();
+        state.save(&snapshot)?;
+    }
 
-    Ok(snapshot)
+    state.snapshot()
 }
 
 #[tauri::command]

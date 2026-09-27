@@ -106,6 +106,9 @@ function dismissNotificationBanner(immediate = false) {
 
 function renderNotificationBannerDom() {
   const containers = document.querySelectorAll(".ios-banner-container");
+  if (appState.isAdmin && viewState.activeImpactBanner?.isAdminPrompt) {
+    viewState.activeImpactBanner = null;
+  }
   const html = renderIosNotification(viewState, t);
   if (!html) {
     containers.forEach((c) => c.remove());
@@ -278,6 +281,11 @@ function showBackupNotificationBanner() {
 }
 
 function showAdminNotificationBanner() {
+  if (appState.isAdmin) {
+    viewState.activeImpactBanner = null;
+    document.querySelectorAll(".ios-banner-container").forEach((c) => c.remove());
+    return;
+  }
   clearImpactBannerTimer();
   const isRu = lang() === "ru";
   viewState.activeImpactBanner = {
@@ -458,7 +466,12 @@ async function switchLanguage(nextLang) {
   renderBackupModalDom();
   renderApplyModalDom();
   if (viewState.activeImpactBanner) {
-    renderNotificationBannerDom();
+    if (appState.isAdmin && viewState.activeImpactBanner.isAdminPrompt) {
+      viewState.activeImpactBanner = null;
+      document.querySelectorAll(".ios-banner-container").forEach((c) => c.remove());
+    } else {
+      renderNotificationBannerDom();
+    }
   }
   syncNavIndicator();
 
@@ -1933,6 +1946,9 @@ async function boot() {
   if (activePage === "tweaks") {
     if (!appState.isAdmin) {
       showAdminNotificationBanner();
+    } else if (viewState.activeImpactBanner?.isAdminPrompt) {
+      viewState.activeImpactBanner = null;
+      document.querySelectorAll(".ios-banner-container").forEach((c) => c.remove());
     }
     loadTweakStatuses().then(updateMain);
   }

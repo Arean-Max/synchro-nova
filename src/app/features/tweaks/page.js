@@ -176,6 +176,9 @@ export const tweaksFeature = {
   mount(container, context) {
     if (!appState.isAdmin && typeof context?.showAdminBanner === "function") {
       context.showAdminBanner();
+    } else if (appState.isAdmin && viewState.activeImpactBanner?.isAdminPrompt) {
+      viewState.activeImpactBanner = null;
+      document.querySelectorAll(".ios-banner-container").forEach((c) => c.remove());
     }
     if (context?.loadTweakStatuses) {
       context.loadTweakStatuses();

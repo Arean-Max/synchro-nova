@@ -15,18 +15,21 @@ pub fn apply_color_settings(
         apply_color_transform(&color, current.settings.show_on_recordings)?;
     }
 
-    let mut data = state
-        .data
-        .lock()
-        .map_err(|_| "Settings lock poisoned".to_string())?;
-    data.color = color;
-    let snapshot = data.clone();
+    {
+        let mut data = state
+            .data
+            .lock()
+            .map_err(|_| "Settings lock poisoned".to_string())?;
+        data.color = color;
+        data.is_admin = current.is_admin;
+        let snapshot = data.clone();
 
-    if snapshot.settings.save_color_correction {
-        state.save(&snapshot)?;
+        if snapshot.settings.save_color_correction {
+            state.save(&snapshot)?;
+        }
     }
 
-    Ok(snapshot)
+    state.snapshot()
 }
 
 #[tauri::command]

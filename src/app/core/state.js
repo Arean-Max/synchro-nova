@@ -159,11 +159,18 @@ export function applyInterfaceAccent(color) {
 }
 
 export function mergeState(state) {
+  const currentAdmin = Boolean(appState?.isAdmin);
+  const incomingAdmin = state?.isAdmin ?? state?.is_admin;
+  const resolvedAdmin = incomingAdmin !== undefined ? Boolean(incomingAdmin) : currentAdmin;
+
   appState = {
     color: { ...defaultState.color, ...(state?.color || {}) },
     settings: { ...defaultState.settings, ...(state?.settings || {}) },
-    isAdmin: Boolean(state?.isAdmin ?? state?.is_admin ?? defaultState.isAdmin)
+    isAdmin: currentAdmin || resolvedAdmin
   };
+  if (appState.isAdmin && viewState.activeImpactBanner?.isAdminPrompt) {
+    viewState.activeImpactBanner = null;
+  }
   document.documentElement.lang = lang();
   applyInterfaceAccent(appState.settings.accentColor);
   return appState;
