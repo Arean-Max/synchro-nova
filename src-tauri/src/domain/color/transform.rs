@@ -39,32 +39,13 @@ pub fn start_color_guard() {
                         break;
                     }
 
-                    let is_active = state.active.as_ref().map(|(c, _)| c.enabled).unwrap_or(false);
-
-                    if !is_active {
-                        state = match cvar.wait(state) {
-                            Ok(g) => g,
-                            Err(e) => e.into_inner(),
-                        };
-                    } else {
-                        let (new_state, _) = match cvar.wait_timeout(state, std::time::Duration::from_secs(3)) {
-                            Ok(res) => res,
-                            Err(e) => e.into_inner(),
-                        };
-                        state = new_state;
-                    }
+                    state = match cvar.wait(state) {
+                        Ok(g) => g,
+                        Err(e) => e.into_inner(),
+                    };
 
                     if state.exiting {
                         break;
-                    }
-
-                    if let Some((ref color, show_on_recordings)) = state.active {
-                        if color.enabled {
-                            let holo_act = super::black_holo::is_black_holo_active() || color.black_holo > 0.0;
-                            let ramp_success = if holo_act { true } else { apply_gamma_ramp(color.gamma).is_ok() };
-                            let include_matrix_gamma = show_on_recordings || !ramp_success;
-                            let _ = apply_magnification_color(color, include_matrix_gamma);
-                        }
                     }
                 }
             })
@@ -118,12 +99,27 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
         apply_gamma_ramp(color.gamma).is_ok()
     };
 
-    // If show_on_recordings is true, incorporate gamma directly into the DWM Magnification
-    // color matrix so that desktop screen capture (OBS Display Capture, Discord screen share, etc.)
-    // records the full color calibration (saturation, contrast, hue and gamma).
-    // If show_on_recordings is false, rely on hardware LUT ramp where available.
     let include_matrix_gamma = show_on_recordings || !ramp_success;
-    apply_magnification_color(color, include_matrix_gamma)?;
+
+    let is_neutral = (color.saturation - 100.0).abs() < 0.1
+        && color.hue.abs() < 0.1
+        && (color.contrast - 100.0).abs() < 0.1
+        && color.black_holo <= 0.0
+        && (!include_matrix_gamma || (color.gamma - 100.0).abs() < 0.1);
+
+    if is_neutral {
+        unsafe {
+            let effect = crate::platform::ffi::MagColorEffect {
+                transform: identity_matrix(),
+            };
+            let _ = crate::platform::ffi::winapi::MagInitialize();
+            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+            let _ = crate::platform::ffi::winapi::mag_uninitialize();
+        }
+    } else {
+        apply_magnification_color(color, include_matrix_gamma)?;
+    }
+
     Ok(())
 }
 
@@ -142,6 +138,7 @@ pub fn reset_color_transform() -> Result<(), String> {
     unsafe {
         let _ = crate::platform::ffi::winapi::MagInitialize();
         let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+        let _ = crate::platform::ffi::winapi::mag_uninitialize();
     }
     if !super::black_holo::is_black_holo_active() {
         let _ = apply_gamma_ramp(100.0);

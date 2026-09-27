@@ -60,6 +60,7 @@ unsafe extern "system" {
         handler_routine: Option<unsafe extern "system" fn(u32) -> i32>,
         add: i32,
     ) -> i32;
+    pub fn SetPriorityClass(process: *mut c_void, priority_class: u32) -> i32;
 }
 
 #[cfg(target_os = "windows")]
@@ -139,6 +140,21 @@ unsafe extern "system" {
 unsafe extern "system" {
     pub fn MagInitialize() -> i32;
     pub fn MagSetFullscreenColorEffect(effect: *const MagColorEffect) -> i32;
+}
+
+#[cfg(target_os = "windows")]
+pub unsafe fn mag_uninitialize() -> i32 {
+    let wide_name: Vec<u16> = "Magnification.dll\0".encode_utf16().collect();
+    let mod_handle = LoadLibraryW(wide_name.as_ptr());
+    if mod_handle.is_null() {
+        return 0;
+    }
+    let proc = GetProcAddress(mod_handle, b"MagUninitialize\0".as_ptr());
+    if proc.is_null() {
+        return 0;
+    }
+    let func: unsafe extern "system" fn() -> i32 = std::mem::transmute(proc);
+    func()
 }
 
 #[cfg(target_os = "windows")]

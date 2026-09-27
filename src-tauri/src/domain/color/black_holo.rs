@@ -199,10 +199,10 @@ fn start_ramp_watchdog() {
         .name("synchro-black-holo-watchdog".to_string())
         .spawn(|| {
             while WATCHDOG_RUNNING.load(Ordering::SeqCst) {
-                std::thread::sleep(Duration::from_millis(1500));
+                std::thread::sleep(Duration::from_secs(30));
 
                 if !IS_ACTIVE.load(Ordering::SeqCst) {
-                    continue;
+                    break;
                 }
 
                 let target = match TARGET_BLACK_HOLO_RAMP.lock() {
@@ -235,6 +235,7 @@ fn start_ramp_watchdog() {
                     let _ = winapi::ReleaseDC(std::ptr::null_mut(), hdc);
                 }
             }
+            WATCHDOG_RUNNING.store(false, Ordering::SeqCst);
         })
         .ok();
 }
@@ -313,6 +314,7 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
                 error: None,
             }
         } else {
+            stop_ramp_watchdog();
             let res = restore_original_system_ramp();
             let _ = winapi::ReleaseDC(std::ptr::null_mut(), hdc);
             IS_ACTIVE.store(false, Ordering::SeqCst);

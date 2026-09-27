@@ -61,10 +61,16 @@ pub fn init_process_tree_job() {
             const JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE: u32 = 0x0000_2000;
             const JOB_OBJECT_LIMIT_BREAKAWAY_OK: u32 = 0x0000_0800;
             const JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK: u32 = 0x0000_1000;
+            const JOB_OBJECT_LIMIT_PRIORITY_CLASS: u32 = 0x0000_0020;
+            const BELOW_NORMAL_PRIORITY_CLASS: u32 = 0x0000_4000;
 
             let mut info = JobObjectExtendedLimitInformation::default();
             info.basic_limit_information.limit_flags =
-                JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE | JOB_OBJECT_LIMIT_BREAKAWAY_OK | JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
+                JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+                | JOB_OBJECT_LIMIT_BREAKAWAY_OK
+                | JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK
+                | JOB_OBJECT_LIMIT_PRIORITY_CLASS;
+            info.basic_limit_information.priority_class = BELOW_NORMAL_PRIORITY_CLASS;
 
             let _ = winapi::SetInformationJobObject(
                 job,
@@ -72,6 +78,8 @@ pub fn init_process_tree_job() {
                 &mut info as *mut _ as *mut c_void,
                 std::mem::size_of::<JobObjectExtendedLimitInformation>() as u32,
             );
+
+            let _ = winapi::SetPriorityClass(winapi::GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
 
             if winapi::AssignProcessToJobObject(job, winapi::GetCurrentProcess()) == 0 {
                 winapi::CloseHandle(job);
@@ -188,6 +196,8 @@ pub fn apply_process_hardening() {
         let _ = winapi::SetDefaultDllDirectories(
             LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_APPLICATION_DIR,
         );
+        const BELOW_NORMAL_PRIORITY_CLASS: u32 = 0x0000_4000;
+        let _ = winapi::SetPriorityClass(winapi::GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
         let heap = winapi::GetProcessHeap();
         if !heap.is_null() {
             let _ = winapi::HeapSetInformation(
