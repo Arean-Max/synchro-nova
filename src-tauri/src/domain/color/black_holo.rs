@@ -95,38 +95,53 @@ pub fn detect_gpu_vendor() -> (GpuVendor, String) {
     (GpuVendor::Unknown, "Unknown GPU".to_string())
 }
 
-/// Generates a gamma LUT for Black Holosight with GDI-safe clamps.
+/// Generates a targeted notch gamma LUT for Black Holosight with GDI-safe clamps.
+/// Preserves low/mid greens (grass, trees, ground) and recovers smoothly at high brightness
+/// (sky, sun, clouds, specular highlights) so the world doesn't turn purple.
 #[cfg(target_os = "windows")]
 pub fn generate_black_holo_ramp(vendor: GpuVendor) -> GammaRamp {
     let mut ramp = GammaRamp::default();
 
-    // R & B channels remain strict linear
+    // R & B channels remain strict linear (no tinting of red/blue spectrum)
     for i in 0..256 {
         let linear = (i as u32 * 65535 / 255) as u16;
         ramp.red[i] = linear;
         ramp.blue[i] = linear;
     }
 
-    let (start_idx, end_idx) = match vendor {
-        GpuVendor::Amd => (160, 212),
-        _ => (168, 218),
+    // Reticle green emission band (in Rust holosightcolour "2"):
+    // 0..start_idx: Natural terrain & foliage (grass, hazmats, shadows)
+    // start_idx..trough_end: Attenuated reticle emission (drops green down into black)
+    // trough_end..recover_idx: Smooth cosine recovery back to linear
+    // recover_idx..255: Natural bright highlights (white clouds, sun, sky blue)
+    let (start_idx, trough_start, trough_end, recover_idx) = match vendor {
+        GpuVendor::Amd => (160, 185, 212, 240),
+        _ => (166, 190, 216, 244),
     };
 
-    const MAX_GDI_ATTENUATION: f64 = 32700.0;
+    const MAX_GDI_ATTENUATION: f64 = 31500.0;
 
     for i in 0..256 {
         let linear = (i as u32 * 65535 / 255) as f64;
         if i <= start_idx {
             ramp.green[i] = linear.round() as u16;
-        } else if i <= end_idx {
-            let t = (i - start_idx) as f64 / (end_idx - start_idx) as f64;
+        } else if i < trough_start {
+            let t = (i - start_idx) as f64 / (trough_start - start_idx) as f64;
             let w = 0.5 * (1.0 - (std::f64::consts::PI * t).cos());
             let drop = MAX_GDI_ATTENUATION * w;
             let val = (linear - drop).max(1000.0);
             ramp.green[i] = val.clamp(0.0, 65535.0).round() as u16;
-        } else {
+        } else if i <= trough_end {
             let val = (linear - MAX_GDI_ATTENUATION).max(1000.0);
             ramp.green[i] = val.clamp(0.0, 65535.0).round() as u16;
+        } else if i < recover_idx {
+            let t = (i - trough_end) as f64 / (recover_idx - trough_end) as f64;
+            let w = 0.5 * (1.0 + (std::f64::consts::PI * t).cos());
+            let drop = MAX_GDI_ATTENUATION * w;
+            let val = (linear - drop).max(1000.0);
+            ramp.green[i] = val.clamp(0.0, 65535.0).round() as u16;
+        } else {
+            ramp.green[i] = linear.round() as u16;
         }
     }
 

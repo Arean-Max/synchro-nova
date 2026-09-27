@@ -131,15 +131,21 @@ export function renderIosNotification(viewState, t) {
   const banner = viewState.activeImpactBanner;
   if (!banner) return "";
 
+  const isRu = typeof t === "function" && t("language") === "ru";
   const category = banner.category || "safe";
-  const iconName = banner.isAdminPrompt ? "shield" : (category === "risk" || category === "experimental" ? "alert" : "info");
+  const iconName = banner.isAdminPrompt
+    ? "shield"
+    : (category === "danger" || category === "risk" || category === "experimental" ? "alert" : "info");
   const bannerAction = banner.isAdminPrompt
     ? "restart-as-admin"
-    : (banner.isBackupPrompt ? "open-backup-name-modal" : "dismiss-impact-banner");
+    : (banner.isBackupPrompt ? "open-backup-name-modal" : "click-impact-banner");
+  const clickHint = banner.isAdminPrompt
+    ? ""
+    : (isRu ? "Нажмите, чтобы скопировать в буфер обмена" : "Click to copy to clipboard");
 
   return [
     '<div class="ios-banner-container">',
-    `  <div class="ios-banner ${escapeAttr(category)}" data-action="${bannerAction}">`,
+    `  <div class="ios-banner ${escapeAttr(category)}" data-action="${bannerAction}" title="${escapeAttr(clickHint)}">`,
     `    <div class="ios-banner-icon ${escapeAttr(category)}">`,
     `      ${icon(iconName)}`,
     '    </div>',

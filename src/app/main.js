@@ -214,17 +214,57 @@ function updateApplyProgress(progress, statusText) {
   if (subEl instanceof HTMLElement && statusText) subEl.textContent = statusText;
 }
 
+let pillToastTimer = null;
+function showPillToast(message) {
+  if (pillToastTimer) {
+    clearTimeout(pillToastTimer);
+    pillToastTimer = null;
+  }
+  let pill = document.querySelector(".clipboard-pill-toast");
+  if (!pill) {
+    pill = document.createElement("div");
+    pill.className = "clipboard-pill-toast";
+    document.body.appendChild(pill);
+  }
+  pill.innerHTML = `
+    <span class="clipboard-pill-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+    <span class="clipboard-pill-text">${escapeHtml(message)}</span>
+  `;
+  pill.classList.remove("hiding");
+  void pill.offsetWidth;
+  pill.classList.add("visible");
+
+  pillToastTimer = setTimeout(() => {
+    pill.classList.add("hiding");
+    setTimeout(() => {
+      pill.classList.remove("visible", "hiding");
+      pill.remove();
+    }, 280);
+  }, 2200);
+}
+
+function showErrorToast(title, err) {
+  const isRu = lang() === "ru";
+  const msg = (err && typeof err === "object" && err.message)
+    ? err.message
+    : (typeof err === "string" ? err : (err ? JSON.stringify(err) : "Unknown error"));
+  showToastBanner(title || (isRu ? "Ошибка" : "Error"), msg, "danger");
+}
+
 function showToastBanner(title, impactText, category = "safe") {
   clearImpactBannerTimer();
   const isRu = lang() === "ru";
+  const defaultAppName = category === "danger"
+    ? (isRu ? "ОШИБКА" : "ERROR")
+    : (isRu ? "УВЕДОМЛЕНИЕ" : "NOTIFICATION");
   viewState.activeImpactBanner = {
     title,
     category,
-    appName: isRu ? "УВЕДОМЛЕНИЕ" : "NOTIFICATION",
-    impactText
+    appName: defaultAppName,
+    impactText: String(impactText || "")
   };
   renderNotificationBannerDom();
-  startImpactBannerTimer(3000);
+  startImpactBannerTimer(category === "danger" ? 6000 : 3000);
 }
 
 function showTweakImpactBanner(tweakId) {
@@ -978,6 +1018,21 @@ async function handleAction(action) {
       return null;
     }
 
+    case "click-impact-banner": {
+      const banner = viewState.activeImpactBanner;
+      if (banner) {
+        const textToCopy = [banner.title, banner.impactText].filter(Boolean).join(": ");
+        if (textToCopy) {
+          if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(textToCopy).catch(() => {});
+          }
+          showPillToast(lang() === "ru" ? "Скопировано в буфер обмена" : "Copied to clipboard");
+        }
+      }
+      dismissNotificationBanner();
+      return null;
+    }
+
     case "dismiss-impact-banner":
       if (viewState.activeImpactBanner?.isAdminPrompt) return null;
       dismissNotificationBanner();
@@ -1480,6 +1535,12 @@ async function handleClick(event) {
     const sw = toggleBlackHolo.querySelector(".ios-switch");
     if (sw) sw.classList.toggle("active", nextActive);
 
+    // Reset global Hue to 0 deg when enabling Black Holo to eliminate purple spectrum shift
+    if (nextActive && Math.abs(Number(appState?.color?.hue || 0)) > 0.1) {
+      appState.color.hue = 0;
+      updateSliderDom("hue", appState);
+    }
+
     if (nextVal > 0) {
       viewState.colorPreviewMode = "holo";
       const img = document.getElementById("color-preview-image");
@@ -1527,6 +1588,7 @@ async function handleClick(event) {
       }
     } catch (err) {
       console.error("Hardware black holo toggle error:", err);
+      showErrorToast(t("blackHolo"), err);
       updateBlackHoloDom(nextVal > 0, viewState.blackHoloStatus);
     }
 
@@ -1548,9 +1610,12 @@ async function handleClick(event) {
             : "Juicy screenshot copied to clipboard (Ctrl+V)!",
           "safe"
         );
+      } else if (res?.message) {
+        showErrorToast(t("screenshot"), res.message);
       }
     } catch (err) {
       console.error("Screenshot error:", err);
+      showErrorToast(t("screenshot"), err);
     }
     return;
   }
@@ -1668,6 +1733,30 @@ async function handleClick(event) {
   if (openBackupModal) {
     event.preventDefault();
     await handleAction("open-backup-name-modal");
+    return;
+  }
+
+  const impactBannerClose = target.closest(".ios-banner-close");
+  if (impactBannerClose) {
+    event.preventDefault();
+    dismissNotificationBanner();
+    return;
+  }
+
+  const clickBanner = target.closest("[data-action='click-impact-banner']");
+  if (clickBanner) {
+    event.preventDefault();
+    const banner = viewState.activeImpactBanner;
+    if (banner) {
+      const textToCopy = [banner.title, banner.impactText].filter(Boolean).join(": ");
+      if (textToCopy) {
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(textToCopy).catch(() => {});
+        }
+        showPillToast(lang() === "ru" ? "Скопировано в буфер обмена" : "Copied to clipboard");
+      }
+    }
+    dismissNotificationBanner();
     return;
   }
 
@@ -1996,6 +2085,10 @@ if (window.__TAURI__?.event?.listen) {
     viewState.blackHoloStatus = status;
     const isAct = Boolean(status.active);
     appState.color.blackHolo = isAct ? 100 : 0;
+    if (isAct && Math.abs(Number(appState?.color?.hue || 0)) > 0.1) {
+      appState.color.hue = 0;
+      updateSliderDom("hue", appState);
+    }
     updateBlackHoloDom(isAct, status);
     const isRu = lang() === "ru";
     if (status.error) {
@@ -2015,5 +2108,20 @@ if (window.__TAURI__?.event?.listen) {
     }
   });
 }
+
+window.addEventListener("error", (event) => {
+  const msg = event.error?.message || event.message;
+  if (msg) {
+    showErrorToast(lang() === "ru" ? "Системная ошибка" : "System Error", msg);
+  }
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  const reason = event.reason;
+  const msg = reason?.message || (typeof reason === "string" ? reason : "");
+  if (msg && !msg.includes("canceled") && !msg.includes("aborted")) {
+    showErrorToast(lang() === "ru" ? "Ошибка выполнения" : "Execution Error", msg);
+  }
+});
 
 boot();

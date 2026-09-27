@@ -101,10 +101,11 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
 
     let include_matrix_gamma = show_on_recordings || !ramp_success;
 
+    let holo_in_matrix = show_on_recordings && color.black_holo > 0.0;
     let is_neutral = (color.saturation - 100.0).abs() < 0.1
         && color.hue.abs() < 0.1
         && (color.contrast - 100.0).abs() < 0.1
-        && color.black_holo <= 0.0
+        && !holo_in_matrix
         && (!include_matrix_gamma || (color.gamma - 100.0).abs() < 0.1);
 
     if is_neutral {
@@ -227,22 +228,15 @@ pub(crate) fn build_color_matrix(color: &ColorSettings, include_matrix_gamma: bo
 
 fn black_holo_matrix(strength: f32) -> [f32; 25] {
     let k = strength.clamp(0.0, 1.0);
-    // Preserves neutral/white luminance (row sums = 1.0),
-    // while driving dominant green channel down towards 0 (deep black).
-    let r_from_r = 1.0 + 0.25 * k;
-    let r_from_g = -0.25 * k;
-    let g_from_g = 1.0 - k;
-    let g_from_r = 0.5 * k;
-    let g_from_b = 0.5 * k;
-    let b_from_b = 1.0 + 0.25 * k;
-    let b_from_g = -0.25 * k;
+    // Attenuates green without boosting red or blue to prevent purple/magenta tinting
+    let g_scale = 1.0 - 0.5 * k;
 
     [
-        r_from_r, g_from_r, 0.0,      0.0, 0.0,
-        r_from_g, g_from_g, b_from_g, 0.0, 0.0,
-        0.0,      g_from_b, b_from_b, 0.0, 0.0,
-        0.0,      0.0,      0.0,      1.0, 0.0,
-        0.0,      0.0,      0.0,      0.0, 1.0,
+        1.0,     0.0,     0.0,     0.0, 0.0,
+        0.0,     g_scale, 0.0,     0.0, 0.0,
+        0.0,     0.0,     1.0,     0.0, 0.0,
+        0.0,     0.0,     0.0,     1.0, 0.0,
+        0.0,     0.0,     0.0,     0.0, 1.0,
     ]
 }
 
