@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Performance & Core
 - Replaced custom SHA-256 routines with standard `sha2` (v0.10) crate.
 - Enabled Link-Time Optimization (`lto = true`) and binary size optimization (`opt-level = "z"`), cutting executable size in half (to 6.8 MB).
-- Cleaned codebase structure, stripped redundant comments and deduplicated WebView2 initialization arguments.
+- Codebase refactoring: removed dead tweak handlers, streamlined event dispatch logic, and deduplicated WebView2 initialization arguments.
 
 ---
 
