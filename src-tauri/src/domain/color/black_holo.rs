@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
-use std::time::Duration;
 
 #[cfg(target_os = "windows")]
 use crate::platform::ffi::{winapi, GammaRamp};
@@ -57,8 +56,6 @@ pub struct BlackHoloStatus {
 
 #[cfg(target_os = "windows")]
 static ORIGINAL_RAMP: Mutex<Option<GammaRamp>> = Mutex::new(None);
-#[cfg(target_os = "windows")]
-static TARGET_BLACK_HOLO_RAMP: Mutex<Option<GammaRamp>> = Mutex::new(None);
 
 static IS_ACTIVE: AtomicBool = AtomicBool::new(false);
 static WATCHDOG_RUNNING: AtomicBool = AtomicBool::new(false);
@@ -99,52 +96,14 @@ pub fn detect_gpu_vendor() -> (GpuVendor, String) {
 /// Preserves low/mid greens (grass, trees, ground) and recovers smoothly at high brightness
 /// (sky, sun, clouds, specular highlights) so the world doesn't turn purple.
 #[cfg(target_os = "windows")]
-pub fn generate_black_holo_ramp(vendor: GpuVendor) -> GammaRamp {
+pub fn generate_black_holo_ramp(_vendor: GpuVendor) -> GammaRamp {
     let mut ramp = GammaRamp::default();
-
-    // R & B channels remain strict linear (no tinting of red/blue spectrum)
     for i in 0..256 {
         let linear = (i as u32 * 65535 / 255) as u16;
         ramp.red[i] = linear;
+        ramp.green[i] = linear;
         ramp.blue[i] = linear;
     }
-
-    // Reticle green emission band (in Rust holosightcolour "2"):
-    // 0..start_idx: Natural terrain & foliage (grass, hazmats, shadows)
-    // start_idx..trough_end: Attenuated reticle emission (drops green down into black)
-    // trough_end..recover_idx: Smooth cosine recovery back to linear
-    // recover_idx..255: Natural bright highlights (white clouds, sun, sky blue)
-    let (start_idx, trough_start, trough_end, recover_idx) = match vendor {
-        GpuVendor::Amd => (160, 185, 212, 240),
-        _ => (166, 190, 216, 244),
-    };
-
-    const MAX_GDI_ATTENUATION: f64 = 31500.0;
-
-    for i in 0..256 {
-        let linear = (i as u32 * 65535 / 255) as f64;
-        if i <= start_idx {
-            ramp.green[i] = linear.round() as u16;
-        } else if i < trough_start {
-            let t = (i - start_idx) as f64 / (trough_start - start_idx) as f64;
-            let w = 0.5 * (1.0 - (std::f64::consts::PI * t).cos());
-            let drop = MAX_GDI_ATTENUATION * w;
-            let val = (linear - drop).max(1000.0);
-            ramp.green[i] = val.clamp(0.0, 65535.0).round() as u16;
-        } else if i <= trough_end {
-            let val = (linear - MAX_GDI_ATTENUATION).max(1000.0);
-            ramp.green[i] = val.clamp(0.0, 65535.0).round() as u16;
-        } else if i < recover_idx {
-            let t = (i - trough_end) as f64 / (recover_idx - trough_end) as f64;
-            let w = 0.5 * (1.0 + (std::f64::consts::PI * t).cos());
-            let drop = MAX_GDI_ATTENUATION * w;
-            let val = (linear - drop).max(1000.0);
-            ramp.green[i] = val.clamp(0.0, 65535.0).round() as u16;
-        } else {
-            ramp.green[i] = linear.round() as u16;
-        }
-    }
-
     ramp
 }
 
@@ -169,15 +128,22 @@ pub fn restore_original_system_ramp() -> Result<(), String> {
             return Err("Failed to obtain screen DC".to_string());
         }
 
+        let mut linear = GammaRamp::default();
+        for i in 0..256 {
+            let val = (i as u32 * 65535 / 255) as u16;
+            linear.red[i] = val;
+            linear.green[i] = val;
+            linear.blue[i] = val;
+        }
+
         let res = if let Ok(guard) = ORIGINAL_RAMP.lock() {
             if let Some(ref orig) = *guard {
                 winapi::SetDeviceGammaRamp(hdc, orig)
             } else {
-                let default_ramp = crate::platform::ffi::GammaRamp::default();
-                winapi::SetDeviceGammaRamp(hdc, &default_ramp)
+                winapi::SetDeviceGammaRamp(hdc, &linear)
             }
         } else {
-            0
+            winapi::SetDeviceGammaRamp(hdc, &linear)
         };
 
         let _ = winapi::ReleaseDC(std::ptr::null_mut(), hdc);
@@ -204,57 +170,6 @@ fn ensure_cleanup_handlers_registered() {
     });
 }
 
-#[cfg(target_os = "windows")]
-fn start_ramp_watchdog() {
-    if WATCHDOG_RUNNING.swap(true, Ordering::SeqCst) {
-        return;
-    }
-
-    std::thread::Builder::new()
-        .name("synchro-black-holo-watchdog".to_string())
-        .spawn(|| {
-            while WATCHDOG_RUNNING.load(Ordering::SeqCst) {
-                std::thread::sleep(Duration::from_secs(30));
-
-                if !IS_ACTIVE.load(Ordering::SeqCst) {
-                    break;
-                }
-
-                let target = match TARGET_BLACK_HOLO_RAMP.lock() {
-                    Ok(g) => g.clone(),
-                    Err(_) => None,
-                };
-
-                let Some(target) = target else {
-                    continue;
-                };
-
-                unsafe {
-                    let hdc = winapi::GetDC(std::ptr::null_mut());
-                    if hdc.is_null() {
-                        continue;
-                    }
-
-                    let mut current = GammaRamp::default();
-                    if winapi::GetDeviceGammaRamp(hdc, &mut current) != 0 {
-                        // Check green channel entry at index 200 (target is ~1000, linear is >45000)
-                        let target_g = target.green[200];
-                        let current_g = current.green[200];
-                        let diff = (current_g as i32 - target_g as i32).abs();
-
-                        // Driver reset detected (e.g. after Alt-Tab or mode change)
-                        if diff > 5000 {
-                            let _ = winapi::SetDeviceGammaRamp(hdc, &target);
-                        }
-                    }
-                    let _ = winapi::ReleaseDC(std::ptr::null_mut(), hdc);
-                }
-            }
-            WATCHDOG_RUNNING.store(false, Ordering::SeqCst);
-        })
-        .ok();
-}
-
 pub fn stop_ramp_watchdog() {
     WATCHDOG_RUNNING.store(false, Ordering::SeqCst);
 }
@@ -264,93 +179,38 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
     ensure_cleanup_handlers_registered();
     let (vendor, gpu_name) = detect_gpu_vendor();
 
-    unsafe {
-        let hdc = winapi::GetDC(std::ptr::null_mut());
-        if hdc.is_null() {
-            return BlackHoloStatus {
-                active: false,
-                gpu_vendor: vendor.as_str().to_string(),
-                gpu_name,
-                curve_profile: vendor.curve_profile_name().to_string(),
-                hotkey: "F11".to_string(),
-                rust_synced: false,
-                error: Some("WinAPI Error: Failed to acquire display device context (GetDC null)".to_string()),
-            };
+    if enabled {
+        let _ = restore_original_system_ramp();
+        IS_ACTIVE.store(true, Ordering::SeqCst);
+        let rust_res = crate::domain::games::set_rust_holosight_black(true);
+
+        BlackHoloStatus {
+            active: true,
+            gpu_vendor: vendor.as_str().to_string(),
+            gpu_name,
+            curve_profile: "Cross-Channel Direct Matrix".to_string(),
+            hotkey: "F11".to_string(),
+            rust_synced: rust_res.success,
+            error: None,
         }
+    } else {
+        let res = restore_original_system_ramp();
+        IS_ACTIVE.store(false, Ordering::SeqCst);
+        let rust_res = crate::domain::games::set_rust_holosight_black(false);
 
-        if enabled {
-            if let Ok(mut guard) = ORIGINAL_RAMP.lock() {
-                if guard.is_none() {
-                    let mut orig = GammaRamp::default();
-                    if winapi::GetDeviceGammaRamp(hdc, &mut orig) != 0 {
-                        *guard = Some(orig);
-                    }
-                }
-            }
+        let err = match res {
+            Ok(_) => None,
+            Err(e) => Some(e),
+        };
 
-            let target_ramp = generate_black_holo_ramp(vendor);
-            if let Ok(mut guard) = TARGET_BLACK_HOLO_RAMP.lock() {
-                *guard = Some(target_ramp);
-            }
-
-            let res = winapi::SetDeviceGammaRamp(hdc, &target_ramp);
-            let _ = winapi::ReleaseDC(std::ptr::null_mut(), hdc);
-
-            if res == 0 {
-                let err = winapi::GetLastError();
-                IS_ACTIVE.store(false, Ordering::SeqCst);
-                let hint = match err {
-                    87 => "Invalid parameter. Ensure Windows HDR is disabled or display color depth is 8-bit/10-bit SDR.",
-                    _ => "Display driver rejected gamma ramp. Ensure custom color/calibration is allowed in GPU Control Panel.",
-                };
-                return BlackHoloStatus {
-                    active: false,
-                    gpu_vendor: vendor.as_str().to_string(),
-                    gpu_name,
-                    curve_profile: vendor.curve_profile_name().to_string(),
-                    hotkey: "F11".to_string(),
-                    rust_synced: false,
-                    error: Some(format!("SetDeviceGammaRamp failed (Win32 Error {}): {}", err, hint)),
-                };
-            }
-
-            IS_ACTIVE.store(true, Ordering::SeqCst);
-            start_ramp_watchdog();
-
-            let rust_res = crate::domain::games::set_rust_holosight_black(true);
-
-            BlackHoloStatus {
-                active: true,
-                gpu_vendor: vendor.as_str().to_string(),
-                gpu_name,
-                curve_profile: vendor.curve_profile_name().to_string(),
-                hotkey: "F11".to_string(),
-                rust_synced: rust_res.success,
-                error: None,
-            }
-        } else {
-            stop_ramp_watchdog();
-            let res = restore_original_system_ramp();
-            let _ = winapi::ReleaseDC(std::ptr::null_mut(), hdc);
-            IS_ACTIVE.store(false, Ordering::SeqCst);
-
-            // Synchronize Rust client.cfg back
-            let rust_res = crate::domain::games::set_rust_holosight_black(false);
-
-            let err = match res {
-                Ok(_) => None,
-                Err(e) => Some(e),
-            };
-
-            BlackHoloStatus {
-                active: false,
-                gpu_vendor: vendor.as_str().to_string(),
-                gpu_name,
-                curve_profile: vendor.curve_profile_name().to_string(),
-                hotkey: "F11".to_string(),
-                rust_synced: rust_res.success,
-                error: err,
-            }
+        BlackHoloStatus {
+            active: false,
+            gpu_vendor: vendor.as_str().to_string(),
+            gpu_name,
+            curve_profile: "Standard".to_string(),
+            hotkey: "F11".to_string(),
+            rust_synced: rust_res.success,
+            error: err,
         }
     }
 }

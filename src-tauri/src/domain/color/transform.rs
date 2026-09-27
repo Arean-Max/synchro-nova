@@ -91,24 +91,16 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
     set_active_color(Some((color.clone(), show_on_recordings)));
 
     // Try hardware LUT gamma ramp first (optimal for standard SDR monitors)
-    // If Black Holo hardware DAC ramp is active, preserve it instead of resetting to standard gamma
-    let holo_act = super::black_holo::is_black_holo_active() || color.black_holo > 0.0;
-    let ramp_success = if holo_act {
-        true
-    } else {
-        apply_gamma_ramp(color.gamma).is_ok()
-    };
-
+    let ramp_success = apply_gamma_ramp(color.gamma).is_ok();
     let include_matrix_gamma = show_on_recordings || !ramp_success;
 
-    let holo_in_matrix = show_on_recordings && color.black_holo > 0.0;
-    let is_neutral = (color.saturation - 100.0).abs() < 0.1
-        && color.hue.abs() < 0.1
-        && (color.contrast - 100.0).abs() < 0.1
-        && !holo_in_matrix
-        && (!include_matrix_gamma || (color.gamma - 100.0).abs() < 0.1);
+    let has_matrix_effect = (color.saturation - 100.0).abs() >= 0.1
+        || color.hue.abs() >= 0.1
+        || (color.contrast - 100.0).abs() >= 0.1
+        || color.black_holo > 0.0
+        || (include_matrix_gamma && (color.gamma - 100.0).abs() >= 0.1);
 
-    if is_neutral {
+    if !has_matrix_effect {
         unsafe {
             let effect = crate::platform::ffi::MagColorEffect {
                 transform: identity_matrix(),
@@ -228,15 +220,27 @@ pub(crate) fn build_color_matrix(color: &ColorSettings, include_matrix_gamma: bo
 
 fn black_holo_matrix(strength: f32) -> [f32; 25] {
     let k = strength.clamp(0.0, 1.0);
-    // Attenuates green without boosting red or blue to prevent purple/magenta tinting
-    let g_scale = 1.0 - 0.5 * k;
+    // Cross-channel color synthesis:
+    // Reconstructs green from equal parts red and blue: (R + B) / 2 for the attenuated portion.
+    // Row 0: R' = R
+    // Row 1: G' = 0.5*k * R + (1.0 - k) * G + 0.5*k * B
+    // Row 2: B' = B
+    //
+    // Exact conservation of neutral gray & white luminance:
+    // 0.5*k + (1.0 - k) + 0.5*k = 1.0 (row sum is identically 1.0)
+    // - Pure green reticle (0, 1, 0) -> (0, 0, 0) deep black.
+    // - White (1, 1, 1) -> (1, 1, 1) pure neutral white (0% purple/magenta shift).
+    // - Sky blue (0.4, 0.7, 1.0) -> (0.4, 0.7, 1.0) natural sky blue.
+    let r_to_g = 0.5 * k;
+    let g_to_g = 1.0 - k;
+    let b_to_g = 0.5 * k;
 
     [
-        1.0,     0.0,     0.0,     0.0, 0.0,
-        0.0,     g_scale, 0.0,     0.0, 0.0,
-        0.0,     0.0,     1.0,     0.0, 0.0,
-        0.0,     0.0,     0.0,     1.0, 0.0,
-        0.0,     0.0,     0.0,     0.0, 1.0,
+        1.0,    r_to_g, 0.0, 0.0, 0.0,
+        0.0,    g_to_g, 0.0, 0.0, 0.0,
+        0.0,    b_to_g, 1.0, 0.0, 0.0,
+        0.0,    0.0,    0.0, 1.0, 0.0,
+        0.0,    0.0,    0.0, 0.0, 1.0,
     ]
 }
 

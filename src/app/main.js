@@ -1573,13 +1573,15 @@ async function handleClick(event) {
         } else if (status.active) {
           showToastBanner(
             t("blackHolo"),
-            isRu ? "Black Holosight включен" : "Black Holosight enabled",
+            isRu
+              ? "Black Holosight включен. В консоли Rust (F1): accessibility.holosightcolour 2"
+              : "Black Holosight enabled. In Rust F1 console: accessibility.holosightcolour 2",
             "safe"
           );
         } else {
           showToastBanner(
             t("blackHolo"),
-            isRu ? "Гамма монитора восстановлена" : "Hardware gamma restored",
+            isRu ? "Black Holosight выключен" : "Black Holosight disabled",
             "safe"
           );
         }
@@ -2096,16 +2098,19 @@ if (window.__TAURI__?.event?.listen) {
     } else if (isAct) {
       showToastBanner(
         t("blackHolo"),
-        isRu ? "Black Holosight включен" : "Black Holosight enabled",
+        isRu
+          ? "Black Holosight включен. В консоли Rust (F1): accessibility.holosightcolour 2"
+          : "Black Holosight enabled. In Rust F1 console: accessibility.holosightcolour 2",
         "safe"
       );
     } else {
       showToastBanner(
         t("blackHolo"),
-        isRu ? "Гамма монитора восстановлена" : "Hardware gamma restored",
+        isRu ? "Black Holosight выключен" : "Black Holosight disabled",
         "safe"
       );
     }
+    scheduleApplyColor();
   });
 }
 
