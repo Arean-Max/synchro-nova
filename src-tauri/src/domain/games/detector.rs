@@ -56,4 +56,35 @@ fn collect_game_entries() -> Vec<GameEntry> {
 
     deduped
 }
-
+
+fn dedupe_entries(entries: Vec<GameEntry>) -> Vec<GameEntry> {
+    let mut ids = HashSet::new();
+    let mut installed_keys = HashSet::new();
+    let mut output = Vec::new();
+
+    for entry in entries {
+        let id_key = entry.public.id.to_lowercase();
+        if !ids.insert(id_key) {
+            continue;
+        }
+
+        let install_key = launch_install_key(&entry.launch)
+            .unwrap_or_else(|| format!("{}:{}", entry.public.source, entry.public.name))
+            .to_lowercase();
+        if !installed_keys.insert(install_key) {
+            continue;
+        }
+
+        output.push(entry);
+    }
+
+    output
+}
+
+fn launch_install_key(launch: &LaunchTarget) -> Option<String> {
+    match launch {
+        LaunchTarget::Exe { path, .. } => path.parent().map(|path| path.to_string_lossy().into_owned()),
+        LaunchTarget::Url(url) => Some(url.clone()),
+        LaunchTarget::None => None,
+    }
+}
