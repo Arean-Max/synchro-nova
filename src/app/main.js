@@ -39,6 +39,7 @@ import { router } from "./core/router.js";
 import { renderApplyModal } from "./features/tweaks/applyModal.js";
 import { icon } from "./ui/icons.js";
 import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget } from "./ui/layout.js";
+import { escapeHtml } from "./core/html.js";
 
 
 router.register("color", colorFeature);
@@ -212,6 +213,35 @@ function updateApplyProgress(progress, statusText) {
   if (fillEl instanceof HTMLElement) fillEl.style.width = `${rounded}%`;
   if (pctEl instanceof HTMLElement) pctEl.textContent = `${rounded}%`;
   if (subEl instanceof HTMLElement && statusText) subEl.textContent = statusText;
+}
+
+function copyTextToClipboard(text) {
+  if (!text) return;
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).catch(() => {
+      fallbackCopyText(text);
+    });
+  } else {
+    fallbackCopyText(text);
+  }
+}
+
+function fallbackCopyText(text) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "-9999px";
+    ta.setAttribute("readonly", "");
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  } catch (e) {
+    console.error("Fallback clipboard copy failed:", e);
+  }
 }
 
 let pillToastTimer = null;
@@ -1023,9 +1053,7 @@ async function handleAction(action) {
       if (banner) {
         const textToCopy = [banner.title, banner.impactText].filter(Boolean).join(": ");
         if (textToCopy) {
-          if (navigator.clipboard?.writeText) {
-            navigator.clipboard.writeText(textToCopy).catch(() => {});
-          }
+          copyTextToClipboard(textToCopy);
           showPillToast(lang() === "ru" ? "Скопировано в буфер обмена" : "Copied to clipboard");
         }
       }
@@ -1294,7 +1322,6 @@ async function handleAction(action) {
         const loaded = await invokeCommand("load_config", { id: viewState.selectedConfig });
         if (loaded) {
           mergeState(loaded);
-          syncCharacteristicsMonitor();
           render();
           scheduleApplyColor();
         }
@@ -1386,6 +1413,38 @@ async function handleClick(event) {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
 
+  const impactBannerClose = target.closest(".ios-banner-close");
+  if (impactBannerClose) {
+    event.preventDefault();
+    event.stopPropagation();
+    dismissNotificationBanner();
+    return;
+  }
+
+  const clickBanner = target.closest(".ios-banner");
+  if (clickBanner) {
+    event.preventDefault();
+    event.stopPropagation();
+    const banner = viewState.activeImpactBanner;
+    if (banner?.isAdminPrompt) {
+      await handleAction("restart-as-admin");
+      return;
+    }
+    if (banner?.isBackupPrompt) {
+      await handleAction("open-backup-name-modal");
+      return;
+    }
+    if (banner) {
+      const textToCopy = [banner.title, banner.impactText].filter(Boolean).join(": ");
+      if (textToCopy) {
+        copyTextToClipboard(textToCopy);
+        showPillToast(lang() === "ru" ? "Скопировано в буфер обмена" : "Copied to clipboard");
+      }
+    }
+    dismissNotificationBanner();
+    return;
+  }
+
   const backdropDismiss = target.closest("[data-action='dismiss-backup-modal']");
   if (backdropDismiss && !target.closest(".template-config-dialog") && !target.closest(".backup-minimal-dialog")) {
     await handleAction("dismiss-backup-modal");
@@ -1417,7 +1476,6 @@ async function handleClick(event) {
     router.navigate(nextPage, {
       onNavigate: () => {
         updateMain();
-        syncCharacteristicsMonitor();
       },
       appState,
       viewState,
@@ -1467,9 +1525,7 @@ async function handleClick(event) {
     const sw = setting.querySelector(".ios-switch");
     if (sw) sw.classList.toggle("active", nextVal);
 
-    saveSettings().then(() => {
-      syncCharacteristicsMonitor();
-    });
+    saveSettings();
 
     if (key === "applyInstantly" && appState.settings.applyInstantly) await applyColor();
     if (key === "showOnRecordings") await applyColor();
@@ -1735,37 +1791,6 @@ async function handleClick(event) {
   if (openBackupModal) {
     event.preventDefault();
     await handleAction("open-backup-name-modal");
-    return;
-  }
-
-  const impactBannerClose = target.closest(".ios-banner-close");
-  if (impactBannerClose) {
-    event.preventDefault();
-    dismissNotificationBanner();
-    return;
-  }
-
-  const clickBanner = target.closest("[data-action='click-impact-banner']");
-  if (clickBanner) {
-    event.preventDefault();
-    const banner = viewState.activeImpactBanner;
-    if (banner) {
-      const textToCopy = [banner.title, banner.impactText].filter(Boolean).join(": ");
-      if (textToCopy) {
-        if (navigator.clipboard?.writeText) {
-          navigator.clipboard.writeText(textToCopy).catch(() => {});
-        }
-        showPillToast(lang() === "ru" ? "Скопировано в буфер обмена" : "Copied to clipboard");
-      }
-    }
-    dismissNotificationBanner();
-    return;
-  }
-
-  const impactBanner = target.closest("[data-action='dismiss-impact-banner']");
-  if (impactBanner) {
-    event.preventDefault();
-    dismissNotificationBanner();
     return;
   }
 
