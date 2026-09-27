@@ -251,6 +251,7 @@ mod tests {
     fn test_updater_version_comparison() {
         use domain::updater::client::is_newer_version;
         assert!(is_newer_version("v2.2.3", "2.2.2"));
+        assert!(is_newer_version("v2.2.4-fix", "2.2.2"));
         assert!(is_newer_version("v3.0.0", "2.2.2"));
         assert!(is_newer_version("2.3.0", "2.2.2"));
         assert!(!is_newer_version("v2.2.2", "2.2.2"));

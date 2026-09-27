@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.4 (fix)] - 2026-09-27
+
+### Fixed
+- Black Holosight toggle switch behavior: knob state now reliably reflects active LUT status upon activation.
+- Preserved and restored Windows System Restore Point creation frequency policy upon fallback.
+- Eliminated redundant frontend action delay.
+
+### Performance & Core
+- Replaced custom SHA-256 routines with standard `sha2` (v0.10) crate.
+- Enabled Link-Time Optimization (`lto = true`) and binary size optimization (`opt-level = "z"`), cutting executable size in half (to 6.8 MB).
+- Cleaned codebase structure, stripped redundant comments and deduplicated WebView2 initialization arguments.
+
+---
+
 ## [2.2.4] - 2026-09-26
 
 ### Added

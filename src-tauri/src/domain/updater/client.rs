@@ -38,7 +38,10 @@ fn get_curl_cmd() -> Command {
 pub fn is_newer_version(latest_tag: &str, current_version: &str) -> bool {
     let parse = |v: &str| -> Vec<u32> {
         let clean = v.trim().trim_start_matches('v').trim_start_matches('V');
-        clean.split('.').filter_map(|s| s.parse::<u32>().ok()).collect()
+        clean
+            .split('.')
+            .filter_map(|s| s.split('-').next().unwrap_or(s).parse::<u32>().ok())
+            .collect()
     };
     let l_parts = parse(latest_tag);
     let c_parts = parse(current_version);
