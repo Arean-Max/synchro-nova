@@ -232,3 +232,87 @@ fn execute_action(action: &str, app: &AppHandle) {
         }
     }
 }
+
+fn apply_template_by_name(name: &str, app: &AppHandle) {
+    let target = match name {
+        "balanced" => Some(crate::app::state::ColorSettings {
+            saturation: 160.0,
+            hue: -5.0,
+            contrast: 97.0,
+            gamma: 118.0,
+            black_holo: 0.0,
+            enabled: true,
+            active_filter: String::new(),
+        }),
+        "vibrant" => Some(crate::app::state::ColorSettings {
+            saturation: 200.0,
+            hue: -5.0,
+            contrast: 95.0,
+            gamma: 105.0,
+            black_holo: 0.0,
+            enabled: true,
+            active_filter: String::new(),
+        }),
+            "soft" => Some(crate::app::state::ColorSettings {
+                saturation: 150.0,
+                hue: -5.0,
+                contrast: 85.0,
+                gamma: 115.0,
+                black_holo: 0.0,
+                enabled: true,
+                active_filter: String::new(),
+            }),
+            "night" => Some(crate::app::state::ColorSettings {
+                saturation: 120.0,
+                hue: -5.0,
+                contrast: 90.0,
+                gamma: 150.0,
+                black_holo: 0.0,
+                enabled: true,
+                active_filter: String::new(),
+            }),
+            "rust_cold_tactical" => Some(crate::app::state::ColorSettings {
+                saturation: 78.0,
+                hue: 0.0,
+                contrast: 116.0,
+                gamma: 108.0,
+                black_holo: 0.0,
+                enabled: true,
+                active_filter: "rust_cold_tactical".to_string(),
+            }),
+            "rust_midnight_neon" => Some(crate::app::state::ColorSettings {
+                saturation: 140.0,
+                hue: 0.0,
+                contrast: 122.0,
+                gamma: 100.0,
+                black_holo: 0.0,
+                enabled: true,
+                active_filter: "rust_midnight_neon".to_string(),
+            }),
+            _ => None,
+        };
+
+    if let Some(color) = target {
+        if let Some(state) = app.try_state::<crate::app::state::RuntimeState>() {
+            let recordings = state
+                .data
+                .lock()
+                .ok()
+                .map(|d| d.settings.show_on_recordings)
+                .unwrap_or(true);
+            let _ = crate::domain::color::apply_color_transform(&color, recordings);
+            if let Ok(mut guard) = state.data.lock() {
+                guard.color = color.clone();
+            }
+            let _ = app.emit(
+                "hotkey-triggered",
+                serde_json::json!({
+                    "action": format!("template:{}", name),
+                    "template": name,
+                    "name": name,
+                    "color": color
+                }),
+            );
+        }
+    }
+}
