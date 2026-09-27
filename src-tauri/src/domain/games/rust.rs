@@ -17,8 +17,6 @@ pub struct BlackHoloConfigResult {
     pub message: String,
 }
 
-/// Passive process check via toolhelp snapshot.
-/// Does not open handles to target processes or interact with process memory.
 #[cfg(target_os = "windows")]
 pub fn is_rust_process_running() -> bool {
     unsafe {
@@ -170,10 +168,8 @@ pub fn set_rust_holosight_black(enabled: bool) -> BlackHoloConfigResult {
     let current = parse_holosight_colour(&content);
 
     if enabled {
-        // User is activating Black Holo:
         sync_autoexec_cfg(&cfg_path, true, None);
 
-        // If it's already "2", do not change client.cfg!
         if current.as_deref() == Some("2") {
             if let Ok(mut guard) = ORIGINAL_HOLOSIGHT_COLOUR.lock() {
                 if guard.is_none() {
@@ -195,7 +191,6 @@ pub fn set_rust_holosight_black(enabled: bool) -> BlackHoloConfigResult {
             };
         }
 
-        // In other cases (e.g. "0", "1", "3"), forcibly change to "2" and save original
         let prev = current.unwrap_or_else(|| "0".to_string());
         if let Ok(mut guard) = ORIGINAL_HOLOSIGHT_COLOUR.lock() {
             if guard.is_none() {
@@ -203,7 +198,6 @@ pub fn set_rust_holosight_black(enabled: bool) -> BlackHoloConfigResult {
             }
         }
 
-        // Replace or append accessibility.holosightcolour "2"
         let mut replaced = false;
         let mut new_lines = Vec::new();
         for line in content.lines() {
@@ -245,13 +239,11 @@ pub fn set_rust_holosight_black(enabled: bool) -> BlackHoloConfigResult {
             }
         }
     } else {
-        // User is disabling Black Holo:
         let original_opt = ORIGINAL_HOLOSIGHT_COLOUR.lock().ok().and_then(|mut g| g.take());
         sync_autoexec_cfg(&cfg_path, false, original_opt.as_deref());
 
         if let Some(orig) = original_opt {
             if orig == "2" {
-                // Was already 2 before, do nothing
                 return BlackHoloConfigResult {
                     success: true,
                     cfg_path: Some(cfg_str),

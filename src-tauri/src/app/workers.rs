@@ -19,7 +19,6 @@ pub fn spawn_memory_trimmer(trimmer_sync: Arc<TrimmerSync>) {
                 return;
             }
 
-            // Post-boot initial trims via wait_timeout so shutdown is instantaneous
             let (l2, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_millis(2000)) {
                 Ok(res) => res,
                 Err(e) => e.into_inner(),
@@ -40,7 +39,6 @@ pub fn spawn_memory_trimmer(trimmer_sync: Arc<TrimmerSync>) {
             }
             trim_process_memory();
 
-            // Passive wait until shutdown signal - no continuous periodic trimming to avoid micro-stutters during gameplay
             while !*lock {
                 lock = match trimmer_sync.condvar.wait(lock) {
                     Ok(l) => l,

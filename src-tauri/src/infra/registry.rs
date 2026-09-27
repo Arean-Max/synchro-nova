@@ -24,11 +24,6 @@ impl RootKey {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum RegistryValue {
-    Dword(u32),
-    String(String),
-}
 
 #[derive(Debug)]
 pub enum RegistryError {
@@ -187,15 +182,5 @@ impl SafeRegistry {
                 source,
             }
         })
-    }
-
-    pub fn read_existing_value(root: RootKey, path: &str, name: &str) -> Option<RegistryValue> {
-        if let Ok(v) = Self::get_dword(root, path, name) {
-            return Some(RegistryValue::Dword(v));
-        }
-        if let Ok(s) = Self::get_string(root, path, name) {
-            return Some(RegistryValue::String(s));
-        }
-        None
     }
 }

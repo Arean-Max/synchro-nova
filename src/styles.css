@@ -767,7 +767,7 @@ button {
   font-size: 13.5px;
   line-height: 1.3;
   cursor: pointer;
-  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 150ms ease, border-color 150ms ease;
   box-sizing: border-box;
 }
 
@@ -780,11 +780,10 @@ button.check-row {
 button.check-row:hover {
   background: rgba(255, 255, 255, 0.048);
   border-color: rgba(255, 255, 255, 0.12);
-  transform: translateY(-0.5px);
 }
 
 button.check-row:active {
-  transform: scale(0.988);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .settings-hint-text {
@@ -1560,7 +1559,7 @@ button.check-row:active {
   min-height: 280px;
 }
 
-/* Color Correction Preview */
+
 .color-preview-viewport {
   position: relative;
   width: 100%;
@@ -2022,7 +2021,8 @@ button.check-row:active {
   pointer-events: none;
 }
 
-/* Authentic Apple iOS Switch Toggle */
+
+
 .ios-switch {
   position: relative;
   width: 40px;
@@ -2069,7 +2069,7 @@ button.check-row:active {
 }
 
 .ios-switch:active .ios-switch-thumb {
-  width: 20px;
+  
 }
 
 .template-config-dialog {
@@ -2349,7 +2349,7 @@ button.check-row:active {
   transition: transform 220ms cubic-bezier(0.2, 0, 0, 1), background 200ms ease, border-color 200ms ease, box-shadow 220ms ease, opacity 200ms ease;
 }
 
-/* Inactive / unapplied tweak tile: pure deep black, compact standard size */
+
 .tweak-tile.not-installed,
 .tweak-tile:not(.installed):not(.selected) {
   min-height: 110px;
@@ -2371,26 +2371,26 @@ button.check-row:active {
   transform: scale(0.98);
 }
 
-/* Active tweak tile (installed / applied): noticeably larger size, brighter neutral shade */
+
 .tweak-tile.installed {
   min-height: 140px;
   padding: 14px 16px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1.5px solid #22c55e !important;
   background: #232326;
   transform: scale(1.03);
   opacity: 1;
   z-index: 4;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.35), 0 4px 20px rgba(0, 0, 0, 0.6) !important;
 }
 
 .tweak-tile.installed:hover {
   transform: scale(1.045);
-  border-color: rgba(255, 255, 255, 0.55);
+  border-color: #4ade80 !important;
   background: #2b2b2f;
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 22px rgba(34, 197, 94, 0.5), 0 6px 24px rgba(0, 0, 0, 0.7) !important;
 }
 
-/* Selected tweak tile */
+
 .tweak-tile.selected {
   min-height: 140px;
   padding: 14px 16px 14px;
@@ -2409,7 +2409,7 @@ button.check-row:active {
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
-/* Category bottom borders - refined 2px */
+
 .tweak-tile[data-category="safe"] {
   border-bottom: 2px solid #22c55e !important;
 }
@@ -2520,6 +2520,21 @@ button.check-row:active {
   transform: scale(0.92);
 }
 
+.tweak-help-btn.tweak-error-btn {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #f87171;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+.tweak-help-btn.tweak-error-btn:hover {
+  background: rgba(239, 68, 68, 0.38);
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+}
+
+
 .tweak-tile.installed .tweak-title,
 .tweak-tile.selected .tweak-title {
   font-size: 14.5px;
@@ -2574,7 +2589,7 @@ button.check-row:active {
   -webkit-box-orient: vertical;
 }
 
-/* Tweaks Top Toolbar */
+
 .tweaks-top-toolbar {
   display: flex;
   align-items: center;
@@ -2628,7 +2643,7 @@ button.check-row:active {
   transform: scale(0.97);
 }
 
-/* iOS-style Dynamic Island / Top Notification Banner */
+
 .ios-banner-container {
   position: fixed;
   top: 14px;
@@ -2730,7 +2745,7 @@ button.check-row:active {
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.12);
 }
 
-/* Animated Bottom Pill Notification (Clipboard Toast) */
+
 .clipboard-pill-toast {
   position: fixed;
   bottom: 24px;
@@ -2883,7 +2898,7 @@ button.check-row:active {
   animation: bannerShake 360ms ease-in-out;
 }
 
-/* Backup Minimal Input Dialog */
+
 .backup-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -2931,7 +2946,7 @@ button.check-row:active {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75);
 }
 
-/* Modal Backdrops & Dialogs */
+
 .smart-tips-backdrop {
   position: fixed;
   inset: 0;
@@ -3158,7 +3173,7 @@ button.check-row:active {
   background: rgba(255, 255, 255, 0.02);
 }
 
-/* Admin Elevation Dialog */
+
 .admin-prompt-dialog {
   display: flex;
   flex-direction: column;
@@ -3493,11 +3508,32 @@ button.check-row:active {
 }
 
 .empty-state {
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   min-height: 240px;
   color: var(--text-tertiary);
-  font-size: 14px;
+  font-size: 13.5px;
+}
+
+.empty-state .icon,
+.empty-state svg {
+  width: 26px !important;
+  height: 26px !important;
+  max-width: 26px !important;
+  max-height: 26px !important;
+  color: var(--ui-accent, #ffffff);
+  flex-shrink: 0;
+}
+
+.empty-state-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
 }
 
 .folder-dot {
@@ -4446,7 +4482,7 @@ button.check-row:active {
   }
 }
 
-/* Apply Tweaks Fullscreen Overlay & Modal */
+
 .apply-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -4953,9 +4989,7 @@ button.check-row:active {
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* ==========================================================================
-   Drivers Center (Consistent with Tweaks & Synchro Design Language)
-   ========================================================================== */
+
 .drivers-page {
   position: relative;
   display: flex;
@@ -5025,7 +5059,7 @@ button.check-row:active {
   box-sizing: border-box;
 }
 
-/* Driver Tile: Harmonized with Synchro Dark Neutral Aesthetic */
+
 .driver-tile {
   position: relative;
   display: flex;
@@ -5452,7 +5486,7 @@ button.check-row:active {
   min-height: 40px;
 }
 
-/* Settings Tall Rectangular Community Buttons (Right Side Column) */
+
 .settings-tall-card-btn {
   display: flex;
   align-items: center;
@@ -5546,7 +5580,7 @@ button.check-row:active {
   color: var(--text-secondary, #94a3b8);
 }
 
-/* Sidebar Updater Widget */
+
 .sidebar-update-wrapper {
   margin: 0 10px 8px;
   display: flex;
@@ -5623,7 +5657,7 @@ button.check-row:active {
   50% { box-shadow: 0 0 16px rgba(34, 197, 94, 0.45); }
 }
 
-/* Progress State */
+
 .update-progress-container {
   display: flex;
   flex-direction: column;

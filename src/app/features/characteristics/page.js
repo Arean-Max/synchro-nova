@@ -65,20 +65,18 @@ export function renderCharacteristicsPage(viewState, t) {
     ? (t("scanningDrivers") || (isRu ? "Сканирование..." : "Scanning system..."))
     : (t("scanDrivers") || (isRu ? "Сканировать ПК" : "Scan PC for Drivers"));
 
-  // Keep meaningful hardware drivers only
   const drivers = rawDrivers.filter((d) => d && d.name && d.name !== "Unknown");
 
   if (isScanning && !drivers.length) {
     return [
       '<div class="drivers-page">',
       '  <div class="scroll-panel">',
-      `    <div class="empty-state">${icon("rotate", "spin")} <span>${escapeHtml(t("scanningDrivers") || (isRu ? "Сканирование ПК..." : "Scanning system..."))}</span></div>`,
+      `    <div class="empty-state"><div class="empty-state-spinner">${icon("rotate", "spin")}</div><span>${escapeHtml(t("scanningDrivers") || (isRu ? "Сканирование ПК..." : "Scanning system..."))}</span></div>`,
       '  </div>',
       '</div>'
     ].join("");
   }
 
-  // Render grouped sections (matching Tweaks cards layout)
   const groupCards = DRIVER_CATEGORIES.map((cat) => {
     const items = drivers.filter((d) => {
       const cls = (d.className || d.class_name || "").toLowerCase();
@@ -98,7 +96,6 @@ export function renderCharacteristicsPage(viewState, t) {
     ].join("");
   }).filter(Boolean);
 
-  // Uncategorized if any
   const categorized = new Set();
   DRIVER_CATEGORIES.forEach((cat) => {
     drivers.forEach((d) => {
@@ -194,7 +191,6 @@ export const characteristicsFeature = {
     }
   },
   unmount() {
-    // Release references
   }
 };
 

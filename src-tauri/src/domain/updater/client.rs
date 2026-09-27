@@ -128,7 +128,6 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
             }
         }
 
-        // Fallback to any .exe if synchro.exe not found directly
         if download_url.is_none() {
             for asset in assets {
                 let name = asset.get("name").and_then(|v| v.as_str()).unwrap_or("");
@@ -274,7 +273,6 @@ pub fn spawn_download_worker(
                                 break;
                             }
 
-                            // Verify valid PE header (fail-closed)
                             let mut header_buf = [0u8; 2];
                             let is_valid_pe = match fs::File::open(&target_file) {
                                 Ok(mut file) => {
@@ -296,7 +294,6 @@ pub fn spawn_download_worker(
                                 break;
                             }
 
-                            // Verify SHA-256 against release SHA256SUMS.txt (mandatory fail-closed)
                             let sha_url = LATEST_SHA_URL.lock().ok().and_then(|g| g.clone());
                             let sha_url = match sha_url {
                                 Some(url) => url,
@@ -411,7 +408,6 @@ pub fn spawn_download_worker(
                                 break;
                             }
 
-                            // Verify Authenticode if running binary is signed
                             if let Ok(current_path) = std::env::current_exe() {
                                 if crate::platform::ffi::verify_embedded_signature(&current_path)
                                     && !crate::platform::ffi::verify_embedded_signature(&target_file)

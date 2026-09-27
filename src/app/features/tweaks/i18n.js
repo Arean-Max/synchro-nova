@@ -33,7 +33,6 @@ export const tweakTranslations = {
     userBadgeTooltip: "Safe user-level tweak (no administrator rights needed)",
     adminBadgeTooltip: "Requires administrator privileges to apply system policies",
 
-    // Group 1: Gaming & Latency
     tweak_game_mode_on_title: "Enable Game Mode",
     tweak_game_mode_on_desc: "Enables Windows Game Mode hints and priority for active games.",
     tweak_modern_flip_model_on_title: "Modern Flip Model upgrade",
@@ -49,7 +48,6 @@ export const tweakTranslations = {
     tweak_pcie_aspm_off_title: "Disable PCIe ASPM",
     tweak_pcie_aspm_off_desc: "Disables PCIe Active State Power Management to lock PCI Express link at maximum throughput and eliminate bus latency.",
 
-    // Group 2: CPU & Performance
     tweak_power_plan_high_title: "High performance plan",
     tweak_power_plan_high_desc: "Switches Windows power configuration to High Performance, locking CPU clocks.",
     tweak_ultimate_performance_plan_title: "Ultimate performance plan",
@@ -65,7 +63,6 @@ export const tweakTranslations = {
     tweak_network_throttle_off_title: "Network throttling off",
     tweak_network_throttle_off_desc: "Removes MMCSS network throttling for latency-sensitive games and streams during audio playback.",
 
-    // Group 3: Input & Responsiveness
     tweak_pointer_precision_off_title: "Disable pointer precision",
     tweak_pointer_precision_off_desc: "Turns off Windows mouse acceleration for 1:1 consistent raw aim feel.",
     tweak_input_response_fast_title: "Ultra-fast Input Queue",
@@ -81,7 +78,6 @@ export const tweakTranslations = {
     tweak_menu_show_delay_low_title: "Fast desktop menus",
     tweak_menu_show_delay_low_desc: "Reduces classic desktop menu delay to 100ms to make shell interactions feel sharper.",
 
-    // Group 4: Storage & Debloat
     tweak_clean_temp_junk_title: "Clean Windows & Shader Junk",
     tweak_clean_temp_junk_desc: "Cleans temporary junk files, crash dumps, and DirectX shader cache to free gigabytes and eliminate stutters.",
     tweak_hibernate_off_title: "Hibernate off",
@@ -91,7 +87,6 @@ export const tweakTranslations = {
     tweak_trim_enable_title: "Ensure TRIM enabled",
     tweak_trim_enable_desc: "Enables Windows delete notifications for SSD/NVMe cleanup, write consistency, and flash lifespan.",
 
-    // Group 5: Network Latency
     tweak_tcp_nodelay_ack_title: "TCP NoDelay & AckFrequency (Anti-Ping)",
     tweak_tcp_nodelay_ack_desc: "Disables Nagle's algorithm and forces immediate TCP ACK without delay, cutting 40-200ms ping latency in online games.",
     tweak_nic_energy_saving_off_title: "Disable NIC Energy Saving",
@@ -107,7 +102,6 @@ export const tweakTranslations = {
     tweak_dns_cache_flush_title: "DNS cache refresh",
     tweak_dns_cache_flush_desc: "Refreshes stale resolver state and address mappings for clean network resolution.",
 
-    // Group 6: Background & Telemetry
     tweak_disable_gamedvr_title: "Disable GameDVR",
     tweak_disable_gamedvr_desc: "Disables Windows GameDVR capture policy to free GPU video encoder resources and reduce FPS drops.",
     tweak_disable_bg_recording_title: "Disable background recording",
@@ -160,7 +154,6 @@ export const tweakTranslations = {
     userBadgeTooltip: "Пользовательский твик (права администратора не требуются)",
     adminBadgeTooltip: "Требуются права администратора для изменения системных параметров",
 
-    // Group 1: Gaming & Latency
     tweak_game_mode_on_title: "Включить игровой режим",
     tweak_game_mode_on_desc: "Активирует оптимизации Windows Game Mode для активных игр.",
     tweak_modern_flip_model_on_title: "Оптимизация Modern Flip Model",
@@ -176,7 +169,6 @@ export const tweakTranslations = {
     tweak_pcie_aspm_off_title: "Отключение ASPM шины PCIe",
     tweak_pcie_aspm_off_desc: "Отключает энергосбережение шины PCI Express: фиксирует максимальную пропускную способность видеокарты без задержек пробуждения линий.",
 
-    // Group 2: CPU & Performance
     tweak_power_plan_high_title: "Схема высокой производительности",
     tweak_power_plan_high_desc: "Переключает питание Windows на высокую производительность, устраняя провалы частот процессора.",
     tweak_ultimate_performance_plan_title: "Схема «Максимальная производительность»",
@@ -192,7 +184,6 @@ export const tweakTranslations = {
     tweak_network_throttle_off_title: "Отключение сетевого троттлинга MMCSS",
     tweak_network_throttle_off_desc: "Снимает древний лимит сетевых пакетов Windows при воспроизведении звука, снижая пинг в играх.",
 
-    // Group 3: Input & Responsiveness
     tweak_pointer_precision_off_title: "Отключить акселерацию мыши",
     tweak_pointer_precision_off_desc: "Отключает нелинейное ускорение мыши: 1:1 Raw Input для точного аима в шутерах.",
     tweak_input_response_fast_title: "Мгновенный буфер мыши и клавиатуры",
@@ -208,7 +199,6 @@ export const tweakTranslations = {
     tweak_menu_show_delay_low_title: "Мгновенный отклик меню",
     tweak_menu_show_delay_low_desc: "Снижает задержку контекстных меню Windows до 100 мс: интерфейс открывается мгновенно.",
 
-    // Group 4: Storage & Debloat
     tweak_clean_temp_junk_title: "Очистка мусора и кэша шейдеров",
     tweak_clean_temp_junk_desc: "Безопасно удаляет временные файлы (%TEMP%), кэш шейдеров DirectX и дампы ошибок, освобождая гигабайты и убирая статтеры.",
     tweak_hibernate_off_title: "Отключить гибернацию (удаление hiberfil.sys)",
@@ -218,7 +208,6 @@ export const tweakTranslations = {
     tweak_trim_enable_title: "Проверить и включить TRIM для SSD",
     tweak_trim_enable_desc: "Гарантирует своевременную очистку ячеек флэш-памяти SSD/NVMe, предотвращая просадки скорости со временем.",
 
-    // Group 5: Network Latency
     tweak_tcp_nodelay_ack_title: "TCP NoDelay и AckFrequency (Снижение пинга)",
     tweak_tcp_nodelay_ack_desc: "Отключает алгоритм Нагла и буферизацию пакетов (AckFrequency=1) на всех сетевых адаптерах: снижает пинг в играх на 40–200 мс.",
     tweak_nic_energy_saving_off_title: "Отключение энергосбережения сетевой карты",
@@ -234,7 +223,6 @@ export const tweakTranslations = {
     tweak_dns_cache_flush_title: "Очистка кэша DNS",
     tweak_dns_cache_flush_desc: "Сбрасывает устаревшие сетевые маршруты и кэш DNS для быстрого подключения к серверам.",
 
-    // Group 6: Background & Telemetry
     tweak_disable_gamedvr_title: "Отключить службу GameDVR",
     tweak_disable_gamedvr_desc: "Полностью отключает службу записи GameDVR: освобождает аппаратный видеокодер видеокарты и устраняет просадки FPS.",
     tweak_disable_bg_recording_title: "Отключить фоновую запись клипов",

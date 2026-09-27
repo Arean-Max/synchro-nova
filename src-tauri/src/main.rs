@@ -108,7 +108,6 @@ mod prerequisites_check {
             }
         }
 
-        // Check local portable runtime directory next to executable
         if let Ok(current_exe) = std::env::current_exe() {
             if let Some(parent) = current_exe.parent() {
                 let local_wv = parent.join("webview2");
@@ -179,7 +178,6 @@ mod prerequisites_check {
             return false;
         }
 
-        // Native WinVerifyTrust in-process verification (clean heuristics, zero child processes)
         synchro_lib::ffi::verify_embedded_signature(path)
     }
 }
@@ -211,9 +209,6 @@ fn main() {
             std::process::exit(0);
         }
 
-        // Isolate WebView2 browser user data and prevent white flash on window create.
-        // Elevated instance uses EBWebView_Admin to completely prevent SQLite lock contention
-        // and integrity level conflicts with standard user instance.
         let is_admin = synchro_lib::ffi::is_user_admin();
         if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
             let folder_name = if is_admin { "EBWebView_Admin" } else { "EBWebView" };
@@ -224,6 +219,20 @@ fn main() {
             std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", webview_cache);
         }
         std::env::set_var("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0xFF121214");
+        std::env::set_var(
+            "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+            "--renderer-process-limit=1 \
+             --disable-background-networking \
+             --disable-component-update \
+             --disable-sync \
+             --disable-features=Translate,OptimizationHints,MediaRouter,CalculateNativeWinOcclusion \
+             --disable-speech-api \
+             --disable-pinch \
+             --disable-domain-reliability \
+             --no-first-run \
+             --no-default-browser-check \
+             --js-flags=\"--max-old-space-size=64 --lite-mode\"",
+        );
 
         prerequisites_check::ensure_runtime_prerequisites();
     }
@@ -259,7 +268,6 @@ mod tests {
             let non_existent = std::path::PathBuf::from("C:\\synchro_invalid_non_existent_file.exe");
             assert!(!synchro_lib::ffi::verify_embedded_signature(&non_existent));
 
-            // Test on installed WebView2 or Edge binaries which are signed with embedded Authenticode
             let candidates = [
                 r"C:\Program Files (x86)\Microsoft\EdgeWebView\Application",
                 r"C:\Program Files\Microsoft\EdgeWebView\Application",

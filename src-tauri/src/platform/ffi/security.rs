@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+
 
 #[cfg(target_os = "windows")]
 use std::ffi::c_void;
@@ -102,6 +102,10 @@ pub fn trim_working_set() {
     const CACHE_TTL: Duration = Duration::from_secs(30);
 
     unsafe {
+        let heap = winapi::GetProcessHeap();
+        if !heap.is_null() {
+            let _ = winapi::HeapCompact(heap, 0);
+        }
         let _ = winapi::SetProcessWorkingSetSize(winapi::GetCurrentProcess(), usize::MAX, usize::MAX);
 
         let mut webview_pids = Vec::new();
@@ -419,8 +423,8 @@ pub fn create_native_system_restore_point(description: &str) -> bool {
         let sr_fn: SRSetRestorePointWFn = std::mem::transmute(proc);
 
         let mut info = RestorePointInfoW {
-            dw_event_type: 100, // BEGIN_SYSTEM_CHANGE
-            dw_restore_pt_type: 12, // MODIFY_SETTINGS
+            dw_event_type: 100,
+            dw_restore_pt_type: 12,
             ll_sequence_number: 0,
             sz_description: [0; 256],
         };
@@ -445,8 +449,8 @@ pub fn create_native_system_restore_point(description: &str) -> bool {
 
         let committed = if success != 0 && status.n_status == 0 {
             let mut end_info = RestorePointInfoW {
-                dw_event_type: 101, // END_SYSTEM_CHANGE
-                dw_restore_pt_type: 12, // MODIFY_SETTINGS
+                dw_event_type: 101,
+                dw_restore_pt_type: 12,
                 ll_sequence_number: status.ll_sequence_number,
                 sz_description: [0; 256],
             };

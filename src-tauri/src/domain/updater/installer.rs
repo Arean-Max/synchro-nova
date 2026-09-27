@@ -19,7 +19,6 @@ pub fn apply_install() -> Result<(), String> {
         return Err(format!("Update file corrupted or incomplete: {} bytes", meta.len()));
     }
 
-    // Verify valid PE header (fail-closed)
     let mut header_buf = [0u8; 2];
     {
         use std::io::Read;
@@ -33,7 +32,6 @@ pub fn apply_install() -> Result<(), String> {
         return Err("Downloaded update is not a valid Windows executable (missing MZ signature)".to_string());
     }
 
-    // Verify SHA-256 against release manifest if available in update cache
     let update_dir = super::client::get_update_dir();
     let sha_file = update_dir.join("SHA256SUMS.txt");
     if sha_file.exists() {
@@ -64,7 +62,6 @@ pub fn apply_install() -> Result<(), String> {
         }
     }
 
-    // Check Authenticode signature: if currently running executable is signed, update MUST also be signed
     if let Ok(current_path) = std::env::current_exe() {
         if crate::platform::ffi::verify_embedded_signature(&current_path)
             && !crate::platform::ffi::verify_embedded_signature(&temp_file)
@@ -89,7 +86,6 @@ pub fn apply_install() -> Result<(), String> {
         ping_exe.to_string_lossy(), temp_str, current_str, current_str
     );
 
-    // Test write permission to target binary (e.g. Program Files requires elevation)
     let needs_elevation = match fs::OpenOptions::new().write(true).open(&current_exe) {
         Ok(_) => false,
         Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => true,

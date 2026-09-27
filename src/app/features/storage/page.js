@@ -3,7 +3,7 @@ import { lang } from "../../core/state.js";
 import { button } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
 
-export function formatDate(seconds, currentLang) {
+function formatDate(seconds, currentLang) {
   if (!seconds) return "-";
   const locale = (currentLang || lang()) === "en" ? "en-US" : "ru-RU";
   return new Intl.DateTimeFormat(locale, {
@@ -13,7 +13,7 @@ export function formatDate(seconds, currentLang) {
   }).format(new Date(seconds * 1000));
 }
 
-export function formatColorSummary(color) {
+function formatColorSummary(color) {
   if (!color) return "-";
   return `S ${Math.round(color.saturation)} / H ${Math.round(color.hue)} / C ${Math.round(color.contrast)} / G ${Math.round(color.gamma)}`;
 }

@@ -12,7 +12,6 @@ pub mod platform;
 pub mod settings;
 pub mod system_info;
 
-// Backwards-compatible aliases for existing crate callers and tests
 pub use app::state::{AppSettings, ColorSettings, DriverInfo, PersistedState, RuntimeState, SystemCharacteristics};
 pub use app::workers::trim_process_memory;
 pub use domain::color;
@@ -180,6 +179,7 @@ pub fn run() {
             commands::take_juicy_screenshot,
             commands::scan_drivers,
             commands::open_official_driver_url,
+            commands::open_windows_driver_updates,
             commands::open_external_url,
             commands::get_pending_navigation,
             commands::check_for_updates,
@@ -273,11 +273,9 @@ mod tests {
         let default_color = ColorSettings::default();
         let matrix = domain::color::transform::build_color_matrix(&default_color, true);
         assert_eq!(matrix.len(), 25);
-        // All values should be finite numbers, not NaN or Infinity
         for val in &matrix {
             assert!(val.is_finite());
         }
-        // Alpha channel (element 18, 4th diagonal element) should be 1.0
         assert_eq!(matrix[18], 1.0);
     }
 

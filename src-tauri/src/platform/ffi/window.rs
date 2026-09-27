@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+
 
 #[cfg(target_os = "windows")]
 use std::ffi::c_void;
@@ -32,7 +32,6 @@ pub fn eliminate_window_borders(hwnd: isize) {
     }
 
     unsafe {
-        // DWMWA_USE_IMMERSIVE_DARK_MODE (20)
         let dark_mode: i32 = 1;
         let _ = DwmSetWindowAttribute(
             hwnd,
@@ -41,7 +40,6 @@ pub fn eliminate_window_borders(hwnd: isize) {
             std::mem::size_of::<i32>() as u32,
         );
 
-        // DWMWA_BORDER_COLOR = DWMWA_COLOR_NONE (34)
         let no_border: u32 = 0xFFFF_FFFE;
         let _ = DwmSetWindowAttribute(
             hwnd,
@@ -50,7 +48,6 @@ pub fn eliminate_window_borders(hwnd: isize) {
             std::mem::size_of::<u32>() as u32,
         );
 
-        // Match caption color to app theme
         let caption_color: u32 = 0x0014_1414;
         let _ = DwmSetWindowAttribute(
             hwnd,
@@ -59,7 +56,6 @@ pub fn eliminate_window_borders(hwnd: isize) {
             std::mem::size_of::<u32>() as u32,
         );
 
-        // Subclass window to prevent edge resize dragging without stripping WS_THICKFRAME
         let fns = SUBCLASS_FNS.get_or_init(|| {
             #[link(name = "kernel32")]
             extern "system" {

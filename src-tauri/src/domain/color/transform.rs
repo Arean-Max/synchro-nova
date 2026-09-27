@@ -90,7 +90,6 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
 
     set_active_color(Some((color.clone(), show_on_recordings)));
 
-    // Try hardware LUT gamma ramp first (optimal for standard SDR monitors)
     let ramp_success = apply_gamma_ramp(color.gamma).is_ok();
     let include_matrix_gamma = show_on_recordings || !ramp_success;
 
@@ -220,17 +219,6 @@ pub(crate) fn build_color_matrix(color: &ColorSettings, include_matrix_gamma: bo
 
 fn black_holo_matrix(strength: f32) -> [f32; 25] {
     let k = strength.clamp(0.0, 1.0);
-    // Cross-channel color synthesis:
-    // Reconstructs green from equal parts red and blue: (R + B) / 2 for the attenuated portion.
-    // Row 0: R' = R
-    // Row 1: G' = 0.5*k * R + (1.0 - k) * G + 0.5*k * B
-    // Row 2: B' = B
-    //
-    // Exact conservation of neutral gray & white luminance:
-    // 0.5*k + (1.0 - k) + 0.5*k = 1.0 (row sum is identically 1.0)
-    // - Pure green reticle (0, 1, 0) -> (0, 0, 0) deep black.
-    // - White (1, 1, 1) -> (1, 1, 1) pure neutral white (0% purple/magenta shift).
-    // - Sky blue (0.4, 0.7, 1.0) -> (0.4, 0.7, 1.0) natural sky blue.
     let r_to_g = 0.5 * k;
     let g_to_g = 1.0 - k;
     let b_to_g = 0.5 * k;

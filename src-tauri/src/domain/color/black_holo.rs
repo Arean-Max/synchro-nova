@@ -24,14 +24,6 @@ impl GpuVendor {
         }
     }
 
-    pub fn display_title(&self) -> &'static str {
-        match self {
-            Self::Nvidia => "NVIDIA GeForce",
-            Self::Amd => "AMD Radeon",
-            Self::Intel => "Intel Graphics",
-            Self::Unknown => "Generic GPU",
-        }
-    }
 
     pub fn curve_profile_name(&self) -> &'static str {
         match self {
@@ -59,7 +51,6 @@ static ORIGINAL_RAMP: Mutex<Option<GammaRamp>> = Mutex::new(None);
 
 static IS_ACTIVE: AtomicBool = AtomicBool::new(false);
 static WATCHDOG_RUNNING: AtomicBool = AtomicBool::new(false);
-static HOTKEY_LISTENER_STARTED: AtomicBool = AtomicBool::new(false);
 
 #[cfg(target_os = "windows")]
 pub fn detect_gpu_vendor() -> (GpuVendor, String) {
@@ -92,20 +83,6 @@ pub fn detect_gpu_vendor() -> (GpuVendor, String) {
     (GpuVendor::Unknown, "Unknown GPU".to_string())
 }
 
-/// Generates a targeted notch gamma LUT for Black Holosight with GDI-safe clamps.
-/// Preserves low/mid greens (grass, trees, ground) and recovers smoothly at high brightness
-/// (sky, sun, clouds, specular highlights) so the world doesn't turn purple.
-#[cfg(target_os = "windows")]
-pub fn generate_black_holo_ramp(_vendor: GpuVendor) -> GammaRamp {
-    let mut ramp = GammaRamp::default();
-    for i in 0..256 {
-        let linear = (i as u32 * 65535 / 255) as u16;
-        ramp.red[i] = linear;
-        ramp.green[i] = linear;
-        ramp.blue[i] = linear;
-    }
-    ramp
-}
 
 #[cfg(target_os = "windows")]
 unsafe extern "system" fn console_ctrl_handler(ctrl_type: u32) -> i32 {
@@ -189,7 +166,7 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
             gpu_vendor: vendor.as_str().to_string(),
             gpu_name,
             curve_profile: "Cross-Channel Direct Matrix".to_string(),
-            hotkey: "F11".to_string(),
+            hotkey: "".to_string(),
             rust_synced: rust_res.success,
             error: None,
         }
@@ -208,7 +185,7 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
             gpu_vendor: vendor.as_str().to_string(),
             gpu_name,
             curve_profile: "Standard".to_string(),
-            hotkey: "F11".to_string(),
+            hotkey: "".to_string(),
             rust_synced: rust_res.success,
             error: err,
         }
@@ -223,7 +200,7 @@ pub fn set_hardware_black_holo(_enabled: bool) -> BlackHoloStatus {
         gpu_vendor: vendor.as_str().to_string(),
         gpu_name,
         curve_profile: vendor.curve_profile_name().to_string(),
-        hotkey: "F11".to_string(),
+        hotkey: "".to_string(),
         rust_synced: false,
         error: Some("Hardware Black Holo is only supported on Windows".to_string()),
     }
@@ -240,44 +217,14 @@ pub fn get_hardware_black_holo_status() -> BlackHoloStatus {
         gpu_vendor: vendor.as_str().to_string(),
         gpu_name,
         curve_profile: vendor.curve_profile_name().to_string(),
-        hotkey: "F11".to_string(),
+        hotkey: "".to_string(),
         rust_synced: true,
         error: None,
     }
 }
 
 #[cfg(target_os = "windows")]
-pub fn start_black_holo_hotkey_listener(app_handle: Option<tauri::AppHandle>) {
-    if HOTKEY_LISTENER_STARTED.swap(true, Ordering::SeqCst) {
-        return;
-    }
-
-    std::thread::Builder::new()
-        .name("synchro-black-holo-hotkey".to_string())
-        .spawn(move || {
-            const HOTKEY_ID: i32 = 0x484F; // 'HO'
-            const VK_F11: u32 = 0x7A;
-            const WM_HOTKEY: u32 = 0x0312;
-
-            unsafe {
-                let registered = winapi::RegisterHotKey(std::ptr::null_mut(), HOTKEY_ID, 0, VK_F11);
-                if registered != 0 {
-                    let mut msg = std::mem::zeroed::<crate::platform::ffi::MSG>();
-                    while winapi::GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) > 0 {
-                        if msg.message == WM_HOTKEY {
-                            let next_state = !IS_ACTIVE.load(Ordering::SeqCst);
-                            let status = set_hardware_black_holo(next_state);
-                            if let Some(ref app) = app_handle {
-                                use tauri::Emitter;
-                                let _ = app.emit("black-holo-toggled", &status);
-                            }
-                        }
-                    }
-                    winapi::UnregisterHotKey(std::ptr::null_mut(), HOTKEY_ID);
-                }
-            }
-        })
-        .ok();
+pub fn start_black_holo_hotkey_listener(_app_handle: Option<tauri::AppHandle>) {
 }
 
 #[cfg(not(target_os = "windows"))]

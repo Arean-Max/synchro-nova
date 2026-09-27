@@ -1,8 +1,6 @@
 fn main() {
     tauri_build::build();
 
-    // Dynamically locate MinGW system libraries for x86_64-pc-windows-gnu without hardcoded paths.
-    // Resolves through environment variables (MINGW_PREFIX, MINGW_HOME) or the active GCC toolchain in PATH.
     if std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("gnu") {
         if let Ok(prefix) = std::env::var("MINGW_PREFIX") {
             println!("cargo:rustc-link-search=native={}/lib", prefix);

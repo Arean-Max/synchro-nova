@@ -11,9 +11,7 @@ pub fn apply_color_settings(
 ) -> Result<PersistedState, String> {
     let color = color.sanitized();
     let current = state.snapshot()?;
-    if current.color != color {
-        apply_color_transform(&color, current.settings.show_on_recordings)?;
-    }
+    apply_color_transform(&color, current.settings.show_on_recordings)?;
 
     {
         let mut data = state
@@ -46,6 +44,18 @@ pub fn get_black_holo_status() -> crate::domain::color::BlackHoloStatus {
 }
 
 #[tauri::command]
-pub fn toggle_hardware_black_holo(enabled: bool) -> crate::domain::color::BlackHoloStatus {
-    crate::domain::color::set_hardware_black_holo(enabled)
+pub fn toggle_hardware_black_holo(
+    enabled: bool,
+    state: State<'_, RuntimeState>,
+) -> Result<crate::domain::color::BlackHoloStatus, String> {
+    let status = crate::domain::color::set_hardware_black_holo(enabled);
+    {
+        let mut data = state
+            .data
+            .lock()
+            .map_err(|_| "Settings lock poisoned".to_string())?;
+        data.color.black_holo = if status.active { 100.0 } else { 0.0 };
+        let _ = crate::domain::color::apply_color_transform(&data.color, data.settings.show_on_recordings);
+    }
+    Ok(status)
 }

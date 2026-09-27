@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 
 use std::path::Path;
 use super::common::LaunchTarget;
@@ -15,7 +14,6 @@ pub(crate) fn is_safe_game_url(url: &str) -> bool {
     if url.is_empty() || url.len() > 512 {
         return false;
     }
-    // Disallow control characters, quotes, and dangerous shell metacharacters
     if url.chars().any(|ch| ch.is_control() || matches!(ch, '"' | '\'' | '`' | '<' | '>' | '^' | '|' | '&')) {
         return false;
     }

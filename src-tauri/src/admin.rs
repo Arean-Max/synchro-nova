@@ -1,11 +1,7 @@
 #[cfg(target_os = "windows")]
 use std::path::Path;
 
-#[cfg(target_os = "windows")]
-#[allow(dead_code)]
-pub(crate) fn restart_as_admin() -> Result<(), String> {
-    restart_as_admin_with_hwnd(0, None)
-}
+
 
 #[cfg(target_os = "windows")]
 pub(crate) fn restart_as_admin_with_hwnd(hwnd: isize, target_page: Option<&str>) -> Result<(), String> {
@@ -20,10 +16,6 @@ pub(crate) fn restart_as_admin_with_hwnd(hwnd: isize, target_page: Option<&str>)
     runas_with_hwnd(&exe, hwnd, Some(&args))
 }
 
-#[cfg(not(target_os = "windows"))]
-pub(crate) fn restart_as_admin() -> Result<(), String> {
-    Ok(())
-}
 
 #[cfg(not(target_os = "windows"))]
 pub(crate) fn restart_as_admin_with_hwnd(_hwnd: isize, _target_page: Option<&str>) -> Result<(), String> {

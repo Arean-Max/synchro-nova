@@ -68,7 +68,7 @@ export const viewState = {
     gpuVendor: "unknown",
     gpuName: "",
     curveProfile: "",
-    hotkey: "F11",
+    hotkey: "",
     rustSynced: true,
     error: null
   }
@@ -129,22 +129,15 @@ export function applyInterfaceAccent(color) {
     b = Number.isFinite(pb) ? pb : 255;
   }
 
-  // Rec. 601 perceived luminance
   const brightness = (r * 299 + g * 587 + b * 114) / 1000;
 
-  // If accent is light (e.g. #ffffff), text on accent background is dark (#111113).
-  // If accent is dark (e.g. #000000), text on accent background is bright white (#ffffff).
   const textColor = brightness > 140 ? "#111113" : "#ffffff";
   const thumbColor = brightness > 190 ? "#141416" : "#ffffff";
 
-  // For text/icons tinted with the accent against the dark app background (#141414),
-  // if the accent is very dark (e.g. #000000), ensure it never becomes invisible.
   const fgAccent = brightness < 65 ? "#ffffff" : accent;
 
-  // Subtle border outline for dark accents on dark backgrounds
   const accentBorder = brightness < 65 ? "rgba(255, 255, 255, 0.28)" : "transparent";
 
-  // Glow definition
   const glowR = brightness < 65 ? 255 : r;
   const glowG = brightness < 65 ? 255 : g;
   const glowB = brightness < 65 ? 255 : b;

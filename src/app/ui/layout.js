@@ -7,7 +7,7 @@ import { renderBackupsPage, renderConfigsPage } from "../features/storage/page.j
 import { renderTweaksPage } from "../features/tweaks/page.js";
 import { logo, icon } from "./icons.js";
 
-export function renderTitlebar(t) {
+function renderTitlebar(t) {
   return [
     '<div class="titlebar" data-window-drag data-tauri-drag-region>',
     '<div class="titlebar-left" data-window-drag data-tauri-drag-region>',
@@ -84,7 +84,7 @@ export function renderSidebarUpdateWidget(t, viewState) {
   return '<div id="sidebar-update-wrapper" class="sidebar-update-wrapper hidden"></div>';
 }
 
-export function renderSidebar(t, viewState) {
+function renderSidebar(t, viewState) {
   const isCollapsed = Boolean(viewState?.sidebarCollapsed);
   const toggleTitle = isCollapsed ? t("expandSidebar") : t("collapseSidebar");
   const nav = pageOrder

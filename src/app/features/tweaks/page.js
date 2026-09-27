@@ -3,7 +3,6 @@ import { appState, lang } from "../../core/state.js";
 import { button } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
 import {
-  allTweaks,
   tweakAppImpacts,
   tweakCategory,
   tweakCatalog,
@@ -16,12 +15,14 @@ import {
 function tweakTile(tweak, viewState, t) {
   const isRu = lang() === "ru";
   const installed = viewState.installedTweaks?.has(tweak.id);
+  const selected = viewState.selectedTweaks?.has(tweak.id);
   const category = tweakCategory(tweak);
   const title = tweakTitle(tweak, t);
   const desc = tweakDescription(tweak, t);
   const helpTitle = t("whatBreaks") || (isRu ? "Что меняет этот твик?" : "What does this tweak affect?");
+  const stateClass = installed ? "installed" : (selected ? "selected" : "not-installed");
 
-  return `<div class="tweak-tile ${installed ? "installed" : "not-installed"}" role="button" tabindex="0" data-tweak-id="${escapeAttr(tweak.id)}" data-category="${category}"><div class="tweak-head"><span class="tweak-title">${escapeHtml(title)}</span><button class="tweak-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(tweak.id)}" title="${escapeAttr(helpTitle)}" aria-label="${escapeAttr(helpTitle)}">?</button></div><p>${escapeHtml(desc)}</p></div>`;
+  return `<div class="tweak-tile ${stateClass}" role="button" tabindex="0" data-tweak-id="${escapeAttr(tweak.id)}" data-category="${category}"><div class="tweak-head"><span class="tweak-title">${escapeHtml(title)}</span><button class="tweak-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(tweak.id)}" title="${escapeAttr(helpTitle)}" aria-label="${escapeAttr(helpTitle)}">?</button></div><p>${escapeHtml(desc)}</p></div>`;
 }
 
 function tweakGroup(group, viewState, t) {
@@ -52,7 +53,11 @@ function tweakResults(viewState, t) {
           }
         }
       }
-      return `<div class="tweak-result-row ${escapeAttr(item.status || "skipped")}"><span>${escapeHtml(item.id || "-")}</span><strong>${escapeHtml(t(statusKey))}</strong><em>${escapeHtml(msg)}</em></div>`;
+      const isFailed = item.status === "failed";
+      const errorBtn = isFailed
+        ? `<button class="tweak-help-btn tweak-error-btn" type="button" data-action="show-tweak-error" data-tweak-id="${escapeAttr(item.id)}" data-error-msg="${escapeAttr(item.message || (isRu ? "Ошибка применения твика" : "Failed to apply tweak"))}" title="${isRu ? "Почему не поставился этот твик?" : "Why did this tweak fail?"}">?</button>`
+        : "";
+      return `<div class="tweak-result-row ${escapeAttr(item.status || "skipped")}"><span>${escapeHtml(item.id || "-")}</span>${errorBtn}<strong>${escapeHtml(t(statusKey))}</strong><em>${escapeHtml(msg)}</em></div>`;
     })
     .join("");
   return [
@@ -167,12 +172,17 @@ export function renderIosNotification(viewState, t) {
 export function renderTweaksPage(viewState, t) {
   const isLocked = !appState.isAdmin;
   const groups = tweakCatalog.map((group) => tweakGroup(group, viewState, t)).join("");
+  const hasSelected = viewState.selectedTweaks && viewState.selectedTweaks.size > 0;
   const applyLabel = viewState.applyingTweaks ? t("loading") : t("applySelected");
+
+  const applyBtnHtml = hasSelected
+    ? button(applyLabel, "check", "primary", "apply-tweaks")
+    : "";
 
   return [
     `<div class="tweaks-page ${isLocked ? "admin-locked" : ""}">`,
     `<div class="scroll-panel">${tweakResults(viewState, t)}${groups}</div>`,
-    `<div class="actions tweaks-actions">${button(applyLabel, "check", "primary", "apply-tweaks")}${button(t("rollbackTweaks"), "rotate", "outline", "rollback-tweaks")}</div>`,
+    `<div class="actions tweaks-actions">${applyBtnHtml}${button(t("rollbackTweaks"), "rotate", "outline", "rollback-tweaks")}</div>`,
     '</div>'
   ].join("");
 }
@@ -191,7 +201,6 @@ export const tweaksFeature = {
     }
   },
   unmount() {
-    // Clean up references
   }
 };
 

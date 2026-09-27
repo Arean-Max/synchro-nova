@@ -292,7 +292,6 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
             return Err("Failed to retrieve screen bitmap bits".to_string());
         }
 
-        // Apply color calibration transform in-place
         let saturation = (color.saturation / 100.0).max(0.0);
         let contrast = (color.contrast / 100.0).max(0.0);
         let gamma = (color.gamma / 100.0).clamp(0.5, 2.0);
@@ -339,7 +338,6 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
         let header_size = std::mem::size_of::<BITMAPINFOHEADER>();
         let total_size = header_size + pixels.len();
 
-        // Copy to clipboard (CF_DIB)
         let h_global = GlobalAlloc(GMEM_MOVEABLE, total_size);
         if !h_global.is_null() {
             let p_mem = GlobalLock(h_global) as *mut u8;
@@ -366,7 +364,6 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
             }
         }
 
-        // Save directly to file
         let mut saved_path_str = None;
         if let Some(user_profile) = std::env::var_os("USERPROFILE") {
             let screenshots_dir = PathBuf::from(user_profile).join("Pictures").join("Screenshots");
@@ -383,7 +380,6 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
                     let mut writer = BufWriter::with_capacity(64 * 1024, file);
                     let mut write_success = true;
 
-                    // BMP 14-byte File Header
                     let file_size = (14 + total_size) as u32;
                     let offset = (14 + header_size) as u32;
                     let mut bmp_file_header = [0u8; 14];
@@ -396,13 +392,11 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
                         write_success = false;
                     }
 
-                    // DIB Header
                     let header_bytes = std::slice::from_raw_parts(&header as *const _ as *const u8, header_size);
                     if write_success && writer.write_all(header_bytes).is_err() {
                         write_success = false;
                     }
 
-                    // Pixel bits directly from `pixels`
                     if write_success && writer.write_all(&pixels).is_err() {
                         write_success = false;
                     }
@@ -414,7 +408,6 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
             }
         }
 
-        // Explicitly drop large pixel buffer immediately
         drop(pixels);
 
         Ok(JuicyScreenshotResult {
@@ -437,7 +430,7 @@ pub fn start_global_screenshot_listener() {
         std::thread::Builder::new()
             .name("synchro-screenshot-hotkey".to_string())
             .spawn(move || {
-                const HOTKEY_ID: i32 = 0x534E; // 'SN'
+                const HOTKEY_ID: i32 = 0x534E;
                 const VK_SNAPSHOT: u32 = 0x2C;
                 const WM_HOTKEY: u32 = 0x0312;
 

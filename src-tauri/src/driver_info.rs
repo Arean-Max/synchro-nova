@@ -147,7 +147,6 @@ fn collect_pnp_class_drivers(drivers: &mut Vec<DriverInfo>, seen: &mut HashSet<S
             .unwrap_or_else(|_| "System".to_string());
         let class_name = normalize_class(&raw_class);
 
-        // Filter for meaningful hardware classes
         if !is_relevant_class(&class_name) {
             continue;
         }
@@ -306,7 +305,6 @@ fn detect_vendor(provider: &str, name: &str, hardware_id: &str) -> String {
 }
 
 fn check_if_outdated(date: &str, vendor: &str, class_name: &str) -> bool {
-    // Microsoft built-in and generic system drivers are updated via Windows Update
     if vendor == "microsoft" || vendor == "generic" {
         return false;
     }
@@ -318,13 +316,10 @@ fn check_if_outdated(date: &str, vendor: &str, class_name: &str) -> bool {
 
     let class_lower = class_name.to_lowercase();
     if class_lower == "display" {
-        // GPUs release updates frequently; anything older than 2024 is candidate
         year < 2024
     } else if class_lower == "net" || class_lower == "media" {
-        // Network / Audio: older than 2023
         year < 2023
     } else {
-        // Chipset, storage, peripherals: older than 2021
         year < 2021
     }
 }
@@ -333,7 +328,6 @@ fn is_ignorable_device(name: &str, provider: &str, class_name: &str) -> bool {
     let n = name.to_lowercase();
     let p = provider.to_lowercase();
 
-    // Virtual, debug, or software devices
     if n.contains("wan miniport")
         || n.contains("kernel debug")
         || n.contains("directshow")
@@ -386,7 +380,6 @@ fn is_ignorable_device(name: &str, provider: &str, class_name: &str) -> bool {
         return true;
     }
 
-    // Class-specific filtering
     let cls = class_name.to_lowercase();
     if cls == "system" && (p.contains("microsoft") || p == "unknown") {
         return true;

@@ -89,11 +89,11 @@ export const tweakCatalog = [
   }
 ];
 
-export function tweakBadges(tweak) {
+function tweakBadges(tweak) {
   return Array.isArray(tweak.badges) ? tweak.badges : tweak.badges ? [tweak.badges] : [];
 }
 
-export function tweakKey(tweak) {
+function tweakKey(tweak) {
   return String(tweak?.id || "").replace(/-/g, "_");
 }
 

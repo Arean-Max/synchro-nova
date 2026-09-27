@@ -52,6 +52,13 @@ pub(crate) fn is_admin_tweak(id: &str) -> bool {
 }
 
 fn apply_one(id: &str) -> TweakApplyResult {
+    if is_tweak_applied(id) && id != "clean-temp-junk" && id != "dns-cache-flush" {
+        return TweakApplyResult {
+            id: id.to_string(),
+            status: "skipped".to_string(),
+            message: "Tweak is already applied in the system".to_string(),
+        };
+    }
     if is_admin_tweak(id) && !crate::admin::is_running_elevated() {
         return TweakApplyResult {
             id: id.to_string(),
@@ -60,7 +67,6 @@ fn apply_one(id: &str) -> TweakApplyResult {
         };
     }
     match id {
-        // Group 1: Gaming & Latency
         "game-mode-on" => gaming::apply_game_mode(id),
         "modern-flip-model-on" => gaming::apply_modern_flip_model(id),
         "gamedvr-fse-mode" => gaming::apply_gamedvr_fse_mode(id),
@@ -69,7 +75,6 @@ fn apply_one(id: &str) -> TweakApplyResult {
         "mpo-disable" => gaming::apply_mpo_disable(id),
         "pcie-aspm-off" => gaming::apply_pcie_aspm_off(id),
 
-        // Group 2: CPU & Performance
         "power-plan-high" => runner::run_powercfg(
             id,
             &["/setactive", "SCHEME_MIN"],
@@ -82,7 +87,6 @@ fn apply_one(id: &str) -> TweakApplyResult {
         "system-responsiveness-10" => power::apply_system_responsiveness(id),
         "network-throttle-off" => power::apply_network_throttle_off(id),
 
-        // Group 3: Input & Responsiveness
         "pointer-precision-off" => system::apply_pointer_precision_off(id),
         "sticky-keys-off" => system::apply_sticky_keys_off(id),
         "usb-selective-suspend-off" => system::apply_usb_selective_suspend(id),
@@ -91,7 +95,6 @@ fn apply_one(id: &str) -> TweakApplyResult {
         "transparency-off" => system::apply_transparency_off(id),
         "menu-show-delay-low" => system::apply_menu_show_delay_low(id),
 
-        // Group 4: Storage & Debloat
         "clean-temp-junk" => storage::apply_clean_temp_junk(id),
         "hibernate-off" => runner::run_command_result(
             id,
@@ -112,7 +115,6 @@ fn apply_one(id: &str) -> TweakApplyResult {
             "TRIM notifications enabled",
         ),
 
-        // Group 5: Network Latency
         "tcp-nodelay-ack" => network::apply_tcp_nodelay_ack(id),
         "nic-energy-saving-off" => network::apply_nic_energy_saving_off(id),
         "tcp-heuristics-off" => network::apply_tcp_heuristics_off(id),
@@ -141,7 +143,6 @@ fn apply_one(id: &str) -> TweakApplyResult {
             runner::run_command_result(id, "ipconfig", &["/flushdns"], "DNS cache refreshed")
         }
 
-        // Group 6: Background & Privacy
         "disable-gamedvr" => gaming::apply_disable_gamedvr(id),
         "disable-bg-recording" => gaming::apply_disable_bg_recording(id),
         "gamebar-startup-off" => gaming::apply_gamebar_startup_off(id),
@@ -160,7 +161,6 @@ fn apply_one(id: &str) -> TweakApplyResult {
 
 pub fn known_tweak_ids() -> &'static [&'static str] {
     &[
-        // Group 1: Gaming & Latency
         "game-mode-on",
         "modern-flip-model-on",
         "gamedvr-fse-mode",
@@ -169,7 +169,6 @@ pub fn known_tweak_ids() -> &'static [&'static str] {
         "mpo-disable",
         "pcie-aspm-off",
 
-        // Group 2: CPU & Performance
         "power-plan-high",
         "ultimate-performance-plan",
         "cpu-unpark-cores",
@@ -178,7 +177,6 @@ pub fn known_tweak_ids() -> &'static [&'static str] {
         "system-responsiveness-10",
         "network-throttle-off",
 
-        // Group 3: Input & Responsiveness
         "pointer-precision-off",
         "sticky-keys-off",
         "usb-selective-suspend-off",
@@ -187,13 +185,11 @@ pub fn known_tweak_ids() -> &'static [&'static str] {
         "transparency-off",
         "menu-show-delay-low",
 
-        // Group 4: Storage & Debloat
         "clean-temp-junk",
         "hibernate-off",
         "ntfs-last-access-off",
         "trim-enable",
 
-        // Group 5: Network Latency
         "tcp-nodelay-ack",
         "nic-energy-saving-off",
         "tcp-heuristics-off",
@@ -202,7 +198,6 @@ pub fn known_tweak_ids() -> &'static [&'static str] {
         "ecn-off",
         "dns-cache-flush",
 
-        // Group 6: Background & Privacy
         "disable-gamedvr",
         "disable-bg-recording",
         "gamebar-startup-off",
@@ -216,7 +211,6 @@ pub fn known_tweak_ids() -> &'static [&'static str] {
 
 pub fn is_tweak_applied(id: &str) -> bool {
     match id {
-        // Group 1: Gaming & Latency
         "game-mode-on" => gaming::is_game_mode_applied(),
         "modern-flip-model-on" => gaming::is_modern_flip_model_applied(),
         "gamedvr-fse-mode" => gaming::is_gamedvr_fse_mode_applied(),
@@ -225,7 +219,6 @@ pub fn is_tweak_applied(id: &str) -> bool {
         "mpo-disable" => gaming::is_mpo_disable_applied(),
         "pcie-aspm-off" => gaming::is_pcie_aspm_off_applied(),
 
-        // Group 2: CPU & Performance
         "power-plan-high" => power::is_power_plan_high_applied(),
         "ultimate-performance-plan" => power::is_ultimate_performance_applied(),
         "cpu-unpark-cores" => power::is_cpu_unpark_cores_applied(),
@@ -234,7 +227,6 @@ pub fn is_tweak_applied(id: &str) -> bool {
         "system-responsiveness-10" => power::is_system_responsiveness_applied(),
         "network-throttle-off" => power::is_network_throttle_off_applied(),
 
-        // Group 3: Input & Responsiveness
         "pointer-precision-off" => system::is_pointer_precision_off_applied(),
         "sticky-keys-off" => system::is_sticky_keys_off_applied(),
         "usb-selective-suspend-off" => system::is_usb_selective_suspend_applied(),
@@ -243,13 +235,11 @@ pub fn is_tweak_applied(id: &str) -> bool {
         "transparency-off" => system::is_transparency_off_applied(),
         "menu-show-delay-low" => system::is_menu_show_delay_low_applied(),
 
-        // Group 4: Storage & Debloat
         "clean-temp-junk" => false,
         "hibernate-off" => storage::is_hibernate_applied(),
         "ntfs-last-access-off" => storage::is_ntfs_last_access_applied(),
         "trim-enable" => storage::is_trim_applied(),
 
-        // Group 5: Network Latency
         "tcp-nodelay-ack" => network::hklm_tcp_nodelay_active(),
         "nic-energy-saving-off" => network::hklm_nic_energy_saving_off(),
         "tcp-heuristics-off" => network::is_tcp_heuristics_off_applied(),
@@ -258,7 +248,6 @@ pub fn is_tweak_applied(id: &str) -> bool {
         "ecn-off" => network::is_ecn_applied(),
         "dns-cache-flush" => false,
 
-        // Group 6: Background & Privacy
         "disable-gamedvr" => gaming::is_disable_gamedvr_applied(),
         "disable-bg-recording" => gaming::is_disable_bg_recording_applied(),
         "gamebar-startup-off" => gaming::is_gamebar_startup_off_applied(),

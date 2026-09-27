@@ -1,4 +1,4 @@
-export const nativeInvoke =
+const nativeInvoke =
   window.__TAURI__?.core?.invoke ||
   window.__TAURI__?.tauri?.invoke ||
   null;

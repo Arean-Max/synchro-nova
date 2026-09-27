@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 
 #[cfg(target_os = "windows")]
 use std::ffi::c_void;
@@ -25,13 +24,6 @@ unsafe extern "system" {
         job_info: *mut c_void,
         job_info_length: u32,
     ) -> i32;
-    pub fn QueryInformationJobObject(
-        job: *mut c_void,
-        info_class: i32,
-        job_info: *mut c_void,
-        job_info_length: u32,
-        return_length: *mut u32,
-    ) -> i32;
     pub fn CloseHandle(handle: *mut c_void) -> i32;
     pub fn SetProcessWorkingSetSize(process: *mut c_void, min: usize, max: usize) -> i32;
     pub fn SetProcessDEPPolicy(flags: u32) -> i32;
@@ -53,6 +45,7 @@ unsafe extern "system" {
         heap_information: *mut c_void,
         heap_information_length: usize,
     ) -> i32;
+    pub fn HeapCompact(heap_handle: *mut c_void, flags: u32) -> usize;
     pub fn LoadLibraryW(lib_file_name: *const u16) -> *mut c_void;
     pub fn GetProcAddress(module: *mut c_void, proc_name: *const u8) -> *mut c_void;
     pub fn FreeLibrary(module: *mut c_void) -> i32;
@@ -117,7 +110,6 @@ unsafe extern "system" {
         lp_dev_mode: *mut c_void,
         dw_flags: u32,
     ) -> i32;
-    pub fn GetAsyncKeyState(v_key: i32) -> i16;
     pub fn RegisterHotKey(hwnd: *mut c_void, id: i32, fs_modifiers: u32, vk: u32) -> i32;
     pub fn UnregisterHotKey(hwnd: *mut c_void, id: i32) -> i32;
     pub fn GetMessageW(
@@ -132,7 +124,6 @@ unsafe extern "system" {
 #[link(name = "Gdi32")]
 unsafe extern "system" {
     pub fn SetDeviceGammaRamp(hdc: *mut c_void, ramp: *const GammaRamp) -> i32;
-    pub fn GetDeviceGammaRamp(hdc: *mut c_void, ramp: *mut GammaRamp) -> i32;
 }
 
 #[cfg(target_os = "windows")]
@@ -171,23 +162,5 @@ unsafe extern "system" {
         token_information: *mut c_void,
         token_information_length: u32,
         return_length: *mut u32,
-    ) -> i32;
-}
-
-#[cfg(target_os = "windows")]
-#[link(name = "Version")]
-unsafe extern "system" {
-    pub fn GetFileVersionInfoSizeW(file_name: *const u16, handle: *mut u32) -> u32;
-    pub fn GetFileVersionInfoW(
-        file_name: *const u16,
-        handle: u32,
-        len: u32,
-        data: *mut c_void,
-    ) -> i32;
-    pub fn VerQueryValueW(
-        block: *const c_void,
-        sub_block: *const u16,
-        buffer: *mut *mut c_void,
-        len: *mut u32,
     ) -> i32;
 }

@@ -1,6 +1,6 @@
 import { defaultPresets, lang, sliderDefs } from "../../core/state.js";
 import { escapeAttr, escapeHtml, safeValue } from "../../core/html.js";
-import { button, card, checkbox } from "../../ui/components.js";
+import { button, card } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
 
 export const standardTemplateNames = new Set([
@@ -14,7 +14,7 @@ export function colorGames(viewState) {
   return Array.isArray(viewState.colorGames) ? viewState.colorGames : [];
 }
 
-export function selectedColorGameIndex(viewState) {
+function selectedColorGameIndex(viewState) {
   const games = colorGames(viewState);
   if (!games.length) return -1;
   const index = games.findIndex((game) => game.id === viewState.selectedColorGame);
@@ -560,7 +560,6 @@ export const colorFeature = {
     }
   },
   unmount() {
-    // Release decoded preview bitmap from memory immediately on leaving tab
     const img = document.getElementById("color-preview-image");
     if (img) {
       img.src = "";

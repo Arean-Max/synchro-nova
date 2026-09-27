@@ -165,7 +165,6 @@ pub fn clean_directory_contents(dir: &std::path::Path, total_bytes: &mut u64, fi
             if let Ok(sym_meta) = std::fs::symlink_metadata(&path) {
                 let file_type = sym_meta.file_type();
                 if file_type.is_symlink() {
-                    // Do not traverse symlinks or directory junctions to prevent arbitrary file deletion
                     let len = sym_meta.len();
                     if std::fs::remove_file(&path).is_ok() || std::fs::remove_dir(&path).is_ok() {
                         *total_bytes += len;

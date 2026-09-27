@@ -34,7 +34,6 @@ export function renderApplyModal(modalState, t) {
     ].join("");
   }
 
-  // Complete phase
   const isRu = lang() === "ru";
   const results = Array.isArray(modalState.results) ? modalState.results : [];
   const tweaksMap = new Map(allTweaks().map((tw) => [tw.id, tw]));
@@ -70,19 +69,28 @@ export function renderApplyModal(modalState, t) {
     } else if (item.status === "skipped") {
       statusClass = "skipped";
       iconContent = icon("minus");
-      statusTag = isRu ? "Пропущено" : "Skipped";
+      statusTag = isRu ? "Уже активен" : "Already applied";
+      desc = item.message || (isRu ? "Твик уже настроен в системе" : "Tweak is already active in system");
     } else if (item.status === "failed") {
       statusClass = "failed";
       iconContent = icon("x");
       statusTag = isRu ? "Ошибка" : "Failed";
+      desc = item.message || (isRu ? "Не удалось применить твик" : "Failed to apply tweak");
     }
 
-    const helpTooltip = t("whatBreaks") || (isRu ? "Что меняет этот твик?" : "What does this tweak affect?");
+    const isFailed = item.status === "failed";
+    const helpTooltip = isFailed
+      ? (isRu ? "Почему этот твик не поставился?" : "Why did this tweak fail?")
+      : (t("whatBreaks") || (isRu ? "Что меняет этот твик?" : "What does this tweak affect?"));
+
+    const helpBtnHtml = isFailed
+      ? `<button class="tweak-help-btn tweak-error-btn apply-result-help-btn" type="button" data-action="show-tweak-error" data-tweak-id="${escapeAttr(item.id)}" data-error-msg="${escapeAttr(item.message || (isRu ? "Ошибка применения твика в системе" : "Tweak application error"))}" title="${escapeAttr(helpTooltip)}">?</button>`
+      : `<button class="tweak-help-btn apply-result-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(item.id)}" title="${escapeAttr(helpTooltip)}">?</button>`;
 
     return [
       `<div class="apply-result-item ${escapeAttr(statusClass)}">`,
       '  <div class="apply-result-left">',
-      `    <button class="tweak-help-btn apply-result-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(item.id)}" title="${escapeAttr(helpTooltip)}">?</button>`,
+      `    ${helpBtnHtml}`,
       '    <div class="apply-result-info">',
       `      <strong class="apply-result-title">${escapeHtml(title)}</strong>`,
       `      <span class="apply-result-desc">${escapeHtml(desc)}</span>`,
@@ -115,8 +123,8 @@ export function renderApplyModal(modalState, t) {
   ].join("") : "";
 
   return [
-    '<div class="apply-modal-backdrop" id="apply-modal-backdrop" data-action="dismiss-apply-modal">',
-    '  <div class="apply-modal-complete" onclick="event.stopPropagation()">',
+    '<div class="apply-modal-backdrop" id="apply-modal-backdrop">',
+    '  <div class="apply-modal-complete">',
     '    <div class="apply-complete-head">',
     '      <div class="apply-complete-titles">',
     `        <h2>${escapeHtml(headerTitle)}</h2>`,

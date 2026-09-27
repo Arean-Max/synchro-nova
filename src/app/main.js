@@ -1,4 +1,4 @@
-import { invokeCommand, nativeInvoke } from "./core/bridge.js";
+import { invokeCommand } from "./core/bridge.js";
 import {
   activePage,
   appState,
@@ -38,6 +38,7 @@ import { settingsFeature } from "./features/settings/page.js";
 import { router } from "./core/router.js";
 import { renderApplyModal } from "./features/tweaks/applyModal.js";
 import { icon } from "./ui/icons.js";
+import { button } from "./ui/components.js";
 import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget } from "./ui/layout.js";
 import { escapeHtml } from "./core/html.js";
 
@@ -319,6 +320,25 @@ function showTweakImpactBanner(tweakId) {
   startImpactBannerTimer(3000);
 }
 
+function showTweakErrorBanner(tweakId, errorMsg) {
+  clearImpactBannerTimer();
+  const tweaks = allTweaks();
+  const tweak = tweaks.find((t) => t.id === tweakId);
+  const isRu = lang() === "ru";
+  const title = tweak ? tweakTitle(tweak, t) : (tweakId || (isRu ? "Ошибка твика" : "Tweak Error"));
+  const impactText = errorMsg || (isRu ? "Не удалось применить данный твик в системе." : "Failed to apply this tweak to the system.");
+
+  viewState.activeImpactBanner = {
+    tweakId,
+    title: isRu ? `Сбой: ${title}` : `Failed: ${title}`,
+    category: "danger",
+    appName: isRu ? "ПОЧЕМУ НЕ ПОСТАВИЛСЯ" : "INSTALLATION ERROR",
+    impactText
+  };
+  renderNotificationBannerDom();
+  startImpactBannerTimer(8000);
+}
+
 function showRiskWarningBanner(tweak) {
   clearImpactBannerTimer();
   const isRu = lang() === "ru";
@@ -456,31 +476,25 @@ async function switchLanguage(nextLang) {
   const pageBody = document.querySelector(".page-body");
   const savedScrollTop = scrollPanel ? scrollPanel.scrollTop : (pageBody ? pageBody.scrollTop : 0);
 
-  // Instantly toggle active class on segmented control button for immediate visual tactile feedback
   document.querySelectorAll("[data-language]").forEach((btn) => {
     btn.classList.toggle("active", btn.getAttribute("data-language") === nextLang);
   });
 
-  // Start subtle soft dip animation (fade + micro-blur)
   if (workspace) {
     workspace.classList.remove("lang-fade-in");
     workspace.classList.add("lang-fade-out");
   }
 
-  // Wait 100ms for smooth transition
   await new Promise((resolve) => window.setTimeout(resolve, 100));
 
-  // Change language in state and root attribute
   appState.settings.language = nextLang;
   document.documentElement.lang = nextLang;
 
-  // Update titlebar tooltips
   const minBtn = document.querySelector('.window-btn[data-action="window-minimize"]');
   if (minBtn) minBtn.title = t("minimize");
   const closeBtn = document.querySelector('.window-btn[data-action="window-close"]');
   if (closeBtn) closeBtn.title = t("close");
 
-  // Update sidebar labels in place
   const navLabel = document.querySelector(".nav-label");
   if (navLabel) navLabel.textContent = t("main");
 
@@ -511,14 +525,12 @@ async function switchLanguage(nextLang) {
   }
   updateSidebarUpdateWidgetDom();
 
-  // Page header
   const page = pageDefs[activePage];
   const title = document.querySelector(".page-header h1");
   const subtitle = document.querySelector(".page-header p");
   if (title) title.textContent = t(page.title);
   if (subtitle) subtitle.textContent = t(page.subtitle);
 
-  // Page body & scroll
   const body = document.querySelector(".page-body");
   if (body) {
     body.className = `page-body page-${activePage}`;
@@ -556,7 +568,6 @@ async function switchLanguage(nextLang) {
     isLanguageSwitching = false;
   }
 
-  // Save setting to backend
   await saveSettings();
 }
 
@@ -682,24 +693,39 @@ function updateMainKeepingScroll(selector = ".scroll-panel") {
   });
 }
 
+function syncTweaksActionButtons() {
+  const actionsEl = document.querySelector(".tweaks-actions");
+  if (!actionsEl) return;
+  const hasSelected = viewState.selectedTweaks && viewState.selectedTweaks.size > 0;
+  let applyBtn = actionsEl.querySelector("[data-action='apply-tweaks']");
+  if (hasSelected) {
+    if (!applyBtn) {
+      const applyLabel = viewState.applyingTweaks ? t("loading") : t("applySelected");
+      const btnHtml = button(applyLabel, "check", "primary", "apply-tweaks");
+      actionsEl.insertAdjacentHTML("afterbegin", btnHtml);
+    }
+  } else {
+    if (applyBtn) {
+      applyBtn.remove();
+    }
+  }
+}
+
 function syncTweakTile(id) {
   const tile = Array.from(document.querySelectorAll("[data-tweak-id]")).find(
-    (element) => element.getAttribute("data-tweak-id") === id
+    (element) => element.getAttribute("data-tweak-id") === id && element.classList.contains("tweak-tile")
   );
   if (!tile) {
     updateMainKeepingScroll(".tweaks-page .scroll-panel");
     return;
   }
   const installed = Boolean(viewState.installedTweaks?.has(id));
+  const selected = Boolean(viewState.selectedTweaks?.has(id));
   tile.classList.toggle("installed", installed);
-  tile.classList.toggle("not-installed", !installed);
-  tile.classList.remove("selected");
-  tile.setAttribute("aria-pressed", installed ? "true" : "false");
-  const box = tile.querySelector(".box");
-  if (box) {
-    box.classList.toggle("checked", installed);
-    box.innerHTML = installed ? icon("check", "box-check") : "";
-  }
+  tile.classList.toggle("selected", selected);
+  tile.classList.toggle("not-installed", !installed && !selected);
+  tile.setAttribute("aria-pressed", (installed || selected) ? "true" : "false");
+  syncTweaksActionButtons();
 }
 
 async function applyColor() {
@@ -712,62 +738,6 @@ function scheduleApplyColor() {
   applyTimer = window.setTimeout(applyColor, 50);
 }
 
-let lastBlackHoloSynced = null;
-async function syncRustBlackHolo(enabled) {
-  if (lastBlackHoloSynced === enabled) return;
-  lastBlackHoloSynced = enabled;
-  try {
-    const res = await invokeCommand("set_rust_black_holo", { enabled });
-    if (res?.success) {
-      const isRu = lang() === "ru";
-      if (enabled) {
-        if (res.modified) {
-          showToastBanner(
-            t("blackHolo"),
-            isRu
-              ? 'Rust client.cfg: holosightcolour изменён на "2"'
-              : 'Rust client.cfg: holosightcolour set to "2"',
-            "safe"
-          );
-        } else {
-          showToastBanner(
-            t("blackHolo"),
-            isRu
-              ? 'Rust client.cfg: уже установлено значение "2"'
-              : 'Rust client.cfg: holosightcolour is already "2"',
-            "safe"
-          );
-        }
-      } else {
-        if (res.modified) {
-          const orig = res.currentValue || "0";
-          showToastBanner(
-            t("blackHolo"),
-            isRu
-              ? `Rust client.cfg: исходный цвет (${orig}) восстановлен`
-              : `Rust client.cfg: restored original colour (${orig})`,
-            "safe"
-          );
-        }
-      }
-      if (res.rustRunning) {
-        setTimeout(() => {
-          showToastBanner(
-            t("blackHolo"),
-            isRu
-              ? "Rust запущен! Введите в консоли (F1): readcfg"
-              : "Rust is running! In console (F1) type: readcfg",
-            "safe"
-          );
-        }, 1800);
-      }
-    } else if (res?.message) {
-      console.warn("Rust client.cfg:", res.message);
-    }
-  } catch (err) {
-    console.error("Failed to sync Rust black holo cfg:", err);
-  }
-}
 
 async function loadBlackHoloStatus() {
   try {
@@ -825,21 +795,6 @@ async function loadTweakStatuses() {
   });
 }
 
-const MAX_CPU_HISTORY = 40;
-
-function mergeCharacteristics(info) {
-  if (!info) return false;
-  viewState.system = { ...(viewState.system || {}), ...info };
-  const cpu = Number.parseFloat(String(info.cpuUsagePercent ?? "").replace(",", "."));
-  if (Number.isFinite(cpu)) {
-    viewState.cpuHistory.push(Math.max(0, Math.min(100, cpu)));
-    if (viewState.cpuHistory.length > MAX_CPU_HISTORY) {
-      viewState.cpuHistory.splice(0, viewState.cpuHistory.length - MAX_CPU_HISTORY);
-    }
-  }
-  return true;
-}
-
 async function triggerScanDrivers() {
   if (viewState.driversLoading) return;
   viewState.driversLoading = true;
@@ -878,22 +833,9 @@ function updateDriversPageContent() {
   }
 }
 
-async function refreshCharacteristics() {
-  await triggerScanDrivers();
-}
-
-
 function applyPreset(name) {
   const custom = appState.settings?.templateOverrides?.[name];
   const preset = custom || defaultPresets[name];
-  if (!preset) return;
-  appState.color = { ...appState.color, ...preset };
-  updateColorPage();
-  scheduleApplyColor();
-}
-
-function applyDefaultPreset(name) {
-  const preset = defaultPresets[name];
   if (!preset) return;
   appState.color = { ...appState.color, ...preset };
   updateColorPage();
@@ -1152,9 +1094,18 @@ async function handleAction(action) {
         return null;
       }
       if (viewState.applyingTweaks) return null;
-      const ids = Array.from(viewState.installedTweaks);
+      const ids = Array.from(viewState.selectedTweaks).filter(
+        (id) => !viewState.installedTweaks.has(id) || id === "clean-temp-junk" || id === "dns-cache-flush"
+      );
       if (!ids.length) {
-        showToastBanner(t("noSelection"), t("noSelection"), "safe");
+        const isRu = lang() === "ru";
+        showToastBanner(
+          t("noSelection"),
+          viewState.selectedTweaks.size > 0
+            ? (isRu ? "Все выбранные твики уже установлены в системе" : "All selected tweaks are already active in the system")
+            : t("noSelection"),
+          "safe"
+        );
         return null;
       }
       viewState.applyingTweaks = true;
@@ -1203,6 +1154,8 @@ async function handleAction(action) {
           viewState.showAdminPrompt = true;
         }
         await Promise.all([loadTweakStatuses(), loadLists()]);
+        viewState.selectedTweaks.clear();
+        syncTweaksActionButtons();
       } catch (err) {
         clearInterval(progressInterval);
         viewState.applyModal = {
@@ -1451,9 +1404,32 @@ async function handleClick(event) {
     return;
   }
 
-  const applyBackdropDismiss = target.closest("[data-action='dismiss-apply-modal']");
-  if (applyBackdropDismiss && !target.closest(".apply-modal-complete")) {
+  if (target.id === "apply-modal-backdrop") {
     await handleAction("dismiss-apply-modal");
+    return;
+  }
+
+  if (target.closest(".apply-modal-complete")) {
+    const actionBtn = target.closest("[data-action]");
+    if (actionBtn && actionBtn.closest(".apply-modal-complete")) {
+      const actionName = actionBtn.getAttribute("data-action");
+      if (actionName === "show-tweak-error") {
+        event.preventDefault();
+        event.stopPropagation();
+        const id = actionBtn.getAttribute("data-tweak-id");
+        const errorMsg = actionBtn.getAttribute("data-error-msg") || "";
+        showTweakErrorBanner(id, errorMsg);
+        return;
+      }
+      if (actionName === "show-tweak-impact") {
+        event.preventDefault();
+        event.stopPropagation();
+        const id = actionBtn.getAttribute("data-tweak-id");
+        if (id) showTweakImpactBanner(id);
+        return;
+      }
+      if (actionName) await handleAction(actionName);
+    }
     return;
   }
 
@@ -1584,14 +1560,12 @@ async function handleClick(event) {
     const nextVal = nextActive ? 100 : 0;
     appState.color.blackHolo = nextVal;
 
-    // Synchronous optimistic UI update for instant visual feedback:
     toggleBlackHolo.classList.toggle("active", nextActive);
     toggleBlackHolo.setAttribute("aria-checked", String(nextActive));
     toggleBlackHolo.setAttribute("aria-pressed", String(nextActive));
     const sw = toggleBlackHolo.querySelector(".ios-switch");
     if (sw) sw.classList.toggle("active", nextActive);
 
-    // Reset global Hue to 0 deg when enabling Black Holo to eliminate purple spectrum shift
     if (nextActive && Math.abs(Number(appState?.color?.hue || 0)) > 0.1) {
       appState.color.hue = 0;
       updateSliderDom("hue", appState);
@@ -1787,6 +1761,16 @@ async function handleClick(event) {
     return;
   }
 
+  const tweakError = target.closest("[data-action='show-tweak-error']");
+  if (tweakError) {
+    event.preventDefault();
+    event.stopPropagation();
+    const id = tweakError.getAttribute("data-tweak-id");
+    const errorMsg = tweakError.getAttribute("data-error-msg") || "";
+    showTweakErrorBanner(id, errorMsg);
+    return;
+  }
+
   const openBackupModal = target.closest("[data-action='open-backup-name-modal']");
   if (openBackupModal) {
     event.preventDefault();
@@ -1803,16 +1787,24 @@ async function handleClick(event) {
     }
   }
 
-  const tweak = target.closest("[data-tweak-id]");
+  const tweak = target.closest(".tweak-tile[data-tweak-id]");
   if (tweak) {
     event.preventDefault();
     const id = tweak.getAttribute("data-tweak-id");
     if (!id) return;
-    if (viewState.installedTweaks.has(id)) {
-      viewState.installedTweaks.delete(id);
+
+    const isInstalled = viewState.installedTweaks.has(id);
+    const isMaintenance = id === "clean-temp-junk" || id === "dns-cache-flush";
+
+    if (isInstalled && !isMaintenance) {
+      const isRu = lang() === "ru";
+      showPillToast(isRu ? "Этот твик уже активен в вашей системе" : "This tweak is already active in your system");
+      return;
+    }
+
+    if (viewState.selectedTweaks.has(id)) {
       viewState.selectedTweaks.delete(id);
     } else {
-      viewState.installedTweaks.add(id);
       viewState.selectedTweaks.add(id);
       const tweakItem = allTweaks().find((item) => item.id === id);
       if (tweakItem && tweakCategory(tweakItem) === "risk") {
@@ -2036,8 +2028,8 @@ function render() {
 }
 
 async function boot() {
-  const state = await invokeCommand("get_app_state");
-  if (state) mergeState(state);
+  const statePromise = invokeCommand("get_app_state");
+  const holoPromise = loadBlackHoloStatus();
   try {
     const savedCollapsed = localStorage.getItem("synchro_sidebar_collapsed");
     if (savedCollapsed !== null) {
@@ -2045,33 +2037,23 @@ async function boot() {
     }
   } catch {}
   try {
-    const cliNav = await invokeCommand("get_pending_navigation");
-    const pendingNav = cliNav || localStorage.getItem("synchro_pending_nav");
-    if (pendingNav && pageDefs[pendingNav]) {
-      try { localStorage.removeItem("synchro_pending_nav"); } catch {}
-      setActivePage(pendingNav);
-    }
+    localStorage.removeItem("synchro_pending_nav");
   } catch {}
-  await loadLists();
-  await loadBlackHoloStatus();
+  setActivePage("color");
+
+  const state = await statePromise;
+  if (state) mergeState(state);
   render();
-  loadColorGames();
+
+  Promise.all([holoPromise, loadLists(), loadColorGames()]).then(() => {
+    updateMainKeepingScroll();
+  });
+
   if (appState.settings && appState.settings.autoUpdate) {
     checkForUpdates();
   }
-  if (activePage === "tweaks") {
-    if (!appState.isAdmin) {
-      showAdminNotificationBanner();
-    } else if (viewState.activeImpactBanner?.isAdminPrompt) {
-      viewState.activeImpactBanner = null;
-      document.querySelectorAll(".ios-banner-container").forEach((c) => c.remove());
-    }
-    loadTweakStatuses().then(updateMain);
-  }
-  if (activePage === "characteristics") {
-    triggerScanDrivers();
-  }
-  scheduleTrimMemory(1200);
+  loadTweakStatuses();
+  scheduleTrimMemory(600);
 }
 
 document.addEventListener("input", handleInput);

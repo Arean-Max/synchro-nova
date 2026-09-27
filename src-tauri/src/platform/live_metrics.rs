@@ -276,7 +276,6 @@ fn read_pdh_counter_sum(counter: isize) -> f64 {
 
     PDH_BUFFER.with(|buf_cell| {
         let mut buffer = buf_cell.borrow_mut();
-        // buffer_size is in bytes. Ensure capacity in u64 words to guarantee 8-byte alignment
         let needed_words = (buffer_size as usize + 7) / 8;
         if buffer.len() < needed_words {
             buffer.resize(needed_words, 0);

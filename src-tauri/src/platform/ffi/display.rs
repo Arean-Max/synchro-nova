@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+
 
 use super::types::*;
 use super::winapi;
@@ -39,7 +39,6 @@ pub fn read_system_times() -> Option<(FileTime, FileTime, FileTime)> {
 
 #[cfg(target_os = "windows")]
 pub fn restart_graphics_driver() -> Result<(), String> {
-    // Trigger display re-enumeration via GDI without synthetic hotkey injection
     unsafe {
         let _ = winapi::ChangeDisplaySettingsW(std::ptr::null_mut(), 0);
     }

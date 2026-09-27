@@ -98,10 +98,8 @@ pub fn restart_as_admin(app: AppHandle, state: State<'_, RuntimeState>) -> Resul
         .map(|h| h.0 as isize)
         .unwrap_or(0);
 
-    // Launch elevated process FIRST - if user cancels UAC prompt, current app stays open
     crate::admin::restart_as_admin_with_hwnd(hwnd, Some("tweaks"))?;
 
-    // Elevated process is launched and running. Release mutex so it can acquire ownership.
     crate::ffi::release_single_instance();
     state.signal_shutdown();
 

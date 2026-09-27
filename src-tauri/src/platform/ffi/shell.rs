@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+
 
 use std::path::Path;
 use super::types::*;
@@ -106,7 +106,7 @@ pub fn restart_explorer() -> Result<(), String> {
     let taskkill_exe = std::path::PathBuf::from(&system_root).join("System32").join("taskkill.exe");
     let mut kill_cmd = Command::new(&taskkill_exe);
     kill_cmd.args(["/F", "/IM", "explorer.exe"]);
-    kill_cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
+    kill_cmd.creation_flags(0x0800_0000);
     let _ = kill_cmd.status();
 
     std::thread::sleep(std::time::Duration::from_millis(350));
@@ -115,11 +115,11 @@ pub fn restart_explorer() -> Result<(), String> {
         let env_w = wide_null("Environment");
         let mut result: usize = 0;
         let _ = winapi::SendMessageTimeoutW(
-            0xFFFF as *mut std::ffi::c_void, // HWND_BROADCAST
-            0x001A,                          // WM_SETTINGCHANGE
+            0xFFFF as *mut std::ffi::c_void,
+            0x001A,
             0,
             env_w.as_ptr() as isize,
-            2,                               // SMTO_ABORTIFHUNG
+            2,
             1000,
             &mut result,
         );
