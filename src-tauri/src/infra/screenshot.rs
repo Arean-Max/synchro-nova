@@ -339,7 +339,7 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
         let header_size = std::mem::size_of::<BITMAPINFOHEADER>();
         let total_size = header_size + pixels.len();
 
-        // 1. Copy to Windows Clipboard (CF_DIB)
+        // Copy to clipboard (CF_DIB)
         let h_global = GlobalAlloc(GMEM_MOVEABLE, total_size);
         if !h_global.is_null() {
             let p_mem = GlobalLock(h_global) as *mut u8;
@@ -366,7 +366,7 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
             }
         }
 
-        // 2. Stream directly to file without allocating a secondary buffer (Zero-Duplicate Memory Optimization)
+        // Save directly to file
         let mut saved_path_str = None;
         if let Some(user_profile) = std::env::var_os("USERPROFILE") {
             let screenshots_dir = PathBuf::from(user_profile).join("Pictures").join("Screenshots");

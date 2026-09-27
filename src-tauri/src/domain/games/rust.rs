@@ -58,7 +58,6 @@ pub fn is_rust_process_running() -> bool {
 }
 
 pub fn find_rust_client_cfg() -> Option<PathBuf> {
-    // 1. Check Steam library folders
     if let Some(steam_root) = super::detector::steam_install_root() {
         let mut libraries = vec![steam_root.clone()];
         libraries.extend(super::detector::read_steam_libraries(&steam_root));
@@ -75,7 +74,6 @@ pub fn find_rust_client_cfg() -> Option<PathBuf> {
         }
     }
 
-    // 2. Common drive paths (C:, D:, E:, F:, G:)
     let drives = ["C", "D", "E", "F", "G"];
     for drive in &drives {
         let candidates = [

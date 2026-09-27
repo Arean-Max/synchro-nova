@@ -94,10 +94,8 @@ pub fn trim_working_set() {
     const CACHE_TTL: Duration = Duration::from_secs(30);
 
     unsafe {
-        // 1. Trim the main application process
         let _ = winapi::SetProcessWorkingSetSize(winapi::GetCurrentProcess(), usize::MAX, usize::MAX);
 
-        // 2. Check cached child WebView2 process IDs
         let mut webview_pids = Vec::new();
         let mut needs_refresh = true;
 
@@ -110,7 +108,6 @@ pub fn trim_working_set() {
             }
         }
 
-        // 3. Discover direct child and descendant WebView2 processes if cache expired
         if needs_refresh {
             let my_pid = winapi::GetCurrentProcessId();
             let snapshot = winapi::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -160,7 +157,6 @@ pub fn trim_working_set() {
             }
         }
 
-        // 4. Trim working sets for the discovered WebView2 child processes
         const PROCESS_SET_QUOTA: u32 = 0x0100;
         for pid in webview_pids {
             let handle = winapi::OpenProcess(PROCESS_SET_QUOTA, 0, pid);

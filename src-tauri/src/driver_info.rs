@@ -7,18 +7,10 @@ pub(crate) fn collect_drivers() -> Vec<DriverInfo> {
 
     #[cfg(target_os = "windows")]
     {
-        // 1. Primary active display adapters first
         collect_display_drivers(&mut drivers, &mut seen);
-
-        // 2. Comprehensive PnP registry class drivers
         collect_pnp_class_drivers(&mut drivers, &mut seen);
     }
 
-    // Sort drivers logically:
-    // 1. Class priority (Display -> Media -> Net -> Storage -> System -> Peripherals)
-    // 2. Outdated drivers first within category
-    // 3. Known vendors before generic/microsoft
-    // 4. Alphabetical by name
     drivers.sort_by(|a, b| {
         let class_rank = |c: &str| match c.to_lowercase().as_str() {
             "display" => 0,
@@ -341,7 +333,7 @@ fn is_ignorable_device(name: &str, provider: &str, class_name: &str) -> bool {
     let n = name.to_lowercase();
     let p = provider.to_lowercase();
 
-    // 1. Virtual, debug, or software devices
+    // Virtual, debug, or software devices
     if n.contains("wan miniport")
         || n.contains("kernel debug")
         || n.contains("directshow")
@@ -394,7 +386,7 @@ fn is_ignorable_device(name: &str, provider: &str, class_name: &str) -> bool {
         return true;
     }
 
-    // 2. Class-specific filtering
+    // Class-specific filtering
     let cls = class_name.to_lowercase();
     if cls == "system" && (p.contains("microsoft") || p == "unknown") {
         return true;

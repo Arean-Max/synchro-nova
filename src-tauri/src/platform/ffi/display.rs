@@ -39,7 +39,7 @@ pub fn read_system_times() -> Option<(FileTime, FileTime, FileTime)> {
 
 #[cfg(target_os = "windows")]
 pub fn restart_graphics_driver() -> Result<(), String> {
-    // Hardware display subsystem reset without synthetic keyboard injection (eliminating anti-cheat flags)
+    // Trigger display re-enumeration via GDI without synthetic hotkey injection
     unsafe {
         let _ = winapi::ChangeDisplaySettingsW(std::ptr::null_mut(), 0);
     }

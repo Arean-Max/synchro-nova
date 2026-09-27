@@ -225,31 +225,6 @@ fn main() {
         }
         std::env::set_var("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0xFF121214");
 
-        // Optimize WebView2 runtime: eliminate telemetry, background network chatter, and minimize RAM safely
-        if std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").is_err() {
-            std::env::set_var(
-                "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
-                "--disable-background-networking \
-                 --disable-component-update \
-                 --disable-domain-reliability \
-                 --disable-sync \
-                 --no-pings \
-                 --disable-client-side-phishing-detection \
-                 --safebrowsing-disable-auto-update \
-                 --disable-default-apps \
-                 --disable-extensions \
-                 --disable-breakpad \
-                 --no-crash-upload \
-                 --disable-speech-api \
-                 --disable-speech-synthesis-api \
-                 --disable-notifications \
-                 --disable-wake-on-wifi \
-                 --disable-features=Translate,OptimizationHints,MediaRouter,DialMediaRouteProvider,InterestFeedContentSuggestions,SpeechSynthesis \
-                 --disk-cache-size=16777216 \
-                 --media-cache-size=8388608",
-            );
-        }
-
         prerequisites_check::ensure_runtime_prerequisites();
     }
 

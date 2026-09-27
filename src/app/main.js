@@ -396,13 +396,13 @@ async function switchLanguage(nextLang) {
   appState.settings.language = nextLang;
   document.documentElement.lang = nextLang;
 
-  // 1. Update Titlebar tooltips
+  // Update titlebar tooltips
   const minBtn = document.querySelector('.window-btn[data-action="window-minimize"]');
   if (minBtn) minBtn.title = t("minimize");
   const closeBtn = document.querySelector('.window-btn[data-action="window-close"]');
   if (closeBtn) closeBtn.title = t("close");
 
-  // 2. Update Sidebar labels in place (zero layout jump, indicator locked)
+  // Update sidebar labels in place
   const navLabel = document.querySelector(".nav-label");
   if (navLabel) navLabel.textContent = t("main");
 
@@ -433,14 +433,14 @@ async function switchLanguage(nextLang) {
   }
   updateSidebarUpdateWidgetDom();
 
-  // 3. Update Page Header
+  // Page header
   const page = pageDefs[activePage];
   const title = document.querySelector(".page-header h1");
   const subtitle = document.querySelector(".page-header p");
   if (title) title.textContent = t(page.title);
   if (subtitle) subtitle.textContent = t(page.subtitle);
 
-  // 4. Update Page Body & restore scroll
+  // Page body & scroll
   const body = document.querySelector(".page-body");
   if (body) {
     body.className = `page-body page-${activePage}`;
@@ -453,7 +453,6 @@ async function switchLanguage(nextLang) {
     }
   }
 
-  // 5. Sync sliders, modals, notification
   syncAllSliders(appState);
   syncAllTemplateSliders(appState);
   renderBackupModalDom();
@@ -463,7 +462,6 @@ async function switchLanguage(nextLang) {
   }
   syncNavIndicator();
 
-  // 6. Complete transition: smooth fade-in
   if (workspace) {
     workspace.classList.remove("lang-fade-out");
     workspace.classList.add("lang-fade-in");
@@ -693,9 +691,7 @@ async function loadBlackHoloStatus() {
     const status = await invokeCommand("get_black_holo_status");
     if (status) {
       viewState.blackHoloStatus = status;
-      if (status.active && (!appState?.color?.blackHolo || appState.color.blackHolo === 0)) {
-        appState.color.blackHolo = 100;
-      }
+      appState.color.blackHolo = status.active ? 100 : 0;
       updateBlackHoloDom(status.active, status);
     }
   } catch (err) {
@@ -831,397 +827,439 @@ function stepColorSelection(step) {
 }
 
 async function handleAction(action) {
-  if (action === "window-minimize") return invokeCommand("minimize_window");
-  if (action === "window-maximize") return invokeCommand("toggle_window_maximize");
-  if (action === "window-close") return invokeCommand("close_window");
-  if (action === "exit-app") return invokeCommand("exit_app");
-  if (action === "restart-as-admin") {
-    try {
-      localStorage.setItem("synchro_pending_nav", "tweaks");
-    } catch {}
-    const banner = document.querySelector(".ios-banner");
-    if (banner) banner.style.pointerEvents = "none";
-    try {
-      const res = await invokeCommand("restart_as_admin");
-      if (res === null && !appState.isAdmin) {
+  switch (action) {
+    case "window-minimize":
+      return invokeCommand("minimize_window");
+    case "window-maximize":
+      return invokeCommand("toggle_window_maximize");
+    case "window-close":
+      return invokeCommand("close_window");
+    case "exit-app":
+      return invokeCommand("exit_app");
+
+    case "restart-as-admin": {
+      try {
+        localStorage.setItem("synchro_pending_nav", "tweaks");
+      } catch {}
+      const banner = document.querySelector(".ios-banner");
+      if (banner) banner.style.pointerEvents = "none";
+      try {
+        const res = await invokeCommand("restart_as_admin");
+        if (res === null && !appState.isAdmin) {
+          if (banner) banner.style.pointerEvents = "auto";
+          if (activePage === "tweaks") {
+            showAdminNotificationBanner();
+          }
+        }
+        return res;
+      } catch (err) {
+        console.error("restart_as_admin failed or cancelled:", err);
         if (banner) banner.style.pointerEvents = "auto";
-        if (activePage === "tweaks") {
+        if (!appState.isAdmin && activePage === "tweaks") {
           showAdminNotificationBanner();
         }
+        return null;
       }
-      return res;
-    } catch (err) {
-      console.error("restart_as_admin failed or cancelled:", err);
-      if (banner) banner.style.pointerEvents = "auto";
-      if (!appState.isAdmin && activePage === "tweaks") {
-        showAdminNotificationBanner();
+    }
+
+    case "apply-color":
+      return applyColor();
+
+    case "toggle-sidebar": {
+      viewState.sidebarCollapsed = !viewState.sidebarCollapsed;
+      try {
+        localStorage.setItem("synchro_sidebar_collapsed", String(viewState.sidebarCollapsed));
+      } catch {}
+      const ws = document.querySelector(".workspace");
+      if (ws) {
+        ws.classList.toggle("sidebar-collapsed", viewState.sidebarCollapsed);
+        const toggleBtn = document.querySelector(".sidebar-toggle-btn");
+        if (toggleBtn) {
+          const title = viewState.sidebarCollapsed ? t("expandSidebar") : t("collapseSidebar");
+          toggleBtn.setAttribute("title", title);
+          toggleBtn.setAttribute("aria-label", title);
+        }
+        syncNavIndicator();
+        setTimeout(syncNavIndicator, 140);
+        setTimeout(syncNavIndicator, 280);
+      } else {
+        render();
       }
       return null;
     }
-  }
-  if (action === "apply-color") return applyColor();
-  if (action === "toggle-sidebar") {
-    viewState.sidebarCollapsed = !viewState.sidebarCollapsed;
-    try {
-      localStorage.setItem("synchro_sidebar_collapsed", String(viewState.sidebarCollapsed));
-    } catch {}
-    const ws = document.querySelector(".workspace");
-    if (ws) {
-      ws.classList.toggle("sidebar-collapsed", viewState.sidebarCollapsed);
-      const toggleBtn = document.querySelector(".sidebar-toggle-btn");
-      if (toggleBtn) {
-        const title = viewState.sidebarCollapsed ? t("expandSidebar") : t("collapseSidebar");
-        toggleBtn.setAttribute("title", title);
-        toggleBtn.setAttribute("aria-label", title);
+
+    case "close-color-game-panel":
+      viewState.colorGamePanelOpen = false;
+      updateColorPage({ stableDrawer: true });
+      return null;
+
+    case "launch-color-game": {
+      const game = selectedColorGame(viewState);
+      if (game?.id && game.launchable) return invokeCommand("launch_installed_game", { id: game.id });
+      return null;
+    }
+
+    case "save-color-template": {
+      const name = (viewState.colorTemplateName || "").trim() || "Default";
+      const configs = await invokeCommand("save_config", { name });
+      if (Array.isArray(configs)) {
+        viewState.configs = configs;
+        viewState.selectedConfig = configs[0]?.id || "";
+        viewState.colorTemplateName = "";
+        updateColorPage();
       }
-      syncNavIndicator();
-      setTimeout(syncNavIndicator, 140);
-      setTimeout(syncNavIndicator, 280);
-    } else {
-      render();
+      return null;
     }
-    return null;
-  }
-  if (action === "close-color-game-panel") {
-    viewState.colorGamePanelOpen = false;
-    updateColorPage({ stableDrawer: true });
-    return null;
-  }
-  if (action === "launch-color-game") {
-    const game = selectedColorGame(viewState);
-    if (game?.id && game.launchable) return invokeCommand("launch_installed_game", { id: game.id });
-    return null;
-  }
-  if (action === "save-color-template") {
-    const name = (viewState.colorTemplateName || "").trim() || "Default";
-    const configs = await invokeCommand("save_config", { name });
-    if (Array.isArray(configs)) {
-      viewState.configs = configs;
-      viewState.selectedConfig = configs[0]?.id || "";
-      viewState.colorTemplateName = "";
-      updateColorPage();
-    }
-    return null;
-  }
-  if (action === "close-template-config") {
-    if (viewState.editingTemplate) {
-      if (!appState.settings.templateOverrides) appState.settings.templateOverrides = {};
-      const presetKey = viewState.editingTemplate;
-      const nameInput = document.getElementById("template-name-input");
-      const inputName = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : "";
-      const customName = inputName || (typeof viewState.editingTemplateName === "string" ? viewState.editingTemplateName.trim() : "");
-      const defaultPreset = defaultPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
-      const currentOverride = appState.settings.templateOverrides[presetKey] || defaultPreset;
-      const colors = {
-        saturation: Number(viewState.editingTemplateColor?.saturation ?? currentOverride.saturation),
-        hue: Number(viewState.editingTemplateColor?.hue ?? currentOverride.hue),
-        contrast: Number(viewState.editingTemplateColor?.contrast ?? currentOverride.contrast),
-        gamma: Number(viewState.editingTemplateColor?.gamma ?? currentOverride.gamma)
-      };
-      appState.settings.templateOverrides[presetKey] = {
-        name: customName || appState.settings.templateOverrides[presetKey]?.name || undefined,
-        saturation: colors.saturation,
-        hue: colors.hue,
-        contrast: colors.contrast,
-        gamma: colors.gamma,
-        enabled: true
-      };
-      saveSettings();
-      viewState.editingTemplate = null;
-      viewState.editingTemplateName = "";
-      viewState.editingTemplateColor = null;
-      updateColorPage();
-    }
-    return null;
-  }
-  if (action === "reset-template-preset") {
-    const presetKey = viewState.editingTemplate;
-    if (presetKey) {
-      if (appState.settings?.templateOverrides) {
-        delete appState.settings.templateOverrides[presetKey];
+
+    case "close-template-config": {
+      if (viewState.editingTemplate) {
+        if (!appState.settings.templateOverrides) appState.settings.templateOverrides = {};
+        const presetKey = viewState.editingTemplate;
+        const nameInput = document.getElementById("template-name-input");
+        const inputName = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : "";
+        const customName = inputName || (typeof viewState.editingTemplateName === "string" ? viewState.editingTemplateName.trim() : "");
+        const defaultPreset = defaultPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+        const currentOverride = appState.settings.templateOverrides[presetKey] || defaultPreset;
+        const colors = {
+          saturation: Number(viewState.editingTemplateColor?.saturation ?? currentOverride.saturation),
+          hue: Number(viewState.editingTemplateColor?.hue ?? currentOverride.hue),
+          contrast: Number(viewState.editingTemplateColor?.contrast ?? currentOverride.contrast),
+          gamma: Number(viewState.editingTemplateColor?.gamma ?? currentOverride.gamma)
+        };
+        appState.settings.templateOverrides[presetKey] = {
+          name: customName || appState.settings.templateOverrides[presetKey]?.name || undefined,
+          saturation: colors.saturation,
+          hue: colors.hue,
+          contrast: colors.contrast,
+          gamma: colors.gamma,
+          enabled: true
+        };
         saveSettings();
+        viewState.editingTemplate = null;
+        viewState.editingTemplateName = "";
+        viewState.editingTemplateColor = null;
+        updateColorPage();
       }
-      const presetLabels = {
-        balanced: t("balanced"),
-        vibrant: t("vibrant"),
-        soft: t("soft"),
-        night: t("night")
+      return null;
+    }
+
+    case "reset-template-preset": {
+      const presetKey = viewState.editingTemplate;
+      if (presetKey) {
+        if (appState.settings?.templateOverrides) {
+          delete appState.settings.templateOverrides[presetKey];
+          saveSettings();
+        }
+        const presetLabels = {
+          balanced: t("balanced"),
+          vibrant: t("vibrant"),
+          soft: t("soft"),
+          night: t("night")
+        };
+        viewState.editingTemplateName = presetLabels[presetKey] || presetKey;
+        const defaultPreset = defaultPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+        viewState.editingTemplateColor = { ...defaultPreset };
+        updateColorPage();
+        syncAllTemplateSliders(viewState.editingTemplateColor);
+      }
+      return null;
+    }
+
+    case "dismiss-impact-banner":
+      if (viewState.activeImpactBanner?.isAdminPrompt) return null;
+      dismissNotificationBanner();
+      return null;
+
+    case "dismiss-admin-prompt":
+      viewState.showAdminPrompt = false;
+      viewState.dismissedAdminPrompt = true;
+      return updateMain();
+
+    case "restart-explorer":
+      await invokeCommand("restart_explorer");
+      return null;
+
+    case "dismiss-tweak-results":
+      viewState.tweakResults = [];
+      return updateMain();
+
+    case "dismiss-apply-modal":
+      viewState.applyModal = null;
+      renderApplyModalDom();
+      updateMain();
+      return null;
+
+    case "rollback-from-apply-modal": {
+      if (!appState.isAdmin) {
+        highlightAdminBanner();
+        return null;
+      }
+      if (viewState.applyingTweaks) return null;
+      viewState.applyingTweaks = true;
+      viewState.applyModal = {
+        phase: "rollingBack",
+        progress: 0,
+        statusText: t("rollingBackSubtitle"),
+        results: []
       };
-      viewState.editingTemplateName = presetLabels[presetKey] || presetKey;
-      const defaultPreset = defaultPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
-      viewState.editingTemplateColor = { ...defaultPreset };
-      updateColorPage();
-      syncAllTemplateSliders(viewState.editingTemplateColor);
-    }
-    return null;
-  }
-  if (action === "dismiss-impact-banner") {
-    if (viewState.activeImpactBanner?.isAdminPrompt) {
-      return null;
-    }
-    dismissNotificationBanner();
-    return null;
-  }
-  if (action === "dismiss-admin-prompt") {
-    viewState.showAdminPrompt = false;
-    viewState.dismissedAdminPrompt = true;
-    return updateMain();
-  }
-  if (action === "restart-explorer") {
-    await invokeCommand("restart_explorer");
-    return null;
-  }
-  if (action === "dismiss-tweak-results") {
-    viewState.tweakResults = [];
-    return updateMain();
-  }
-  if (action === "dismiss-apply-modal") {
-    viewState.applyModal = null;
-    renderApplyModalDom();
-    updateMain();
-    return null;
-  }
-  if (action === "rollback-from-apply-modal") {
-    if (!appState.isAdmin) {
-      highlightAdminBanner();
-      return null;
-    }
-    if (viewState.applyingTweaks) return null;
-    viewState.applyingTweaks = true;
-    viewState.applyModal = {
-      phase: "rollingBack",
-      progress: 0,
-      statusText: t("rollingBackSubtitle"),
-      results: []
-    };
-    renderApplyModalDom();
+      renderApplyModalDom();
 
-    let currentProgress = 0;
-    let progressInterval = setInterval(() => {
-      if (currentProgress < 85) {
-        currentProgress += Math.max(1, (88 - currentProgress) * 0.12);
-        updateApplyProgress(currentProgress);
+      let currentProgress = 0;
+      const progressInterval = setInterval(() => {
+        if (currentProgress < 85) {
+          currentProgress += Math.max(1, (88 - currentProgress) * 0.12);
+          updateApplyProgress(currentProgress);
+        }
+      }, 40);
+
+      try {
+        const restored = await invokeCommand("rollback_last_tweaks");
+        clearInterval(progressInterval);
+
+        await new Promise((resolve) => {
+          const finishInterval = setInterval(() => {
+            currentProgress += Math.max(3, (100 - currentProgress) * 0.4);
+            if (currentProgress >= 99.5) {
+              currentProgress = 100;
+              updateApplyProgress(100, t("rollbackSuccess"));
+              clearInterval(finishInterval);
+              setTimeout(resolve, 450);
+            } else {
+              updateApplyProgress(currentProgress);
+            }
+          }, 20);
+        });
+
+        if (restored) {
+          mergeState(restored);
+          await Promise.all([loadTweakStatuses(), loadLists()]);
+        }
+
+        viewState.applyModal = null;
+        renderApplyModalDom();
+        updateMain();
+        showToastBanner(t("rollbackSuccess"), t("rollbackSuccess"), "safe");
+      } catch (err) {
+        clearInterval(progressInterval);
+        viewState.applyModal = null;
+        renderApplyModalDom();
+        updateMain();
+      } finally {
+        viewState.applyingTweaks = false;
       }
-    }, 40);
+      return null;
+    }
 
-    try {
-      const restored = await invokeCommand("rollback_last_tweaks");
-      clearInterval(progressInterval);
+    case "apply-tweaks": {
+      if (!appState.isAdmin) {
+        highlightAdminBanner();
+        return null;
+      }
+      if (viewState.applyingTweaks) return null;
+      const ids = Array.from(viewState.installedTweaks);
+      if (!ids.length) {
+        showToastBanner(t("noSelection"), t("noSelection"), "safe");
+        return null;
+      }
+      viewState.applyingTweaks = true;
+      viewState.applyModal = {
+        phase: "loading",
+        progress: 0,
+        statusText: t("applyingTweaksSubtitle"),
+        results: []
+      };
+      renderApplyModalDom();
 
-      await new Promise((resolve) => {
-        let finishInterval = setInterval(() => {
-          currentProgress += Math.max(3, (100 - currentProgress) * 0.4);
-          if (currentProgress >= 99.5) {
-            currentProgress = 100;
-            updateApplyProgress(100, t("rollbackSuccess"));
-            clearInterval(finishInterval);
-            setTimeout(resolve, 450);
-          } else {
-            updateApplyProgress(currentProgress);
-          }
-        }, 20);
-      });
+      let currentProgress = 0;
+      const progressInterval = setInterval(() => {
+        if (currentProgress < 85) {
+          currentProgress += Math.max(0.5, (88 - currentProgress) * 0.08);
+          updateApplyProgress(currentProgress);
+        }
+      }, 45);
 
-      if (restored) {
-        mergeState(restored);
+      try {
+        const results = await invokeCommand("apply_tweaks", { ids });
+        clearInterval(progressInterval);
+
+        await new Promise((resolve) => {
+          const finishInterval = setInterval(() => {
+            currentProgress += Math.max(2, (100 - currentProgress) * 0.35);
+            if (currentProgress >= 99.5) {
+              currentProgress = 100;
+              updateApplyProgress(100, t("ready"));
+              clearInterval(finishInterval);
+              setTimeout(resolve, 360);
+            } else {
+              updateApplyProgress(currentProgress);
+            }
+          }, 25);
+        });
+
+        viewState.applyModal = {
+          phase: "complete",
+          progress: 100,
+          results: Array.isArray(results) ? results : []
+        };
+        renderApplyModalDom();
+
+        if (results?.some((r) => r.status === "requiresAdmin") && !appState.isAdmin) {
+          viewState.showAdminPrompt = true;
+        }
         await Promise.all([loadTweakStatuses(), loadLists()]);
+      } catch (err) {
+        clearInterval(progressInterval);
+        viewState.applyModal = {
+          phase: "complete",
+          progress: 100,
+          results: [{ id: "error", status: "failed", message: String(err) }]
+        };
+        renderApplyModalDom();
+      } finally {
+        viewState.applyingTweaks = false;
       }
-
-      viewState.applyModal = null;
-      renderApplyModalDom();
-      updateMain();
-      showToastBanner(t("rollbackSuccess"), t("rollbackSuccess"), "safe");
-    } catch (err) {
-      clearInterval(progressInterval);
-      viewState.applyModal = null;
-      renderApplyModalDom();
-      updateMain();
-    } finally {
-      viewState.applyingTweaks = false;
-    }
-    return null;
-  }
-  if (action === "apply-tweaks") {
-    if (!appState.isAdmin) {
-      highlightAdminBanner();
       return null;
     }
-    if (viewState.applyingTweaks) return null;
-    const ids = Array.from(viewState.installedTweaks);
-    if (!ids.length) {
-      showToastBanner(t("noSelection"), t("noSelection"), "safe");
+
+    case "rollback-tweaks": {
+      if (!appState.isAdmin) {
+        highlightAdminBanner();
+        return null;
+      }
+      return handleAction("rollback-from-apply-modal");
+    }
+
+    case "reset-color":
+      appState.color = cloneState(defaultState).color;
+      updateMain();
+      return applyColor();
+
+    case "refresh-characteristics":
+    case "scan-drivers":
+      return triggerScanDrivers();
+
+    case "open-windows-update-drivers":
+      try {
+        await invokeCommand("open_windows_driver_updates");
+      } catch (e) {
+        console.error(e);
+      }
+      return null;
+
+    case "toggle-all-drivers":
+      viewState.showAllDrivers = !viewState.showAllDrivers;
+      return updateMain();
+
+    case "create-backup":
+      showBackupNotificationBanner();
+      return null;
+
+    case "open-backup-name-modal":
+      clearImpactBannerTimer();
+      viewState.activeImpactBanner = null;
+      renderNotificationBannerDom();
+      viewState.showBackupNameModal = true;
+      updateMain();
+      return null;
+
+    case "confirm-create-backup": {
+      const input = document.getElementById("custom-backup-name-input");
+      const name = input?.value?.trim() || viewState.backupName?.trim() || "";
+      viewState.showBackupNameModal = false;
+      viewState.backupName = "";
+      clearImpactBannerTimer();
+      viewState.activeImpactBanner = null;
+      renderNotificationBannerDom();
+      updateMain();
+      const backups = await invokeCommand("create_backup", { name });
+      if (Array.isArray(backups)) {
+        viewState.backups = backups;
+        viewState.selectedBackup = backups[0]?.id || "";
+        updateMain();
+      }
       return null;
     }
-    viewState.applyingTweaks = true;
-    viewState.applyModal = {
-      phase: "loading",
-      progress: 0,
-      statusText: t("applyingTweaksSubtitle"),
-      results: []
-    };
-    renderApplyModalDom();
 
-    let currentProgress = 0;
-    let progressInterval = setInterval(() => {
-      if (currentProgress < 85) {
-        currentProgress += Math.max(0.5, (88 - currentProgress) * 0.08);
-        updateApplyProgress(currentProgress);
+    case "dismiss-backup-modal":
+      viewState.showBackupNameModal = false;
+      viewState.backupName = "";
+      updateMain();
+      return null;
+
+    case "restore-backup":
+      if (viewState.selectedBackup) {
+        const restored = await invokeCommand("restore_backup", { id: viewState.selectedBackup });
+        if (restored) {
+          mergeState(restored);
+          render();
+        }
       }
-    }, 45);
+      return null;
 
-    try {
-      const results = await invokeCommand("apply_tweaks", { ids });
-      clearInterval(progressInterval);
-
-      await new Promise((resolve) => {
-        let finishInterval = setInterval(() => {
-          currentProgress += Math.max(2, (100 - currentProgress) * 0.35);
-          if (currentProgress >= 99.5) {
-            currentProgress = 100;
-            updateApplyProgress(100, t("ready"));
-            clearInterval(finishInterval);
-            setTimeout(resolve, 360);
-          } else {
-            updateApplyProgress(currentProgress);
-          }
-        }, 25);
-      });
-
-      viewState.applyModal = {
-        phase: "complete",
-        progress: 100,
-        results: Array.isArray(results) ? results : []
-      };
-      renderApplyModalDom();
-
-      if (results?.some((r) => r.status === "requiresAdmin") && !appState.isAdmin) {
-        viewState.showAdminPrompt = true;
+    case "delete-backup":
+      if (viewState.selectedBackup) {
+        const backups = await invokeCommand("delete_backup", { id: viewState.selectedBackup });
+        if (Array.isArray(backups)) {
+          viewState.backups = backups;
+          viewState.selectedBackup = "";
+          updateMain();
+        }
       }
-      await Promise.all([loadTweakStatuses(), loadLists()]);
-    } catch (err) {
-      clearInterval(progressInterval);
-      viewState.applyModal = {
-        phase: "complete",
-        progress: 100,
-        results: [{ id: "error", status: "failed", message: String(err) }]
-      };
-      renderApplyModalDom();
-    } finally {
-      viewState.applyingTweaks = false;
-    }
-    return null;
-  }
-  if (action === "rollback-tweaks") {
-    if (!appState.isAdmin) {
-      highlightAdminBanner();
+      return null;
+
+    case "open-backups-folder":
+      return invokeCommand("open_storage_folder", { kind: "backups" });
+
+    case "save-config": {
+      const configs = await invokeCommand("save_config", { name: viewState.configName });
+      if (Array.isArray(configs)) {
+        viewState.configs = configs;
+        viewState.selectedConfig = configs[0]?.id || "";
+        viewState.configName = "";
+        updateMain();
+      }
       return null;
     }
-    return handleAction("rollback-from-apply-modal");
+
+    case "load-config":
+      if (viewState.selectedConfig) {
+        const loaded = await invokeCommand("load_config", { id: viewState.selectedConfig });
+        if (loaded) {
+          mergeState(loaded);
+          syncCharacteristicsMonitor();
+          render();
+          scheduleApplyColor();
+        }
+      }
+      return null;
+
+    case "apply-config":
+      if (viewState.selectedConfig) {
+        const next = await invokeCommand("apply_config", { id: viewState.selectedConfig });
+        if (next) {
+          mergeState(next);
+          render();
+        }
+      }
+      return null;
+
+    case "delete-config":
+      if (viewState.selectedConfig) {
+        const configs = await invokeCommand("delete_config", { id: viewState.selectedConfig });
+        if (Array.isArray(configs)) {
+          viewState.configs = configs;
+          viewState.selectedConfig = configs[0]?.id || "";
+          updateMain();
+        }
+      }
+      return null;
+
+    case "open-configs-folder":
+      return invokeCommand("open_storage_folder", { kind: "configs" });
+
+    default:
+      return null;
   }
-  if (action === "reset-color") {
-    appState.color = cloneState(defaultState).color;
-    updateMain();
-    return applyColor();
-  }
-  if (action === "refresh-characteristics" || action === "scan-drivers") return triggerScanDrivers();
-  if (action === "open-windows-update-drivers") {
-    try {
-      await invokeCommand("open_windows_driver_updates");
-    } catch (e) {
-      console.error(e);
-    }
-    return null;
-  }
-  if (action === "toggle-all-drivers") {
-    viewState.showAllDrivers = !viewState.showAllDrivers;
-    return updateMain();
-  }
-  if (action === "create-backup") {
-    showBackupNotificationBanner();
-    return null;
-  }
-  if (action === "open-backup-name-modal") {
-    clearImpactBannerTimer();
-    viewState.activeImpactBanner = null;
-    renderNotificationBannerDom();
-    viewState.showBackupNameModal = true;
-    updateMain();
-    return null;
-  }
-  if (action === "confirm-create-backup") {
-    const input = document.getElementById("custom-backup-name-input");
-    const name = input?.value?.trim() || viewState.backupName?.trim() || "";
-    viewState.showBackupNameModal = false;
-    viewState.backupName = "";
-    clearImpactBannerTimer();
-    viewState.activeImpactBanner = null;
-    renderNotificationBannerDom();
-    updateMain();
-    const backups = await invokeCommand("create_backup", { name });
-    if (Array.isArray(backups)) {
-      viewState.backups = backups;
-      viewState.selectedBackup = backups[0]?.id || "";
-      updateMain();
-    }
-    return null;
-  }
-  if (action === "dismiss-backup-modal") {
-    viewState.showBackupNameModal = false;
-    viewState.backupName = "";
-    updateMain();
-    return null;
-  }
-  if (action === "restore-backup" && viewState.selectedBackup) {
-    const restored = await invokeCommand("restore_backup", { id: viewState.selectedBackup });
-    if (restored) {
-      mergeState(restored);
-      render();
-    }
-  }
-  if (action === "delete-backup" && viewState.selectedBackup) {
-    const backups = await invokeCommand("delete_backup", { id: viewState.selectedBackup });
-    if (Array.isArray(backups)) {
-      viewState.backups = backups;
-      viewState.selectedBackup = "";
-      updateMain();
-    }
-  }
-  if (action === "open-backups-folder") return invokeCommand("open_storage_folder", { kind: "backups" });
-  if (action === "save-config") {
-    const configs = await invokeCommand("save_config", { name: viewState.configName });
-    if (Array.isArray(configs)) {
-      viewState.configs = configs;
-      viewState.selectedConfig = configs[0]?.id || "";
-      viewState.configName = "";
-      updateMain();
-    }
-  }
-  if (action === "load-config" && viewState.selectedConfig) {
-    const loaded = await invokeCommand("load_config", { id: viewState.selectedConfig });
-    if (loaded) {
-      mergeState(loaded);
-      syncCharacteristicsMonitor();
-      render();
-      scheduleApplyColor();
-    }
-  }
-  if (action === "apply-config" && viewState.selectedConfig) {
-    const next = await invokeCommand("apply_config", { id: viewState.selectedConfig });
-    if (next) {
-      mergeState(next);
-      render();
-    }
-  }
-  if (action === "delete-config" && viewState.selectedConfig) {
-    const configs = await invokeCommand("delete_config", { id: viewState.selectedConfig });
-    if (Array.isArray(configs)) {
-      viewState.configs = configs;
-      viewState.selectedConfig = configs[0]?.id || "";
-      updateMain();
-    }
-  }
-  if (action === "open-configs-folder") return invokeCommand("open_storage_folder", { kind: "configs" });
-  return null;
 }
 
 function handleInput(event) {
@@ -1413,7 +1451,11 @@ async function handleClick(event) {
 
   const toggleBlackHolo = target.closest("[data-action='toggle-black-holo']");
   if (toggleBlackHolo) {
-    const isCurrentlyActive = toggleBlackHolo.classList.contains("active") || Number(appState.color.blackHolo || 0) > 0;
+    const isCurrentlyActive = Boolean(
+      viewState.blackHoloStatus?.active ||
+      toggleBlackHolo.classList.contains("active") ||
+      Number(appState?.color?.blackHolo || 0) > 0
+    );
     const nextActive = !isCurrentlyActive;
     const nextVal = nextActive ? 100 : 0;
     appState.color.blackHolo = nextVal;
@@ -1449,6 +1491,7 @@ async function handleClick(event) {
       const status = await invokeCommand("toggle_hardware_black_holo", { enabled: nextActive });
       if (status) {
         viewState.blackHoloStatus = status;
+        appState.color.blackHolo = status.active ? 100 : 0;
         updateBlackHoloDom(status.active, status);
         const isRu = lang() === "ru";
         if (status.error) {

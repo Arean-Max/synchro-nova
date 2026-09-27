@@ -9,13 +9,11 @@ const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 pub fn create_system_restore_point(description: &str) -> bool {
     #[cfg(target_os = "windows")]
     {
-        // 1. Try native WinAPI SRSetRestorePointW first
         if crate::platform::ffi::create_native_system_restore_point(description) {
             eprintln!("[RestorePoint] Native WinAPI restore point created: {}", description);
             return true;
         }
 
-        // 2. Fallback to PowerShell Checkpoint-Computer
         let safe_desc: String = description
             .chars()
             .filter(|c| c.is_ascii_alphanumeric() || *c == ' ' || *c == '-' || *c == '_')
@@ -27,7 +25,14 @@ pub fn create_system_restore_point(description: &str) -> bool {
         }
 
         let cmd = format!(
-            "Set-ItemProperty -Path 'HKLM:\\Software\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore' -Name 'SystemRestorePointCreationFrequency' -Value 0 -Force -ErrorAction SilentlyContinue; Checkpoint-Computer -Description '{}' -RestorePointType 'MODIFY_SETTINGS' -ErrorAction SilentlyContinue",
+            "$p = 'HKLM:\\Software\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore'; \
+             $k = Get-ItemProperty -Path $p -Name 'SystemRestorePointCreationFrequency' -ErrorAction SilentlyContinue; \
+             Set-ItemProperty -Path $p -Name 'SystemRestorePointCreationFrequency' -Value 0 -Force -ErrorAction SilentlyContinue; \
+             try {{ Checkpoint-Computer -Description '{}' -RestorePointType 'MODIFY_SETTINGS' -ErrorAction SilentlyContinue }} \
+             finally {{ \
+                 if ($null -ne $k) {{ Set-ItemProperty -Path $p -Name 'SystemRestorePointCreationFrequency' -Value $k.SystemRestorePointCreationFrequency -Force -ErrorAction SilentlyContinue }} \
+                 else {{ Remove-ItemProperty -Path $p -Name 'SystemRestorePointCreationFrequency' -ErrorAction SilentlyContinue }} \
+             }}",
             safe_desc
         );
 

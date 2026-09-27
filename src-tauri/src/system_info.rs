@@ -240,7 +240,6 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
         pf_dirs.push(std::path::PathBuf::from(pfx86));
     }
 
-    // 1. Xbox Game Bar / GameDVR
     let has_gamebar = sys32.join("bcastdvr.exe").exists()
         || sys32.join("GameBarPresenceWriter.exe").exists();
     apps.push(DetectedAppConflictInfo {
@@ -254,7 +253,6 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
         },
     });
 
-    // 2. Discord
     let has_discord = check_folder_in_local_or_roaming("Discord");
     apps.push(DetectedAppConflictInfo {
         id: "discord".to_string(),
@@ -267,7 +265,6 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
         },
     });
 
-    // 3. GeForce Experience / NVIDIA App
     let has_geforce = pf_dirs.iter().any(|dir| {
         dir.join("NVIDIA Corporation\\NVIDIA GeForce Experience").exists()
             || dir.join("NVIDIA Corporation\\NVIDIA App").exists()
@@ -283,7 +280,6 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
         },
     });
 
-    // 4. OBS Studio
     let has_obs = pf_dirs.iter().any(|dir| dir.join("obs-studio").exists())
         || check_folder_in_roaming("obs-studio");
     apps.push(DetectedAppConflictInfo {
@@ -297,7 +293,6 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
         },
     });
 
-    // 5. RivaTuner Statistics Server (RTSS)
     let has_rtss = pf_dirs.iter().any(|dir| dir.join("RivaTuner Statistics Server").exists());
     apps.push(DetectedAppConflictInfo {
         id: "rtss".to_string(),
@@ -310,7 +305,6 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
         },
     });
 
-    // 6. Steam
     let has_steam = pf_dirs.iter().any(|dir| dir.join("Steam").exists())
         || crate::domain::games::steam_install_root().is_some();
     apps.push(DetectedAppConflictInfo {
@@ -324,7 +318,6 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
         },
     });
 
-    // 7. VPN / Virtual Network Adapters
     let has_vpn = check_vpn_present();
     apps.push(DetectedAppConflictInfo {
         id: "vpn".to_string(),
@@ -337,7 +330,6 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
         },
     });
 
-    // 8. Bluetooth
     let has_bluetooth = check_bluetooth_present();
     apps.push(DetectedAppConflictInfo {
         id: "bluetooth".to_string(),
@@ -350,7 +342,6 @@ pub(crate) fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
         },
     });
 
-    // 9. Fast Startup (Hiberboot)
     let has_fast_startup = check_fast_startup_enabled();
     apps.push(DetectedAppConflictInfo {
         id: "fast_startup".to_string(),

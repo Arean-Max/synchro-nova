@@ -95,16 +95,7 @@ pub fn detect_gpu_vendor() -> (GpuVendor, String) {
     (GpuVendor::Unknown, "Unknown GPU".to_string())
 }
 
-/// Generates a driver-validated hardware gamma LUT for Black Holosight.
-///
-/// Anti-Cheat: Strictly operates through user-mode WinAPI (SetDeviceGammaRamp) on the desktop DC.
-/// No process handles, no DLL injection, no DirectX/Vulkan hooks, no memory reading.
-///
-/// NVIDIA Driver Check:
-/// - Range 0..170: Linear gamma (y = x, i * 257)
-/// - Range 170..220: Half-cosine wave smooth falloff from maximum (43690) to 1.5% floor (983)
-/// - Range 220..255: Minimum floor held at 1.5% (prevents NVIDIA driver sanity-check rejection)
-/// - Red and Blue channels maintain strict linear ramp (i * 257).
+/// Generates a gamma LUT for Black Holosight with GDI-safe clamps.
 #[cfg(target_os = "windows")]
 pub fn generate_black_holo_ramp(vendor: GpuVendor) -> GammaRamp {
     let mut ramp = GammaRamp::default();
@@ -116,25 +107,26 @@ pub fn generate_black_holo_ramp(vendor: GpuVendor) -> GammaRamp {
         ramp.blue[i] = linear;
     }
 
-    let (start_idx, end_idx, min_pct) = match vendor {
-        GpuVendor::Amd => (165, 225, 0.010_f32),     // AMD allows slightly wider/crisper dynamic range
-        _ => (170, 220, 0.015_f32),                  // NVIDIA & default: strict gradient smoothstep
+    let (start_idx, end_idx) = match vendor {
+        GpuVendor::Amd => (160, 212),
+        _ => (168, 218),
     };
 
-    let min_val = (65535.0 * min_pct).round() as f64;
-    let start_val = (start_idx as f64) * 257.0;
+    const MAX_GDI_ATTENUATION: f64 = 32700.0;
 
     for i in 0..256 {
+        let linear = (i as u32 * 65535 / 255) as f64;
         if i <= start_idx {
-            ramp.green[i] = (i as u32 * 257) as u16;
+            ramp.green[i] = linear.round() as u16;
         } else if i <= end_idx {
             let t = (i - start_idx) as f64 / (end_idx - start_idx) as f64;
-            // Half-wave cosine curve for C^1 continuous smooth falloff
-            let w = 0.5 * (1.0 + (std::f64::consts::PI * t).cos());
-            let val = (min_val + (start_val - min_val) * w).round();
-            ramp.green[i] = val.clamp(min_val, 65535.0) as u16;
+            let w = 0.5 * (1.0 - (std::f64::consts::PI * t).cos());
+            let drop = MAX_GDI_ATTENUATION * w;
+            let val = (linear - drop).max(1000.0);
+            ramp.green[i] = val.clamp(0.0, 65535.0).round() as u16;
         } else {
-            ramp.green[i] = min_val as u16;
+            let val = (linear - MAX_GDI_ATTENUATION).max(1000.0);
+            ramp.green[i] = val.clamp(0.0, 65535.0).round() as u16;
         }
     }
 
@@ -271,7 +263,6 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
         }
 
         if enabled {
-            // 1. Save original system ramp once before modifying
             if let Ok(mut guard) = ORIGINAL_RAMP.lock() {
                 if guard.is_none() {
                     let mut orig = GammaRamp::default();
@@ -281,13 +272,11 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
                 }
             }
 
-            // 2. Generate driver-validated ramp
             let target_ramp = generate_black_holo_ramp(vendor);
             if let Ok(mut guard) = TARGET_BLACK_HOLO_RAMP.lock() {
                 *guard = Some(target_ramp);
             }
 
-            // 3. Apply to hardware DAC
             let res = winapi::SetDeviceGammaRamp(hdc, &target_ramp);
             let _ = winapi::ReleaseDC(std::ptr::null_mut(), hdc);
 
@@ -312,7 +301,6 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
             IS_ACTIVE.store(true, Ordering::SeqCst);
             start_ramp_watchdog();
 
-            // 4. Also synchronize Rust client.cfg
             let rust_res = crate::domain::games::set_rust_holosight_black(true);
 
             BlackHoloStatus {

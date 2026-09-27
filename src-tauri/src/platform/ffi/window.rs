@@ -32,7 +32,7 @@ pub fn eliminate_window_borders(hwnd: isize) {
     }
 
     unsafe {
-        // 1. Force dark mode on window frame (attribute 20: DWMWA_USE_IMMERSIVE_DARK_MODE)
+        // DWMWA_USE_IMMERSIVE_DARK_MODE (20)
         let dark_mode: i32 = 1;
         let _ = DwmSetWindowAttribute(
             hwnd,
@@ -41,7 +41,7 @@ pub fn eliminate_window_borders(hwnd: isize) {
             std::mem::size_of::<i32>() as u32,
         );
 
-        // 2. Suppress DWM border rendering on Windows 11 (attribute 34: DWMWA_BORDER_COLOR = DWMWA_COLOR_NONE 0xFFFFFFFE)
+        // DWMWA_BORDER_COLOR = DWMWA_COLOR_NONE (34)
         let no_border: u32 = 0xFFFF_FFFE;
         let _ = DwmSetWindowAttribute(
             hwnd,
@@ -50,7 +50,7 @@ pub fn eliminate_window_borders(hwnd: isize) {
             std::mem::size_of::<u32>() as u32,
         );
 
-        // 3. Caption / title background color matching app background (#141414 -> 0x00141414)
+        // Match caption color to app theme
         let caption_color: u32 = 0x0014_1414;
         let _ = DwmSetWindowAttribute(
             hwnd,
@@ -59,7 +59,7 @@ pub fn eliminate_window_borders(hwnd: isize) {
             std::mem::size_of::<u32>() as u32,
         );
 
-        // 4. Subclass window to prevent edge resize dragging without stripping WS_THICKFRAME
+        // Subclass window to prevent edge resize dragging without stripping WS_THICKFRAME
         let fns = SUBCLASS_FNS.get_or_init(|| {
             #[link(name = "kernel32")]
             extern "system" {

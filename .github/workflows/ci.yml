@@ -38,10 +38,10 @@ jobs:
           node --check scripts/app-server.mjs
 
       - name: Cargo test
-        run: cargo test --manifest-path src-tauri/Cargo.toml --verbose
+        run: cargo test --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc --verbose
 
       - name: Cargo clippy
-        run: cargo clippy --manifest-path src-tauri/Cargo.toml --no-deps
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc --no-deps
 
       - name: Cargo check (release profile)
-        run: cargo check --manifest-path src-tauri/Cargo.toml --release
+        run: cargo check --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc --release
