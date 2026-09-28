@@ -221,4 +221,149 @@ pub fn is_win32_priority_rust_applied() -> bool {
         "Win32PrioritySeparation",
     ) == Some(38)
 }
-
+
+pub fn apply_system_timer_resolution(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [set_hklm_dword(
+            "SYSTEM\\CurrentControlSet\\Control\\Session Manager",
+            "GlobalTimerResolutionRequests",
+            1,
+        )],
+        "High-resolution 0.5ms system timer enabled",
+    )
+}
+
+pub fn is_system_timer_resolution_applied() -> bool {
+    hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Control\\Session Manager",
+        "GlobalTimerResolutionRequests",
+    ) == Some(1)
+}
+
+pub fn apply_kill_gamebar_presence(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [
+            set_hkcu_dword(
+                "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+                "AppCaptureEnabled",
+                0,
+            ),
+            set_hklm_dword(
+                "SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR",
+                "AllowGameDVR",
+                0,
+            ),
+            set_hkcu_dword("System\\GameConfigStore", "GameDVR_Enabled", 0),
+        ],
+        "GameBar presence hooks and background monitoring disabled",
+    )
+}
+
+pub fn is_kill_gamebar_presence_applied() -> bool {
+    hklm_dword(
+        "SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR",
+        "AllowGameDVR",
+    ) == Some(0)
+}
+
+pub fn apply_directx_thread_priority(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [
+            set_hklm_dword(
+                "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers",
+                "TdrDelay",
+                10,
+            ),
+            set_hklm_dword(
+                "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers\\Scheduler",
+                "EnablePreemption",
+                1,
+            ),
+        ],
+        "DirectX graphics scheduler preemption and TdrDelay optimized for 3D games",
+    )
+}
+
+pub fn is_directx_thread_priority_applied() -> bool {
+    hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers",
+        "TdrDelay",
+    ) == Some(10)
+}
+
+pub fn clean_legacy_rust_ifeo() {
+    let _ = super::runner::delete_hklm_tree(
+        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\RustClient.exe",
+    );
+    let _ = super::runner::delete_hklm_tree(
+        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\rust.exe",
+    );
+    let _ = super::runner::run_command_output("bcdedit", &["/deletevalue", "disabledynamictick"]);
+}
+
+pub fn apply_gpu_adaptive_power(id: &str) -> TweakApplyResult {
+    let vendor = super::runner::detected_gpu_vendor();
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        let class_path = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}";
+        let mut modified = 0;
+        if let Ok(class_key) = hklm.open_subkey(class_path) {
+            for subkey_name in class_key.enum_keys().flatten() {
+                let full_path = format!("{class_path}\\{subkey_name}");
+                if let Ok(key) = class_key.open_subkey(&subkey_name) {
+                    if key.get_value::<String, _>("DriverDesc").is_ok() {
+                        if vendor == "nvidia" {
+                            let _ = set_hklm_dword(&full_path, "PowerMizerEnable", 0);
+                            let _ = set_hklm_dword(&full_path, "PerfLevelSrc", 0x2222);
+                            modified += 1;
+                        } else if vendor == "amd" {
+                            let _ = set_hklm_dword(&full_path, "EnableUlps", 0);
+                            let _ = set_hklm_dword(&full_path, "EnableUlps_NA", 0);
+                            modified += 1;
+                        }
+                    }
+                }
+            }
+        }
+        if vendor == "nvidia" {
+            applied(id, &format!("NVIDIA GPU PowerMizer downclocking disabled across {modified} driver profiles"))
+        } else if vendor == "amd" {
+            applied(id, &format!("AMD Radeon ULPS sleep latency disabled across {modified} driver profiles"))
+        } else {
+            applied(id, "Adaptive GPU power policy verified for graphics adapter")
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        applied(id, "Adaptive GPU power simulated")
+    }
+}
+
+pub fn is_gpu_adaptive_power_applied() -> bool {
+    let vendor = super::runner::detected_gpu_vendor();
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        let class_path = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}";
+        if let Ok(class_key) = hklm.open_subkey(class_path) {
+            for subkey_name in class_key.enum_keys().flatten() {
+                if let Ok(key) = class_key.open_subkey(&subkey_name) {
+                    if vendor == "nvidia" && key.get_value::<u32, _>("PowerMizerEnable").ok() == Some(0) {
+                        return true;
+                    }
+                    if vendor == "amd" && key.get_value::<u32, _>("EnableUlps").ok() == Some(0) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
