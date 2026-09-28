@@ -137,4 +137,86 @@ pub fn apply_large_system_cache_off(id: &str) -> TweakApplyResult {
         "LargeSystemCache disabled to dedicate physical RAM to games",
     )
 }
-
+
+pub fn is_large_system_cache_off_applied() -> bool {
+    hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+        "LargeSystemCache",
+    ) == Some(0)
+}
+
+pub fn apply_disable_page_combining(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [set_hklm_dword(
+            "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+            "DisablePageCombining",
+            1,
+        )],
+        "Windows memory deduplication (Page Combining) disabled to prevent fight stutters",
+    )
+}
+
+pub fn is_disable_page_combining_applied() -> bool {
+    hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+        "DisablePageCombining",
+    ) == Some(1)
+}
+
+pub fn apply_adaptive_io_page_lock(id: &str) -> TweakApplyResult {
+    let ram_gb = super::runner::total_ram_gb();
+    let bytes: u32 = if ram_gb >= 30.0 {
+        1073741824
+    } else if ram_gb >= 15.0 {
+        536870912
+    } else {
+        268435456
+    };
+    let mb = bytes / 1024 / 1024;
+    collect_result(
+        id,
+        [set_hklm_dword(
+            "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+            "IoPageLockLimit",
+            bytes,
+        )],
+        &format!("IoPageLockLimit set to {mb} MB based on {ram_gb:.1} GB RAM for zero-hitch asset streaming"),
+    )
+}
+
+pub fn is_adaptive_io_page_lock_applied() -> bool {
+    hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+        "IoPageLockLimit",
+    )
+    .map(|v| v >= 268435456)
+    .unwrap_or(false)
+}
+
+pub fn clean_directory_contents(dir: &std::path::Path, total_bytes: &mut u64, files_count: &mut usize) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if let Ok(sym_meta) = std::fs::symlink_metadata(&path) {
+                let file_type = sym_meta.file_type();
+                if file_type.is_symlink() {
+                    let len = sym_meta.len();
+                    if std::fs::remove_file(&path).is_ok() || std::fs::remove_dir(&path).is_ok() {
+                        *total_bytes += len;
+                        *files_count += 1;
+                    }
+                } else if file_type.is_file() {
+                    let len = sym_meta.len();
+                    if std::fs::remove_file(&path).is_ok() {
+                        *total_bytes += len;
+                        *files_count += 1;
+                    }
+                } else if file_type.is_dir() {
+                    clean_directory_contents(&path, total_bytes, files_count);
+                    let _ = std::fs::remove_dir(&path);
+                }
+            }
+        }
+    }
+}
