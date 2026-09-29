@@ -221,4 +221,121 @@ pub static REGISTRY_BACKUP_TARGETS: &[RegistryTarget] = &[
     reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters", "MouseDataQueueSize"),
     reg_dword("HKLM", "SYSTEM\\CurrentControlSet\\Services\\kbdclass\\Parameters", "KeyboardDataQueueSize"),
 ];
-
+
+pub fn registry_backup_targets() -> &'static [RegistryTarget] {
+    REGISTRY_BACKUP_TARGETS
+}
+
+pub fn collect_tweak_registry_snapshot() -> Vec<TweakRegistrySnapshot> {
+    let mut snapshots: Vec<TweakRegistrySnapshot> = registry_backup_targets()
+        .iter()
+        .map(|target| TweakRegistrySnapshot {
+            hive: target.hive.to_string(),
+            path: target.path.to_string(),
+            name: target.name.to_string(),
+            value: read_registry_value(target),
+        })
+        .collect();
+
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        let base_path = "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces";
+        if let Ok(interfaces) = hklm.open_subkey(base_path) {
+            for subkey_name in interfaces.enum_keys().flatten() {
+                let full_path = format!("{base_path}\\{subkey_name}");
+                for val_name in ["TcpAckFrequency", "TCPNoDelay", "TcpDelAckTicks"] {
+                    snapshots.push(TweakRegistrySnapshot {
+                        hive: "HKLM".to_string(),
+                        path: full_path.clone(),
+                        name: val_name.to_string(),
+                        value: read_registry_raw("HKLM", &full_path, val_name, RegistryValueKind::Dword),
+                    });
+                }
+            }
+        }
+    }
+
+    snapshots
+}
+
+pub fn restore_tweak_registry_snapshot(snapshot: &[TweakRegistrySnapshot]) -> Vec<String> {
+    snapshot
+        .iter()
+        .filter_map(|entry| restore_registry_value(entry).err())
+        .collect()
+}
+
+#[cfg(target_os = "windows")]
+pub fn read_registry_raw(hive: &str, path: &str, name: &str, kind: RegistryValueKind) -> Option<TweakRegistryValue> {
+    use winreg::{
+        enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE},
+        RegKey,
+    };
+
+    let root = match hive {
+        "HKCU" => RegKey::predef(HKEY_CURRENT_USER),
+        "HKLM" => RegKey::predef(HKEY_LOCAL_MACHINE),
+        _ => return None,
+    };
+    let key = root.open_subkey(path).ok()?;
+    match kind {
+        RegistryValueKind::Dword => key
+            .get_value(name)
+            .ok()
+            .map(TweakRegistryValue::Dword),
+        RegistryValueKind::Text => key
+            .get_value(name)
+            .ok()
+            .map(TweakRegistryValue::Text),
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn read_registry_value(target: &RegistryTarget) -> Option<TweakRegistryValue> {
+    read_registry_raw(target.hive, target.path, target.name, target.value_kind)
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn read_registry_value(_target: &RegistryTarget) -> Option<TweakRegistryValue> {
+    None
+}
+
+#[cfg(target_os = "windows")]
+pub fn restore_registry_value(entry: &TweakRegistrySnapshot) -> Result<(), String> {
+    use winreg::{
+        enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE},
+        RegKey,
+    };
+
+    let root = match entry.hive.as_str() {
+        "HKCU" => RegKey::predef(HKEY_CURRENT_USER),
+        "HKLM" => RegKey::predef(HKEY_LOCAL_MACHINE),
+        _ => return Err(format!("Unsupported registry hive {}", entry.hive)),
+    };
+
+    if let Some(value) = &entry.value {
+        let (key, _) = root
+            .create_subkey(&entry.path)
+            .map_err(|error| format!("{}\\{}: {error}", entry.hive, entry.path))?;
+        match value {
+            TweakRegistryValue::Dword(value) => key
+                .set_value(&entry.name, value)
+                .map_err(|error| format!("{}: {error}", entry.name)),
+            TweakRegistryValue::Text(value) => key
+                .set_value(&entry.name, value)
+                .map_err(|error| format!("{}: {error}", entry.name)),
+        }
+    } else {
+        if let Ok(key) = root.open_subkey_with_flags(&entry.path, winreg::enums::KEY_SET_VALUE) {
+            let _ = key.delete_value(&entry.name);
+        }
+        Ok(())
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn restore_registry_value(_entry: &TweakRegistrySnapshot) -> Result<(), String> {
+    Ok(())
+}
