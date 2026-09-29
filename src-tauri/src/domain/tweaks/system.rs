@@ -79,4 +79,50 @@ pub fn apply_input_response_fast(id: &str) -> TweakApplyResult {
         "Input response latency optimized (keyboard delay 0, instant mouse hover, high queue sizes)",
     )
 }
-
+
+pub fn is_input_response_fast_applied() -> bool {
+    hkcu_string("Control Panel\\Keyboard", "KeyboardDelay").as_deref() == Some("0")
+        && hkcu_string("Control Panel\\Keyboard", "KeyboardSpeed").as_deref() == Some("31")
+}
+
+pub fn clean_legacy_csrss_override() {
+    let _ = super::runner::delete_hklm_tree(
+        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe",
+    );
+}
+
+pub fn apply_visual_effects_performance(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [set_hkcu_dword(
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects",
+            "VisualFXSetting",
+            2,
+        )],
+        "Visual effects set to performance profile",
+    )
+}
+
+pub fn is_visual_effects_performance_applied() -> bool {
+    hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects", "VisualFXSetting")
+        == Some(2)
+}
+
+pub fn apply_transparency_off(id: &str) -> TweakApplyResult {
+    collect_result(
+        id,
+        [set_hkcu_dword(
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            "EnableTransparency",
+            0,
+        )],
+        "Windows transparency disabled",
+    )
+}
+
+pub fn is_transparency_off_applied() -> bool {
+    hkcu_dword(
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+        "EnableTransparency",
+    ) == Some(0)
+}
