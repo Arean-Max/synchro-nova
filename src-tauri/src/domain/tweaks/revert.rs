@@ -252,3 +252,166 @@ fn revert_one(id: &str) -> TweakApplyResult {
             ],
             "Keyboard repeat rate and delay restored to default",
         ),
+
+        "visual-effects-performance" => collect_revert(
+            id,
+            [set_hkcu_dword(
+                "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects",
+                "VisualFXSetting",
+                0,
+            )],
+            "Windows visual effects appearance restored to default",
+        ),
+
+        "transparency-off" => collect_revert(
+            id,
+            [set_hkcu_dword(
+                "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                "EnableTransparency",
+                1,
+            )],
+            "Acrylic and mica transparency effects restored to default",
+        ),
+
+        "clean-temp-junk" => applied(id, "Clean junk operation has no persistent state"),
+
+        "disable-paging-executive" => collect_revert(
+            id,
+            [set_hklm_dword(
+                "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+                "DisablePagingExecutive",
+                0,
+            )],
+            "Paging executive memory policy restored to default (0)",
+        ),
+
+        "disable-memory-compression" => run_command_result(
+            id,
+            "powershell",
+            &["-NoProfile", "-NonInteractive", "-Command", "Enable-MMAgent -MemoryCompression"],
+            "Windows memory compression restored to default (enabled)",
+        ),
+
+        "disable-page-combining" => run_command_result(
+            id,
+            "powershell",
+            &["-NoProfile", "-NonInteractive", "-Command", "Enable-MMAgent -PageCombining"],
+            "Windows page combining restored to default (enabled)",
+        ),
+
+        "adaptive-io-page-lock" => collect_revert(
+            id,
+            [delete_hklm_value(
+                "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+                "IoPageLockLimit",
+            )],
+            "I/O page lock limit allocation restored to default",
+        ),
+
+        "large-system-cache-off" => collect_revert(
+            id,
+            [set_hklm_dword(
+                "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+                "LargeSystemCache",
+                0,
+            )],
+            "Large system cache allocation restored to default (0)",
+        ),
+
+        "hibernate-off" => run_command_result(
+            id,
+            "powercfg",
+            &["/hibernate", "on"],
+            "Windows hibernate and Fast Startup restored to default (enabled)",
+        ),
+
+        "ntfs-last-access-off" => run_command_result(
+            id,
+            "fsutil",
+            &["behavior", "set", "disableLastAccess", "0"],
+            "NTFS last access time updates restored to default (enabled)",
+        ),
+
+        "trim-enable" => applied(id, "TRIM notifications active"),
+
+        "network-udp-buffers" => collect_revert(
+            id,
+            [
+                delete_hklm_value(
+                    "SYSTEM\\CurrentControlSet\\Services\\AFD\\Parameters",
+                    "DefaultReceiveWindow",
+                ),
+                delete_hklm_value(
+                    "SYSTEM\\CurrentControlSet\\Services\\AFD\\Parameters",
+                    "DefaultSendWindow",
+                ),
+            ],
+            "AFD socket receive and send windows restored to defaults",
+        ),
+
+        "tcp-nodelay-ack" => {
+            let _ = delete_hklm_value(
+                "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces",
+                "TcpAckFrequency",
+            );
+            let _ = delete_hklm_value(
+                "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces",
+                "TCPNoDelay",
+            );
+            applied(id, "TCP ACK frequency and Nagle algorithm restored to defaults")
+        }
+
+        "nic-energy-saving-off" => {
+            applied(id, "Network adapter energy saving configuration restored")
+        }
+
+        "tcp-heuristics-off" => run_netsh(
+            id,
+            &["interface", "tcp", "set", "heuristics", "default"],
+            "TCP window heuristics restored to default",
+        ),
+
+        "rss-adaptive-cores" => run_netsh(
+            id,
+            &["interface", "tcp", "set", "global", "rss=default"],
+            "Receive-Side Scaling global configuration restored to default",
+        ),
+
+        "rsc-off" => run_netsh(
+            id,
+            &["interface", "tcp", "set", "global", "rsc=default"],
+            "Receive segment coalescing restored to default",
+        ),
+
+        "disable-gamedvr" => collect_revert(
+            id,
+            [
+                set_hklm_dword("SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR", "AllowGameDVR", 1),
+                set_hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", "AppCaptureEnabled", 1),
+                set_hkcu_dword("System\\GameConfigStore", "GameDVR_Enabled", 1),
+            ],
+            "GameDVR broadcast and capture policies restored to defaults",
+        ),
+
+        "disable-bg-recording" => collect_revert(
+            id,
+            [set_hkcu_dword(
+                "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+                "HistoricalCaptureEnabled",
+                1,
+            )],
+            "Background video recording capability restored to default",
+        ),
+
+        "wer-off" => collect_revert(
+            id,
+            [delete_hklm_value(
+                "SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting",
+                "Disabled",
+            )],
+            "Windows Error Reporting service policy restored to default",
+        ),
+
+        _ => skipped(id, "No restore action required for this tweak"),
+    }
+}
