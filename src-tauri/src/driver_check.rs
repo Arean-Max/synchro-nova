@@ -258,3 +258,133 @@ pub fn enrich_with_real_version_checks(drivers: &mut [DriverInfo]) {
 
 #[cfg(not(target_os = "windows"))]
 pub fn enrich_with_real_version_checks(_drivers: &mut [DriverInfo]) {}
+
+fn apply_catalog_entry(driver: &mut DriverInfo, latest: &str, official_url: &str) {
+    driver.latest_version = latest.to_string();
+    if driver.official_url.is_empty() || driver.official_url == "https://www.catalog.update.microsoft.com" {
+        driver.official_url = official_url.to_string();
+    }
+    let cmp = compare_version_parts(&driver.version, latest);
+    if cmp == Ordering::Less {
+        driver.is_outdated = true;
+        driver.status = format!("Update Available: v{}", latest);
+    } else {
+        driver.is_outdated = false;
+        driver.status = "Up to date".to_string();
+    }
+}
+
+fn compare_version_parts(v1: &str, v2: &str) -> Ordering {
+    let parse = |s: &str| -> Vec<u64> {
+        s.split(|c: char| !c.is_ascii_digit())
+            .filter(|p| !p.is_empty())
+            .filter_map(|p| p.parse::<u64>().ok())
+            .collect()
+    };
+    let mut p1 = parse(v1);
+    let mut p2 = parse(v2);
+    while p1.last() == Some(&0) {
+        p1.pop();
+    }
+    while p2.last() == Some(&0) {
+        p2.pop();
+    }
+    for (a, b) in p1.iter().zip(p2.iter()) {
+        if a != b {
+            return a.cmp(b);
+        }
+    }
+    p1.len().cmp(&p2.len())
+}
+
+fn parse_nvidia_branch(version: &str) -> f32 {
+    let clean = version.trim_start_matches('v').trim();
+    if let Ok(v) = clean.parse::<f32>() {
+        return v;
+    }
+    let parts: Vec<&str> = clean.split('.').collect();
+    if parts.len() == 4 {
+        let p2 = parts[2];
+        let p3 = parts[3];
+        if p3.len() >= 4 {
+            let last_digit = p2.chars().last().unwrap_or('0');
+            let combined = format!("{}.{}", format!("{}{}", last_digit, &p3[..2]), &p3[2..]);
+            return combined.parse::<f32>().unwrap_or(0.0);
+        }
+    }
+    0.0
+}
+
+fn compare_amd(cur: &str, lat: &str) -> Ordering {
+    let cur_clean = cur.trim_start_matches('v').trim();
+    let lat_clean = lat.trim_start_matches('v').trim();
+    let parse = |s: &str| -> Option<(u32, u32, u32)> {
+        let parts: Vec<&str> = s.split('.').collect();
+        if parts.len() == 3 && parts[0].len() == 2 {
+            let y = parts[0].parse::<u32>().ok()?;
+            let m = parts[1].parse::<u32>().ok()?;
+            let r = parts[2].parse::<u32>().ok()?;
+            return Some((y, m, r));
+        }
+        if parts.len() == 4 && parts[2].len() >= 4 {
+            let p2 = parts[2];
+            let y = p2[..2].parse::<u32>().ok()?;
+            let m = p2[2..4].parse::<u32>().ok()?;
+            let r = if p2.len() > 4 { p2[4..].parse::<u32>().ok()? } else { 1 };
+            return Some((y, m, r));
+        }
+        None
+    };
+    match (parse(cur_clean), parse(lat_clean)) {
+        (Some(c), Some(l)) => c.cmp(&l),
+        _ => compare_version_parts(cur_clean, lat_clean),
+    }
+}
+
+fn compute_bumped_version(version: &str) -> String {
+    let parts: Vec<&str> = version.split('.').collect();
+    if parts.len() == 4 {
+        let p0 = parts[0];
+        let p1 = parts[1];
+        let p2 = parts[2];
+        let p3: u64 = parts[3].parse().unwrap_or(0);
+        return format!("{}.{}.{}.{}", p0, p1, p2, p3 + 120);
+    }
+    if parts.len() == 3 {
+        let p0 = parts[0];
+        let p1 = parts[1];
+        let p2: u64 = parts[2].parse().unwrap_or(0);
+        return format!("{}.{}.{}", p0, p1, p2 + 10);
+    }
+    version.to_string()
+}
+
+fn extract_year(date: &str) -> u32 {
+    let digits: String = date.chars().filter(|c| c.is_ascii_digit()).collect();
+    if digits.len() >= 4 {
+        if let Ok(y) = digits[..4].parse::<u32>() {
+            if (1990..=2030).contains(&y) {
+                return y;
+            }
+        }
+        if let Ok(y) = digits[digits.len() - 4..].parse::<u32>() {
+            if (1990..=2030).contains(&y) {
+                return y;
+            }
+        }
+    }
+    0
+}
+
+fn extract_version_from_text(text: &str) -> Option<String> {
+    for part in text.split(|c: char| c == ' ' || c == '-' || c == '_') {
+        let dots = part.chars().filter(|c| *c == '.').count();
+        if dots >= 1 && part.chars().any(|c| c.is_ascii_digit()) {
+            let cleaned: String = part.chars().filter(|c| c.is_ascii_digit() || *c == '.').collect();
+            if cleaned.len() >= 3 {
+                return Some(cleaned);
+            }
+        }
+    }
+    None
+}
