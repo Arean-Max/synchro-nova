@@ -158,4 +158,307 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
         changelog: body,
     })
 }
-
+
+pub fn spawn_download_worker(
+    download_url: String,
+    expected_size: u64,
+) -> Result<(), String> {
+    if IS_DOWNLOADING.swap(true, Ordering::SeqCst) {
+        return Ok(());
+    }
+
+    let target_dir = get_update_dir();
+    let target_file = get_update_file_path();
+
+    if let Err(e) = fs::create_dir_all(&target_dir) {
+        IS_DOWNLOADING.store(false, Ordering::SeqCst);
+        return Err(format!("Failed to create temp update dir: {}", e));
+    }
+
+    let _ = fs::remove_file(&target_file);
+
+    super::set_progress(super::UpdateProgress {
+        status: "downloading".to_string(),
+        downloaded_bytes: 0,
+        total_bytes: expected_size,
+        percent: 0,
+        error: None,
+    });
+
+    std::thread::Builder::new()
+        .name("synchro-downloader".to_string())
+        .spawn(move || {
+            let mut cmd = get_curl_cmd();
+            cmd.args([
+                "-L",
+                "--fail",
+                "--silent",
+                "--show-error",
+                "--max-time",
+                "300",
+                "-o",
+            ]);
+            cmd.arg(&target_file);
+            cmd.arg(&download_url);
+            #[cfg(target_os = "windows")]
+            cmd.creation_flags(CREATE_NO_WINDOW);
+
+            let mut child = match cmd.spawn() {
+                Ok(c) => c,
+                Err(e) => {
+                    super::set_progress(super::UpdateProgress {
+                        status: "error".to_string(),
+                        downloaded_bytes: 0,
+                        total_bytes: expected_size,
+                        percent: 0,
+                        error: Some(format!("Failed to spawn curl: {}", e)),
+                    });
+                    IS_DOWNLOADING.store(false, Ordering::SeqCst);
+                    return;
+                }
+            };
+
+            let start_time = std::time::Instant::now();
+            let max_download_duration = Duration::from_secs(360);
+
+            loop {
+                std::thread::sleep(Duration::from_millis(70));
+
+                if start_time.elapsed() > max_download_duration {
+                    let _ = child.kill();
+                    let _ = fs::remove_file(&target_file);
+                    super::set_progress(super::UpdateProgress {
+                        status: "error".to_string(),
+                        downloaded_bytes: 0,
+                        total_bytes: expected_size,
+                        percent: 0,
+                        error: Some("Download timed out after 360 seconds".to_string()),
+                    });
+                    break;
+                }
+
+                if let Ok(meta) = fs::metadata(&target_file) {
+                    let downloaded = meta.len();
+                    let pct = if expected_size > 0 {
+                        ((downloaded as f64 / expected_size as f64) * 100.0).clamp(0.0, 99.0) as u8
+                    } else {
+                        0
+                    };
+
+                    super::set_progress(super::UpdateProgress {
+                        status: "downloading".to_string(),
+                        downloaded_bytes: downloaded,
+                        total_bytes: expected_size,
+                        percent: pct,
+                        error: None,
+                    });
+                }
+
+                match child.try_wait() {
+                    Ok(Some(status)) => {
+                        if status.success() {
+                            let actual_size = fs::metadata(&target_file)
+                                .map(|m| m.len())
+                                .unwrap_or(0);
+
+                            if actual_size < 500_000 {
+                                let _ = fs::remove_file(&target_file);
+                                super::set_progress(super::UpdateProgress {
+                                    status: "error".to_string(),
+                                    downloaded_bytes: actual_size,
+                                    total_bytes: expected_size,
+                                    percent: 0,
+                                    error: Some("Downloaded file size is too small or incomplete".to_string()),
+                                });
+                                break;
+                            }
+
+                            let mut header_buf = [0u8; 2];
+                            let is_valid_pe = match fs::File::open(&target_file) {
+                                Ok(mut file) => {
+                                    use std::io::Read;
+                                    file.read_exact(&mut header_buf).is_ok() && &header_buf == b"MZ"
+                                }
+                                Err(_) => false,
+                            };
+
+                            if !is_valid_pe {
+                                let _ = fs::remove_file(&target_file);
+                                super::set_progress(super::UpdateProgress {
+                                    status: "error".to_string(),
+                                    downloaded_bytes: actual_size,
+                                    total_bytes: expected_size,
+                                    percent: 0,
+                                    error: Some("Downloaded file is not a valid Windows executable (missing MZ signature)".to_string()),
+                                });
+                                break;
+                            }
+
+                            let sha_url = LATEST_SHA_URL.lock().ok().and_then(|g| g.clone());
+                            let sha_url = match sha_url {
+                                Some(url) => url,
+                                None => {
+                                    let _ = fs::remove_file(&target_file);
+                                    super::set_progress(super::UpdateProgress {
+                                        status: "error".to_string(),
+                                        downloaded_bytes: actual_size,
+                                        total_bytes: expected_size,
+                                        percent: 0,
+                                        error: Some("Release manifest missing SHA256SUMS.txt; rejecting unverified update (fail-closed)".to_string()),
+                                    });
+                                    break;
+                                }
+                            };
+
+                            let sha_file = target_dir.join("SHA256SUMS.txt");
+                            let mut sha_cmd = get_curl_cmd();
+                            sha_cmd.args(["-L", "--fail", "--silent", "--max-time", "30", "-o"]);
+                            sha_cmd.arg(&sha_file);
+                            sha_cmd.arg(&sha_url);
+                            #[cfg(target_os = "windows")]
+                            sha_cmd.creation_flags(CREATE_NO_WINDOW);
+
+                            let sha_downloaded = match sha_cmd.status() {
+                                Ok(sha_status) => sha_status.success(),
+                                Err(_) => false,
+                            };
+
+                            if !sha_downloaded {
+                                let _ = fs::remove_file(&target_file);
+                                super::set_progress(super::UpdateProgress {
+                                    status: "error".to_string(),
+                                    downloaded_bytes: actual_size,
+                                    total_bytes: expected_size,
+                                    percent: 0,
+                                    error: Some("Failed to download SHA256SUMS.txt checksum manifest".to_string()),
+                                });
+                                break;
+                            }
+
+                            let contents = match fs::read_to_string(&sha_file) {
+                                Ok(c) => c,
+                                Err(e) => {
+                                    let _ = fs::remove_file(&target_file);
+                                    super::set_progress(super::UpdateProgress {
+                                        status: "error".to_string(),
+                                        downloaded_bytes: actual_size,
+                                        total_bytes: expected_size,
+                                        percent: 0,
+                                        error: Some(format!("Failed to read SHA256SUMS.txt: {}", e)),
+                                    });
+                                    break;
+                                }
+                            };
+
+                            let mut expected_hash = None;
+                            for line in contents.lines() {
+                                let parts: Vec<&str> = line.split_whitespace().collect();
+                                if parts.len() >= 2 {
+                                    let hash = parts[0].trim().to_lowercase();
+                                    let file = parts[1].trim().trim_start_matches('*');
+                                    if file == "synchro.exe" || download_url.ends_with(file) {
+                                        expected_hash = Some(hash);
+                                        break;
+                                    }
+                                }
+                            }
+
+                            let expected = match expected_hash {
+                                Some(h) => h,
+                                None => {
+                                    let _ = fs::remove_file(&target_file);
+                                    super::set_progress(super::UpdateProgress {
+                                        status: "error".to_string(),
+                                        downloaded_bytes: actual_size,
+                                        total_bytes: expected_size,
+                                        percent: 0,
+                                        error: Some("SHA-256 hash for binary not found in release manifest".to_string()),
+                                    });
+                                    break;
+                                }
+                            };
+
+                            let actual_hash = match crate::infra::hash::sha256_file(&target_file) {
+                                Ok(h) => h.to_lowercase(),
+                                Err(e) => {
+                                    let _ = fs::remove_file(&target_file);
+                                    super::set_progress(super::UpdateProgress {
+                                        status: "error".to_string(),
+                                        downloaded_bytes: actual_size,
+                                        total_bytes: expected_size,
+                                        percent: 0,
+                                        error: Some(format!("Failed to compute update file SHA-256: {}", e)),
+                                    });
+                                    break;
+                                }
+                            };
+
+                            if actual_hash != expected {
+                                let _ = fs::remove_file(&target_file);
+                                super::set_progress(super::UpdateProgress {
+                                    status: "error".to_string(),
+                                    downloaded_bytes: actual_size,
+                                    total_bytes: expected_size,
+                                    percent: 0,
+                                    error: Some(format!(
+                                        "SHA-256 verification failed (expected {}, got {})",
+                                        expected, actual_hash
+                                    )),
+                                });
+                                break;
+                            }
+
+                            if let Ok(current_path) = std::env::current_exe() {
+                                if crate::platform::ffi::verify_embedded_signature(&current_path)
+                                    && !crate::platform::ffi::verify_embedded_signature(&target_file)
+                                {
+                                    let _ = fs::remove_file(&target_file);
+                                    super::set_progress(super::UpdateProgress {
+                                        status: "error".to_string(),
+                                        downloaded_bytes: actual_size,
+                                        total_bytes: expected_size,
+                                        percent: 0,
+                                        error: Some("Update binary is missing valid Authenticode signature".to_string()),
+                                    });
+                                    break;
+                                }
+                            }
+
+                            super::set_progress(super::UpdateProgress {
+                                status: "ready".to_string(),
+                                downloaded_bytes: actual_size,
+                                total_bytes: actual_size,
+                                percent: 100,
+                                error: None,
+                            });
+                        } else {
+                            super::set_progress(super::UpdateProgress {
+                                status: "error".to_string(),
+                                downloaded_bytes: 0,
+                                total_bytes: expected_size,
+                                percent: 0,
+                                error: Some(format!("curl download failed with exit code {:?}", status.code())),
+                            });
+                        }
+                        break;
+                    }
+                    Ok(None) => {}
+                    Err(e) => {
+                        super::set_progress(super::UpdateProgress {
+                            status: "error".to_string(),
+                            downloaded_bytes: 0,
+                            total_bytes: expected_size,
+                            percent: 0,
+                            error: Some(format!("Error monitoring download child: {}", e)),
+                        });
+                        break;
+                    }
+                }
+            }
+
+            IS_DOWNLOADING.store(false, Ordering::SeqCst);
+        })
+        .map_err(|e| format!("Failed to spawn downloader thread: {}", e))?;
+
+    Ok(())
+}
