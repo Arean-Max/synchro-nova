@@ -157,3 +157,117 @@ fn apply_one(id: &str) -> TweakApplyResult {
         ),
     }
 }
+
+pub fn known_tweak_ids() -> &'static [&'static str] {
+    &[
+        "win32-priority-rust",
+        "system-timer-resolution",
+        "kill-gamebar-presence",
+        "directx-thread-priority",
+        "gpu-adaptive-power",
+        "game-mode-on",
+        "modern-flip-model-on",
+        "gamedvr-fse-mode",
+        "disable-fso-globally",
+        "hags-on",
+        "mpo-disable",
+        "pcie-aspm-off",
+
+        "power-plan-high",
+        "ultimate-performance-plan",
+        "cpu-unpark-cores",
+        "power-throttling-off",
+        "cpu-adaptive-scheduling",
+        "system-worker-threads",
+        "mmcss-games-priority",
+        "system-responsiveness-0",
+        "network-throttle-off",
+
+        "pointer-precision-off",
+        "usb-selective-suspend-off",
+        "input-response-fast",
+        "visual-effects-performance",
+        "transparency-off",
+
+        "clean-temp-junk",
+        "disable-paging-executive",
+        "disable-memory-compression",
+        "disable-page-combining",
+        "adaptive-io-page-lock",
+        "large-system-cache-off",
+        "hibernate-off",
+        "ntfs-last-access-off",
+        "trim-enable",
+
+        "network-udp-buffers",
+        "tcp-nodelay-ack",
+        "nic-energy-saving-off",
+        "tcp-heuristics-off",
+        "rss-adaptive-cores",
+        "rsc-off",
+
+        "disable-gamedvr",
+        "disable-bg-recording",
+        "wer-off",
+    ]
+}
+
+pub fn is_tweak_applied(id: &str) -> bool {
+    match id {
+        "win32-priority-rust" => gaming::is_win32_priority_rust_applied(),
+        "system-timer-resolution" => gaming::is_system_timer_resolution_applied(),
+        "kill-gamebar-presence" => gaming::is_kill_gamebar_presence_applied(),
+        "directx-thread-priority" => gaming::is_directx_thread_priority_applied(),
+        "gpu-adaptive-power" => gaming::is_gpu_adaptive_power_applied(),
+        "game-mode-on" => gaming::is_game_mode_applied(),
+        "modern-flip-model-on" => gaming::is_modern_flip_model_applied(),
+        "gamedvr-fse-mode" => gaming::is_gamedvr_fse_mode_applied(),
+        "disable-fso-globally" => gaming::is_disable_fso_globally_applied(),
+        "hags-on" => gaming::is_hags_applied(),
+        "mpo-disable" => gaming::is_mpo_disable_applied(),
+        "pcie-aspm-off" => gaming::is_pcie_aspm_off_applied(),
+
+        "power-plan-high" => power::is_power_plan_high_applied(),
+        "ultimate-performance-plan" => power::is_ultimate_performance_applied(),
+        "cpu-unpark-cores" => power::is_cpu_unpark_cores_applied(),
+        "power-throttling-off" => power::is_power_throttling_off_applied(),
+        "cpu-adaptive-scheduling" => power::is_cpu_adaptive_scheduling_applied(),
+        "system-worker-threads" => power::is_system_worker_threads_applied(),
+        "mmcss-games-priority" => power::is_mmcss_games_priority_applied(),
+        "system-responsiveness-0" => power::is_system_responsiveness_applied(),
+        "network-throttle-off" => power::is_network_throttle_off_applied(),
+
+        "pointer-precision-off" => system::is_pointer_precision_off_applied(),
+        "usb-selective-suspend-off" => system::is_usb_selective_suspend_applied(),
+        "input-response-fast" => system::is_input_response_fast_applied(),
+        "visual-effects-performance" => system::is_visual_effects_performance_applied(),
+        "transparency-off" => system::is_transparency_off_applied(),
+
+        "clean-temp-junk" => false,
+        "disable-paging-executive" => storage::is_disable_paging_executive_applied(),
+        "disable-memory-compression" => storage::is_disable_memory_compression_applied(),
+        "disable-page-combining" => storage::is_disable_page_combining_applied(),
+        "adaptive-io-page-lock" => storage::is_adaptive_io_page_lock_applied(),
+        "large-system-cache-off" => storage::is_large_system_cache_off_applied(),
+        "hibernate-off" => storage::is_hibernate_applied(),
+        "ntfs-last-access-off" => storage::is_ntfs_last_access_applied(),
+        "trim-enable" => storage::is_trim_applied(),
+
+        "network-udp-buffers" => network::is_network_udp_buffers_applied(),
+        "tcp-nodelay-ack" => network::hklm_tcp_nodelay_active(),
+        "nic-energy-saving-off" => network::hklm_nic_energy_saving_off(),
+        "tcp-heuristics-off" => network::is_tcp_heuristics_off_applied(),
+        "rss-adaptive-cores" => network::is_rss_adaptive_cores_applied(),
+        "rsc-off" => network::is_rsc_applied(),
+
+        "disable-gamedvr" => gaming::is_disable_gamedvr_applied(),
+        "disable-bg-recording" => gaming::is_disable_bg_recording_applied(),
+        "wer-off" => storage::is_wer_off_applied(),
+
+        _ => false,
+    }
+}
+
+pub fn create_system_restore_point(description: &str) {
+    crate::infra::restore_point::create_system_restore_point(description);
+}
