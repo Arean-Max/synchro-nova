@@ -267,4 +267,211 @@ fn make_driver(
         latest_version: String::new(),
     }
 }
-
+
+fn detect_vendor(provider: &str, name: &str, hardware_id: &str) -> String {
+    let p = provider.to_lowercase();
+    let n = name.to_lowercase();
+    let id = hardware_id.to_lowercase();
+
+    if p.contains("nvidia") || n.contains("geforce") || n.contains("nvidia") || id.contains("ven_10de") {
+        "nvidia".to_string()
+    } else if p.contains("advanced micro devices")
+        || p.contains("amd")
+        || n.contains("radeon")
+        || n.contains("ryzen")
+        || id.contains("ven_1002")
+        || id.contains("ven_1022")
+    {
+        "amd".to_string()
+    } else if p.contains("intel") || n.contains("intel") || id.contains("ven_8086") {
+        "intel".to_string()
+    } else if p.contains("realtek") || n.contains("realtek") || id.contains("ven_10ec") {
+        "realtek".to_string()
+    } else if p.contains("logitech") || n.contains("logitech") || id.contains("vid_046d") {
+        "logitech".to_string()
+    } else if p.contains("qualcomm") || n.contains("qualcomm") || id.contains("ven_168c") {
+        "qualcomm".to_string()
+    } else if p.contains("mediatek") || n.contains("mediatek") || id.contains("ven_14c3") {
+        "mediatek".to_string()
+    } else if p.contains("broadcom") || n.contains("broadcom") || id.contains("ven_14e4") {
+        "broadcom".to_string()
+    } else if p.contains("samsung") || n.contains("samsung") {
+        "samsung".to_string()
+    } else if p.contains("asus") || n.contains("asus") || n.contains("asustek") {
+        "asus".to_string()
+    } else if p.contains("microsoft") {
+        "microsoft".to_string()
+    } else {
+        "generic".to_string()
+    }
+}
+
+fn check_if_outdated(date: &str, vendor: &str, class_name: &str) -> bool {
+    if vendor == "microsoft" || vendor == "generic" {
+        return false;
+    }
+
+    let year = extract_year(date);
+    if year == 0 {
+        return false;
+    }
+
+    let class_lower = class_name.to_lowercase();
+    if class_lower == "display" {
+        year < 2024
+    } else if class_lower == "net" || class_lower == "media" {
+        year < 2023
+    } else {
+        year < 2021
+    }
+}
+
+fn is_ignorable_device(name: &str, provider: &str, class_name: &str) -> bool {
+    let n = name.to_lowercase();
+    let p = provider.to_lowercase();
+
+    const IGNORED: &[&str] = &[
+        "wan miniport", "kernel debug", "directshow", "ras async", "remote ndis",
+        "virtual", "composite bus", "pnp-software", "pnp software", "terminal server",
+        "root audio", "volume manager", "volume snapshot", "generic volume",
+        "generic pnp monitor", "generic non-pnp monitor", "motherboard resources",
+        "system timer", "interrupt controller", "numeric data processor", "acpi fan",
+        "acpi processor", "acpi power", "acpi thermal", "pci memory controller",
+        "legacy device", "print queue", "software device", "usbncm host device",
+        "power engine plug-in", "platform monitoring technology", "pawnio",
+        "usb composite device", "usb root hub", "acpi x64-based pc", "computer device",
+        "standard ps/2", "microsoft ps/2", "standard sata ahci", "pci standard host",
+        "pci standard isa", "pci standard pci", "pci standard ram", "standard dual channel",
+        "pci-to-pci bridge", "standard nvm express controller", "storage spaces", "audio endpoint"
+    ];
+    if IGNORED.iter().any(|k| n.contains(k)) {
+        return true;
+    }
+
+    let cls = class_name.to_lowercase();
+    if cls == "system" && (p.contains("microsoft") || p == "unknown") {
+        return true;
+    }
+
+    if cls == "net" && p.contains("microsoft") {
+        return true;
+    }
+
+    if (cls == "storage" || cls == "diskdrive") && (n == "disk drive" || n == "cd-rom drive") {
+        return true;
+    }
+
+    if cls == "peripherals" && (p.contains("microsoft") || n.contains("hid-compliant") || n.contains("hid keyboard")) {
+        return true;
+    }
+
+    false
+}
+
+fn extract_year(date: &str) -> u32 {
+    for part in date.split(|c: char| c == '-' || c == '/' || c == '.' || c.is_whitespace()) {
+        if part.len() == 4 && part.chars().all(|c| c.is_ascii_digit()) {
+            if let Ok(y) = part.parse::<u32>() {
+                if (1990..=2030).contains(&y) {
+                    return y;
+                }
+            }
+        }
+    }
+    0
+}
+
+fn resolve_official_url(vendor: &str, name: &str, hardware_id: &str) -> String {
+    match vendor {
+        "nvidia" => {
+            let n = name.to_lowercase();
+            if n.contains("rtx") || n.contains("gtx") || n.contains("geforce") {
+                "https://www.nvidia.com/en-us/geforce/drivers/".to_string()
+            } else {
+                "https://www.nvidia.com/Download/index.aspx".to_string()
+            }
+        }
+        "amd" => "https://www.amd.com/en/support/download/drivers.html".to_string(),
+        "intel" => "https://www.intel.com/content/www/us/en/support/detect.html".to_string(),
+        "logitech" => "https://support.logi.com/".to_string(),
+        _ => {
+            let query = if !hardware_id.is_empty() {
+                hardware_id.replace('&', "%26")
+            } else {
+                name.replace(' ', "+")
+            };
+            format!("https://www.catalog.update.microsoft.com/Search.aspx?q={query}")
+        }
+    }
+}
+
+fn normalize_class(class: &str) -> String {
+    let lower = class.to_lowercase();
+    if lower.contains("display") || lower.contains("video") || lower.contains("graphics") {
+        "Display".to_string()
+    } else if lower.contains("net") {
+        "Net".to_string()
+    } else if lower.contains("media") || lower.contains("audio") || lower.contains("sound") {
+        "Media".to_string()
+    } else if lower.contains("scsi") || lower.contains("storage") || lower.contains("disk") || lower.contains("hdc") {
+        "Storage".to_string()
+    } else if lower.contains("bluetooth") {
+        "Bluetooth".to_string()
+    } else if lower.contains("mouse") || lower.contains("keyboard") || lower.contains("hid") || lower.contains("input") {
+        "Peripherals".to_string()
+    } else {
+        "System".to_string()
+    }
+}
+
+fn is_relevant_class(class: &str) -> bool {
+    matches!(
+        class,
+        "Display" | "Net" | "Media" | "Storage" | "Bluetooth" | "Peripherals" | "System"
+    )
+}
+
+fn clean_date(value: &str) -> String {
+    let trimmed = value.trim();
+    if trimmed.is_empty() {
+        return "Unknown".to_string();
+    }
+    trimmed.replace('-', "/")
+}
+
+fn fallback(value: String, fallback: &str) -> String {
+    if value.is_empty() {
+        fallback.to_string()
+    } else {
+        value
+    }
+}
+
+fn clean_text(value: &str) -> String {
+    value
+        .chars()
+        .filter(|ch| !ch.is_control())
+        .collect::<String>()
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .chars()
+        .take(180)
+        .collect()
+}
+
+fn normalize_key(value: &str) -> String {
+    value
+        .chars()
+        .filter(|ch| ch.is_ascii_alphanumeric())
+        .collect::<String>()
+        .to_ascii_lowercase()
+}
+
+#[cfg(target_os = "windows")]
+fn registry_machine_path(path: &str) -> String {
+    path.trim()
+        .trim_start_matches("\\Registry\\Machine\\")
+        .trim_start_matches("\\REGISTRY\\MACHINE\\")
+        .to_string()
+}
