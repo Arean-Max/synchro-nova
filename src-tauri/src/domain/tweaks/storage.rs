@@ -72,90 +72,126 @@ pub fn is_wer_off_applied() -> bool {
     hkcu_dword("Software\\Microsoft\\Windows\\Windows Error Reporting", "Disabled") == Some(1)
 }
 
-pub fn apply_start_bing_search_off(id: &str) -> TweakApplyResult {
-    collect_result(
-        id,
-        [
-            set_hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "BingSearchEnabled", 0),
-            set_hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "DisableSearchBoxSuggestions", 1),
-        ],
-        "Start menu web search and Bing suggestions disabled for fast local search",
-    )
-}
-
-pub fn is_start_bing_search_off_applied() -> bool {
-    hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "BingSearchEnabled") == Some(0)
-        && hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\Search", "DisableSearchBoxSuggestions") == Some(1)
-}
-
-pub fn apply_delivery_optimization_lan(id: &str) -> TweakApplyResult {
+pub fn apply_disable_paging_executive(id: &str) -> TweakApplyResult {
     collect_result(
         id,
         [set_hklm_dword(
-            "SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization",
-            "DODownloadMode",
+            "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+            "DisablePagingExecutive",
             1,
         )],
-        "Delivery Optimization limited to LAN policy",
+        "Kernel executive and drivers locked in RAM; disk paging disabled",
     )
 }
 
-pub fn is_delivery_optimization_lan_applied() -> bool {
+pub fn is_disable_paging_executive_applied() -> bool {
     hklm_dword(
-        "SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization",
-        "DODownloadMode",
+        "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+        "DisablePagingExecutive",
     ) == Some(1)
 }
 
-pub fn apply_activity_history_off(id: &str) -> TweakApplyResult {
+pub fn apply_disable_memory_compression(id: &str) -> TweakApplyResult {
+    let res = run_command_output(
+        "powershell",
+        &[
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            "Disable-MMAgent -MemoryCompression",
+        ],
+    );
+    if res.is_ok() {
+        applied(id, "Windows background memory compression disabled")
+    } else {
+        super::types::failed(id, "Failed to disable memory compression; requires administrator privileges")
+    }
+}
+
+pub fn is_disable_memory_compression_applied() -> bool {
+    run_command_output(
+        "powershell",
+        &[
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            "(Get-MMAgent).MemoryCompression",
+        ],
+    )
+    .map(|o| String::from_utf8_lossy(&o.stdout).trim().eq_ignore_ascii_case("false"))
+    .unwrap_or(false)
+}
+
+pub fn apply_large_system_cache_off(id: &str) -> TweakApplyResult {
     collect_result(
         id,
-        [
-            set_hklm_dword(
-                "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
-                "EnableActivityFeed",
-                0,
-            ),
-            set_hklm_dword(
-                "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
-                "PublishUserActivities",
-                0,
-            ),
-            set_hklm_dword(
-                "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
-                "UploadUserActivities",
-                0,
-            ),
-        ],
-        "Activity history policy disabled",
+        [set_hklm_dword(
+            "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+            "LargeSystemCache",
+            0,
+        )],
+        "LargeSystemCache disabled to dedicate physical RAM to games",
     )
 }
 
-pub fn is_activity_history_off_applied() -> bool {
-    hklm_dword("SOFTWARE\\Policies\\Microsoft\\Windows\\System", "EnableActivityFeed") == Some(0)
+pub fn is_large_system_cache_off_applied() -> bool {
+    hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+        "LargeSystemCache",
+    ) == Some(0)
 }
 
-pub fn apply_advertising_id_off(id: &str) -> TweakApplyResult {
+pub fn apply_disable_page_combining(id: &str) -> TweakApplyResult {
     collect_result(
         id,
-        [
-            set_hkcu_dword(
-                "Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
-                "Enabled",
-                0,
-            ),
-            set_hkcu_dword(
-                "Software\\Microsoft\\Windows\\CurrentVersion\\Privacy",
-                "TailoredExperiencesWithDiagnosticDataEnabled",
-                0,
-            ),
-        ],
-        "Advertising ID and tailored diagnostic experiences disabled",
+        [set_hklm_dword(
+            "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+            "DisablePageCombining",
+            1,
+        )],
+        "Windows memory deduplication (Page Combining) disabled to prevent fight stutters",
     )
 }
 
-pub fn is_advertising_id_off_applied() -> bool {
-    hkcu_dword("Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo", "Enabled") == Some(0)
+pub fn is_disable_page_combining_applied() -> bool {
+    hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+        "DisablePageCombining",
+    ) == Some(1)
+}
+
+pub fn apply_adaptive_io_page_lock(id: &str) -> TweakApplyResult {
+    let ram_gb = super::runner::total_ram_gb();
+    let bytes: u32 = if ram_gb >= 30.0 {
+        1073741824
+    } else if ram_gb >= 15.0 {
+        536870912
+    } else {
+        268435456
+    };
+    let mb = bytes / 1024 / 1024;
+    collect_result(
+        id,
+        [set_hklm_dword(
+            "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+            "IoPageLockLimit",
+            bytes,
+        )],
+        &format!("IoPageLockLimit set to {mb} MB based on {ram_gb:.1} GB RAM for zero-hitch asset streaming"),
+    )
+}
+
+pub fn is_adaptive_io_page_lock_applied() -> bool {
+    hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+        "IoPageLockLimit",
+    )
+    .map(|v| v >= 268435456)
+    .unwrap_or(false)
 }
 
 pub fn clean_directory_contents(dir: &std::path::Path, total_bytes: &mut u64, files_count: &mut usize) {

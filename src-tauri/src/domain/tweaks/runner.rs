@@ -210,3 +210,73 @@ pub fn delete_hklm_value(_path: &str, _name: &str) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(target_os = "windows")]
+pub fn total_ram_gb() -> f64 {
+    crate::platform::ffi::read_memory_status_ex()
+        .map(|s| s.ull_total_phys as f64 / 1024.0 / 1024.0 / 1024.0)
+        .unwrap_or(16.0)
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn total_ram_gb() -> f64 {
+    16.0
+}
+
+pub fn cpu_cores_count() -> usize {
+    std::thread::available_parallelism()
+        .map(|c| c.get())
+        .unwrap_or(4)
+}
+
+#[cfg(target_os = "windows")]
+pub fn is_intel_hybrid() -> bool {
+    use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    if let Ok(key) = hklm.open_subkey("HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0") {
+        if let Ok(name) = key.get_value::<String, _>("ProcessorNameString") {
+            let lower = name.to_lowercase();
+            let is_intel = lower.contains("intel");
+            let has_hybrid = lower.contains("12th")
+                || lower.contains("13th")
+                || lower.contains("14th")
+                || lower.contains("15th")
+                || lower.contains("ultra")
+                || (is_intel && cpu_cores_count() >= 12);
+            return is_intel && has_hybrid;
+        }
+    }
+    false
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn is_intel_hybrid() -> bool {
+    false
+}
+
+#[cfg(target_os = "windows")]
+pub fn detected_gpu_vendor() -> &'static str {
+    use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let class_path = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}";
+    if let Ok(class_key) = hklm.open_subkey(class_path) {
+        for subkey_name in class_key.enum_keys().flatten() {
+            if let Ok(key) = class_key.open_subkey(&subkey_name) {
+                let desc = key.get_value::<String, _>("DriverDesc").unwrap_or_default().to_lowercase();
+                let provider = key.get_value::<String, _>("ProviderName").unwrap_or_default().to_lowercase();
+                if desc.contains("nvidia") || provider.contains("nvidia") {
+                    return "nvidia";
+                }
+                if desc.contains("amd") || desc.contains("radeon") || provider.contains("advanced micro devices") {
+                    return "amd";
+                }
+            }
+        }
+    }
+    "unknown"
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn detected_gpu_vendor() -> &'static str {
+    "unknown"
+}
+

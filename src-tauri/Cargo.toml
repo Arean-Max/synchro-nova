@@ -1,6 +1,6 @@
 [package]
 name = "synchro"
-version = "2.2.4"
+version = "2.2.5"
 description = "Windows display calibration and system performance optimization utility"
 authors = ["Arean-Max"]
 license = "AGPL-3.0-or-later"

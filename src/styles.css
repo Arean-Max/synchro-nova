@@ -670,7 +670,8 @@ button {
   letter-spacing: -0.01em;
 }
 
-.slider-meta span:last-child {
+.slider-meta span:last-child,
+.slider-value-badge {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11.5px;
   font-weight: 600;
@@ -682,6 +683,40 @@ button {
   min-width: 44px;
   text-align: right;
   letter-spacing: 0;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+
+.slider-meta span:last-child:hover,
+.slider-value-badge:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.slider-inline-input {
+  width: 44px;
+  height: 18px;
+  padding: 0 4px;
+  margin: -2px -4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(18, 18, 22, 0.95);
+  border: 1px solid var(--accent, #3b82f6);
+  border-radius: 4px;
+  text-align: right;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  -moz-appearance: textfield;
+}
+
+.slider-inline-input::-webkit-outer-spin-button,
+.slider-inline-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .slider-track {

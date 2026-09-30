@@ -94,6 +94,16 @@ pub fn run() {
                 if let Ok(hwnd) = window.hwnd() {
                     platform::ffi::eliminate_window_borders(hwnd.0 as isize);
                 }
+                #[cfg(target_os = "windows")]
+                let _ = window.with_webview(|webview| {
+                    let controller = webview.controller();
+                    if let Ok(core) = unsafe { controller.CoreWebView2() } {
+                        let mut pid = 0u32;
+                        if unsafe { core.BrowserProcessId(&mut pid) }.is_ok() && pid != 0 {
+                            platform::ffi::register_webview_pid(pid);
+                        }
+                    }
+                });
 
                 let _ = window.center();
                 if initial.settings.start_minimized {

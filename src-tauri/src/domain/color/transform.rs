@@ -166,10 +166,12 @@ fn apply_gamma_ramp(gamma_percent: f32) -> Result<(), String> {
 
     for index in 0..256 {
         let normalized = index as f32 / 255.0;
-        let corrected = (normalized.powf(exponent) * 65535.0).round() as u16;
-        ramp.red[index] = corrected;
-        ramp.green[index] = corrected;
-        ramp.blue[index] = corrected;
+        let corrected = normalized.powf(exponent);
+
+        let val = (corrected * 65535.0).round() as u16;
+        ramp.red[index] = val;
+        ramp.green[index] = val;
+        ramp.blue[index] = val;
     }
 
     unsafe {

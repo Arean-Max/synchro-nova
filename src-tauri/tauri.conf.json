@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Synchro Nova",
-  "version": "2.2.4",
+  "version": "2.2.5",
   "identifier": "app.synchro.performance",
   "build": {
     "frontendDist": "../src"
@@ -23,7 +23,7 @@
         "decorations": false,
         "shadow": false,
         "devtools": false,
-        "additionalBrowserArgs": "--disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --no-pings --disable-client-side-phishing-detection --safebrowsing-disable-auto-update --disable-default-apps --disable-extensions --disable-breakpad --no-crash-upload --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disable-wake-on-wifi --enable-low-end-device-mode --disable-gpu-vsync --enable-features=CalculateNativeWinOcclusion,IntensiveWakeUpThrottling,ThrottleDisplayNoneAndVisibilityHiddenCrossOriginIframes --disable-features=Translate,OptimizationHints,MediaRouter,DialMediaRouteProvider,InterestFeedContentSuggestions,SpeechSynthesis --disk-cache-size=16777216 --media-cache-size=8388608"
+        "additionalBrowserArgs": "--disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --no-pings --disable-client-side-phishing-detection --safebrowsing-disable-auto-update --disable-default-apps --disable-extensions --disable-breakpad --no-crash-upload --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disable-wake-on-wifi --enable-low-end-device-mode --disable-gpu-vsync --renderer-process-limit=1 --js-flags=--max-old-space-size=32,--optimize-for-size,--lite-mode --disk-cache-size=1048576 --media-cache-size=1048576 --disable-gpu-shader-disk-cache --enable-features=CalculateNativeWinOcclusion,IntensiveWakeUpThrottling,ThrottleDisplayNoneAndVisibilityHiddenCrossOriginIframes --disable-features=AudioServiceOutOfProcess,Translate,OptimizationHints,MediaRouter,DialMediaRouteProvider,InterestFeedContentSuggestions,SpeechSynthesis,BackForwardCache,AutofillServerCommunication"
       }
     ],
     "security": {

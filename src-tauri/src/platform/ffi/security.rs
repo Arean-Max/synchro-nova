@@ -94,6 +94,16 @@ pub fn init_process_tree_job() {
 pub fn init_process_tree_job() {}
 
 #[cfg(target_os = "windows")]
+static REGISTERED_WEBVIEW_PID: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+pub fn register_webview_pid(pid: u32) {
+    #[cfg(target_os = "windows")]
+    REGISTERED_WEBVIEW_PID.store(pid, std::sync::atomic::Ordering::Relaxed);
+    #[cfg(not(target_os = "windows"))]
+    let _ = pid;
+}
+
+#[cfg(target_os = "windows")]
 pub fn trim_working_set() {
     use std::sync::Mutex;
     use std::time::{Duration, Instant};
@@ -145,6 +155,12 @@ pub fn trim_working_set() {
                 tree_pids.push(my_pid);
 
                 let mut discovered = Vec::with_capacity(8);
+                let root_wv = REGISTERED_WEBVIEW_PID.load(std::sync::atomic::Ordering::Relaxed);
+                if root_wv != 0 && root_wv != my_pid {
+                    tree_pids.push(root_wv);
+                    discovered.push(root_wv);
+                }
+
                 let mut added = true;
 
                 while added {
@@ -169,9 +185,9 @@ pub fn trim_working_set() {
             }
         }
 
-        const PROCESS_SET_QUOTA: u32 = 0x0100;
+        const PROCESS_TRIM_ACCESS: u32 = 0x0100 | 0x0400;
         for pid in webview_pids {
-            let handle = winapi::OpenProcess(PROCESS_SET_QUOTA, 0, pid);
+            let handle = winapi::OpenProcess(PROCESS_TRIM_ACCESS, 0, pid);
             if !handle.is_null() && handle as isize != -1 {
                 let _ = winapi::SetProcessWorkingSetSize(handle, usize::MAX, usize::MAX);
                 winapi::CloseHandle(handle);

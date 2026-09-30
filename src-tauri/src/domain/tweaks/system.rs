@@ -22,22 +22,6 @@ pub fn is_pointer_precision_off_applied() -> bool {
         && hkcu_string("Control Panel\\Mouse", "MouseThreshold2").as_deref() == Some("0")
 }
 
-pub fn apply_sticky_keys_off(id: &str) -> TweakApplyResult {
-    collect_result(
-        id,
-        [
-            set_hkcu_string("Control Panel\\Accessibility\\StickyKeys", "Flags", "506"),
-            set_hkcu_string("Control Panel\\Accessibility\\Keyboard Response", "Flags", "98"),
-            set_hkcu_string("Control Panel\\Accessibility\\ToggleKeys", "Flags", "58"),
-        ],
-        "Sticky Keys and accessibility gaming popups disabled",
-    )
-}
-
-pub fn is_sticky_keys_off_applied() -> bool {
-    hkcu_string("Control Panel\\Accessibility\\StickyKeys", "Flags").as_deref() == Some("506")
-}
-
 pub fn apply_usb_selective_suspend(id: &str) -> TweakApplyResult {
     let results = [
         run_command(
@@ -142,20 +126,4 @@ pub fn is_transparency_off_applied() -> bool {
         "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
         "EnableTransparency",
     ) == Some(0)
-}
-
-pub fn apply_menu_show_delay_low(id: &str) -> TweakApplyResult {
-    collect_result(
-        id,
-        [set_hkcu_string(
-            "Control Panel\\Desktop",
-            "MenuShowDelay",
-            "100",
-        )],
-        "Desktop menu delay reduced",
-    )
-}
-
-pub fn is_menu_show_delay_low_applied() -> bool {
-    hkcu_string("Control Panel\\Desktop", "MenuShowDelay").as_deref() == Some("100")
 }

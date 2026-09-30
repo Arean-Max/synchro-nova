@@ -155,18 +155,85 @@ pub fn apply_system_responsiveness(id: &str) -> TweakApplyResult {
         [set_hklm_dword(
             "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
             "SystemResponsiveness",
-            10,
+            0,
         )],
-        "System responsiveness reserve set to 10; reboot recommended",
+        "System responsiveness reserve set to 0% (100% CPU capacity dedicated to active games)",
     )
 }
 
 pub fn is_system_responsiveness_applied() -> bool {
-    let val = hklm_dword(
+    hklm_dword(
         "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile",
         "SystemResponsiveness",
-    );
-    val == Some(10) || val == Some(0)
+    ) == Some(0)
+}
+
+pub fn apply_cpu_adaptive_scheduling(id: &str) -> TweakApplyResult {
+    let is_hybrid = super::runner::is_intel_hybrid();
+    let cores = super::runner::cpu_cores_count();
+    if is_hybrid {
+        let r1 = run_command("powercfg", &["/setacvalueindex", "SCHEME_CURRENT", "SUB_PROCESSOR", "HETEROPOLICY", "2"]);
+        let r2 = run_command("powercfg", &["/setacvalueindex", "SCHEME_CURRENT", "SUB_PROCESSOR", "HETEROSHORTPOLICY", "2"]);
+        let _ = run_command("powercfg", &["/setactive", "SCHEME_CURRENT"]);
+        if r1.is_ok() || r2.is_ok() {
+            applied(id, &format!("Intel Hybrid detected ({cores} threads): game threads pinned to high-performance P-cores"))
+        } else {
+            failed(id, "Failed to configure Intel HeteroPolicy; run Synchro as administrator")
+        }
+    } else {
+        let r1 = run_command("powercfg", &["/setacvalueindex", "SCHEME_CURRENT", "SUB_PROCESSOR", "CPMINCORES", "100"]);
+        let r2 = run_command("powercfg", &["/setacvalueindex", "SCHEME_CURRENT", "SUB_PROCESSOR", "CPMAXCORES", "100"]);
+        let _ = run_command("powercfg", &["/setactive", "SCHEME_CURRENT"]);
+        if r1.is_ok() || r2.is_ok() {
+            applied(id, &format!("Processor architecture optimized ({cores} cores): full core availability locked"))
+        } else {
+            failed(id, "Failed to configure CPU core parameters; run Synchro as administrator")
+        }
+    }
+}
+
+pub fn is_cpu_adaptive_scheduling_applied() -> bool {
+    let is_hybrid = super::runner::is_intel_hybrid();
+    if is_hybrid {
+        run_command_output("powercfg", &["/query", "SCHEME_CURRENT", "SUB_PROCESSOR", "HETEROPOLICY"])
+            .map(|o| String::from_utf8_lossy(&o.stdout).contains("0x00000002"))
+            .unwrap_or(false)
+    } else {
+        hklm_dword(
+            "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerSettings\\54533251-82be-4824-96c1-47b60b740d00\\0cc5b647-6429-45d6-8e05-69d96c744b5c",
+            "ValueMax",
+        ) == Some(0)
+    }
+}
+
+pub fn apply_system_worker_threads(id: &str) -> TweakApplyResult {
+    let cores = super::runner::cpu_cores_count();
+    let count = (cores * 2).clamp(16, 64) as u32;
+    collect_result(
+        id,
+        [
+            set_hklm_dword(
+                "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Executive",
+                "AdditionalWorkerThreads",
+                count,
+            ),
+            set_hklm_dword(
+                "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Executive",
+                "AdditionalCriticalWorkerThreads",
+                count,
+            ),
+        ],
+        &format!("Kernel executive worker threads expanded to {count} based on {cores} CPU cores"),
+    )
+}
+
+pub fn is_system_worker_threads_applied() -> bool {
+    hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Executive",
+        "AdditionalWorkerThreads",
+    )
+    .map(|v| v >= 16)
+    .unwrap_or(false)
 }
 
 pub fn apply_network_throttle_off(id: &str) -> TweakApplyResult {

@@ -23,6 +23,7 @@ import {
   selectedColorGame,
   standardTemplateNames,
   stepColorGame,
+  formatSliderValue,
   syncAllSliders,
   syncAllTemplateSliders,
   updateBlackHoloDom,
@@ -1095,7 +1096,7 @@ async function handleAction(action) {
       }
       if (viewState.applyingTweaks) return null;
       const ids = Array.from(viewState.selectedTweaks).filter(
-        (id) => !viewState.installedTweaks.has(id) || id === "clean-temp-junk" || id === "dns-cache-flush"
+        (id) => !viewState.installedTweaks.has(id) || id === "clean-temp-junk"
       );
       if (!ids.length) {
         const isRu = lang() === "ru";
@@ -1365,6 +1366,88 @@ function handleInput(event) {
 async function handleClick(event) {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
+
+  const valBadge = target.closest("[data-slider-value]");
+  if (valBadge && !valBadge.querySelector("input")) {
+    const field = valBadge.getAttribute("data-slider-value");
+    const def = sliderDefs[field];
+    if (def) {
+      event.preventDefault();
+      event.stopPropagation();
+      const curVal = Math.round(Number(appState.color[field] ?? 100));
+      valBadge.innerHTML = `<input class="slider-inline-input" type="number" min="${def.min}" max="${def.max}" step="${def.step}" value="${curVal}">`;
+      const numInput = valBadge.querySelector("input");
+      if (numInput) {
+        numInput.focus();
+        numInput.select();
+        let committed = false;
+        const commit = () => {
+          if (committed) return;
+          committed = true;
+          const raw = Number(numInput.value);
+          const finalVal = Number.isFinite(raw) ? Math.min(def.max, Math.max(def.min, raw)) : curVal;
+          appState.color[field] = finalVal;
+          valBadge.textContent = formatSliderValue(field, finalVal);
+          updateSliderDom(field, appState);
+          scheduleApplyColor();
+          saveSettings();
+        };
+        numInput.addEventListener("blur", commit, { once: true });
+        numInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            committed = true;
+            valBadge.textContent = formatSliderValue(field, curVal);
+          }
+        });
+        numInput.addEventListener("click", (e) => e.stopPropagation());
+      }
+      return;
+    }
+  }
+
+  const tplValBadge = target.closest("[data-template-slider-value]");
+  if (tplValBadge && !tplValBadge.querySelector("input")) {
+    const field = tplValBadge.getAttribute("data-template-slider-value");
+    const def = sliderDefs[field];
+    if (def && viewState.editingTemplateColor) {
+      event.preventDefault();
+      event.stopPropagation();
+      const curVal = Math.round(Number(viewState.editingTemplateColor[field] ?? 100));
+      tplValBadge.innerHTML = `<input class="slider-inline-input" type="number" min="${def.min}" max="${def.max}" step="${def.step}" value="${curVal}">`;
+      const numInput = tplValBadge.querySelector("input");
+      if (numInput) {
+        numInput.focus();
+        numInput.select();
+        let committed = false;
+        const commit = () => {
+          if (committed) return;
+          committed = true;
+          const raw = Number(numInput.value);
+          const finalVal = Number.isFinite(raw) ? Math.min(def.max, Math.max(def.min, raw)) : curVal;
+          viewState.editingTemplateColor[field] = finalVal;
+          tplValBadge.textContent = formatSliderValue(field, finalVal);
+          updateTemplateSliderDom(field, viewState.editingTemplateColor);
+        };
+        numInput.addEventListener("blur", commit, { once: true });
+        numInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            committed = true;
+            tplValBadge.textContent = formatSliderValue(field, curVal);
+          }
+        });
+        numInput.addEventListener("click", (e) => e.stopPropagation());
+      }
+      return;
+    }
+  }
 
   const impactBannerClose = target.closest(".ios-banner-close");
   if (impactBannerClose) {
@@ -1794,7 +1877,7 @@ async function handleClick(event) {
     if (!id) return;
 
     const isInstalled = viewState.installedTweaks.has(id);
-    const isMaintenance = id === "clean-temp-junk" || id === "dns-cache-flush";
+    const isMaintenance = id === "clean-temp-junk";
 
     if (isInstalled && !isMaintenance) {
       const isRu = lang() === "ru";

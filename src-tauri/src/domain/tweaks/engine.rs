@@ -28,20 +28,32 @@ pub fn collect_tweak_statuses() -> Vec<TweakStatus> {
 pub(crate) fn is_admin_tweak(id: &str) -> bool {
     matches!(
         id,
-        "hags-on"
+        "win32-priority-rust"
+            | "rust-ifeo-high-priority"
+            | "system-timer-resolution"
+            | "disable-paging-executive"
+            | "disable-memory-compression"
+            | "disable-page-combining"
+            | "adaptive-io-page-lock"
+            | "kill-gamebar-presence"
+            | "disable-hpet-synthetic"
+            | "directx-thread-priority"
+            | "gpu-adaptive-power"
+            | "network-udp-buffers"
+            | "large-system-cache-off"
+            | "hags-on"
             | "mpo-disable"
             | "mmcss-games-priority"
-            | "system-responsiveness-10"
+            | "system-responsiveness-0"
+            | "system-worker-threads"
+            | "cpu-adaptive-scheduling"
             | "network-throttle-off"
             | "hibernate-off"
             | "ntfs-last-access-off"
             | "trim-enable"
-            | "rss-on"
+            | "rss-adaptive-cores"
             | "rsc-off"
-            | "ecn-off"
             | "disable-gamedvr"
-            | "delivery-optimization-lan"
-            | "activity-history-off"
             | "tcp-nodelay-ack"
             | "nic-energy-saving-off"
             | "tcp-heuristics-off"
@@ -52,7 +64,7 @@ pub(crate) fn is_admin_tweak(id: &str) -> bool {
 }
 
 fn apply_one(id: &str) -> TweakApplyResult {
-    if is_tweak_applied(id) && id != "clean-temp-junk" && id != "dns-cache-flush" {
+    if is_tweak_applied(id) && id != "clean-temp-junk" {
         return TweakApplyResult {
             id: id.to_string(),
             status: "skipped".to_string(),
@@ -67,6 +79,13 @@ fn apply_one(id: &str) -> TweakApplyResult {
         };
     }
     match id {
+        "win32-priority-rust" => gaming::apply_win32_priority_rust(id),
+        "rust-ifeo-high-priority" => gaming::apply_rust_ifeo_high_priority(id),
+        "system-timer-resolution" => gaming::apply_system_timer_resolution(id),
+        "kill-gamebar-presence" => gaming::apply_kill_gamebar_presence(id),
+        "disable-hpet-synthetic" => gaming::apply_disable_hpet_synthetic(id),
+        "directx-thread-priority" => gaming::apply_directx_thread_priority(id),
+        "gpu-adaptive-power" => gaming::apply_gpu_adaptive_power(id),
         "game-mode-on" => gaming::apply_game_mode(id),
         "modern-flip-model-on" => gaming::apply_modern_flip_model(id),
         "gamedvr-fse-mode" => gaming::apply_gamedvr_fse_mode(id),
@@ -83,19 +102,24 @@ fn apply_one(id: &str) -> TweakApplyResult {
         "ultimate-performance-plan" => power::apply_ultimate_performance(id),
         "cpu-unpark-cores" => power::apply_cpu_unpark_cores(id),
         "power-throttling-off" => power::apply_power_throttling_off(id),
+        "cpu-adaptive-scheduling" => power::apply_cpu_adaptive_scheduling(id),
+        "system-worker-threads" => power::apply_system_worker_threads(id),
         "mmcss-games-priority" => power::apply_mmcss_games_priority(id),
-        "system-responsiveness-10" => power::apply_system_responsiveness(id),
+        "system-responsiveness-0" => power::apply_system_responsiveness(id),
         "network-throttle-off" => power::apply_network_throttle_off(id),
 
         "pointer-precision-off" => system::apply_pointer_precision_off(id),
-        "sticky-keys-off" => system::apply_sticky_keys_off(id),
         "usb-selective-suspend-off" => system::apply_usb_selective_suspend(id),
         "input-response-fast" => system::apply_input_response_fast(id),
         "visual-effects-performance" => system::apply_visual_effects_performance(id),
         "transparency-off" => system::apply_transparency_off(id),
-        "menu-show-delay-low" => system::apply_menu_show_delay_low(id),
 
         "clean-temp-junk" => storage::apply_clean_temp_junk(id),
+        "disable-paging-executive" => storage::apply_disable_paging_executive(id),
+        "disable-memory-compression" => storage::apply_disable_memory_compression(id),
+        "disable-page-combining" => storage::apply_disable_page_combining(id),
+        "adaptive-io-page-lock" => storage::apply_adaptive_io_page_lock(id),
+        "large-system-cache-off" => storage::apply_large_system_cache_off(id),
         "hibernate-off" => runner::run_command_result(
             id,
             "powercfg",
@@ -115,42 +139,20 @@ fn apply_one(id: &str) -> TweakApplyResult {
             "TRIM notifications enabled",
         ),
 
+        "network-udp-buffers" => network::apply_network_udp_buffers(id),
         "tcp-nodelay-ack" => network::apply_tcp_nodelay_ack(id),
         "nic-energy-saving-off" => network::apply_nic_energy_saving_off(id),
         "tcp-heuristics-off" => network::apply_tcp_heuristics_off(id),
-        "rss-on" => runner::run_netsh(
-            id,
-            &["interface", "tcp", "set", "global", "rss=enabled"],
-            "Receive-side scaling enabled",
-        ),
+        "rss-adaptive-cores" => network::apply_rss_adaptive_cores(id),
         "rsc-off" => runner::run_netsh(
             id,
             &["interface", "tcp", "set", "global", "rsc=disabled"],
             "Receive segment coalescing disabled",
         ),
-        "ecn-off" => runner::run_netsh(
-            id,
-            &[
-                "interface",
-                "tcp",
-                "set",
-                "global",
-                "ecncapability=disabled",
-            ],
-            "ECN disabled",
-        ),
-        "dns-cache-flush" => {
-            runner::run_command_result(id, "ipconfig", &["/flushdns"], "DNS cache refreshed")
-        }
 
         "disable-gamedvr" => gaming::apply_disable_gamedvr(id),
         "disable-bg-recording" => gaming::apply_disable_bg_recording(id),
-        "gamebar-startup-off" => gaming::apply_gamebar_startup_off(id),
         "wer-off" => storage::apply_wer_off(id),
-        "start-bing-search-off" => storage::apply_start_bing_search_off(id),
-        "delivery-optimization-lan" => storage::apply_delivery_optimization_lan(id),
-        "activity-history-off" => storage::apply_activity_history_off(id),
-        "advertising-id-off" => storage::apply_advertising_id_off(id),
 
         _ => skipped(
             id,
@@ -161,6 +163,13 @@ fn apply_one(id: &str) -> TweakApplyResult {
 
 pub fn known_tweak_ids() -> &'static [&'static str] {
     &[
+        "win32-priority-rust",
+        "rust-ifeo-high-priority",
+        "system-timer-resolution",
+        "kill-gamebar-presence",
+        "disable-hpet-synthetic",
+        "directx-thread-priority",
+        "gpu-adaptive-power",
         "game-mode-on",
         "modern-flip-model-on",
         "gamedvr-fse-mode",
@@ -173,44 +182,50 @@ pub fn known_tweak_ids() -> &'static [&'static str] {
         "ultimate-performance-plan",
         "cpu-unpark-cores",
         "power-throttling-off",
+        "cpu-adaptive-scheduling",
+        "system-worker-threads",
         "mmcss-games-priority",
-        "system-responsiveness-10",
+        "system-responsiveness-0",
         "network-throttle-off",
 
         "pointer-precision-off",
-        "sticky-keys-off",
         "usb-selective-suspend-off",
         "input-response-fast",
         "visual-effects-performance",
         "transparency-off",
-        "menu-show-delay-low",
 
         "clean-temp-junk",
+        "disable-paging-executive",
+        "disable-memory-compression",
+        "disable-page-combining",
+        "adaptive-io-page-lock",
+        "large-system-cache-off",
         "hibernate-off",
         "ntfs-last-access-off",
         "trim-enable",
 
+        "network-udp-buffers",
         "tcp-nodelay-ack",
         "nic-energy-saving-off",
         "tcp-heuristics-off",
-        "rss-on",
+        "rss-adaptive-cores",
         "rsc-off",
-        "ecn-off",
-        "dns-cache-flush",
 
         "disable-gamedvr",
         "disable-bg-recording",
-        "gamebar-startup-off",
         "wer-off",
-        "start-bing-search-off",
-        "delivery-optimization-lan",
-        "activity-history-off",
-        "advertising-id-off",
     ]
 }
 
 pub fn is_tweak_applied(id: &str) -> bool {
     match id {
+        "win32-priority-rust" => gaming::is_win32_priority_rust_applied(),
+        "rust-ifeo-high-priority" => gaming::is_rust_ifeo_high_priority_applied(),
+        "system-timer-resolution" => gaming::is_system_timer_resolution_applied(),
+        "kill-gamebar-presence" => gaming::is_kill_gamebar_presence_applied(),
+        "disable-hpet-synthetic" => gaming::is_disable_hpet_synthetic_applied(),
+        "directx-thread-priority" => gaming::is_directx_thread_priority_applied(),
+        "gpu-adaptive-power" => gaming::is_gpu_adaptive_power_applied(),
         "game-mode-on" => gaming::is_game_mode_applied(),
         "modern-flip-model-on" => gaming::is_modern_flip_model_applied(),
         "gamedvr-fse-mode" => gaming::is_gamedvr_fse_mode_applied(),
@@ -223,39 +238,38 @@ pub fn is_tweak_applied(id: &str) -> bool {
         "ultimate-performance-plan" => power::is_ultimate_performance_applied(),
         "cpu-unpark-cores" => power::is_cpu_unpark_cores_applied(),
         "power-throttling-off" => power::is_power_throttling_off_applied(),
+        "cpu-adaptive-scheduling" => power::is_cpu_adaptive_scheduling_applied(),
+        "system-worker-threads" => power::is_system_worker_threads_applied(),
         "mmcss-games-priority" => power::is_mmcss_games_priority_applied(),
-        "system-responsiveness-10" => power::is_system_responsiveness_applied(),
+        "system-responsiveness-0" => power::is_system_responsiveness_applied(),
         "network-throttle-off" => power::is_network_throttle_off_applied(),
 
         "pointer-precision-off" => system::is_pointer_precision_off_applied(),
-        "sticky-keys-off" => system::is_sticky_keys_off_applied(),
         "usb-selective-suspend-off" => system::is_usb_selective_suspend_applied(),
         "input-response-fast" => system::is_input_response_fast_applied(),
         "visual-effects-performance" => system::is_visual_effects_performance_applied(),
         "transparency-off" => system::is_transparency_off_applied(),
-        "menu-show-delay-low" => system::is_menu_show_delay_low_applied(),
 
         "clean-temp-junk" => false,
+        "disable-paging-executive" => storage::is_disable_paging_executive_applied(),
+        "disable-memory-compression" => storage::is_disable_memory_compression_applied(),
+        "disable-page-combining" => storage::is_disable_page_combining_applied(),
+        "adaptive-io-page-lock" => storage::is_adaptive_io_page_lock_applied(),
+        "large-system-cache-off" => storage::is_large_system_cache_off_applied(),
         "hibernate-off" => storage::is_hibernate_applied(),
         "ntfs-last-access-off" => storage::is_ntfs_last_access_applied(),
         "trim-enable" => storage::is_trim_applied(),
 
+        "network-udp-buffers" => network::is_network_udp_buffers_applied(),
         "tcp-nodelay-ack" => network::hklm_tcp_nodelay_active(),
         "nic-energy-saving-off" => network::hklm_nic_energy_saving_off(),
         "tcp-heuristics-off" => network::is_tcp_heuristics_off_applied(),
-        "rss-on" => network::is_rss_applied(),
+        "rss-adaptive-cores" => network::is_rss_adaptive_cores_applied(),
         "rsc-off" => network::is_rsc_applied(),
-        "ecn-off" => network::is_ecn_applied(),
-        "dns-cache-flush" => false,
 
         "disable-gamedvr" => gaming::is_disable_gamedvr_applied(),
         "disable-bg-recording" => gaming::is_disable_bg_recording_applied(),
-        "gamebar-startup-off" => gaming::is_gamebar_startup_off_applied(),
         "wer-off" => storage::is_wer_off_applied(),
-        "start-bing-search-off" => storage::is_start_bing_search_off_applied(),
-        "delivery-optimization-lan" => storage::is_delivery_optimization_lan_applied(),
-        "activity-history-off" => storage::is_activity_history_off_applied(),
-        "advertising-id-off" => storage::is_advertising_id_off_applied(),
 
         _ => false,
     }

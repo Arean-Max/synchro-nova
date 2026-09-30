@@ -87,7 +87,7 @@ function slider(field, appState, t) {
   const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
   const fillStyle = sliderFillStyle(field, value);
   const zeroMark = def?.zero ? '<span class="zero-mark"></span>' : '';
-  return `<div class="slider-row" data-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span data-slider-value="${field}">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${pct}%">${zeroMark}<span class="slider-fill" style="${fillStyle}"></span><span class="slider-thumb" style="left:${pct}%"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
+  return `<div class="slider-row" data-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span class="slider-value-badge" data-slider-value="${field}" data-field="${field}" tabindex="0" role="button" title="Click to enter value">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${pct}%">${zeroMark}<span class="slider-fill" style="${fillStyle}"></span><span class="slider-thumb" style="left:${pct}%"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
 }
 
 function hashString(value) {
@@ -518,7 +518,9 @@ export function updateSliderDom(field, appState) {
   const value = Number(appState.color[field]);
   const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
   if (input) input.value = String(value);
-  if (valueLabel) valueLabel.textContent = formatSliderValue(field, value);
+  if (valueLabel && !valueLabel.querySelector("input")) {
+    valueLabel.textContent = formatSliderValue(field, value);
+  }
   if (track) track.style.setProperty("--slider-percent", `${pct}%`);
   if (thumb) thumb.style.left = `${pct}%`;
   if (fill) fill.style.cssText = sliderFillStyle(field, value);

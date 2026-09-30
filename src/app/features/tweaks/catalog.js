@@ -5,6 +5,13 @@ export const tweakCatalog = [
     icon: "zap",
     title: "Gaming & Latency",
     tweaks: [
+      { id: "win32-priority-rust", title: "Win32 Priority Separation", description: "Allocates long fixed-length processor quantums to Rust and active games, stabilizing 1% Low FPS.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
+      { id: "rust-ifeo-high-priority", title: "Rust IFEO High CPU & I/O Priority", description: "Enforces automatic High CPU and High I/O priority for RustClient.exe via Windows Image File Execution Options.", badges: ["ADMIN", "VERIFIED"] },
+      { id: "system-timer-resolution", title: "System Timer Resolution (0.5 ms)", description: "Forces Windows global timer resolution to 0.5 ms to smooth frame pacing and eliminate micro-stutters during weapon spray.", badges: ["ADMIN", "VERIFIED"] },
+      { id: "kill-gamebar-presence", title: "Kill GameBar Presence Writer", description: "Completely disables GameBarPresenceWriter and GameDVR hooks that cause frame time spikes in Unity games.", badges: ["ADMIN", "VERIFIED"] },
+      { id: "disable-hpet-synthetic", title: "Disable Dynamic Tick (Synthetic Timers)", description: "Disables dynamic tick in the Windows boot configuration to maintain steady clock cycles and prevent micro-stuttering.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
+      { id: "directx-thread-priority", title: "DirectX GPU Scheduling & TdrDelay", description: "Enables GPU preemption and extends DirectX TDR delay to 10s to eliminate GPU hang spikes and driver timeouts.", badges: ["ADMIN", "VERIFIED"] },
+      { id: "gpu-adaptive-power", title: "Hardware-Adaptive GPU Power", description: "Detects GPU vendor: disables PowerMizer downclocking on NVIDIA or disables ULPS sleep state on AMD for locked framerates.", badges: ["ADMIN", "VERIFIED"] },
       { id: "game-mode-on", title: "Enable Game Mode", description: "Enables Windows Game Mode hints and priority for active games.", badges: ["SAFE", "VERIFIED"] },
       { id: "modern-flip-model-on", title: "Modern Flip Model upgrade", description: "Forces Modern Flip presentation model for windowed and borderless games to prevent gamma resets and reduce latency.", badges: ["SAFE", "VERIFIED"] },
       { id: "gamedvr-fse-mode", title: "DirectX FSE mode", description: "Enforces true Full Screen Exclusive presentation for games to minimize latency.", badges: ["SAFE", "VERIFIED"] },
@@ -24,8 +31,10 @@ export const tweakCatalog = [
       { id: "ultimate-performance-plan", title: "Ultimate performance plan", description: "Activates the hidden Windows Ultimate Performance power scheme.", badges: ["SAFE", "VERIFIED"] },
       { id: "cpu-unpark-cores", title: "Unpark CPU Cores", description: "Disables CPU core parking so 100% of logical cores remain active, eliminating core wake-up micro-stutters in games.", badges: ["ADMIN", "VERIFIED"] },
       { id: "power-throttling-off", title: "Disable Power Throttling", description: "Globally disables Windows Power Throttling to prevent Windows from downclocking game threads.", badges: ["ADMIN", "VERIFIED"] },
+      { id: "cpu-adaptive-scheduling", title: "Hardware-Adaptive CPU Scheduling", description: "Detects Intel Hybrid P/E-cores or AMD Ryzen: pins game threads to high-performance P-cores or locks multi-core quantums.", badges: ["ADMIN", "VERIFIED"] },
+      { id: "system-worker-threads", title: "Adaptive System Worker Threads", description: "Dynamically expands Windows kernel executive worker threads based on detected CPU core count to eliminate I/O starvation.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
       { id: "mmcss-games-priority", title: "MMCSS game priority", description: "Raises the Games multimedia task priority hints used by MMCSS.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "system-responsiveness-10", title: "Minimal system reserve", description: "Reduces the MMCSS low-priority CPU reserve to give up to 100% CPU to games.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
+      { id: "system-responsiveness-0", title: "Dedicated 100% CPU to Games", description: "Sets MMCSS system responsiveness reserve to 0% to allocate full processor capacity to active games.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
       { id: "network-throttle-off", title: "Network throttling off", description: "Removes MMCSS network throttling for latency-sensitive games and streams.", badges: ["ADMIN", "REBOOT", "VERIFIED"] }
     ]
   },
@@ -37,11 +46,9 @@ export const tweakCatalog = [
     tweaks: [
       { id: "pointer-precision-off", title: "Disable pointer precision", description: "Turns off Windows mouse acceleration for consistent 1:1 raw aim feel.", badges: ["SAFE", "VERIFIED"] },
       { id: "input-response-fast", title: "Ultra-fast Input Queue", description: "Minimizes keyboard repeat delay, sets instant mouse hover time, and expands mouse/keyboard driver buffer queues.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "sticky-keys-off", title: "Disable Sticky Keys", description: "Disables Shift x5 Sticky Keys and Filter Keys shortcut popups during gaming.", badges: ["SAFE", "VERIFIED"] },
       { id: "usb-selective-suspend-off", title: "USB selective suspend off", description: "Prevents USB devices from entering selective suspend to eliminate wake latency.", badges: ["SAFE", "VERIFIED"] },
       { id: "visual-effects-performance", title: "Visual effects performance", description: "Switches Explorer visual effects to the Windows performance profile.", badges: ["SAFE", "VERIFIED"], note: "Some window animations and visual polish will be reduced." },
-      { id: "transparency-off", title: "Transparency off", description: "Disables Windows transparency effects for a lighter desktop compositor path.", badges: ["SAFE", "VERIFIED"], note: "Acrylic and translucent shell surfaces will become solid." },
-      { id: "menu-show-delay-low", title: "Fast desktop menus", description: "Reduces classic desktop menu delay to make shell interactions feel sharper.", badges: ["SAFE", "VERIFIED"] }
+      { id: "transparency-off", title: "Transparency off", description: "Disables Windows transparency effects for a lighter desktop compositor path.", badges: ["SAFE", "VERIFIED"], note: "Acrylic and translucent shell surfaces will become solid." }
     ]
   },
   {
@@ -51,6 +58,11 @@ export const tweakCatalog = [
     title: "Storage & Debloat",
     tweaks: [
       { id: "clean-temp-junk", title: "Clean Windows & Shader Junk", description: "Cleans temporary junk files, crash dumps, and DirectX shader cache to free gigabytes and eliminate stutters.", badges: ["SAFE", "VERIFIED"] },
+      { id: "disable-paging-executive", title: "Lock Kernel & Drivers in RAM", description: "Forces Windows to keep system kernel and drivers in physical RAM instead of paging them to disk, eliminating asset-load freezes.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
+      { id: "disable-memory-compression", title: "Disable Memory Compression", description: "Disables Windows background memory compression to free CPU cores and avoid compression overhead during intense gunfights.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
+      { id: "disable-page-combining", title: "Disable Memory Deduplication", description: "Disables background Windows Page Combining RAM scans that induce micro-stutters during heavy gameplay.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
+      { id: "adaptive-io-page-lock", title: "Hardware-Adaptive IoPageLockLimit", description: "Dynamically allocates 512MB-1GB physical memory I/O transfer limits based on total RAM for zero-hitch monument streaming.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
+      { id: "large-system-cache-off", title: "Prioritize RAM for Game Execution", description: "Sets LargeSystemCache to 0 so Windows dedicates physical RAM to game processes rather than filesystem cache.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
       { id: "hibernate-off", title: "Hibernate off", description: "Disables hibernation to remove hiberfil.sys (freeing 8-32GB) and eliminates Fast Startup state corruption.", badges: ["ADMIN", "REBOOT", "VERIFIED"], note: "Hibernate and Windows Fast Startup will stop working." },
       { id: "ntfs-last-access-off", title: "NTFS last access off", description: "Disables last-access timestamp updates to reduce metadata writes and disk I/O.", badges: ["ADMIN", "VERIFIED"] },
       { id: "trim-enable", title: "Ensure TRIM enabled", description: "Enables Windows delete notifications for SSD/NVMe cleanup and write consistency.", badges: ["ADMIN", "VERIFIED"], note: "Useful for SSDs; preserves flash cell lifespan and write speed." }
@@ -62,13 +74,12 @@ export const tweakCatalog = [
     icon: "monitor",
     title: "Network Latency",
     tweaks: [
+      { id: "network-udp-buffers", title: "Hardware-Adaptive RakNet Buffers", description: "Optimizes AFD datagram thresholds and dynamically sizes socket buffers (512KB-1MB) based on RAM for zero packet loss.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
       { id: "tcp-nodelay-ack", title: "TCP NoDelay & AckFrequency", description: "Disables Nagle's algorithm and forces immediate TCP ACK without delay, cutting 40-200ms ping latency in online games.", badges: ["ADMIN", "VERIFIED"] },
       { id: "nic-energy-saving-off", title: "Disable NIC Energy Saving", description: "Disables Energy-Efficient Ethernet (EEE), Green Ethernet, and Flow Control on network cards to prevent ping spikes.", badges: ["ADMIN", "VERIFIED"] },
       { id: "tcp-heuristics-off", title: "Optimize TCP Windows & Heuristics", description: "Disables TCP heuristics and timestamps, setting autotuning to normal to eliminate packet loss and jitter.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "rss-on", title: "Receive-side scaling on", description: "Keeps network receive processing distributed across CPU cores, eliminating Core 0 bottleneck.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "rsc-off", title: "Receive segment coalescing off", description: "Reduces packet batching latency on network adapters for online multiplayer games.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "ecn-off", title: "ECN off", description: "Disables ECN for networks that drop packets or spike ping during ECN negotiation.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "dns-cache-flush", title: "DNS cache refresh", description: "Refreshes stale resolver state and address mappings for clean network resolution.", badges: ["SAFE", "VERIFIED"] }
+      { id: "rss-adaptive-cores", title: "Hardware-Adaptive RSS Core Affinity", description: "Enables Receive-Side Scaling with BaseProcessor=2 to steer network interrupts off Core 0 and protect game simulation threads.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
+      { id: "rsc-off", title: "Receive segment coalescing off", description: "Reduces packet batching latency on network adapters for online multiplayer games.", badges: ["ADMIN", "VERIFIED"] }
     ]
   },
   {
@@ -79,12 +90,7 @@ export const tweakCatalog = [
     tweaks: [
       { id: "disable-gamedvr", title: "Disable GameDVR", description: "Disables Windows GameDVR capture policy to free GPU video encoder resources.", badges: ["ADMIN", "VERIFIED"], note: "Xbox Game Bar recording and Win+Alt+R capture will stop working." },
       { id: "disable-bg-recording", title: "Disable background recording", description: "Stops passive clip recording and continuous video writing to disk.", badges: ["SAFE", "VERIFIED"], note: "Background clips and instant replay in Xbox Game Bar will be unavailable." },
-      { id: "gamebar-startup-off", title: "Game Bar startup off", description: "Keeps Game Bar startup prompts and controller launch hooks quiet.", badges: ["SAFE", "VERIFIED"], note: "The Xbox button will no longer open Game Bar automatically." },
-      { id: "wer-off", title: "Disable Error Reporting", description: "Disables Windows Error Reporting (WerFault) to eliminate crash lag spikes.", badges: ["SAFE", "VERIFIED"], note: "WerFault background diagnostics will be turned off." },
-      { id: "start-bing-search-off", title: "Disable Start web search", description: "Disables Bing web search in Start menu for instant, 100% offline local search.", badges: ["SAFE", "PRIVACY", "VERIFIED"] },
-      { id: "delivery-optimization-lan", title: "Delivery Optimization LAN only", description: "Prevents Windows Update from seeding updates across the internet during gaming.", badges: ["ADMIN", "PRIVACY", "VERIFIED"] },
-      { id: "activity-history-off", title: "Activity history off", description: "Stops activity history feed, timeline publishing and cloud upload policies.", badges: ["ADMIN", "PRIVACY", "VERIFIED"] },
-      { id: "advertising-id-off", title: "Advertising ID & tracking off", description: "Disables the Windows per-user advertising identifier and tailored diagnostic profiling.", badges: ["SAFE", "PRIVACY", "VERIFIED"] }
+      { id: "wer-off", title: "Disable Error Reporting", description: "Disables Windows Error Reporting (WerFault) to eliminate crash lag spikes.", badges: ["SAFE", "VERIFIED"], note: "WerFault background diagnostics will be turned off." }
     ]
   }
 ];
@@ -143,6 +149,94 @@ export const tweakAppImpacts = {
     impactEn: "Windows prioritizes GPU and CPU resources for the active game and suppresses background tasks.",
     impactRu: "Windows выделяет максимум ресурсов CPU и GPU активной игре, приостанавливая фоновые обновления и задачи."
   },
+  "win32-priority-rust": {
+    appId: "win32_priority",
+    appName: "Win32 Priority Separation",
+    appNameEn: "Win32 Priority Separation",
+    appNameRu: "Приоритеты Win32 / Кванты процессора",
+    impactEn: "Allocates long fixed-length processor quantums (0x26 / 38) to RustClient.exe and foreground games, dramatically boosting 1% Low FPS stability.",
+    impactRu: "Выделяет длинные фиксированные кванты времени процессора (0x26 / 38) активной игре (RustClient.exe), обеспечивая +5-12% к стабильности 1% Low FPS."
+  },
+  "rust-ifeo-high-priority": {
+    appId: "rust_ifeo",
+    appName: "Rust IFEO High Priority",
+    appNameEn: "Rust IFEO High Priority",
+    appNameRu: "Авто-приоритет RustClient (IFEO)",
+    impactEn: "Enforces automatic High CPU and High I/O priority for RustClient.exe in Windows Image File Execution Options, boosting 1% Low FPS without background apps.",
+    impactRu: "Автоматически задает высокий приоритет CPU и дискового ввода-вывода процессу RustClient.exe через реестр IFEO: гарантирует +5-8% к стабильности 1% Low FPS."
+  },
+  "gpu-adaptive-power": {
+    appId: "gpu_power",
+    appName: "Hardware-Adaptive GPU Power",
+    appNameEn: "Hardware-Adaptive GPU Power",
+    appNameRu: "Адаптивное энергопотребление GPU",
+    impactEn: "Detects GPU vendor: disables PowerMizer downclocking on NVIDIA or disables ULPS sleep on AMD to prevent sudden clock drops and stutters in games.",
+    impactRu: "Определяет видеокарту: отключает сброс частот PowerMizer на NVIDIA или отключает ULPS на AMD, устраняя просадки частот и микрофризы."
+  },
+  "system-timer-resolution": {
+    appId: "system_timer",
+    appName: "System Timer Resolution (0.5 ms)",
+    appNameEn: "System Timer Resolution (0.5 ms)",
+    appNameRu: "Системный таймер 0.5 мс",
+    impactEn: "Enforces 0.5 ms global timer resolution (GlobalTimerResolutionRequests = 1), smoothing frame delivery and spray tracking in Rust.",
+    impactRu: "Переводит системный таймер прерываний с 15.6 мс на 0.5 мс: выравнивает фреймтайм и делает спрей оружия идеально плавным."
+  },
+  "kill-gamebar-presence": {
+    appId: "gamebar_presence",
+    appName: "GameBarPresenceWriter",
+    appNameEn: "GameBarPresenceWriter",
+    appNameRu: "GameBarPresenceWriter",
+    impactEn: "Completely disables GameBarPresenceWriter and background presence tracking that causes frametime spikes in Unity engine games.",
+    impactRu: "Полностью устраняет системный процесс GameBarPresenceWriter, вызывающий скачки задержки кадров в играх на движке Unity."
+  },
+  "disable-hpet-synthetic": {
+    appId: "synthetic_timers",
+    appName: "Dynamic Tick & HPET",
+    appNameEn: "Dynamic Tick & HPET",
+    appNameRu: "Dynamic Tick и синтетические таймеры",
+    impactEn: "Disables dynamic tick via BCDEdit, eliminating synthetic timer overhead and micro-stuttering during gameplay.",
+    impactRu: "Отключает Dynamic Tick в конфигурации загрузки Windows: стабилизирует тактовую частоту без просадок фреймрейта."
+  },
+  "directx-thread-priority": {
+    appId: "directx_gpu",
+    appName: "DirectX GPU Scheduling & TdrDelay",
+    appNameEn: "DirectX GPU Scheduling & TdrDelay",
+    appNameRu: "DirectX планирование GPU и TdrDelay",
+    impactEn: "Enables GPU preemption and sets TDR recovery delay to 10s, preventing GPU timeout driver crashes and hang spikes.",
+    impactRu: "Включает вытесняющую многозадачность GPU и увеличивает задержку TDR до 10 сек, предотвращая вылеты видеодрайвера при тяжелых сценах."
+  },
+  "disable-paging-executive": {
+    appId: "memory_paging",
+    appName: "Kernel Memory Paging",
+    appNameEn: "Kernel Memory Paging",
+    appNameRu: "Блокировка ядра в RAM",
+    impactEn: "Forces Windows to keep kernel executive and device drivers locked in physical RAM, eliminating disk page-in stutters during base loading.",
+    impactRu: "Запрещает Windows выгружать системные драйверы и ядро в файл подкачки на диск, устраняя фризы при подгрузке баз в Расте."
+  },
+  "disable-memory-compression": {
+    appId: "memory_compression",
+    appName: "Memory Compression",
+    appNameEn: "Memory Compression",
+    appNameRu: "Сжатие памяти Windows",
+    impactEn: "Disables Windows background RAM compression, freeing CPU cores from compression work during gunfights.",
+    impactRu: "Отключает фоновое сжатие памяти Windows, освобождая ядра процессора для рендеринга и предотвращая микрофризы при стрельбе."
+  },
+  "large-system-cache-off": {
+    appId: "system_cache",
+    appName: "Large System Cache",
+    appNameEn: "Large System Cache",
+    appNameRu: "Файловый кэш LargeSystemCache",
+    impactEn: "Sets LargeSystemCache to 0, dedicating physical memory directly to game processes rather than Windows filesystem cache.",
+    impactRu: "Отключает LargeSystemCache, отдавая максимум оперативной памяти игровому процессу RustClient.exe вместо дискового кэша."
+  },
+  "network-udp-buffers": {
+    appId: "raknet_udp",
+    appName: "RakNet UDP Network Buffers",
+    appNameEn: "RakNet UDP Network Buffers",
+    appNameRu: "Буферы RakNet UDP в Rust",
+    impactEn: "Expands AFD FastSendDatagramThreshold and socket buffers for Rust's RakNet UDP networking, preventing packet loss in 50+ player fights.",
+    impactRu: "Оптимизирует буферы сокетов AFD для протокола RakNet в Rust: исключает потерю пакетов в масштабных файтах 50+ человек и рейдах."
+  },
   "modern-flip-model-on": {
     appId: "directx_flip",
     appName: "DirectX / Modern Flip",
@@ -199,13 +293,29 @@ export const tweakAppImpacts = {
     impactEn: "Assigns maximum scheduling and disk I/O priority to game threads in Windows Multimedia Class Scheduler.",
     impactRu: "Задаёт наивысший приоритет потоков и дискового ввода-вывода для игровых задач в планировщике MMCSS."
   },
-  "system-responsiveness-10": {
+  "cpu-adaptive-scheduling": {
+    appId: "cpu_scheduling",
+    appName: "Hardware-Adaptive CPU Scheduling",
+    appNameEn: "Hardware-Adaptive CPU Scheduling",
+    appNameRu: "Адаптивное планирование CPU",
+    impactEn: "Detects Intel Hybrid architecture to force game threads onto performance P-cores, or pins cores and quantums on AMD Ryzen for peak FPS.",
+    impactRu: "Определяет процессор: фиксирует игровые потоки на мощных P-ядрах на Intel Hybrid или оптимизирует кванты ядер на AMD Ryzen для максимального FPS."
+  },
+  "system-worker-threads": {
+    appId: "kernel_workers",
+    appName: "Adaptive System Worker Threads",
+    appNameEn: "Adaptive System Worker Threads",
+    appNameRu: "Системные рабочие потоки ядра",
+    impactEn: "Expands Windows kernel executive worker threads dynamically based on CPU core count, eliminating I/O starvation during intense gaming.",
+    impactRu: "Динамически расширяет пул системных потоков ядра под количество ядер CPU, предотвращая задержки очередей ввода-вывода в Расте."
+  },
+  "system-responsiveness-0": {
     appId: "multimedia_scheduler",
-    appName: "MMCSS CPU Reserve",
-    appNameEn: "MMCSS CPU Reserve",
-    appNameRu: "Резерв процессора MMCSS",
-    impactEn: "Reduces background CPU reservation from 20% to 10%, giving up to 100% CPU capacity to games.",
-    impactRu: "Снижает резерв процессора для фоновых служб с 20% до 10%, отдавая до 100% мощности процессора активной игре."
+    appName: "MMCSS CPU Reserve (0%)",
+    appNameEn: "MMCSS CPU Reserve (0%)",
+    appNameRu: "Резерв процессора MMCSS (0%)",
+    impactEn: "Sets MMCSS system responsiveness reserve to 0%, dedicating 100% of CPU capacity exclusively to the active game process.",
+    impactRu: "Устанавливает резерв процессора MMCSS на 0%: отдает 100% мощности процессора активной игре без резервирования под фоновые службы."
   },
   "network-throttle-off": {
     appId: "network_mmcss",
@@ -222,14 +332,6 @@ export const tweakAppImpacts = {
     appNameRu: "Курсор мыши / Raw Input",
     impactEn: "Disables Windows mouse acceleration for 1:1 true raw mouse input and consistent muscle memory aim in shooters.",
     impactRu: "Отключает нелинейное ускорение мыши («Повышенная точность»): даёт чистый ввод 1:1 Raw Input для стабильного аима в шутерах."
-  },
-  "sticky-keys-off": {
-    appId: "keyboard_accessibility",
-    appName: "Sticky Keys (Shift x5)",
-    appNameEn: "Sticky Keys (Shift x5)",
-    appNameRu: "Залипание клавиш (Shift x5)",
-    impactEn: "Disables Shift x5 Sticky Keys and Filter Keys popups that can minimize or freeze fullscreen games.",
-    impactRu: "Отключает диалоги залипания клавиш: частое нажатие Shift больше не свернёт полноэкранную игру в разгар боя."
   },
   "usb-selective-suspend-off": {
     appId: "usb_power",
@@ -255,14 +357,6 @@ export const tweakAppImpacts = {
     impactEn: "Disables Acrylic and transparent shell surfaces, freeing GPU VRAM and compositor rendering cycles.",
     impactRu: "Отключает полупрозрачность интерфейса Windows: разгружает видеопамять и ускоряет работу композитора рабочего стола."
   },
-  "menu-show-delay-low": {
-    appId: "windows_shell",
-    appName: "Windows Context Menus",
-    appNameEn: "Windows Context Menus",
-    appNameRu: "Контекстные меню Windows",
-    impactEn: "Reduces classic desktop menu delay to 100ms, making context menus and shell navigation instantaneous.",
-    impactRu: "Снижает задержку контекстных меню Windows до 100 мс: интерфейс открывается мгновенно."
-  },
   "clean-temp-junk": {
     appId: "storage_cleaner",
     appName: "Junk & Shader Cache Cleaner",
@@ -270,6 +364,22 @@ export const tweakAppImpacts = {
     appNameRu: "Очистка мусора и кэша шейдеров",
     impactEn: "Safely cleans %TEMP%, Windows temp files, DirectX D3D shader cache, and crash dumps, freeing gigabytes and fixing stutters.",
     impactRu: "Безопасно удаляет временные файлы (%TEMP%), кэш шейдеров DirectX и дампы ошибок: освобождает гигабайты и убирает статтеры."
+  },
+  "disable-page-combining": {
+    appId: "memory_dedup",
+    appName: "Disable Page Combining",
+    appNameEn: "Disable Page Combining",
+    appNameRu: "Отключение Page Combining",
+    impactEn: "Disables Windows kernel memory deduplication scans that induce periodic CPU spikes and TLB invalidation stutters during gunfights.",
+    impactRu: "Отключает фоновое объединение страниц памяти Windows: исключает периодические подергивания и задержки TLB во время перестрелок."
+  },
+  "adaptive-io-page-lock": {
+    appId: "io_page_lock",
+    appName: "Hardware-Adaptive IoPageLockLimit",
+    appNameEn: "Hardware-Adaptive IoPageLockLimit",
+    appNameRu: "Адаптивный буфер ввода-вывода (IoPageLockLimit)",
+    impactEn: "Allocates 512MB-1GB physical RAM for direct I/O transfers based on total memory, eliminating hitching when streaming monuments and clan bases.",
+    impactRu: "Выделяет 512–1024 МБ памяти под прямой ввод-вывод в зависимости от объема RAM: полностью устраняет фризы при подгрузке РТ и огромных баз."
   },
   "hibernate-off": {
     appId: "fast_startup",
@@ -295,13 +405,13 @@ export const tweakAppImpacts = {
     impactEn: "Ensures TRIM command is active for NVMe and SATA SSDs, preserving peak read/write speeds over time.",
     impactRu: "Проверяет и включает TRIM для SSD: гарантирует своевременную очистку ячеек памяти, предотвращая падение скорости со временем."
   },
-  "rss-on": {
-    appId: "network_adapter",
-    appName: "Receive-Side Scaling (RSS)",
-    appNameEn: "Receive-Side Scaling (RSS)",
-    appNameRu: "Receive-Side Scaling (RSS)",
-    impactEn: "Enables Receive-Side Scaling, spreading incoming network packet processing across multiple CPU cores.",
-    impactRu: "Включает Receive-Side Scaling (RSS): распределяет обработку сетевых пакетов между ядрами CPU, устраняя перегрузку первого ядра."
+  "rss-adaptive-cores": {
+    appId: "network_rss",
+    appName: "Hardware-Adaptive Receive-Side Scaling",
+    appNameEn: "Hardware-Adaptive Receive-Side Scaling",
+    appNameRu: "Адаптивный Receive-Side Scaling (RSS)",
+    impactEn: "Enables RSS and steers network packet processing off Core 0 to protect Rust's main game simulation thread from DPC interrupt lag.",
+    impactRu: "Включает RSS со смещением BaseProcessor=2: убирает сетевые прерывания с ядра 0, освобождая его для главного потока рендеринга Rust."
   },
   "rsc-off": {
     appId: "network_adapter",
@@ -310,22 +420,6 @@ export const tweakAppImpacts = {
     appNameRu: "Receive Segment Coalescing (RSC)",
     impactEn: "Disables Receive Segment Coalescing on network adapters, eliminating packet batching latency in online games.",
     impactRu: "Отключает Receive Segment Coalescing (RSC): исключает буферизацию и склейку пакетов, снижая сетевую задержку в шутерах."
-  },
-  "ecn-off": {
-    appId: "network_tcp",
-    appName: "ECN Capability",
-    appNameEn: "ECN Capability",
-    appNameRu: "ECN Capability",
-    impactEn: "Disables Explicit Congestion Notification to prevent dropped packets with older routers and game servers.",
-    impactRu: "Отключает ECN: устраняет внезапные потери пакетов и скачки пинга при игре на серверах, не поддерживающих ECN."
-  },
-  "dns-cache-flush": {
-    appId: "network_dns",
-    appName: "DNS Cache",
-    appNameEn: "DNS Cache",
-    appNameRu: "Кэш DNS",
-    impactEn: "Flushes stale DNS resolver cache and address mappings for clean network server resolution.",
-    impactRu: "Очищает кэш сопоставления DNS-имён: полезно при сбоях подключения к игровым серверам и для сброса устаревших маршрутов."
   },
   "disable-gamedvr": {
     appId: "xbox_game_bar",
@@ -343,14 +437,6 @@ export const tweakAppImpacts = {
     impactEn: "Stops continuous background gameplay clip buffering, eliminating constant SSD writes and encoder usage.",
     impactRu: "Отключает фоновую непрерывную запись клипов: прекращает постоянную запись видео на накопитель и нагрузку на GPU."
   },
-  "gamebar-startup-off": {
-    appId: "xbox_game_bar",
-    appName: "Game Bar Startup",
-    appNameEn: "Game Bar Startup",
-    appNameRu: "Автозапуск Game Bar",
-    impactEn: "Disables Game Bar startup hooks and controller guide button intercepts.",
-    impactRu: "Отключает автозапуск Game Bar и перехват кнопки Guide на контроллерах Xbox."
-  },
   "wer-off": {
     appId: "windows_wer",
     appName: "Windows Error Reporting (WER)",
@@ -358,38 +444,6 @@ export const tweakAppImpacts = {
     appNameRu: "Отчёты об ошибках (WER)",
     impactEn: "Disables Windows Error Reporting (WerFault) to prevent system freeze spikes when background processes crash.",
     impactRu: "Отключает службу отчётов об ошибках WerFault: исключает микрофризы и зависания игр при сбоях фоновых программ."
-  },
-  "start-bing-search-off": {
-    appId: "windows_search",
-    appName: "Start Menu Bing Search",
-    appNameEn: "Start Menu Bing Search",
-    appNameRu: "Поиск Bing в меню «Пуск»",
-    impactEn: "Disables Bing web search in Start menu, making desktop search 100% offline, private, and instant.",
-    impactRu: "Отключает поиск Bing в меню «Пуск»: делает поиск локальным, мгновенным и прекращает отправку поисковых запросов в Microsoft."
-  },
-  "delivery-optimization-lan": {
-    appId: "windows_update",
-    appName: "Delivery Optimization",
-    appNameEn: "Delivery Optimization",
-    appNameRu: "Оптимизация доставки (LAN)",
-    impactEn: "Restricts Windows Delivery Optimization to LAN only, preventing P2P update seeding from using your upload bandwidth during games.",
-    impactRu: "Ограничивает раздачу обновлений только локальной сетью: запрещает Windows отдавать обновления в интернет во время игр."
-  },
-  "activity-history-off": {
-    appId: "windows_privacy",
-    appName: "Activity History (Timeline)",
-    appNameEn: "Activity History (Timeline)",
-    appNameRu: "История активности (Timeline)",
-    impactEn: "Disables Windows user activity history tracking, timeline publishing, and cloud synchronization.",
-    impactRu: "Отключает сбор истории активности пользователя (Timeline) и передачу логов в облако Microsoft."
-  },
-  "advertising-id-off": {
-    appId: "windows_privacy",
-    appName: "Advertising ID",
-    appNameEn: "Advertising ID",
-    appNameRu: "Рекламный идентификатор",
-    impactEn: "Disables the Windows per-user advertising identifier and tailored diagnostic profiling.",
-    impactRu: "Отключает персонализированный рекламный идентификатор Windows, предотвращая фоновый трекинг."
   },
   "disable-fso-globally": {
     appId: "directx_fso",

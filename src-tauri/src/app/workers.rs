@@ -40,10 +40,15 @@ pub fn spawn_memory_trimmer(trimmer_sync: Arc<TrimmerSync>) {
             trim_process_memory();
 
             while !*lock {
-                lock = match trimmer_sync.condvar.wait(lock) {
-                    Ok(l) => l,
+                let (next_lock, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_secs(15)) {
+                    Ok(res) => res,
                     Err(e) => e.into_inner(),
                 };
+                lock = next_lock;
+                if *lock {
+                    break;
+                }
+                trim_process_memory();
             }
         })
         .ok();
