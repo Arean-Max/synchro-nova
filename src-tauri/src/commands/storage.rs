@@ -165,4 +165,100 @@ pub fn restore_backup(
     }
     state.snapshot()
 }
-
+
+#[tauri::command]
+pub fn delete_backup(id: String, state: State<'_, RuntimeState>) -> Result<Vec<BackupEntry>, String> {
+    let path = checked_child_json_path(&state.backups_dir, &id)?;
+    if path.exists() {
+        fs::remove_file(&path).map_err(|error| format!("Failed to delete backup: {error}"))?;
+    }
+    read_backup_entries(&state.backups_dir)
+}
+
+#[tauri::command]
+pub fn list_configs(state: State<'_, RuntimeState>) -> Result<Vec<ConfigEntry>, String> {
+    read_config_entries(&state.configs_dir)
+}
+
+#[tauri::command]
+pub fn save_config(name: String, state: State<'_, RuntimeState>) -> Result<Vec<ConfigEntry>, String> {
+    let snapshot = state.snapshot()?;
+    let display_name = clean_display_name(name);
+    let id = unique_available_stem(&state.configs_dir, &safe_file_stem(&display_name))?;
+    let path = checked_child_json_path(&state.configs_dir, &id)?;
+    let config = ConfigFile {
+        color: snapshot.color,
+        settings: snapshot.settings,
+    };
+    write_new_json_file(&path, &config)?;
+    read_config_entries(&state.configs_dir)
+}
+
+#[tauri::command]
+pub fn load_config(id: String, state: State<'_, RuntimeState>) -> Result<PersistedState, String> {
+    let path = checked_child_json_path(&state.configs_dir, &id)?;
+    let config = read_json_file::<ConfigFile>(&path)?;
+    let current = state.snapshot()?;
+    let mut settings = config.settings;
+    settings.accepted_agreement = current.settings.accepted_agreement;
+    Ok(PersistedState {
+        color: config.color,
+        settings,
+        is_admin: current.is_admin,
+        keybinds: current.keybinds.clone(),
+    }
+    .sanitized())
+}
+
+#[tauri::command]
+pub fn apply_config(
+    app: AppHandle,
+    id: String,
+    state: State<'_, RuntimeState>,
+) -> Result<PersistedState, String> {
+    let path = checked_child_json_path(&state.configs_dir, &id)?;
+    let config = read_json_file::<ConfigFile>(&path)?;
+    let current = state.snapshot()?;
+    let mut settings = config.settings;
+    settings.accepted_agreement = current.settings.accepted_agreement;
+    let snapshot = PersistedState {
+        color: config.color,
+        settings,
+        is_admin: current.is_admin,
+        keybinds: current.keybinds,
+    }
+    .sanitized();
+    apply_color_transform(&snapshot.color, snapshot.settings.show_on_recordings)?;
+    set_autostart(&app, snapshot.settings.autostart_windows)?;
+
+    {
+        let mut data = state
+            .data
+            .lock()
+            .map_err(|_| "Settings lock poisoned".to_string())?;
+        *data = snapshot;
+        data.is_admin = current.is_admin;
+        let stored = data.clone();
+        state.save(&stored)?;
+    }
+    state.snapshot()
+}
+
+#[tauri::command]
+pub fn delete_config(id: String, state: State<'_, RuntimeState>) -> Result<Vec<ConfigEntry>, String> {
+    let path = checked_child_json_path(&state.configs_dir, &id)?;
+    if path.exists() {
+        fs::remove_file(&path).map_err(|error| format!("Failed to delete config: {error}"))?;
+    }
+    read_config_entries(&state.configs_dir)
+}
+
+#[tauri::command]
+pub fn open_storage_folder(kind: String, state: State<'_, RuntimeState>) -> Result<(), String> {
+    let path = match kind.as_str() {
+        "backups" => state.backups_dir.clone(),
+        "configs" => state.configs_dir.clone(),
+        _ => return Err("Rejected unknown storage folder".to_string()),
+    };
+    open_folder(&path)
+}
