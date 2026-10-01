@@ -73,4 +73,52 @@ pub fn toggle_window_maximize(window: Window) {
         }
     }
 }
-
+
+#[tauri::command]
+pub fn start_window_drag(window: Window) {
+    let _ = window.start_dragging();
+}
+
+#[tauri::command]
+pub fn close_window(window: Window) {
+    let _ = window.close();
+}
+
+#[tauri::command]
+pub fn exit_app(app: AppHandle, state: State<'_, RuntimeState>) {
+    state.signal_shutdown();
+    app.exit(0);
+}
+
+#[tauri::command]
+pub fn restart_as_admin(app: AppHandle, state: State<'_, RuntimeState>) -> Result<(), String> {
+    let hwnd = app
+        .get_webview_window("main")
+        .and_then(|w| w.hwnd().ok())
+        .map(|h| h.0 as isize)
+        .unwrap_or(0);
+
+    crate::admin::restart_as_admin_with_hwnd(hwnd, Some("tweaks"))?;
+
+    crate::ffi::release_single_instance();
+    state.signal_shutdown();
+
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.hide();
+    }
+
+    let app_handle = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(300));
+        app_handle.exit(0);
+        std::thread::sleep(std::time::Duration::from_millis(400));
+        std::process::exit(0);
+    });
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn trim_memory() {
+    trim_process_memory();
+}
