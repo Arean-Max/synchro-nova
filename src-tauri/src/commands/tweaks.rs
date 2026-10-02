@@ -98,4 +98,41 @@ pub fn detect_installed_apps() -> Vec<system_info::DetectedAppConflictInfo> {
 pub fn restart_explorer() -> Result<(), String> {
     ffi_restart_explorer()
 }
-
+
+fn log_tweaks_audit(app_dir: &Path, results: &[TweakApplyResult]) {
+    let log_path = app_dir.join("tweaks_audit.log");
+    let now = match SystemTime::now().duration_since(UNIX_EPOCH) {
+        Ok(d) => d.as_secs(),
+        Err(_) => 0,
+    };
+    let mut file = match OpenOptions::new().create(true).append(true).open(&log_path) {
+        Ok(f) => f,
+        Err(_) => return,
+    };
+
+    if let Ok(meta) = file.metadata() {
+        if meta.len() > 512 * 1024 {
+            drop(file);
+            let _ = fs::rename(&log_path, app_dir.join("tweaks_audit.old.log"));
+            file = match OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open(&log_path)
+            {
+                Ok(f) => f,
+                Err(_) => return,
+            };
+        }
+    }
+
+    for result in results {
+        let line = format!(
+            "[{now}] id=\"{}\" status=\"{}\" message=\"{}\"\n",
+            result.id.replace('"', "\\\""),
+            result.status.replace('"', "\\\""),
+            result.message.replace('"', "\\\""),
+        );
+        let _ = file.write_all(line.as_bytes());
+    }
+}
