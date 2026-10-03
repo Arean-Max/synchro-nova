@@ -40,4 +40,38 @@ export function renderBackupsPage(viewState, t) {
   const restoreBtn = isSelected
     ? button(t("restore"), "check", "primary restore-highlight-btn", "restore-backup")
     : `<button class="btn btn-outline restore-dimmed" type="button" data-action="restore-backup" disabled title="${escapeAttr(t("selectBackupFirst") || (isRu ? "Сначала выберите бэкап" : "Select a backup from the list first"))}">${icon("check")}<span>${escapeHtml(t("restore"))}</span></button>`;
-
+
+  const rows = viewState.backups.length
+    ? viewState.backups.map((item) => `<button class="config-row backup-row ${viewState.selectedBackup === item.id ? "selected" : ""}" type="button" data-backup-id="${escapeAttr(item.id)}"><span class="config-check">${viewState.selectedBackup === item.id ? icon("check") : ""}</span><span class="backup-name"><strong>${escapeHtml(item.name)}</strong><small>${formatDate(item.createdAt)}</small></span></button>`).join("")
+    : `<div class="empty-state">${t("noBackups")}</div>`;
+
+  return [
+    '<section class="card backup-card">',
+    `<h2>${t("backupManager")}</h2>`,
+    '<div class="toolbar-row backup-tools">',
+    button(t("createBackup"), "save", "outline", "create-backup"),
+    restoreBtn,
+    button(t("deleteBackup"), "trash", "outline", "delete-backup"),
+    button(t("openFolder"), "folder", "outline", "open-backups-folder"),
+    '</div>',
+    `<div class="config-list backup-list">${rows}</div>`,
+    '</section>'
+  ].join("");
+}
+
+export function renderConfigsPage(viewState, t) {
+  const rows = viewState.configs.length
+    ? viewState.configs.map((item) => `<button class="config-row ${viewState.selectedConfig === item.id ? "selected" : ""}" type="button" data-config-id="${escapeAttr(item.id)}"><span class="config-check">${viewState.selectedConfig === item.id ? icon("check") : ""}</span><span>${escapeHtml(item.name)}</span><em>${escapeHtml(formatColorSummary(item.color))}</em></button>`).join("")
+    : `<div class="empty-state">${t("noConfigs")}</div>`;
+  return `<section class="card configs-card"><h2>${t("savedConfigs")}</h2><div class="toolbar-row config-name-row"><input class="text-input wide" data-field="configName" value="${escapeAttr(viewState.configName)}" placeholder="${escapeAttr(t("configName"))}" aria-label="${escapeAttr(t("configName"))}">${button(t("saveConfig"), "save", "primary", "save-config")}</div><div class="toolbar-row config-tools">${button(t("loadConfig"), "folder", "outline", "load-config")}${button(t("applyConfig"), "check", "outline", "apply-config")}${button(t("deleteConfig"), "trash", "outline", "delete-config")}${button(t("openFolder"), "folder", "outline", "open-configs-folder")}</div><div class="config-list">${rows}</div></section>`;
+}
+
+export const backupsFeature = {
+  render: renderBackupsPage,
+  mount(container, context) {
+    if (context?.loadLists) {
+      context.loadLists();
+    }
+  },
+  unmount() {}
+};
