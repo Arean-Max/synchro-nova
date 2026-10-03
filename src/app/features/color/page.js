@@ -399,4 +399,283 @@ export function renderTemplateConfigModal(appState, viewState, t) {
     '</div>'
   ].join("");
 }
-
+
+function renderColorSettingsPanel(appState, viewState, t) {
+  const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState, t)).join("");
+  const selected = selectedColorGame(viewState);
+  const launch = selected?.launchable
+    ? button(t("launchGame"), "play", "primary", "launch-color-game")
+    : `<button class="btn btn-outline" type="button" disabled>${icon("play")}<span>${t("launchUnavailable")}</span></button>`;
+  const closeBtn = `<button class="color-drawer-close" type="button" data-action="close-color-game-panel" title="${escapeAttr(t("close"))}" aria-label="${escapeAttr(t("close"))}">${icon("x")}</button>`;
+  const headStyle = selected ? ` style="--game-accent:${gameAccent(selected)}"` : "";
+  const headLogoSrc = gameLogoSrc(selected);
+  const headMark = selected
+    ? headLogoSrc
+      ? `<img class="color-game-head-mark image" src="${escapeAttr(headLogoSrc)}" alt="" aria-hidden="true">`
+      : `<span class="color-game-head-mark" aria-hidden="true">${gameLogoText(selected.name)}</span>`
+    : "";
+  const gameHeader = [
+    `<div class="color-game-head"${headStyle}>`,
+    headMark,
+    '<div class="color-game-head-info">',
+    `<span class="color-game-head-label">${t("selectedGame")}</span>`,
+    `<strong class="color-game-head-title">${safeValue(selected?.name)}</strong>`,
+    "</div>",
+    `<div class="color-game-head-actions">${launch}${closeBtn}</div>`,
+    "</div>"
+  ].join("");
+
+  return [
+    '<div class="color-game-panel">',
+    '<div class="stack">',
+    gameHeader,
+    card(t("controls"), controls),
+    card(t("templates"), renderTemplates(appState, viewState, t)),
+    "</div>",
+    viewState.editingTemplate ? renderTemplateConfigModal(appState, viewState, t) : "",
+    "</div>"
+  ].join("");
+}
+
+export function getPreviewFilterStyle(color) {
+  let sat = Math.max(0, (color?.saturation ?? 100) / 100);
+  let hue = color?.hue ?? 0;
+  let con = Math.max(0, (color?.contrast ?? 100) / 100);
+  let gam = Math.max(0, (color?.gamma ?? 100) / 100);
+
+  if (color?.activeFilter === "rust_cold_tactical") {
+    sat *= 0.78;
+    con *= 1.16;
+    gam *= 1.05;
+    return `filter: saturate(${sat}) hue-rotate(${hue}deg) contrast(${con}) brightness(${gam}) sepia(0.06);`;
+  }
+  if (color?.activeFilter === "rust_midnight_neon") {
+    sat *= 1.40;
+    con *= 1.22;
+    return `filter: saturate(${sat}) hue-rotate(${hue + 12}deg) contrast(${con}) brightness(${gam});`;
+  }
+  if (color?.activeFilter === "clear_sight") {
+    sat *= 1.25;
+    con *= 1.10;
+    return `filter: saturate(${sat}) hue-rotate(${hue}deg) contrast(${con}) brightness(${gam});`;
+  }
+
+  return `filter: saturate(${sat}) hue-rotate(${hue}deg) contrast(${con}) brightness(${gam});`;
+}
+
+export function renderColorPreview(appState, viewState, t) {
+  const mode = viewState?.colorPreviewMode || "day";
+  let imgSrc = "./assets/preview.png";
+  if (mode === "night") imgSrc = "./assets/night.png";
+  else if (mode === "holo") imgSrc = "./assets/blackholo.png";
+  const filterStyle = getPreviewFilterStyle(appState.color);
+
+  return [
+    '<div class="color-preview-viewport">',
+    `  <img id="color-preview-image" class="color-preview-img" src="${imgSrc}" alt="Preview" loading="lazy" decoding="async" style="${filterStyle}">`,
+    '  <div class="color-preview-overlay">',
+    '    <div class="color-preview-switch">',
+    `      <button class="preview-mode-btn ${mode === "day" ? "active" : ""}" type="button" data-action="set-color-preview-mode" data-mode="day" title="${escapeAttr(t("previewDay"))}">`,
+    '        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>',
+    `        <span>${escapeHtml(t("day"))}</span>`,
+    '      </button>',
+    `      <button class="preview-mode-btn ${mode === "night" ? "active" : ""}" type="button" data-action="set-color-preview-mode" data-mode="night" title="${escapeAttr(t("previewNight"))}">`,
+    '        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>',
+    `        <span>${escapeHtml(t("night"))}</span>`,
+    '      </button>',
+    `      <button class="preview-mode-btn ${mode === "holo" ? "active" : ""}" type="button" data-action="set-color-preview-mode" data-mode="holo" title="${escapeAttr(t("previewHolo"))}">`,
+    '        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="1" x2="12" y2="5"></line><line x1="12" y1="19" x2="12" y2="23"></line><line x1="1" y1="12" x2="5" y2="12"></line><line x1="19" y1="12" x2="23" y2="12"></line></svg>',
+    `        <span>${escapeHtml(t("holo"))}</span>`,
+    '      </button>',
+    '    </div>',
+    '  </div>',
+    '</div>'
+  ].join("");
+}
+
+export function updateColorPreviewDom(color) {
+  const img = document.getElementById("color-preview-image");
+  if (!img) return;
+  img.style.cssText = getPreviewFilterStyle(color);
+}
+
+export function renderFiltersSection(appState, t) {
+  const activeFilter = appState.color?.activeFilter || "";
+  const filters = [
+    {
+      id: "rust_cold_tactical",
+      name: t("rustColdTactical"),
+      icon: "crosshair",
+      desc: t("rustColdTacticalDesc")
+    },
+    {
+      id: "rust_midnight_neon",
+      name: t("rustMidnightNeon"),
+      icon: "moon",
+      desc: t("rustMidnightNeonDesc")
+    },
+    {
+      id: "clear_sight",
+      name: t("clearSight"),
+      icon: "eye",
+      desc: t("clearSightDesc")
+    }
+  ];
+
+  const tiles = filters.map((f) => {
+    const isActive = activeFilter === f.id;
+    return [
+      `<div class="color-filter-tile ${isActive ? "active" : ""}" data-filter-id="${escapeAttr(f.id)}" data-action="toggle-color-filter" role="button" tabindex="0" title="${escapeAttr(f.desc)}">`,
+      '  <div class="filter-tile-left">',
+      '    <div class="filter-tile-icon-box">',
+      `      ${icon(f.icon)}`,
+      '    </div>',
+      `    <span class="filter-tile-title">${escapeHtml(f.name)}</span>`,
+      '  </div>',
+      '  <div class="filter-tile-right">',
+      `    <button type="button" class="template-gear-btn filter-gear-btn" data-action="configure-filter" data-filter="${escapeAttr(f.id)}" title="${escapeAttr(t("settings"))}" aria-label="${escapeAttr(t("settings"))}">`,
+      `      ${icon("settings")}`,
+      '    </button>',
+      `    <span class="filter-toggle-switch ios-switch ${isActive ? "active" : ""}" aria-hidden="true">`,
+      '      <span class="ios-switch-thumb"></span>',
+      '    </span>',
+      '  </div>',
+      '</div>'
+    ].join("");
+  }).join("");
+
+  return `<div class="fine-tuning-filters-wrapper"><div class="fine-tuning-filters-grid">${tiles}</div></div>`;
+}
+
+export function renderColorPage(appState, viewState, t) {
+  const isRu = lang() === "ru";
+  const preview = renderColorPreview(appState, viewState, t);
+  const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState, t)).join("");
+
+  const currentTab = viewState?.fineTuningTab || "vibrance";
+  const activeFilter = appState.color?.activeFilter || "";
+  const filterDot = activeFilter ? '<span class="tab-indicator-dot" aria-hidden="true"></span>' : '';
+
+  const switchHtml = [
+    '<div class="color-preview-switch fine-tuning-switch">',
+    `  <button class="fine-tuning-btn ${currentTab === "vibrance" ? "active" : ""}" type="button" data-action="set-fine-tuning-tab" data-tab="vibrance">`,
+    '    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>',
+    `    <span>${escapeHtml(t("vibrance"))}</span>`,
+    '  </button>',
+    `  <button class="fine-tuning-btn ${currentTab === "filters" ? "active" : ""}" type="button" data-action="set-fine-tuning-tab" data-tab="filters">`,
+    '    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>',
+    `    <span>${escapeHtml(t("filters"))}</span>`,
+    `    ${filterDot}`,
+    '  </button>',
+    '</div>'
+  ].join("");
+
+  const fineTuningTitle = [
+    '<div class="card-head-with-switch">',
+    `  <div class="card-title-with-icon">${icon("tune")}<span>${escapeHtml(t("fineTuning") || (isRu ? "Тонкая Настройка" : "Fine Tuning"))}</span></div>`,
+    `  ${switchHtml}`,
+    '</div>'
+  ].join("");
+
+  const templatesTitle = `<div class="card-title-with-icon">${icon("layers")}<span>${escapeHtml(t("templates") || (isRu ? "Шаблоны" : "Templates"))}</span></div>`;
+
+  let hintHtml = "";
+  if (currentTab === "vibrance" && activeFilter) {
+    const filterNameMap = {
+      rust_cold_tactical: t("rustColdTactical"),
+      rust_midnight_neon: t("rustMidnightNeon"),
+      clear_sight: t("clearSight")
+    };
+    const activeLabel = filterNameMap[activeFilter] || activeFilter;
+    hintHtml = [
+      '<div class="filter-active-hint">',
+      '  <span class="filter-active-hint-dot"></span>',
+      `  <span class="filter-active-hint-text">${escapeHtml(t("activeFilter"))}: <strong>${escapeHtml(activeLabel)}</strong></span>`,
+      `  <button class="filter-hint-disable-btn" type="button" data-action="disable-color-filter" title="${escapeAttr(t("clearFilter"))}" aria-label="${escapeAttr(t("clearFilter"))}">${icon("x")}</button>`,
+      '</div>'
+    ].join("");
+  }
+
+  const fineTuningBody = currentTab === "vibrance"
+    ? `<div class="fine-tuning-panel fine-tuning-vibrance">${controls}${hintHtml}</div>`
+    : `<div class="fine-tuning-panel fine-tuning-filters">${renderFiltersSection(appState, t)}</div>`;
+
+  return [
+    '<div class="global-color-page">',
+    preview,
+    '<div class="global-color-grid">',
+    card(fineTuningTitle, fineTuningBody, "color-controls-card"),
+    card(templatesTitle, renderTemplates(appState, viewState, t), "color-templates-card"),
+    "</div>",
+    viewState.editingTemplate ? renderTemplateConfigModal(appState, viewState, t) : "",
+    "</div>"
+  ].join("");
+}
+
+export function renderGameColorPage(appState, viewState, t) {
+  const panelOpen = Boolean(viewState.colorGamePanelOpen && selectedColorGame(viewState));
+  const panel = panelOpen ? `<aside class="color-game-drawer">${renderColorSettingsPanel(appState, viewState, t)}</aside>` : "";
+  return `<div class="color-page ${panelOpen ? "panel-open" : "selection-only"}">${renderGameCarousel(viewState, t)}${panel}</div>`;
+}
+
+export function updateSliderDom(field, appState) {
+  const row = document.querySelector(`[data-slider-row="${field}"]`);
+  if (!row) return;
+  const input = row.querySelector("[data-color-field]");
+  const valueLabel = row.querySelector("[data-slider-value]");
+  const track = row.querySelector(".slider-track");
+  const fill = row.querySelector(".slider-fill");
+  const thumb = row.querySelector(".slider-thumb");
+  const value = Number(appState.color[field]);
+  const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
+  if (input) input.value = String(value);
+  if (valueLabel && !valueLabel.querySelector("input")) {
+    valueLabel.textContent = formatSliderValue(field, value);
+  }
+  if (track) track.style.setProperty("--slider-percent", `${pct}%`);
+  if (thumb) thumb.style.left = `${pct}%`;
+  if (fill) fill.style.cssText = sliderFillStyle(field, value);
+  updateColorPreviewDom(appState.color);
+  updateTemplateActiveDom(appState);
+}
+
+export function updateBlackHoloDom(active, holoStatus) {
+  const row = document.querySelector(".black-holo-check-row");
+  if (!row) return;
+  const isAct = Boolean(active);
+  row.classList.toggle("active", isAct);
+  row.setAttribute("aria-checked", String(isAct));
+  row.setAttribute("aria-pressed", String(isAct));
+  const sw = row.querySelector(".ios-switch");
+  if (sw) {
+    sw.classList.toggle("active", isAct);
+  }
+  if (holoStatus?.gpuVendor) {
+    const iconSlot = row.querySelector(".holo-gpu-icon-slot");
+    if (iconSlot) {
+      iconSlot.innerHTML = renderGpuVendorIcon(holoStatus.gpuVendor);
+    }
+  }
+}
+
+export function syncAllSliders(appState, viewState) {
+  Object.keys(sliderDefs).forEach((field) => updateSliderDom(field, appState));
+  updateBlackHoloDom(Number(appState?.color?.blackHolo || 0) > 0, viewState?.blackHoloStatus);
+  updateColorPreviewDom(appState?.color);
+  updateTemplateActiveDom(appState);
+}
+
+export const colorFeature = {
+  render: renderColorPage,
+  mount(container, context) {
+    if (context?.appState) {
+      syncAllSliders(context.appState, context.viewState);
+    }
+  },
+  unmount() {
+    const img = document.getElementById("color-preview-image");
+    if (img) {
+      img.src = "";
+    }
+  }
+};
