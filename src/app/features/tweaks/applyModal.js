@@ -87,4 +87,64 @@ export function renderApplyModal(modalState, t) {
     const helpTooltip = isFailed
       ? (isRu ? "Почему этот твик не поставился?" : "Why did this tweak fail?")
       : (t("whatBreaks") || (isRu ? "Что меняет этот твик?" : "What does this tweak affect?"));
-
+
+    const helpBtnHtml = isFailed
+      ? `<button class="tweak-help-btn tweak-error-btn apply-result-help-btn" type="button" data-action="show-tweak-error" data-tweak-id="${escapeAttr(item.id)}" data-error-msg="${escapeAttr(item.message || (isRu ? "Ошибка применения твика в системе" : "Tweak application error"))}" title="${escapeAttr(helpTooltip)}">?</button>`
+      : `<button class="tweak-help-btn apply-result-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(item.id)}" title="${escapeAttr(helpTooltip)}">?</button>`;
+
+    return [
+      `<div class="apply-result-item ${escapeAttr(statusClass)}">`,
+      '  <div class="apply-result-left">',
+      `    ${helpBtnHtml}`,
+      '    <div class="apply-result-info">',
+      `      <strong class="apply-result-title">${escapeHtml(title)}</strong>`,
+      `      <span class="apply-result-desc">${escapeHtml(desc)}</span>`,
+      '    </div>',
+      '  </div>',
+      `  <span class="apply-result-badge ${escapeAttr(statusClass)}">${escapeHtml(statusTag)}</span>`,
+      '</div>'
+    ].join("");
+  }).join("");
+
+  const headerTitle = adminCount > 0
+    ? (isRu ? "Применение завершено" : "Execution Finished")
+    : (isRu ? "Настройки успешно применены" : "Settings Successfully Applied");
+
+  const statBadges = [
+    `<span class="apply-stat-pill applied">${appliedCount} ${isRu ? "применено" : "applied"}</span>`,
+    adminCount > 0
+      ? `<span class="apply-stat-pill admin">${icon("shield")} ${adminCount} ${isRu ? "требуют прав админа" : "requires admin"}</span>`
+      : ""
+  ].filter(Boolean).join("");
+
+  const adminNotice = adminCount > 0 ? [
+    '<div class="apply-admin-notice">',
+    '  <div class="apply-admin-notice-content">',
+    `    <span class="apply-admin-notice-icon">${icon("shield")}</span>`,
+    `    <span>${isRu ? "Для системных твиков требуются права администратора" : "Administrator rights required for system tweaks"}</span>`,
+    '  </div>',
+    `  <button class="apply-admin-elevate-btn" type="button" data-action="restart-as-admin">${isRu ? "Перезапустить как админ" : "Restart as admin"}</button>`,
+    '</div>'
+  ].join("") : "";
+
+  return [
+    '<div class="apply-modal-backdrop" id="apply-modal-backdrop">',
+    '  <div class="apply-modal-complete">',
+    '    <div class="apply-complete-head">',
+    '      <div class="apply-complete-titles">',
+    `        <h2>${escapeHtml(headerTitle)}</h2>`,
+    `        <div class="apply-stat-pills">${statBadges}</div>`,
+    '      </div>',
+    '    </div>',
+    '    <div class="apply-complete-list">',
+    rows || `<div class="apply-result-empty">${escapeHtml(t("noSelection"))}</div>`,
+    '    </div>',
+    adminNotice,
+    '    <div class="apply-complete-actions">',
+    `      <button class="btn-apply-ok" type="button" data-action="dismiss-apply-modal">${escapeHtml(t("okButton") || "OK")}</button>`,
+    `      <button class="btn-apply-rollback" type="button" data-action="rollback-from-apply-modal">${escapeHtml(t("rollbackButton") || (isRu ? "Откатить" : "Rollback"))}</button>`,
+    '    </div>',
+    '  </div>',
+    '</div>'
+  ].join("");
+}
