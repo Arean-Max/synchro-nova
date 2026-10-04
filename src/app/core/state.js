@@ -1,5 +1,5 @@
 export const defaultState = {
-  color: { saturation: 100, hue: 0, contrast: 100, gamma: 100, blackHolo: 0, enabled: true },
+  color: { saturation: 100, hue: 0, contrast: 100, gamma: 100, blackHolo: 0, enabled: true, activeFilter: "" },
   settings: {
     applyInstantly: true,
     saveColorCorrection: true,
@@ -12,8 +12,11 @@ export const defaultState = {
     showOnRecordings: true,
     accentColor: "#ffffff",
     autoUpdate: false,
+    disableSplash: false,
+    disableAnimations: false,
     templateOverrides: {}
   },
+  keybinds: [],
   isAdmin: false
 };
 
@@ -22,6 +25,12 @@ export const defaultPresets = {
   vibrant: { saturation: 200, hue: -5, contrast: 95, gamma: 105, enabled: true },
   soft: { saturation: 150, hue: -5, contrast: 85, gamma: 115, enabled: true },
   night: { saturation: 120, hue: -5, contrast: 90, gamma: 150, enabled: true }
+};
+
+export const filterPresets = {
+  rust_cold_tactical: { saturation: 78, hue: 0, contrast: 116, gamma: 105, enabled: true },
+  rust_midnight_neon: { saturation: 140, hue: 0, contrast: 122, gamma: 100, enabled: true },
+  clear_sight: { saturation: 125, hue: 0, contrast: 110, gamma: 100, enabled: true }
 };
 
 export const viewState = {
@@ -71,7 +80,10 @@ export const viewState = {
     hotkey: "",
     rustSynced: true,
     error: null
-  }
+  },
+  recordingBindId: null,
+  openDropdownBindId: null,
+  fineTuningTab: "vibrance"
 };
 
 
@@ -85,12 +97,13 @@ export const sliderDefs = {
 export const pageDefs = {
   color: { title: "colorTitle", subtitle: "colorSubtitle", nav: "colorTitle", icon: "layers" },
   tweaks: { title: "tweaksTitle", subtitle: "tweaksSubtitle", nav: "tweaksTitle", icon: "fileText" },
+  binds: { title: "bindsTitle", subtitle: "bindsSubtitle", nav: "bindsTitle", icon: "keyboard" },
   characteristics: { title: "characteristicsTitle", subtitle: "characteristicsSubtitle", nav: "characteristicsTitle", icon: "cpu" },
   backups: { title: "backupsTitle", subtitle: "backupsSubtitle", nav: "backupsTitle", icon: "archive" },
   settings: { title: "settingsTitle", subtitle: "settingsSubtitle", nav: "settingsTitle", icon: "settings" }
 };
 
-export const pageOrder = ["color", "tweaks", "characteristics", "backups", "settings"];
+export const pageOrder = ["color", "tweaks", "binds", "characteristics", "backups", "settings"];
 
 export let activePage = "color";
 export let appState = cloneState(defaultState);
@@ -159,6 +172,7 @@ export function mergeState(state) {
   appState = {
     color: { ...defaultState.color, ...(state?.color || {}) },
     settings: { ...defaultState.settings, ...(state?.settings || {}) },
+    keybinds: Array.isArray(state?.keybinds) ? state.keybinds : (Array.isArray(appState?.keybinds) ? appState.keybinds : []),
     isAdmin: currentAdmin || resolvedAdmin
   };
   if (appState.isAdmin && viewState.activeImpactBanner?.isAdminPrompt) {

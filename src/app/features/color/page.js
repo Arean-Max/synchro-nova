@@ -1,4 +1,4 @@
-import { defaultPresets, lang, sliderDefs } from "../../core/state.js";
+import { defaultPresets, filterPresets, lang, sliderDefs } from "../../core/state.js";
 import { escapeAttr, escapeHtml, safeValue } from "../../core/html.js";
 import { button, card } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
@@ -7,7 +7,8 @@ export const standardTemplateNames = new Set([
   "Balanced", "Сбалансированный",
   "Vibrant", "Насыщенный", "Saturation", "Насыщенность",
   "Soft", "Мягкий",
-  "Night", "Ночной"
+  "Night", "Ночной",
+  "Rust: Cold Tactical", "Rust: Midnight Neon", "Clear Sight"
 ]);
 
 export function colorGames(viewState) {
@@ -324,7 +325,7 @@ function templateSlider(field, templateColor, t) {
   const value = Number(templateColor?.[field] ?? 100);
   const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
   const fillStyle = sliderFillStyle(field, value);
-  return `<div class="slider-row" data-template-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span data-template-slider-value="${field}">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${pct}%"><span class="zero-mark"></span><span class="slider-fill" style="${fillStyle}"></span><span class="slider-thumb" style="left:${pct}%"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-template-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
+  return `<div class="slider-row" data-template-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span class="slider-value-badge" data-template-slider-value="${field}" tabindex="0" role="button" title="Click to enter value">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${pct}%"><span class="zero-mark"></span><span class="slider-fill" style="${fillStyle}"></span><span class="slider-thumb" style="left:${pct}%"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-template-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
 }
 
 export function updateTemplateSliderDom(field, values) {
@@ -357,7 +358,10 @@ export function renderTemplateConfigModal(appState, viewState, t) {
     balanced: t("balanced"),
     vibrant: t("vibrant"),
     soft: t("soft"),
-    night: t("night")
+    night: t("night"),
+    rust_cold_tactical: t("rustColdTactical"),
+    rust_midnight_neon: t("rustMidnightNeon"),
+    clear_sight: t("clearSight")
   };
   const defaultName = presetLabels[presetKey] || presetKey;
   let currentName = viewState.editingTemplateName !== undefined && viewState.editingTemplateName !== ""
@@ -434,10 +438,28 @@ function renderColorSettingsPanel(appState, viewState, t) {
 }
 
 export function getPreviewFilterStyle(color) {
-  const sat = Math.max(0, (color?.saturation ?? 100) / 100);
-  const hue = color?.hue ?? 0;
-  const con = Math.max(0, (color?.contrast ?? 100) / 100);
-  const gam = Math.max(0, (color?.gamma ?? 100) / 100);
+  let sat = Math.max(0, (color?.saturation ?? 100) / 100);
+  let hue = color?.hue ?? 0;
+  let con = Math.max(0, (color?.contrast ?? 100) / 100);
+  let gam = Math.max(0, (color?.gamma ?? 100) / 100);
+
+  if (color?.activeFilter === "rust_cold_tactical") {
+    sat *= 0.78;
+    con *= 1.16;
+    gam *= 1.05;
+    return `filter: saturate(${sat}) hue-rotate(${hue}deg) contrast(${con}) brightness(${gam}) sepia(0.06);`;
+  }
+  if (color?.activeFilter === "rust_midnight_neon") {
+    sat *= 1.40;
+    con *= 1.22;
+    return `filter: saturate(${sat}) hue-rotate(${hue + 12}deg) contrast(${con}) brightness(${gam});`;
+  }
+  if (color?.activeFilter === "clear_sight") {
+    sat *= 1.25;
+    con *= 1.10;
+    return `filter: saturate(${sat}) hue-rotate(${hue}deg) contrast(${con}) brightness(${gam});`;
+  }
+
   return `filter: saturate(${sat}) hue-rotate(${hue}deg) contrast(${con}) brightness(${gam});`;
 }
 
@@ -474,11 +496,55 @@ export function renderColorPreview(appState, viewState, t) {
 export function updateColorPreviewDom(color) {
   const img = document.getElementById("color-preview-image");
   if (!img) return;
-  const sat = Math.max(0, (color?.saturation ?? 100) / 100);
-  const hue = color?.hue ?? 0;
-  const con = Math.max(0, (color?.contrast ?? 100) / 100);
-  const gam = Math.max(0, (color?.gamma ?? 100) / 100);
-  img.style.filter = `saturate(${sat}) hue-rotate(${hue}deg) contrast(${con}) brightness(${gam})`;
+  img.style.cssText = getPreviewFilterStyle(color);
+}
+
+export function renderFiltersSection(appState, t) {
+  const activeFilter = appState.color?.activeFilter || "";
+  const filters = [
+    {
+      id: "rust_cold_tactical",
+      name: t("rustColdTactical"),
+      icon: "crosshair",
+      desc: t("rustColdTacticalDesc")
+    },
+    {
+      id: "rust_midnight_neon",
+      name: t("rustMidnightNeon"),
+      icon: "moon",
+      desc: t("rustMidnightNeonDesc")
+    },
+    {
+      id: "clear_sight",
+      name: t("clearSight"),
+      icon: "eye",
+      desc: t("clearSightDesc")
+    }
+  ];
+
+  const tiles = filters.map((f) => {
+    const isActive = activeFilter === f.id;
+    return [
+      `<div class="color-filter-tile ${isActive ? "active" : ""}" data-filter-id="${escapeAttr(f.id)}" data-action="toggle-color-filter" role="button" tabindex="0" title="${escapeAttr(f.desc)}">`,
+      '  <div class="filter-tile-left">',
+      '    <div class="filter-tile-icon-box">',
+      `      ${icon(f.icon)}`,
+      '    </div>',
+      `    <span class="filter-tile-title">${escapeHtml(f.name)}</span>`,
+      '  </div>',
+      '  <div class="filter-tile-right">',
+      `    <button type="button" class="template-gear-btn filter-gear-btn" data-action="configure-filter" data-filter="${escapeAttr(f.id)}" title="${escapeAttr(t("settings"))}" aria-label="${escapeAttr(t("settings"))}">`,
+      `      ${icon("settings")}`,
+      '    </button>',
+      `    <span class="filter-toggle-switch ios-switch ${isActive ? "active" : ""}" aria-hidden="true">`,
+      '      <span class="ios-switch-thumb"></span>',
+      '    </span>',
+      '  </div>',
+      '</div>'
+    ].join("");
+  }).join("");
+
+  return `<div class="fine-tuning-filters-wrapper"><div class="fine-tuning-filters-grid">${tiles}</div></div>`;
 }
 
 export function renderColorPage(appState, viewState, t) {
@@ -486,14 +552,59 @@ export function renderColorPage(appState, viewState, t) {
   const preview = renderColorPreview(appState, viewState, t);
   const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState, t)).join("");
 
-  const fineTuningTitle = `<div class="card-title-with-icon">${icon("tune")}<span>${escapeHtml(t("fineTuning") || (isRu ? "Тонкая Настройка" : "Fine Tuning"))}</span></div>`;
+  const currentTab = viewState?.fineTuningTab || "vibrance";
+  const activeFilter = appState.color?.activeFilter || "";
+  const filterDot = activeFilter ? '<span class="tab-indicator-dot" aria-hidden="true"></span>' : '';
+
+  const switchHtml = [
+    '<div class="color-preview-switch fine-tuning-switch">',
+    `  <button class="fine-tuning-btn ${currentTab === "vibrance" ? "active" : ""}" type="button" data-action="set-fine-tuning-tab" data-tab="vibrance">`,
+    '    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>',
+    `    <span>${escapeHtml(t("vibrance"))}</span>`,
+    '  </button>',
+    `  <button class="fine-tuning-btn ${currentTab === "filters" ? "active" : ""}" type="button" data-action="set-fine-tuning-tab" data-tab="filters">`,
+    '    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>',
+    `    <span>${escapeHtml(t("filters"))}</span>`,
+    `    ${filterDot}`,
+    '  </button>',
+    '</div>'
+  ].join("");
+
+  const fineTuningTitle = [
+    '<div class="card-head-with-switch">',
+    `  <div class="card-title-with-icon">${icon("tune")}<span>${escapeHtml(t("fineTuning") || (isRu ? "Тонкая Настройка" : "Fine Tuning"))}</span></div>`,
+    `  ${switchHtml}`,
+    '</div>'
+  ].join("");
+
   const templatesTitle = `<div class="card-title-with-icon">${icon("layers")}<span>${escapeHtml(t("templates") || (isRu ? "Шаблоны" : "Templates"))}</span></div>`;
+
+  let hintHtml = "";
+  if (currentTab === "vibrance" && activeFilter) {
+    const filterNameMap = {
+      rust_cold_tactical: t("rustColdTactical"),
+      rust_midnight_neon: t("rustMidnightNeon"),
+      clear_sight: t("clearSight")
+    };
+    const activeLabel = filterNameMap[activeFilter] || activeFilter;
+    hintHtml = [
+      '<div class="filter-active-hint">',
+      '  <span class="filter-active-hint-dot"></span>',
+      `  <span class="filter-active-hint-text">${escapeHtml(t("activeFilter"))}: <strong>${escapeHtml(activeLabel)}</strong></span>`,
+      `  <button class="filter-hint-disable-btn" type="button" data-action="disable-color-filter" title="${escapeAttr(t("clearFilter"))}" aria-label="${escapeAttr(t("clearFilter"))}">${icon("x")}</button>`,
+      '</div>'
+    ].join("");
+  }
+
+  const fineTuningBody = currentTab === "vibrance"
+    ? `<div class="fine-tuning-panel fine-tuning-vibrance">${controls}${hintHtml}</div>`
+    : `<div class="fine-tuning-panel fine-tuning-filters">${renderFiltersSection(appState, t)}</div>`;
 
   return [
     '<div class="global-color-page">',
     preview,
     '<div class="global-color-grid">',
-    card(fineTuningTitle, controls, "color-controls-card"),
+    card(fineTuningTitle, fineTuningBody, "color-controls-card"),
     card(templatesTitle, renderTemplates(appState, viewState, t), "color-templates-card"),
     "</div>",
     viewState.editingTemplate ? renderTemplateConfigModal(appState, viewState, t) : "",

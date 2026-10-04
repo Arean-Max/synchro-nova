@@ -6,6 +6,7 @@ import {
   cloneState,
   defaultPresets,
   defaultState,
+  filterPresets,
   lang,
   mergeState,
   pageDefs,
@@ -29,12 +30,14 @@ import {
   updateBlackHoloDom,
   updateSliderDom,
   updateTemplateSliderDom,
+  isTemplateActive,
   colorFeature
 } from "./features/color/page.js";
 import { allTweaks, tweakCategory, tweakTitle } from "./features/tweaks/catalog.js";
 import { getTweakImpactDetails, renderIosNotification, tweaksFeature } from "./features/tweaks/page.js";
 import { renderBackupNameModal, backupsFeature } from "./features/storage/page.js";
 import { characteristicsFeature } from "./features/characteristics/page.js";
+import { bindsFeature } from "./features/binds/page.js";
 import { settingsFeature } from "./features/settings/page.js";
 import { router } from "./core/router.js";
 import { renderApplyModal } from "./features/tweaks/applyModal.js";
@@ -42,11 +45,13 @@ import { icon } from "./ui/icons.js";
 import { button } from "./ui/components.js";
 import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget } from "./ui/layout.js";
 import { escapeHtml } from "./core/html.js";
+import { runIntroSplash } from "./ui/splash.js";
 
 
 router.register("color", colorFeature);
 router.register("gameColor", colorFeature);
 router.register("tweaks", tweaksFeature);
+router.register("binds", bindsFeature);
 router.register("characteristics", characteristicsFeature);
 router.register("backups", backupsFeature);
 router.register("configs", backupsFeature);
@@ -333,7 +338,7 @@ function showTweakErrorBanner(tweakId, errorMsg) {
     tweakId,
     title: isRu ? `Сбой: ${title}` : `Failed: ${title}`,
     category: "danger",
-    appName: isRu ? "ПОЧЕМУ НЕ ПОСТАВИЛСЯ" : "INSTALLATION ERROR",
+    appName: isRu ? "СБОЙ ТВИКА" : "TWEAK ERROR",
     impactText
   };
   renderNotificationBannerDom();
@@ -348,10 +353,10 @@ function showRiskWarningBanner(tweak) {
     tweakId: tweak.id,
     title: isRu ? `Внимание: ${title}` : `Warning: ${title}`,
     category: "risk",
-    appName: isRu ? "ПРЕДУПРЕЖДЕНИЕ" : "SYSTEM WARNING",
+    appName: isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY BACKUP",
     impactText: isRu
-      ? "Перед применением данного твика рекомендуется создать бэкап."
-      : "It is recommended to create a backup before applying this tweak."
+      ? "Перед жестким твиком сделай быстрый снимок системы, чтобы не сломать винду."
+      : "Take a quick safety snapshot before applying system-level tweaks."
   };
   renderNotificationBannerDom();
   startImpactBannerTimer(3000);
@@ -363,9 +368,9 @@ function showBackupNotificationBanner() {
   viewState.activeImpactBanner = {
     isBackupPrompt: true,
     category: "safe",
-    appName: isRu ? "РЕЗЕРВНАЯ КОПИЯ" : "SYSTEM BACKUP",
-    title: t("backupNotificationTitle") || (isRu ? "Создание бэкапа" : "Create Backup"),
-    impactText: t("backupNotificationMsg") || (isRu ? "Нажмите здесь, чтобы задать имя бэкапа" : "Click here to set custom backup name")
+    appName: isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY SNAPSHOT",
+    title: t("backupNotificationTitle") || (isRu ? "Снимок Системы" : "Safety Snapshot"),
+    impactText: t("backupNotificationMsg") || (isRu ? "Кликни здесь, чтобы задать имя снимка" : "Click here to set custom snapshot name")
   };
   renderNotificationBannerDom();
   startImpactBannerTimer(3000);
@@ -382,9 +387,9 @@ function showAdminNotificationBanner() {
   viewState.activeImpactBanner = {
     isAdminPrompt: true,
     category: "admin",
-    appName: isRu ? "ПРАВА АДМИНИСТРАТОРА" : "ADMINISTRATOR RIGHTS",
+    appName: isRu ? "НУЖЕН АДМИН" : "ADMIN REQUIRED",
     title: t("adminNotificationTitle") || (isRu ? "Требуются права администратора" : "Administrator Rights Required"),
-    impactText: t("adminNotificationMsg") || (isRu ? "Нажмите здесь для перезапуска Synchro с правами админа" : "Click here to restart Synchro as administrator")
+    impactText: t("adminNotificationMsg") || (isRu ? "Кликни здесь, чтобы перезапустить Synchro с правами админа" : "Click here to restart Synchro with admin rights")
   };
   renderNotificationBannerDom();
 }
@@ -406,6 +411,125 @@ function scheduleTrimMemory(delay = 400) {
     invokeCommand("trim_memory");
   }, delay);
 }
+
+function getWin32Vk(event) {
+  if (typeof event.keyCode === "number" && event.keyCode > 0 && event.keyCode !== 229) {
+    return event.keyCode;
+  }
+  const code = event.code || "";
+  if (/^Key[A-Z]$/.test(code)) return code.charCodeAt(3);
+  if (/^Digit[0-9]$/.test(code)) return code.charCodeAt(5);
+  if (/^F([1-9]|1[0-9]|2[0-4])$/.test(code)) return 111 + parseInt(code.slice(1), 10);
+  if (/^Numpad[0-9]$/.test(code)) return 96 + parseInt(code.slice(6), 10);
+  const vkMap = {
+    Space: 32,
+    Enter: 13,
+    NumpadEnter: 13,
+    Tab: 9,
+    Escape: 27,
+    Backspace: 8,
+    Insert: 45,
+    Delete: 46,
+    Home: 36,
+    End: 35,
+    PageUp: 33,
+    PageDown: 34,
+    ArrowUp: 38,
+    ArrowDown: 40,
+    ArrowLeft: 37,
+    ArrowRight: 39,
+    NumpadMultiply: 106,
+    NumpadAdd: 107,
+    NumpadSubtract: 109,
+    NumpadDecimal: 110,
+    NumpadDivide: 111,
+    Minus: 189,
+    Equal: 187,
+    BracketLeft: 219,
+    BracketRight: 221,
+    Backslash: 220,
+    Semicolon: 186,
+    Quote: 222,
+    Backquote: 192,
+    Comma: 188,
+    Period: 190,
+    Slash: 191
+  };
+  return vkMap[code] || 0;
+}
+
+function formatKeyLabel(event) {
+  const parts = [];
+  if (event.ctrlKey) parts.push("Ctrl");
+  if (event.altKey) parts.push("Alt");
+  if (event.shiftKey) parts.push("Shift");
+  if (event.metaKey) parts.push("Win");
+
+  let base = "";
+  const code = event.code || "";
+  if (code.startsWith("Key")) {
+    base = code.slice(3).toUpperCase();
+  } else if (code.startsWith("Digit")) {
+    base = code.slice(5);
+  } else if (code.startsWith("Numpad") && /^Numpad\d$/.test(code)) {
+    base = `Num ${code.slice(6)}`;
+  } else if (code === "NumpadEnter") {
+    base = "Num Enter";
+  } else if (code === "NumpadAdd") {
+    base = "Num +";
+  } else if (code === "NumpadSubtract") {
+    base = "Num -";
+  } else if (code === "NumpadMultiply") {
+    base = "Num *";
+  } else if (code === "NumpadDivide") {
+    base = "Num /";
+  } else if (code === "NumpadDecimal") {
+    base = "Num .";
+  } else if (/^F\d+$/.test(code)) {
+    base = code;
+  } else {
+    const specialMap = {
+      Space: "Space",
+      Enter: "Enter",
+      Tab: "Tab",
+      Backspace: "Backspace",
+      Delete: "Delete",
+      Insert: "Insert",
+      Home: "Home",
+      End: "End",
+      PageUp: "PageUp",
+      PageDown: "PageDown",
+      ArrowUp: "Up",
+      ArrowDown: "Down",
+      ArrowLeft: "Left",
+      ArrowRight: "Right",
+      Minus: "-",
+      Equal: "=",
+      BracketLeft: "[",
+      BracketRight: "]",
+      Backslash: "\\",
+      Semicolon: ";",
+      Quote: "'",
+      Backquote: "`",
+      Comma: ",",
+      Period: ".",
+      Slash: "/"
+    };
+    base = specialMap[code] || event.key?.toUpperCase() || code;
+  }
+
+  parts.push(base);
+  return parts.join(" + ");
+}
+
+async function syncKeybinds() {
+  try {
+    await invokeCommand("sync_keybinds", { keybinds: appState.keybinds || [] });
+  } catch (err) {
+    console.error("Failed to sync keybinds:", err);
+  }
+}
+
 
 function t(key) {
   return translate(lang(), key);
@@ -730,6 +854,9 @@ function syncTweakTile(id) {
 }
 
 async function applyColor() {
+  if (!appState.color?.activeFilter) {
+    saveNormalColorState();
+  }
   const result = await invokeCommand("apply_color_settings", { color: appState.color });
   if (result) mergeState(result);
 }
@@ -834,13 +961,72 @@ function updateDriversPageContent() {
   }
 }
 
+const templateMemory = {};
+
+function saveNormalColorState() {
+  if (!appState?.color || appState.color.activeFilter) return;
+  const snapshot = {
+    saturation: Number(appState.color.saturation ?? 100),
+    hue: Number(appState.color.hue ?? 0),
+    contrast: Number(appState.color.contrast ?? 100),
+    gamma: Number(appState.color.gamma ?? 100)
+  };
+  try {
+    localStorage.setItem("synchro_normal_color", JSON.stringify(snapshot));
+  } catch (e) {}
+}
+
+function getSavedNormalColor() {
+  try {
+    const raw = localStorage.getItem("synchro_normal_color");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.saturation === "number") return parsed;
+    }
+  } catch (e) {}
+  return { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+}
+
 function applyPreset(name) {
+  if (isTemplateActive(name, appState)) {
+    templateMemory[name] = {
+      saturation: appState.color.saturation,
+      hue: appState.color.hue,
+      contrast: appState.color.contrast,
+      gamma: appState.color.gamma
+    };
+    appState.color = {
+      ...appState.color,
+      saturation: 100,
+      hue: 0,
+      contrast: 100,
+      gamma: 100,
+      blackHolo: 0,
+      activeFilter: ""
+    };
+    saveNormalColorState();
+    updateColorPage();
+    scheduleApplyColor();
+    saveSettings();
+    return;
+  }
+
+  const remembered = templateMemory[name];
   const custom = appState.settings?.templateOverrides?.[name];
-  const preset = custom || defaultPresets[name];
+  const preset = remembered || custom || defaultPresets[name];
   if (!preset) return;
-  appState.color = { ...appState.color, ...preset };
+  appState.color = {
+    ...appState.color,
+    saturation: preset.saturation,
+    hue: preset.hue,
+    contrast: preset.contrast,
+    gamma: preset.gamma,
+    activeFilter: ""
+  };
+  saveNormalColorState();
   updateColorPage();
   scheduleApplyColor();
+  saveSettings();
 }
 
 function stepColorSelection(step) {
@@ -944,7 +1130,7 @@ async function handleAction(action) {
         const nameInput = document.getElementById("template-name-input");
         const inputName = nameInput instanceof HTMLInputElement ? nameInput.value.trim() : "";
         const customName = inputName || (typeof viewState.editingTemplateName === "string" ? viewState.editingTemplateName.trim() : "");
-        const defaultPreset = defaultPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+        const defaultPreset = defaultPresets[presetKey] || filterPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
         const currentOverride = appState.settings.templateOverrides[presetKey] || defaultPreset;
         const colors = {
           saturation: Number(viewState.editingTemplateColor?.saturation ?? currentOverride.saturation),
@@ -960,6 +1146,13 @@ async function handleAction(action) {
           gamma: colors.gamma,
           enabled: true
         };
+        if (appState.color.activeFilter === presetKey) {
+          appState.color.saturation = colors.saturation;
+          appState.color.hue = colors.hue;
+          appState.color.contrast = colors.contrast;
+          appState.color.gamma = colors.gamma;
+          scheduleApplyColor();
+        }
         saveSettings();
         viewState.editingTemplate = null;
         viewState.editingTemplateName = "";
@@ -980,11 +1173,21 @@ async function handleAction(action) {
           balanced: t("balanced"),
           vibrant: t("vibrant"),
           soft: t("soft"),
-          night: t("night")
+          night: t("night"),
+          rust_cold_tactical: t("rustColdTactical"),
+          rust_midnight_neon: t("rustMidnightNeon"),
+          clear_sight: t("clearSight")
         };
         viewState.editingTemplateName = presetLabels[presetKey] || presetKey;
-        const defaultPreset = defaultPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+        const defaultPreset = defaultPresets[presetKey] || filterPresets[presetKey] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
         viewState.editingTemplateColor = { ...defaultPreset };
+        if (appState.color.activeFilter === presetKey) {
+          appState.color.saturation = defaultPreset.saturation;
+          appState.color.hue = defaultPreset.hue;
+          appState.color.contrast = defaultPreset.contrast;
+          appState.color.gamma = defaultPreset.gamma;
+          scheduleApplyColor();
+        }
         updateColorPage();
         syncAllTemplateSliders(viewState.editingTemplateColor);
       }
@@ -1329,6 +1532,9 @@ function handleInput(event) {
   if (colorField && sliderDefs[colorField]) {
     appState.color[colorField] = Number(input.value);
     updateSliderDom(colorField, appState);
+    if (!appState.color.activeFilter) {
+      saveNormalColorState();
+    }
     scheduleApplyColor();
     return;
   }
@@ -1588,6 +1794,9 @@ async function handleClick(event) {
 
     if (key === "applyInstantly" && appState.settings.applyInstantly) await applyColor();
     if (key === "showOnRecordings") await applyColor();
+    if (key === "disableAnimations") {
+      document.body.classList.toggle("no-animations", Boolean(appState.settings.disableAnimations));
+    }
     return;
   }
 
@@ -1626,9 +1835,94 @@ async function handleClick(event) {
     if (img instanceof HTMLImageElement) {
       img.src = nextMode === "night" ? "./assets/night.png" : (nextMode === "holo" ? "./assets/blackholo.png" : "./assets/preview.png");
     }
-    document.querySelectorAll(".preview-mode-btn").forEach((btn) => {
+    document.querySelectorAll(".preview-mode-btn[data-mode]").forEach((btn) => {
       btn.classList.toggle("active", btn.getAttribute("data-mode") === nextMode);
     });
+    return;
+  }
+
+  const fineTuningTabBtn = target.closest("[data-action='set-fine-tuning-tab']");
+  if (fineTuningTabBtn) {
+    const tab = fineTuningTabBtn.getAttribute("data-tab");
+    if (tab && viewState.fineTuningTab !== tab) {
+      viewState.fineTuningTab = tab;
+      updateColorPage();
+    }
+    return;
+  }
+
+  const configureFilter = target.closest("[data-action='configure-filter']");
+  if (configureFilter) {
+    event.preventDefault();
+    event.stopPropagation();
+    const filterId = configureFilter.getAttribute("data-filter");
+    if (filterId) {
+      viewState.editingTemplate = filterId;
+      const filterNames = {
+        rust_cold_tactical: t("rustColdTactical"),
+        rust_midnight_neon: t("rustMidnightNeon"),
+        clear_sight: t("clearSight")
+      };
+      const custom = appState.settings?.templateOverrides?.[filterId];
+      const defaultFilter = filterPresets[filterId] || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
+      viewState.editingTemplateName = custom?.name || filterNames[filterId] || filterId;
+      viewState.editingTemplateColor = {
+        saturation: custom?.saturation ?? defaultFilter.saturation,
+        hue: custom?.hue ?? defaultFilter.hue,
+        contrast: custom?.contrast ?? defaultFilter.contrast,
+        gamma: custom?.gamma ?? defaultFilter.gamma
+      };
+      updateColorPage();
+      syncAllTemplateSliders(viewState.editingTemplateColor);
+    }
+    return;
+  }
+
+  const toggleFilter = target.closest("[data-action='toggle-color-filter']");
+  if (toggleFilter && !target.closest("[data-action='configure-filter']")) {
+    const filterId = toggleFilter.getAttribute("data-filter-id");
+    if (filterId) {
+      const isAlreadyActive = appState.color.activeFilter === filterId;
+      if (isAlreadyActive) {
+        appState.color.activeFilter = "";
+        const normal = getSavedNormalColor();
+        appState.color.saturation = normal.saturation;
+        appState.color.hue = normal.hue;
+        appState.color.contrast = normal.contrast;
+        appState.color.gamma = normal.gamma;
+      } else {
+        if (!appState.color.activeFilter) {
+          saveNormalColorState();
+        }
+        appState.color.activeFilter = filterId;
+        const custom = appState.settings?.templateOverrides?.[filterId];
+        const defaultFilter = filterPresets[filterId];
+        const cfg = custom || defaultFilter;
+        if (cfg) {
+          if (cfg.saturation !== undefined) appState.color.saturation = cfg.saturation;
+          if (cfg.contrast !== undefined) appState.color.contrast = cfg.contrast;
+          if (cfg.gamma !== undefined) appState.color.gamma = cfg.gamma;
+          if (cfg.hue !== undefined) appState.color.hue = cfg.hue;
+        }
+      }
+      updateColorPage();
+      await applyColor();
+      saveSettings();
+    }
+    return;
+  }
+
+  const disableFilter = target.closest("[data-action='disable-color-filter']");
+  if (disableFilter) {
+    appState.color.activeFilter = "";
+    const normal = getSavedNormalColor();
+    appState.color.saturation = normal.saturation;
+    appState.color.hue = normal.hue;
+    appState.color.contrast = normal.contrast;
+    appState.color.gamma = normal.gamma;
+    updateColorPage();
+    await applyColor();
+    saveSettings();
     return;
   }
 
@@ -1687,14 +1981,14 @@ async function handleClick(event) {
           showToastBanner(
             t("blackHolo"),
             isRu
-              ? "Black Holosight включен. В консоли Rust (F1): accessibility.holosightcolour 2"
-              : "Black Holosight enabled. In Rust F1 console: accessibility.holosightcolour 2",
+              ? "Черный Холик активен (в консоли F1: accessibility.holosightcolour 2)"
+              : "Black Holosight enabled (Rust F1: accessibility.holosightcolour 2)",
             "safe"
           );
         } else {
           showToastBanner(
             t("blackHolo"),
-            isRu ? "Black Holosight выключен" : "Black Holosight disabled",
+            isRu ? "Черный Холик отключен" : "Black Holosight disabled",
             "safe"
           );
         }
@@ -1971,6 +2265,97 @@ async function handleClick(event) {
     return;
   }
 
+  const addBind = target.closest("[data-action='add-bind']");
+  if (addBind) {
+    event.preventDefault();
+    const newId = `bind_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    if (!Array.isArray(appState.keybinds)) appState.keybinds = [];
+    appState.keybinds.push({
+      id: newId,
+      key: "",
+      modifiers: 0,
+      vk: 0,
+      action: "template:vibrant",
+      enabled: true
+    });
+    viewState.recordingBindId = newId;
+    await syncKeybinds();
+    updateMain();
+    return;
+  }
+
+  const toggleDropdown = target.closest("[data-action='toggle-bind-dropdown']");
+  if (toggleDropdown) {
+    event.preventDefault();
+    const bindId = toggleDropdown.getAttribute("data-bind-id");
+    viewState.openDropdownBindId = viewState.openDropdownBindId === bindId ? null : bindId;
+    updateMain();
+    return;
+  }
+
+  const selectAction = target.closest("[data-action='select-bind-action']");
+  if (selectAction) {
+    event.preventDefault();
+    const bindId = selectAction.getAttribute("data-bind-id");
+    const val = selectAction.getAttribute("data-value");
+    const bind = appState.keybinds?.find((b) => b.id === bindId);
+    if (bind && val) {
+      bind.action = val;
+      viewState.openDropdownBindId = null;
+      await syncKeybinds();
+      updateMain();
+    }
+    return;
+  }
+
+  if (viewState.openDropdownBindId && !target.closest(".bind-custom-dropdown")) {
+    viewState.openDropdownBindId = null;
+    updateMain();
+  }
+
+  const recordBind = target.closest("[data-action='record-bind']");
+  if (recordBind) {
+    event.preventDefault();
+    const bindId = recordBind.getAttribute("data-bind-id");
+    if (bindId) {
+      viewState.recordingBindId = viewState.recordingBindId === bindId ? null : bindId;
+      updateMain();
+    }
+    return;
+  }
+
+  const toggleBind = target.closest("[data-action='toggle-bind']");
+  if (toggleBind) {
+    event.preventDefault();
+    const bindId = toggleBind.getAttribute("data-bind-id");
+    const bind = appState.keybinds?.find((b) => b.id === bindId);
+    if (bind) {
+      bind.enabled = !bind.enabled;
+      await syncKeybinds();
+      updateMain();
+    }
+    return;
+  }
+
+  const deleteBind = target.closest("[data-action='delete-bind']");
+  if (deleteBind) {
+    event.preventDefault();
+    const bindId = deleteBind.getAttribute("data-bind-id");
+    if (bindId) {
+      appState.keybinds = (appState.keybinds || []).filter((b) => b.id !== bindId);
+      if (viewState.recordingBindId === bindId) viewState.recordingBindId = null;
+      if (viewState.openDropdownBindId === bindId) viewState.openDropdownBindId = null;
+      await syncKeybinds();
+      updateMain();
+    }
+    return;
+  }
+
+  if (viewState.recordingBindId && !target.closest("[data-action='record-bind']")) {
+    viewState.recordingBindId = null;
+    updateMain();
+  }
+
   const backup = target.closest("[data-backup-id]");
   if (backup) {
     viewState.selectedBackup = backup.getAttribute("data-backup-id");
@@ -1997,7 +2382,43 @@ function handleWheel(event) {
   event.preventDefault();
 }
 
-function handleKeydown(event) {
+async function handleKeydown(event) {
+  if (viewState.recordingBindId) {
+    if (event.key === "Escape" && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      viewState.recordingBindId = null;
+      updateMain();
+      return;
+    }
+    if (["Control", "Shift", "Alt", "Meta"].includes(event.key)) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const bind = appState.keybinds?.find((b) => b.id === viewState.recordingBindId);
+    if (bind) {
+      let modifiers = 0;
+      if (event.altKey) modifiers |= 1;
+      if (event.ctrlKey) modifiers |= 2;
+      if (event.shiftKey) modifiers |= 4;
+      if (event.metaKey) modifiers |= 8;
+      bind.modifiers = modifiers;
+      bind.vk = getWin32Vk(event);
+      bind.key = formatKeyLabel(event);
+    }
+    viewState.recordingBindId = null;
+    await syncKeybinds();
+    updateMain();
+    return;
+  }
+
+  if (viewState.openDropdownBindId && event.key === "Escape") {
+    event.preventDefault();
+    viewState.openDropdownBindId = null;
+    updateMain();
+    return;
+  }
+
   if (viewState.applyModal && viewState.applyModal.phase === "complete") {
     if (event.key === "Escape" || event.key === "Enter") {
       event.preventDefault();
@@ -2126,6 +2547,26 @@ async function boot() {
 
   const state = await statePromise;
   if (state) mergeState(state);
+  if (!appState.color?.activeFilter) {
+    saveNormalColorState();
+  }
+
+  const shouldDisableAnim = Boolean(appState.settings?.disableAnimations);
+  document.body.classList.toggle("no-animations", shouldDisableAnim);
+
+  const shouldSkipSplash = Boolean(
+    appState.settings?.disableSplash ||
+    appState.settings?.disableAnimations ||
+    appState.settings?.startMinimized
+  );
+
+  if (!shouldSkipSplash) {
+    runIntroSplash();
+  }
+
+  if (Array.isArray(appState.keybinds) && appState.keybinds.length) {
+    syncKeybinds();
+  }
   render();
 
   Promise.all([holoPromise, loadLists(), loadColorGames()]).then(() => {
@@ -2148,7 +2589,10 @@ document.addEventListener("keydown", handleKeydown);
 window.addEventListener("resize", syncNavIndicator);
 window.addEventListener("visibilitychange", () => {
   if (document.hidden) {
-    scheduleTrimMemory(150);
+    clearImpactBannerTimer();
+    scheduleTrimMemory(100);
+  } else {
+    scheduleTrimMemory(1000);
   }
 });
 window.addEventListener("keydown", async (event) => {
@@ -2171,6 +2615,27 @@ window.addEventListener("keydown", async (event) => {
 });
 
 if (window.__TAURI__?.event?.listen) {
+  window.__TAURI__.event.listen("hotkey-triggered", (e) => {
+    const payload = e?.payload;
+    if (!payload) return;
+    const isRu = lang() === "ru";
+    if (payload.action === "trim_memory") {
+      showToastBanner(t("action_trim_memory"), t("ramPurgedToast") || (isRu ? "Оперативная память успешно очищена" : "RAM trimmed"), "safe");
+    } else if (payload.action === "toggle_black_holo") {
+      const active = Boolean(payload.active);
+      appState.color.blackHolo = active ? 100 : 0;
+      updateBlackHoloDom(active, viewState.blackHoloStatus);
+      showToastBanner(t("blackHolo"), active ? (isRu ? "Черный Холик активен" : "Black Holosight enabled") : (isRu ? "Черный Холик отключен" : "Black Holosight disabled"), "safe");
+    } else if (payload.color) {
+      appState.color = { ...appState.color, ...payload.color };
+      syncAllSliders(appState);
+      updateColorPage();
+      const label = payload.name ? `${t("templateAppliedToast") || (isRu ? "Применён шаблон" : "Template applied")}: ${payload.name}` : (isRu ? "Цвета обновлены" : "Colors updated");
+      showToastBanner(t("colorTitle"), label, "safe");
+    }
+    updateMain();
+  });
+
   window.__TAURI__.event.listen("black-holo-toggled", (e) => {
     const status = e?.payload;
     if (!status) return;
@@ -2189,14 +2654,14 @@ if (window.__TAURI__?.event?.listen) {
       showToastBanner(
         t("blackHolo"),
         isRu
-          ? "Black Holosight включен. В консоли Rust (F1): accessibility.holosightcolour 2"
-          : "Black Holosight enabled. In Rust F1 console: accessibility.holosightcolour 2",
+          ? "Черный Холик активен (в консоли F1: accessibility.holosightcolour 2)"
+          : "Black Holosight enabled (Rust F1: accessibility.holosightcolour 2)",
         "safe"
       );
     } else {
       showToastBanner(
         t("blackHolo"),
-        isRu ? "Black Holosight выключен" : "Black Holosight disabled",
+        isRu ? "Черный Холик отключен" : "Black Holosight disabled",
         "safe"
       );
     }

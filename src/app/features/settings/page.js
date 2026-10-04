@@ -70,7 +70,9 @@ export function renderSettingsPage(appState, _viewState, t) {
     checkbox(t("startMinimized"), appState.settings.startMinimized, "startMinimized"),
     checkbox(t("autoBackupOnStart"), appState.settings.autoBackupOnStart, "autoBackupOnStart"),
     checkbox(t("showOnRecordings"), Boolean(appState.settings.showOnRecordings), "showOnRecordings"),
-    checkbox(t("autoUpdate"), Boolean(appState.settings.autoUpdate), "autoUpdate")
+    checkbox(t("autoUpdate"), Boolean(appState.settings.autoUpdate), "autoUpdate"),
+    checkbox(t("disableSplash"), Boolean(appState.settings.disableSplash), "disableSplash"),
+    checkbox(t("disableAnimations"), Boolean(appState.settings.disableAnimations), "disableAnimations")
   ].join("");
 
   const unifiedCardBody = [

@@ -5,6 +5,7 @@ import { renderColorPage, renderGameColorPage } from "../features/color/page.js"
 import { renderSettingsPage } from "../features/settings/page.js";
 import { renderBackupsPage, renderConfigsPage } from "../features/storage/page.js";
 import { renderTweaksPage } from "../features/tweaks/page.js";
+import { renderBindsPage } from "../features/binds/page.js";
 import { logo, icon } from "./icons.js";
 
 function renderTitlebar(t) {
@@ -119,6 +120,7 @@ export function renderPageBody(viewState, t) {
   if (activePage === "color") return renderColorPage(appState, viewState, t);
   if (activePage === "gameColor") return renderGameColorPage(appState, viewState, t);
   if (activePage === "tweaks") return renderTweaksPage(viewState, t);
+  if (activePage === "binds") return renderBindsPage(appState, viewState, t);
   if (activePage === "characteristics") return renderCharacteristicsPage(viewState, t);
   if (activePage === "backups") return renderBackupsPage(viewState, t);
   if (activePage === "configs") return renderConfigsPage(viewState, t);

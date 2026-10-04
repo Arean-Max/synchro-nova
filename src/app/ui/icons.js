@@ -28,6 +28,21 @@ const iconPaths = {
   hardDrive: ['<rect x="3" y="6" width="18" height="12" rx="2"></rect>', '<path d="M7 14h.01"></path>', '<path d="M11 14h6"></path>'],
   mouse: ['<rect x="7" y="3" width="10" height="18" rx="5"></rect>', '<path d="M12 7v4"></path>', '<path d="M12 3v4"></path>'],
   minus: ['<path d="M5 12h14"></path>'],
+  plus: ['<line x1="12" y1="5" x2="12" y2="19"></line>', '<line x1="5" y1="12" x2="19" y2="12"></line>'],
+  arrowRight: ['<line x1="5" y1="12" x2="19" y2="12"></line>', '<polyline points="12 5 19 12 12 19"></polyline>'],
+  chevronDown: ['<polyline points="6 9 12 15 18 9"></polyline>'],
+  keyboard: [
+    '<rect x="2" y="4" width="20" height="16" rx="2"></rect>',
+    '<line x1="6" y1="8" x2="6.01" y2="8"></line>',
+    '<line x1="10" y1="8" x2="10.01" y2="8"></line>',
+    '<line x1="14" y1="8" x2="14.01" y2="8"></line>',
+    '<line x1="18" y1="8" x2="18.01" y2="8"></line>',
+    '<line x1="6" y1="12" x2="6.01" y2="12"></line>',
+    '<line x1="10" y1="12" x2="10.01" y2="12"></line>',
+    '<line x1="14" y1="12" x2="14.01" y2="12"></line>',
+    '<line x1="18" y1="12" x2="18.01" y2="12"></line>',
+    '<line x1="8" y1="16" x2="16" y2="16"></line>'
+  ],
   x: ['<path d="M18 6 6 18"></path>', '<path d="m6 6 12 12"></path>'],
   sidebar: ['<rect x="3" y="3" width="18" height="18" rx="2"></rect>', '<path d="M9 3v18"></path>'],
   alert: ['<circle cx="12" cy="12" r="10"></circle>', '<line x1="12" y1="8" x2="12" y2="12"></line>', '<line x1="12" y1="16" x2="12.01" y2="16"></line>'],
@@ -42,6 +57,18 @@ const iconPaths = {
     '<line x1="1" y1="14" x2="7" y2="14"></line>',
     '<line x1="9" y1="8" x2="15" y2="8"></line>',
     '<line x1="17" y1="16" x2="23" y2="16"></line>'
+  ],
+  crosshair: [
+    '<circle cx="12" cy="12" r="10"></circle>',
+    '<line x1="22" y1="12" x2="18" y2="12"></line>',
+    '<line x1="6" y1="12" x2="2" y2="12"></line>',
+    '<line x1="12" y1="6" x2="12" y2="2"></line>',
+    '<line x1="12" y1="22" x2="12" y2="18"></line>'
+  ],
+  moon: ['<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>'],
+  eye: [
+    '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>',
+    '<circle cx="12" cy="12" r="3"></circle>'
   ],
   zap: ['<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>'],
   github: [
