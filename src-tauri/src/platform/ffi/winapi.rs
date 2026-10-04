@@ -54,6 +54,8 @@ unsafe extern "system" {
         add: i32,
     ) -> i32;
     pub fn SetPriorityClass(process: *mut c_void, priority_class: u32) -> i32;
+    pub fn GetCurrentThreadId() -> u32;
+    pub fn GetModuleHandleW(module_name: *const u16) -> *mut c_void;
 }
 
 #[cfg(target_os = "windows")]
@@ -69,6 +71,13 @@ unsafe extern "system" {
     ) -> isize;
 
     pub fn ShellExecuteExW(p_exec_info: *mut ShellExecuteInfoW) -> i32;
+    pub fn ExtractIconExW(
+        lpsz_file: *const u16,
+        n_icon_index: i32,
+        phicon_large: *mut *mut c_void,
+        phicon_small: *mut *mut c_void,
+        n_icons: u32,
+    ) -> u32;
 }
 
 #[cfg(target_os = "windows")]
@@ -112,11 +121,33 @@ unsafe extern "system" {
     ) -> i32;
     pub fn RegisterHotKey(hwnd: *mut c_void, id: i32, fs_modifiers: u32, vk: u32) -> i32;
     pub fn UnregisterHotKey(hwnd: *mut c_void, id: i32) -> i32;
+    pub fn PostThreadMessageW(id_thread: u32, msg: u32, w_param: usize, l_param: isize) -> i32;
     pub fn GetMessageW(
         msg: *mut MSG,
         hwnd: *mut c_void,
         msg_filter_min: u32,
         msg_filter_max: u32,
+    ) -> i32;
+    pub fn TranslateMessage(msg: *const MSG) -> i32;
+    pub fn DispatchMessageW(msg: *const MSG) -> isize;
+    pub fn SetWindowsHookExW(
+        id_hook: i32,
+        lpfn: Option<unsafe extern "system" fn(i32, usize, isize) -> isize>,
+        hmod: *mut c_void,
+        dw_thread_id: u32,
+    ) -> *mut c_void;
+    pub fn UnhookWindowsHookEx(hhk: *mut c_void) -> i32;
+    pub fn CallNextHookEx(hhk: *mut c_void, n_code: i32, w_param: usize, l_param: isize) -> isize;
+    pub fn GetAsyncKeyState(v_key: i32) -> i16;
+    pub fn SendMessageW(hwnd: *mut c_void, msg: u32, w_param: usize, l_param: isize) -> isize;
+    pub fn SetClassLongPtrW(hwnd: *mut c_void, n_index: i32, dw_new_long: isize) -> isize;
+    pub fn LoadIconW(hinstance: *mut c_void, lp_icon_name: *const u16) -> *mut c_void;
+    pub fn PeekMessageW(
+        msg: *mut MSG,
+        hwnd: *mut c_void,
+        msg_filter_min: u32,
+        msg_filter_max: u32,
+        remove_msg: u32,
     ) -> i32;
 }
 

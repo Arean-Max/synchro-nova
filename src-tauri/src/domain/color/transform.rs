@@ -90,10 +90,16 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
 
     set_active_color(Some((color.clone(), show_on_recordings)));
 
-    let ramp_success = apply_gamma_ramp(color.gamma).is_ok();
-    let include_matrix_gamma = show_on_recordings || !ramp_success;
+    let include_matrix_gamma = if show_on_recordings {
+        let _ = apply_gamma_ramp(100.0);
+        true
+    } else {
+        let ramp_success = apply_gamma_ramp(color.gamma).is_ok();
+        !ramp_success
+    };
 
-    let has_matrix_effect = (color.saturation - 100.0).abs() >= 0.1
+    let has_matrix_effect = !color.active_filter.is_empty()
+        || (color.saturation - 100.0).abs() >= 0.1
         || color.hue.abs() >= 0.1
         || (color.contrast - 100.0).abs() >= 0.1
         || color.black_holo > 0.0
@@ -106,7 +112,6 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
             };
             let _ = crate::platform::ffi::winapi::MagInitialize();
             let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
-            let _ = crate::platform::ffi::winapi::mag_uninitialize();
         }
     } else {
         apply_magnification_color(color, include_matrix_gamma)?;
@@ -193,7 +198,11 @@ fn apply_gamma_ramp(gamma_percent: f32) -> Result<(), String> {
 
 pub(crate) fn gamma_fallback_matrix(gamma_percent: f32) -> [f32; 25] {
     let gamma = (gamma_percent / 100.0).clamp(0.5, 1.5);
-    let gain = gamma.powf(0.85);
+    if (gamma - 1.0).abs() < 0.005 {
+        return identity_matrix();
+    }
+    let lift = (gamma - 1.0) * 0.35;
+    let gain = (1.0 + lift).clamp(0.7, 1.25);
     let mut m = identity_matrix();
     m[0] = gain;
     m[6] = gain;
@@ -202,21 +211,60 @@ pub(crate) fn gamma_fallback_matrix(gamma_percent: f32) -> [f32; 25] {
 }
 
 pub(crate) fn build_color_matrix(color: &ColorSettings, include_matrix_gamma: bool) -> [f32; 25] {
+    let mut matrix = identity_matrix();
+
     let saturation = color.saturation / 100.0;
     let contrast = color.contrast / 100.0;
-    let hue = color.hue.to_radians();
 
-    let mut matrix = identity_matrix();
-    matrix = multiply_matrix(matrix, saturation_matrix(saturation));
-    matrix = multiply_matrix(matrix, hue_matrix(hue));
-    matrix = multiply_matrix(matrix, contrast_matrix(contrast));
+    match color.active_filter.as_str() {
+        "rust_cold_tactical" => {
+            matrix = multiply_matrix(matrix, saturation_matrix(saturation));
+            matrix = multiply_matrix(matrix, channel_gain_matrix(0.92, 1.00, 1.08));
+            matrix = multiply_matrix(matrix, contrast_matrix(contrast));
+        }
+        "rust_midnight_neon" => {
+            matrix = multiply_matrix(matrix, saturation_matrix(saturation));
+            matrix = multiply_matrix(matrix, channel_gain_matrix(0.88, 0.94, 1.25));
+            matrix = multiply_matrix(matrix, shadow_bias_matrix(-0.015, 0.00, 0.04));
+            matrix = multiply_matrix(matrix, contrast_matrix(contrast));
+        }
+        "clear_sight" => {
+            matrix = multiply_matrix(matrix, saturation_matrix(saturation));
+            matrix = multiply_matrix(matrix, channel_gain_matrix(1.02, 1.04, 1.00));
+            matrix = multiply_matrix(matrix, contrast_matrix(contrast));
+        }
+        _ => {
+            matrix = multiply_matrix(matrix, saturation_matrix(saturation));
+            matrix = multiply_matrix(matrix, contrast_matrix(contrast));
+        }
+    }
+
+    if color.hue.abs() >= 0.1 {
+        matrix = multiply_matrix(matrix, hue_matrix(color.hue.to_radians()));
+    }
     if color.black_holo > 0.0 {
         matrix = multiply_matrix(matrix, black_holo_matrix(color.black_holo / 100.0));
     }
-    if include_matrix_gamma {
+    if include_matrix_gamma && (color.gamma - 100.0).abs() >= 0.1 {
         matrix = multiply_matrix(matrix, gamma_fallback_matrix(color.gamma));
     }
     matrix
+}
+
+fn channel_gain_matrix(r: f32, g: f32, b: f32) -> [f32; 25] {
+    let mut m = identity_matrix();
+    m[0] = r;
+    m[6] = g;
+    m[12] = b;
+    m
+}
+
+fn shadow_bias_matrix(r_off: f32, g_off: f32, b_off: f32) -> [f32; 25] {
+    let mut m = identity_matrix();
+    m[20] = r_off;
+    m[21] = g_off;
+    m[22] = b_off;
+    m
 }
 
 fn black_holo_matrix(strength: f32) -> [f32; 25] {
@@ -242,9 +290,9 @@ fn identity_matrix() -> [f32; 25] {
 }
 
 fn saturation_matrix(saturation: f32) -> [f32; 25] {
-    let rw = 0.3086;
-    let gw = 0.6094;
-    let bw = 0.0820;
+    let rw = 0.2126;
+    let gw = 0.7152;
+    let bw = 0.0722;
     let inv = 1.0 - saturation;
 
     [

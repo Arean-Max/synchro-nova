@@ -31,6 +31,7 @@ pub struct ColorSettings {
     pub gamma: f32,
     pub black_holo: f32,
     pub enabled: bool,
+    pub active_filter: String,
 }
 
 impl Default for ColorSettings {
@@ -42,6 +43,7 @@ impl Default for ColorSettings {
             gamma: 100.0,
             black_holo: 0.0,
             enabled: true,
+            active_filter: String::new(),
         }
     }
 }
@@ -53,6 +55,9 @@ impl ColorSettings {
         self.contrast = clamp_finite(self.contrast, 50.0, 150.0, 100.0);
         self.gamma = clamp_finite(self.gamma, 50.0, 150.0, 100.0);
         self.black_holo = clamp_finite(self.black_holo, 0.0, 100.0, 0.0);
+        if self.active_filter.len() > 64 {
+            self.active_filter.truncate(64);
+        }
         self
     }
 }
@@ -71,6 +76,8 @@ pub struct AppSettings {
     pub show_on_recordings: bool,
     pub accent_color: String,
     pub auto_update: bool,
+    pub disable_splash: bool,
+    pub disable_animations: bool,
 }
 
 impl Default for AppSettings {
@@ -87,6 +94,8 @@ impl Default for AppSettings {
             show_on_recordings: true,
             accent_color: "#ffffff".to_string(),
             auto_update: false,
+            disable_splash: false,
+            disable_animations: false,
         }
     }
 }
@@ -110,6 +119,8 @@ pub struct PersistedState {
     pub settings: AppSettings,
     #[serde(default)]
     pub is_admin: bool,
+    #[serde(default)]
+    pub keybinds: Vec<crate::domain::hotkeys::Keybind>,
 }
 
 impl PersistedState {
@@ -169,6 +180,7 @@ pub struct DriverInfo {
     pub vendor: String,
     pub is_outdated: bool,
     pub official_url: String,
+    pub latest_version: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -508,37 +520,21 @@ pub fn unique_available_stem(root: &Path, preferred: &str) -> Result<String, Str
 }
 
 pub fn unique_id(name: &str, created_at: u64) -> Result<String, String> {
-    Ok(format!(
-        "{}-{created_at}-{}",
-        safe_file_stem(name),
-        random_hex(RANDOM_SUFFIX_BYTES)?
-    ))
+    Ok(format!("{}-{created_at}-{}", safe_file_stem(name), random_hex(RANDOM_SUFFIX_BYTES)?))
 }
 
 pub fn random_hex(byte_count: usize) -> Result<String, String> {
     let mut bytes = vec![0_u8; byte_count];
-    getrandom::fill(&mut bytes)
-        .map_err(|error| format!("Failed to generate random id: {error}"))?;
+    getrandom::fill(&mut bytes).map_err(|error| format!("Failed to generate random id: {error}"))?;
     Ok(bytes.iter().map(|byte| format!("{byte:02x}")).collect())
 }
 
 pub fn unix_now() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_secs())
-        .unwrap_or_default()
+    SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or_default()
 }
 
 pub fn short_date(seconds: u64) -> String {
     time::OffsetDateTime::from_unix_timestamp(seconds as i64)
-        .map(|date_time| {
-            let date = date_time.date();
-            format!(
-                "{:02}.{:02}.{:04}",
-                date.day(),
-                u8::from(date.month()),
-                date.year()
-            )
-        })
+        .map(|dt| format!("{:02}.{:02}.{:04}", dt.date().day(), u8::from(dt.date().month()), dt.date().year()))
         .unwrap_or_else(|_| "01.01.1970".to_string())
 }

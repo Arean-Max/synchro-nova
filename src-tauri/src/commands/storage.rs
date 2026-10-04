@@ -205,6 +205,7 @@ pub fn load_config(id: String, state: State<'_, RuntimeState>) -> Result<Persist
         color: config.color,
         settings,
         is_admin: current.is_admin,
+        keybinds: current.keybinds.clone(),
     }
     .sanitized())
 }
@@ -224,6 +225,7 @@ pub fn apply_config(
         color: config.color,
         settings,
         is_admin: current.is_admin,
+        keybinds: current.keybinds,
     }
     .sanitized();
     apply_color_transform(&snapshot.color, snapshot.settings.show_on_recordings)?;
