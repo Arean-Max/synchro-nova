@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.0] - 2026-10-04
+
+### Added
+- Real driver freshness checks for display adapters (NVIDIA, AMD, Intel) and system hardware (chipsets, Realtek audio, network cards).
+- Accurate available version badges and direct official download links for all supported vendors.
+- Native Win32 `RegisterHotKey` global message pump for instantaneous hotkey responsiveness.
+- New startup splash animation and Rust-themed brand identity lockup.
+- Settings toggle to disable UI and splash animations.
+
+### Fixed
+- Fixed application icon resolution in Windows taskbar and system notification area.
+- Fixed Common-Controls 6.0 TaskDialogIndirect manifest integration under MinGW GCC.
+- Isolated asynchronous background driver scanning with zero UI thread contention.
+
+---
+
 ## [2.2.4 (fix)] - 2026-09-27
 
 ### Fixed

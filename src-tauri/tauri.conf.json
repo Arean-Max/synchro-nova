@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Synchro Nova",
-  "version": "2.2.5",
+  "version": "2.3.0",
   "identifier": "app.synchro.performance",
   "build": {
     "frontendDist": "../src"
@@ -14,10 +14,12 @@
         "title": "Synchro Nova",
         "width": 980,
         "height": 620,
-        "minWidth": 860,
-        "minHeight": 540,
+        "minWidth": 980,
+        "maxWidth": 980,
+        "minHeight": 620,
+        "maxHeight": 620,
         "center": true,
-        "resizable": true,
+        "resizable": false,
         "maximizable": false,
         "fullscreen": false,
         "decorations": false,
@@ -43,7 +45,13 @@
   },
   "bundle": {
     "active": true,
-    "icon": ["icons/icon.ico"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png",
+      "icons/icon.ico"
+    ],
     "targets": ["nsis"],
     "resources": {
       "crates/webview2-com-sys/x64/WebView2Loader.dll": "WebView2Loader.dll"
