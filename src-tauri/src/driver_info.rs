@@ -9,6 +9,7 @@ pub(crate) fn collect_drivers() -> Vec<DriverInfo> {
     {
         collect_display_drivers(&mut drivers, &mut seen);
         collect_pnp_class_drivers(&mut drivers, &mut seen);
+        crate::driver_check::enrich_with_real_version_checks(&mut drivers);
     }
 
     drivers.sort_by(|a, b| {
@@ -263,6 +264,7 @@ fn make_driver(
         vendor,
         is_outdated,
         official_url,
+        latest_version: String::new(),
     }
 }
 
@@ -328,55 +330,21 @@ fn is_ignorable_device(name: &str, provider: &str, class_name: &str) -> bool {
     let n = name.to_lowercase();
     let p = provider.to_lowercase();
 
-    if n.contains("wan miniport")
-        || n.contains("kernel debug")
-        || n.contains("directshow")
-        || n.contains("ras async")
-        || n.contains("remote ndis")
-        || n.contains("virtual")
-        || n.contains("composite bus")
-        || n.contains("pnp-software")
-        || n.contains("pnp software")
-        || n.contains("terminal server")
-        || n.contains("root audio")
-        || n.contains("volume manager")
-        || n.contains("volume snapshot")
-        || n.contains("generic volume")
-        || n.contains("generic pnp monitor")
-        || n.contains("generic non-pnp monitor")
-        || n.contains("motherboard resources")
-        || n.contains("system timer")
-        || n.contains("interrupt controller")
-        || n.contains("numeric data processor")
-        || n.contains("acpi fan")
-        || n.contains("acpi processor")
-        || n.contains("acpi power")
-        || n.contains("acpi thermal")
-        || n.contains("pci memory controller")
-        || n.contains("legacy device")
-        || n.contains("print queue")
-        || n.contains("software device")
-        || n.contains("usbncm host device")
-        || n.contains("power engine plug-in")
-        || n.contains("platform monitoring technology")
-        || n.contains("pawnio")
-        || n.contains("usb composite device")
-        || n.contains("usb root hub")
-        || n.contains("acpi x64-based pc")
-        || n.contains("computer device")
-        || n.contains("standard ps/2")
-        || n.contains("microsoft ps/2")
-        || n.contains("standard sata ahci")
-        || n.contains("pci standard host")
-        || n.contains("pci standard isa")
-        || n.contains("pci standard pci")
-        || n.contains("pci standard ram")
-        || n.contains("standard dual channel")
-        || n.contains("pci-to-pci bridge")
-        || n.contains("standard nvm express controller")
-        || n.contains("storage spaces")
-        || n.contains("audio endpoint")
-    {
+    const IGNORED: &[&str] = &[
+        "wan miniport", "kernel debug", "directshow", "ras async", "remote ndis",
+        "virtual", "composite bus", "pnp-software", "pnp software", "terminal server",
+        "root audio", "volume manager", "volume snapshot", "generic volume",
+        "generic pnp monitor", "generic non-pnp monitor", "motherboard resources",
+        "system timer", "interrupt controller", "numeric data processor", "acpi fan",
+        "acpi processor", "acpi power", "acpi thermal", "pci memory controller",
+        "legacy device", "print queue", "software device", "usbncm host device",
+        "power engine plug-in", "platform monitoring technology", "pawnio",
+        "usb composite device", "usb root hub", "acpi x64-based pc", "computer device",
+        "standard ps/2", "microsoft ps/2", "standard sata ahci", "pci standard host",
+        "pci standard isa", "pci standard pci", "pci standard ram", "standard dual channel",
+        "pci-to-pci bridge", "standard nvm express controller", "storage spaces", "audio endpoint"
+    ];
+    if IGNORED.iter().any(|k| n.contains(k)) {
         return true;
     }
 

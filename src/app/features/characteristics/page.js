@@ -90,7 +90,7 @@ export function renderCharacteristicsPage(viewState, t) {
 
     return [
       '<section class="card driver-group">',
-      `  <h2 class="group-title">${icon(cat.icon)}<span>${escapeHtml(title)}</span><span class="group-count-badge">${items.length}</span></h2>`,
+      `  <h2 class="group-title">${icon(cat.icon)}<span>${escapeHtml(title)}</span></h2>`,
       `  <div class="driver-grid">${tiles}</div>`,
       '</section>'
     ].join("");
@@ -109,7 +109,7 @@ export function renderCharacteristicsPage(viewState, t) {
     const tiles = remaining.map((driver) => renderDriverTile(driver, t, isRu)).join("");
     groupCards.push([
       '<section class="card driver-group">',
-      `  <h2 class="group-title">${icon("layers")}<span>${escapeHtml(title)}</span><span class="group-count-badge">${remaining.length}</span></h2>`,
+      `  <h2 class="group-title">${icon("layers")}<span>${escapeHtml(title)}</span></h2>`,
       `  <div class="driver-grid">${tiles}</div>`,
       '</section>'
     ].join(""));
@@ -137,22 +137,76 @@ export function renderCharacteristicsPage(viewState, t) {
 
 function renderDriverTile(driver, t, isRu) {
   const isOutdated = Boolean(driver.isOutdated ?? driver.is_outdated);
+  const latestVer = (driver.latestVersion || driver.latest_version || "").trim();
   const vendor = (driver.vendor || "generic").toLowerCase();
   const className = driver.className || driver.class_name || "System";
   const logo = getVendorLogo(vendor, className);
   const officialUrl = driver.officialUrl || driver.official_url || "https://www.catalog.update.microsoft.com";
 
-  const statusLabel = isOutdated
-    ? (isRu ? "Обновление" : "Update Available")
-    : (isRu ? "Актуален" : "Up to Date");
+  let rawVer = driver.version ? driver.version.replace(/^v/, "").trim() : "";
+  let versionText = rawVer ? `v${rawVer}` : "-";
+  if (vendor === "nvidia" && rawVer) {
+    const parts = rawVer.split(".");
+    if (parts.length === 4 && parts[3].length >= 4) {
+      const p2 = parts[2];
+      const p3 = parts[3];
+      const lastDigit = p2.slice(-1);
+      const geforce = `${lastDigit}${p3.slice(0, 2)}.${p3.slice(2)}`;
+      versionText = `v${geforce}`;
+    }
+  } else if (vendor === "amd" && rawVer && rawVer.includes(".")) {
+    const parts = rawVer.split(".");
+    if (parts.length === 4 && parts[2].length >= 4) {
+      const p2 = parts[2];
+      const yy = p2.slice(0, 2);
+      const mm = parseInt(p2.slice(2, 4), 10);
+      const rr = p2.length > 4 ? p2.slice(4) : "1";
+      versionText = `v${yy}.${mm}.${rr}`;
+    }
+  }
+
+  let displayLatest = latestVer ? latestVer.replace(/^v/, "").trim() : "";
+  if (vendor === "nvidia" && displayLatest && displayLatest.includes(".")) {
+    const parts = displayLatest.split(".");
+    if (parts.length === 4 && parts[3].length >= 4) {
+      const p2 = parts[2];
+      const p3 = parts[3];
+      const lastDigit = p2.slice(-1);
+      displayLatest = `${lastDigit}${p3.slice(0, 2)}.${p3.slice(2)}`;
+    }
+  } else if (vendor === "amd" && displayLatest && displayLatest.includes(".")) {
+    const parts = displayLatest.split(".");
+    if (parts.length === 4 && parts[2].length >= 4) {
+      const p2 = parts[2];
+      const yy = p2.slice(0, 2);
+      const mm = parseInt(p2.slice(2, 4), 10);
+      const rr = p2.length > 4 ? p2.slice(4) : "1";
+      displayLatest = `${yy}.${mm}.${rr}`;
+    }
+  }
+  if (!displayLatest) {
+    displayLatest = rawVer || "-";
+  }
+
+  const cleanLatest = displayLatest.replace(/^v/, "");
+  let statusLabel;
+  if (isOutdated) {
+    statusLabel = cleanLatest && cleanLatest !== "-"
+      ? (isRu ? `Доступна v${cleanLatest}` : `v${cleanLatest} Available`)
+      : (isRu ? "Доступно обновление" : "Update Available");
+  } else {
+    statusLabel = isRu ? "Актуален" : "Up to Date";
+  }
 
   const btnLabel = isOutdated
     ? (isRu ? "Скачать обновление" : "Download Update")
     : (isRu ? "Официальный сайт" : "Official Site");
 
-  const versionText = driver.version ? `v${driver.version}` : "-";
   const dateText = driver.date || "-";
   const providerText = driver.provider || "-";
+  const newVerSpec = isOutdated
+    ? `<div class="driver-spec-item update-hint"><span class="spec-label">${isRu ? "Доступна:" : "Available:"}</span> <span class="spec-val highlight-new">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : "-"}</span></div>`
+    : `<div class="driver-spec-item uptodate-hint"><span class="spec-label">${isRu ? "Актуальная:" : "Latest:"}</span> <span class="spec-val highlight-uptodate">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : (versionText !== "-" ? escapeHtml(versionText) : "-")}</span></div>`;
 
   return [
     `<div class="driver-tile ${isOutdated ? "has-update" : "uptodate"}">`,
@@ -170,7 +224,8 @@ function renderDriverTile(driver, t, isRu) {
     '    </span>',
     '  </div>',
     '  <div class="driver-tile-specs">',
-    `    <div class="driver-spec-item"><span class="spec-label">${escapeHtml(t("version"))}:</span> <span class="spec-val version">${escapeHtml(versionText)}</span></div>`,
+    `    <div class="driver-spec-item" title="${escapeAttr(driver.version || "")}"><span class="spec-label">${escapeHtml(t("version"))}:</span> <span class="spec-val version">${escapeHtml(versionText)}</span></div>`,
+    newVerSpec,
     `    <div class="driver-spec-item"><span class="spec-label">${escapeHtml(t("date"))}:</span> <span class="spec-val">${escapeHtml(dateText)}</span></div>`,
     '  </div>',
     '  <div class="driver-tile-footer">',
@@ -180,7 +235,7 @@ function renderDriverTile(driver, t, isRu) {
     '    </button>',
     '  </div>',
     '</div>'
-  ].join("");
+  ].filter(Boolean).join("");
 }
 
 export const characteristicsFeature = {
