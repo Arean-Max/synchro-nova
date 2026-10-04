@@ -1,5 +1,20 @@
 fn main() {
-    tauri_build::build();
+    if std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("gnu") {
+        if let Ok(out_dir) = std::env::var("OUT_DIR") {
+            let out_path = std::path::Path::new(&out_dir);
+            let dummy_manifest = out_path.join("default-manifest.o");
+            let _ = std::process::Command::new("gcc")
+                .args(["-c", "-x", "c", "-o"])
+                .arg(&dummy_manifest)
+                .arg("NUL")
+                .status();
+            println!("cargo:rustc-link-search=native={}", out_dir);
+        }
+    }
+
+    let windows_attrs = tauri_build::WindowsAttributes::new();
+    let attrs = tauri_build::Attributes::new().windows_attributes(windows_attrs);
+    tauri_build::try_build(attrs).expect("failed to run tauri-build");
 
     if std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("gnu") {
         if let Ok(prefix) = std::env::var("MINGW_PREFIX") {

@@ -6,6 +6,7 @@ pub mod app;
 pub mod browser;
 pub mod commands;
 pub mod domain;
+pub mod driver_check;
 pub mod driver_info;
 pub mod infra;
 pub mod platform;
@@ -67,7 +68,7 @@ pub fn run() {
             app::tray::install_tray(app.handle())?;
 
             if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_resizable(true);
+                let _ = window.set_resizable(false);
                 let _ = window.set_maximizable(false);
 
                 let (target_w, target_h) = if let Some(monitor) = window
@@ -88,11 +89,18 @@ pub fn run() {
 
                 let target_size = tauri::LogicalSize::new(target_w, target_h);
                 let _ = window.set_size(target_size);
+                let _ = window.set_min_size(Some(target_size));
+                let _ = window.set_max_size(Some(target_size));
                 let _ = window.set_shadow(false);
+
+                if let Some(icon) = app.default_window_icon().cloned() {
+                    let _ = window.set_icon(icon);
+                }
 
                 #[cfg(target_os = "windows")]
                 if let Ok(hwnd) = window.hwnd() {
                     platform::ffi::eliminate_window_borders(hwnd.0 as isize);
+                    platform::ffi::set_window_taskbar_icon(hwnd.0 as isize);
                 }
                 #[cfg(target_os = "windows")]
                 let _ = window.with_webview(|webview| {
@@ -119,6 +127,8 @@ pub fn run() {
 
             #[cfg(target_os = "windows")]
             domain::color::black_holo::start_black_holo_hotkey_listener(Some(app.handle().clone()));
+            domain::hotkeys::start_global_hotkey_listener(app.handle().clone());
+            domain::hotkeys::sync_hotkeys(&initial.keybinds);
 
             Ok(())
         })
@@ -154,7 +164,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::get_app_state,
             commands::apply_color_settings,
+            commands::apply_color_filter,
             commands::update_app_settings,
+            commands::sync_keybinds,
+            commands::get_keybinds,
             commands::get_system_characteristics,
             commands::get_system_live_metrics,
             commands::open_driver_search,
@@ -215,6 +228,7 @@ mod tests {
                 gamma: 300.0,
                 black_holo: -20.0,
                 enabled: true,
+                active_filter: String::new(),
             },
             settings: AppSettings {
                 language: "unknown".to_string(),
@@ -222,6 +236,7 @@ mod tests {
                 ..Default::default()
             },
             is_admin: false,
+            keybinds: Vec::new(),
         }
         .sanitized();
 
