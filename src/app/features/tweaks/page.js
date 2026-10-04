@@ -134,4 +134,77 @@ export function getTweakImpactDetails(tweak, t, isRu) {
       : "This tweak has no confirmed conflicts with games or apps."
   };
 }
-
+
+export function renderIosNotification(viewState, t) {
+  const banner = viewState.activeImpactBanner;
+  if (!banner) return "";
+
+  const isRu = typeof t === "function" && t("language") === "ru";
+  const category = banner.category || "safe";
+  const iconName = banner.isAdminPrompt
+    ? "shield"
+    : (category === "danger" || category === "risk" || category === "experimental" ? "alert" : "info");
+  const bannerAction = banner.isAdminPrompt
+    ? "restart-as-admin"
+    : (banner.isBackupPrompt ? "open-backup-name-modal" : "click-impact-banner");
+  const clickHint = banner.isAdminPrompt
+    ? ""
+    : (isRu ? "Нажмите, чтобы скопировать в буфер обмена" : "Click to copy to clipboard");
+
+  return [
+    '<div class="ios-banner-container">',
+    `  <div class="ios-banner ${escapeAttr(category)}" data-action="${bannerAction}" title="${escapeAttr(clickHint)}">`,
+    `    <div class="ios-banner-icon ${escapeAttr(category)}">`,
+    `      ${icon(iconName)}`,
+    '    </div>',
+    '    <div class="ios-banner-content">',
+    '      <div class="ios-banner-header">',
+    `        <span class="ios-banner-app">${escapeHtml(banner.appName)}</span>`,
+    '      </div>',
+    `      <div class="ios-banner-title">${escapeHtml(banner.title)}</div>`,
+    `      <div class="ios-banner-message">${escapeHtml(banner.impactText)}</div>`,
+    '    </div>',
+    banner.isAdminPrompt
+      ? ""
+      : `    <button class="ios-banner-close" type="button" data-action="dismiss-impact-banner" title="${escapeAttr(t("close"))}">${icon("x")}</button>`,
+    '  </div>',
+    '</div>'
+  ].join("");
+}
+
+export function renderTweaksPage(viewState, t) {
+  const isLocked = !appState.isAdmin;
+  const groups = tweakCatalog.map((group) => tweakGroup(group, viewState, t)).join("");
+  const hasSelected = (viewState.selectedTweaks && viewState.selectedTweaks.size > 0) ||
+    (viewState.pendingRevertTweaks && viewState.pendingRevertTweaks.size > 0);
+  const applyLabel = viewState.applyingTweaks ? t("loading") : t("applySelected");
+
+  const applyBtnHtml = hasSelected
+    ? button(applyLabel, "check", "primary", "apply-tweaks")
+    : "";
+
+  return [
+    `<div class="tweaks-page ${isLocked ? "admin-locked" : ""}">`,
+    `<div class="scroll-panel">${tweakResults(viewState, t)}${groups}</div>`,
+    `<div class="actions tweaks-actions">${applyBtnHtml}${button(t("rollbackTweaks"), "rotate", "outline", "rollback-tweaks")}</div>`,
+    '</div>'
+  ].join("");
+}
+
+export const tweaksFeature = {
+  render: renderTweaksPage,
+  mount(container, context) {
+    if (!appState.isAdmin && typeof context?.showAdminBanner === "function") {
+      context.showAdminBanner();
+    } else if (appState.isAdmin && viewState.activeImpactBanner?.isAdminPrompt) {
+      viewState.activeImpactBanner = null;
+      document.querySelectorAll(".ios-banner-container").forEach((c) => c.remove());
+    }
+    if (context?.loadTweakStatuses) {
+      context.loadTweakStatuses();
+    }
+  },
+  unmount() {
+  }
+};
+
