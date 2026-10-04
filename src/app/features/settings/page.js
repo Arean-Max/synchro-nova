@@ -88,4 +88,44 @@ export function renderSettingsPage(appState, viewState, t) {
     '  </button>',
     '</div>'
   ].join("");
-
+
+  const appToggles = [
+    checkbox(t("startWithWindows"), appState.settings.autostartWindows, "autostartWindows"),
+    checkbox(t("closeToTray"), appState.settings.closeToTray, "closeToTray"),
+    checkbox(t("startMinimized"), appState.settings.startMinimized, "startMinimized"),
+    checkbox(t("autoBackupOnStart"), appState.settings.autoBackupOnStart, "autoBackupOnStart"),
+    checkbox(t("showOnRecordings"), Boolean(appState.settings.showOnRecordings), "showOnRecordings"),
+    checkbox(t("autoUpdate"), Boolean(appState.settings.autoUpdate), "autoUpdate"),
+    checkbox(t("disableSplash"), Boolean(appState.settings.disableSplash), "disableSplash"),
+    checkbox(t("disableAnimations"), Boolean(appState.settings.disableAnimations), "disableAnimations")
+  ].join("");
+
+  const unifiedCardBody = [
+    '<div class="settings-top-row">',
+    '  <div class="settings-top-left">',
+    language,
+    accentControl,
+    '  </div>',
+    '  <div class="settings-top-right">',
+    communityList,
+    '  </div>',
+    '</div>',
+    '<div class="settings-section-divider"></div>',
+    '<div class="settings-toggles-section">',
+    appToggles,
+    '</div>'
+  ].join("");
+
+  return [
+    '<div class="settings-page settings-unified-page">',
+    card(t("application"), unifiedCardBody, "settings-unified-card"),
+    '</div>'
+  ].join("");
+}
+
+export const settingsFeature = {
+  render: renderSettingsPage,
+  mount(container, context) {},
+  unmount() {}
+};
+
