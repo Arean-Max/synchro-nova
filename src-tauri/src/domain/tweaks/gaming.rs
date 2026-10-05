@@ -268,21 +268,6 @@ pub fn is_kill_gamebar_presence_applied() -> bool {
     ) == Some(0)
 }
 
-pub fn apply_disable_hpet_synthetic(id: &str) -> TweakApplyResult {
-    let res = run_command_output("bcdedit", &["/set", "disabledynamictick", "yes"]);
-    let _ = run_command_output("bcdedit", &["/deletevalue", "useplatformclock"]);
-    if res.is_ok() {
-        super::types::applied(id, "Dynamic tick disabled; synthetic timer jitter eliminated")
-    } else {
-        super::types::failed(id, "Failed to run bcdedit; requires administrator privileges")
-    }
-}
-
-pub fn is_disable_hpet_synthetic_applied() -> bool {
-    let res = run_command_output("bcdedit", &["/enum", "{current}"]);
-    res.map(|o| String::from_utf8_lossy(&o.stdout).contains("disabledynamictick       Yes")).unwrap_or(false)
-}
-
 pub fn apply_directx_thread_priority(id: &str) -> TweakApplyResult {
     collect_result(
         id,
@@ -313,6 +298,10 @@ pub fn clean_legacy_rust_ifeo() {
     let _ = super::runner::delete_hklm_tree(
         "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\RustClient.exe",
     );
+    let _ = super::runner::delete_hklm_tree(
+        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\rust.exe",
+    );
+    let _ = super::runner::run_command_output("bcdedit", &["/deletevalue", "disabledynamictick"]);
 }
 
 pub fn apply_gpu_adaptive_power(id: &str) -> TweakApplyResult {

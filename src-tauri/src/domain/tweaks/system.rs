@@ -1,5 +1,5 @@
 use super::runner::{
-    delete_hklm_value, hkcu_dword, hkcu_string, run_command, run_command_output,
+    hkcu_dword, hkcu_string, run_command, run_command_output,
     set_hkcu_dword, set_hkcu_string, set_hklm_dword,
 };
 use super::types::{collect_result, TweakApplyResult};
@@ -86,9 +86,8 @@ pub fn is_input_response_fast_applied() -> bool {
 }
 
 pub fn clean_legacy_csrss_override() {
-    let _ = delete_hklm_value(
-        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe\\PerfOptions",
-        "CpuPriorityClass",
+    let _ = super::runner::delete_hklm_tree(
+        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe",
     );
 }
 

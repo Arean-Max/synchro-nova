@@ -8,7 +8,6 @@ export const tweakCatalog = [
       { id: "win32-priority-rust", title: "Win32 Priority Separation", description: "Allocates long fixed-length processor quantums to Rust and active games, stabilizing 1% Low FPS.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
       { id: "system-timer-resolution", title: "System Timer Resolution (0.5 ms)", description: "Forces Windows global timer resolution to 0.5 ms to smooth frame pacing and eliminate micro-stutters during weapon spray.", badges: ["ADMIN", "VERIFIED"] },
       { id: "kill-gamebar-presence", title: "Kill GameBar Presence Writer", description: "Completely disables GameBarPresenceWriter and GameDVR hooks that cause frame time spikes in Unity games.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "disable-hpet-synthetic", title: "Disable Dynamic Tick (Synthetic Timers)", description: "Disables dynamic tick in the Windows boot configuration to maintain steady clock cycles and prevent micro-stuttering.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
       { id: "directx-thread-priority", title: "DirectX GPU Scheduling & TdrDelay", description: "Enables GPU preemption and extends DirectX TDR delay to 10s to eliminate GPU hang spikes and driver timeouts.", badges: ["ADMIN", "VERIFIED"] },
       { id: "gpu-adaptive-power", title: "Hardware-Adaptive GPU Power", description: "Detects GPU vendor: disables PowerMizer downclocking on NVIDIA or disables ULPS sleep state on AMD for locked framerates.", badges: ["ADMIN", "VERIFIED"] },
       { id: "game-mode-on", title: "Enable Game Mode", description: "Enables Windows Game Mode hints and priority for active games.", badges: ["SAFE", "VERIFIED"] },
@@ -179,14 +178,6 @@ export const tweakAppImpacts = {
     appNameRu: "GameBarPresenceWriter",
     impactEn: "Completely disables GameBarPresenceWriter and background presence tracking that causes frametime spikes in Unity engine games.",
     impactRu: "Полностью устраняет системный процесс GameBarPresenceWriter, вызывающий скачки задержки кадров в играх на движке Unity."
-  },
-  "disable-hpet-synthetic": {
-    appId: "synthetic_timers",
-    appName: "Dynamic Tick & HPET",
-    appNameEn: "Dynamic Tick & HPET",
-    appNameRu: "Dynamic Tick и синтетические таймеры",
-    impactEn: "Disables dynamic tick via BCDEdit, eliminating synthetic timer overhead and micro-stuttering during gameplay.",
-    impactRu: "Отключает Dynamic Tick в конфигурации загрузки Windows: стабилизирует тактовую частоту без просадок фреймрейта."
   },
   "directx-thread-priority": {
     appId: "directx_gpu",

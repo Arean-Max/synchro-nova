@@ -36,7 +36,6 @@ pub(crate) fn is_admin_tweak(id: &str) -> bool {
             | "disable-page-combining"
             | "adaptive-io-page-lock"
             | "kill-gamebar-presence"
-            | "disable-hpet-synthetic"
             | "directx-thread-priority"
             | "gpu-adaptive-power"
             | "network-udp-buffers"
@@ -82,7 +81,6 @@ fn apply_one(id: &str) -> TweakApplyResult {
         "win32-priority-rust" => gaming::apply_win32_priority_rust(id),
         "system-timer-resolution" => gaming::apply_system_timer_resolution(id),
         "kill-gamebar-presence" => gaming::apply_kill_gamebar_presence(id),
-        "disable-hpet-synthetic" => gaming::apply_disable_hpet_synthetic(id),
         "directx-thread-priority" => gaming::apply_directx_thread_priority(id),
         "gpu-adaptive-power" => gaming::apply_gpu_adaptive_power(id),
         "game-mode-on" => gaming::apply_game_mode(id),
@@ -165,7 +163,6 @@ pub fn known_tweak_ids() -> &'static [&'static str] {
         "win32-priority-rust",
         "system-timer-resolution",
         "kill-gamebar-presence",
-        "disable-hpet-synthetic",
         "directx-thread-priority",
         "gpu-adaptive-power",
         "game-mode-on",
@@ -220,7 +217,6 @@ pub fn is_tweak_applied(id: &str) -> bool {
         "win32-priority-rust" => gaming::is_win32_priority_rust_applied(),
         "system-timer-resolution" => gaming::is_system_timer_resolution_applied(),
         "kill-gamebar-presence" => gaming::is_kill_gamebar_presence_applied(),
-        "disable-hpet-synthetic" => gaming::is_disable_hpet_synthetic_applied(),
         "directx-thread-priority" => gaming::is_directx_thread_priority_applied(),
         "gpu-adaptive-power" => gaming::is_gpu_adaptive_power_applied(),
         "game-mode-on" => gaming::is_game_mode_applied(),
