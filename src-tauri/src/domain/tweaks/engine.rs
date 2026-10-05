@@ -16,6 +16,7 @@ pub fn apply_selected_tweaks(ids: Vec<String>) -> Vec<TweakApplyResult> {
 
 pub fn collect_tweak_statuses() -> Vec<TweakStatus> {
     system::clean_legacy_csrss_override();
+    gaming::clean_legacy_rust_ifeo();
     known_tweak_ids()
         .iter()
         .map(|id| TweakStatus {
@@ -29,7 +30,6 @@ pub(crate) fn is_admin_tweak(id: &str) -> bool {
     matches!(
         id,
         "win32-priority-rust"
-            | "rust-ifeo-high-priority"
             | "system-timer-resolution"
             | "disable-paging-executive"
             | "disable-memory-compression"
@@ -80,7 +80,6 @@ fn apply_one(id: &str) -> TweakApplyResult {
     }
     match id {
         "win32-priority-rust" => gaming::apply_win32_priority_rust(id),
-        "rust-ifeo-high-priority" => gaming::apply_rust_ifeo_high_priority(id),
         "system-timer-resolution" => gaming::apply_system_timer_resolution(id),
         "kill-gamebar-presence" => gaming::apply_kill_gamebar_presence(id),
         "disable-hpet-synthetic" => gaming::apply_disable_hpet_synthetic(id),
@@ -164,7 +163,6 @@ fn apply_one(id: &str) -> TweakApplyResult {
 pub fn known_tweak_ids() -> &'static [&'static str] {
     &[
         "win32-priority-rust",
-        "rust-ifeo-high-priority",
         "system-timer-resolution",
         "kill-gamebar-presence",
         "disable-hpet-synthetic",
@@ -220,7 +218,6 @@ pub fn known_tweak_ids() -> &'static [&'static str] {
 pub fn is_tweak_applied(id: &str) -> bool {
     match id {
         "win32-priority-rust" => gaming::is_win32_priority_rust_applied(),
-        "rust-ifeo-high-priority" => gaming::is_rust_ifeo_high_priority_applied(),
         "system-timer-resolution" => gaming::is_system_timer_resolution_applied(),
         "kill-gamebar-presence" => gaming::is_kill_gamebar_presence_applied(),
         "disable-hpet-synthetic" => gaming::is_disable_hpet_synthetic_applied(),

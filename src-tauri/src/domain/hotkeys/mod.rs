@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
 
 #[cfg(target_os = "windows")]
-use crate::platform::ffi::{winapi, KbdllHookStruct, MSG, WH_KEYBOARD_LL, WM_KEYDOWN, WM_SYSKEYDOWN};
+use crate::platform::ffi::{winapi, MSG};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
@@ -19,7 +19,6 @@ pub struct Keybind {
 
 static CURRENT_KEYBINDS: Mutex<Vec<Keybind>> = Mutex::new(Vec::new());
 static GLOBAL_APP_HANDLE: std::sync::OnceLock<AppHandle> = std::sync::OnceLock::new();
-static HOOK_HANDLE: Mutex<usize> = Mutex::new(0);
 static LISTENER_THREAD_ID: AtomicU32 = AtomicU32::new(0);
 static LAST_TRIGGER_MS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
@@ -47,65 +46,6 @@ pub fn get_active_keybinds() -> Vec<Keybind> {
 }
 
 #[cfg(target_os = "windows")]
-unsafe extern "system" fn low_level_keyboard_proc(
-    n_code: i32,
-    w_param: usize,
-    l_param: isize,
-) -> isize {
-    if n_code >= 0 && l_param != 0 {
-        let msg = w_param as u32;
-        if msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN {
-            let kbd = &*(l_param as *const KbdllHookStruct);
-            let mut modifiers = 0u32;
-            if (winapi::GetAsyncKeyState(0x12) as u16 & 0x8000) != 0 || (kbd.flags & 0x20) != 0 {
-                modifiers |= 0x0001;
-            }
-            if (winapi::GetAsyncKeyState(0x11) as u16 & 0x8000) != 0 {
-                modifiers |= 0x0002;
-            }
-            if (winapi::GetAsyncKeyState(0x10) as u16 & 0x8000) != 0 {
-                modifiers |= 0x0004;
-            }
-            if ((winapi::GetAsyncKeyState(0x5B) as u16 & 0x8000) != 0)
-                || ((winapi::GetAsyncKeyState(0x5C) as u16 & 0x8000) != 0)
-            {
-                modifiers |= 0x0008;
-            }
-
-            let matched_action = {
-                let guard = CURRENT_KEYBINDS.lock().ok();
-                guard.and_then(|list| {
-                    list.iter()
-                        .find(|kb| {
-                            kb.enabled && kb.vk == kbd.vk_code && kb.modifiers == modifiers
-                        })
-                        .map(|kb| kb.action.clone())
-                })
-            };
-
-            if let Some(action) = matched_action {
-                let now = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_millis() as u64)
-                    .unwrap_or(0);
-                let last = LAST_TRIGGER_MS.load(Ordering::Relaxed);
-                if now.saturating_sub(last) > 250 {
-                    LAST_TRIGGER_MS.store(now, Ordering::Relaxed);
-                    if let Some(app) = GLOBAL_APP_HANDLE.get() {
-                        let app_clone = app.clone();
-                        std::thread::spawn(move || {
-                            execute_action(&action, &app_clone);
-                        });
-                    }
-                }
-            }
-        }
-    }
-
-    winapi::CallNextHookEx(std::ptr::null_mut(), n_code, w_param, l_param)
-}
-
-#[cfg(target_os = "windows")]
 pub fn start_global_hotkey_listener(app: AppHandle) {
     let _ = GLOBAL_APP_HANDLE.set(app);
     static STARTED: std::sync::OnceLock<()> = std::sync::OnceLock::new();
@@ -119,22 +59,6 @@ pub fn start_global_hotkey_listener(app: AppHandle) {
                 let mut dummy_msg = unsafe { std::mem::zeroed::<MSG>() };
                 unsafe {
                     winapi::PeekMessageW(&mut dummy_msg, std::ptr::null_mut(), 0x0400, 0x0400, 0);
-                }
-
-                let hmod = unsafe { winapi::GetModuleHandleW(std::ptr::null()) };
-                let hook = unsafe {
-                    winapi::SetWindowsHookExW(
-                        WH_KEYBOARD_LL,
-                        Some(low_level_keyboard_proc),
-                        hmod,
-                        0,
-                    )
-                };
-
-                if !hook.is_null() {
-                    if let Ok(mut guard) = HOOK_HANDLE.lock() {
-                        *guard = hook as usize;
-                    }
                 }
 
                 let mut registered_ids: Vec<i32> = Vec::new();
@@ -199,13 +123,6 @@ pub fn start_global_hotkey_listener(app: AppHandle) {
 
                 for id in registered_ids.drain(..) {
                     unsafe { winapi::UnregisterHotKey(std::ptr::null_mut(), id); }
-                }
-
-                let hook_ptr = HOOK_HANDLE.lock().map(|g| *g).unwrap_or(0);
-                if hook_ptr != 0 {
-                    unsafe {
-                        winapi::UnhookWindowsHookEx(hook_ptr as *mut std::ffi::c_void);
-                    }
                 }
             })
             .ok();

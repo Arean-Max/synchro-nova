@@ -211,6 +211,20 @@ pub fn delete_hklm_value(_path: &str, _name: &str) -> Result<(), String> {
 }
 
 #[cfg(target_os = "windows")]
+pub fn delete_hklm_tree(path: &str) -> Result<(), String> {
+    crate::infra::registry::SafeRegistry::delete_tree(
+        crate::infra::registry::RootKey::Hklm,
+        path,
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn delete_hklm_tree(_path: &str) -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
 pub fn total_ram_gb() -> f64 {
     crate::platform::ffi::read_memory_status_ex()
         .map(|s| s.ull_total_phys as f64 / 1024.0 / 1024.0 / 1024.0)

@@ -309,30 +309,10 @@ pub fn is_directx_thread_priority_applied() -> bool {
     ) == Some(10)
 }
 
-pub fn apply_rust_ifeo_high_priority(id: &str) -> TweakApplyResult {
-    collect_result(
-        id,
-        [
-            set_hklm_dword(
-                "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\RustClient.exe\\PerfOptions",
-                "CpuPriorityClass",
-                3,
-            ),
-            set_hklm_dword(
-                "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\RustClient.exe\\PerfOptions",
-                "IoPriority",
-                3,
-            ),
-        ],
-        "RustClient.exe registered for high CPU & I/O priority in Windows IFEO",
-    )
-}
-
-pub fn is_rust_ifeo_high_priority_applied() -> bool {
-    hklm_dword(
-        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\RustClient.exe\\PerfOptions",
-        "CpuPriorityClass",
-    ) == Some(3)
+pub fn clean_legacy_rust_ifeo() {
+    let _ = super::runner::delete_hklm_tree(
+        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\RustClient.exe",
+    );
 }
 
 pub fn apply_gpu_adaptive_power(id: &str) -> TweakApplyResult {

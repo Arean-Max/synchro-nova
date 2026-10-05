@@ -130,15 +130,6 @@ unsafe extern "system" {
     ) -> i32;
     pub fn TranslateMessage(msg: *const MSG) -> i32;
     pub fn DispatchMessageW(msg: *const MSG) -> isize;
-    pub fn SetWindowsHookExW(
-        id_hook: i32,
-        lpfn: Option<unsafe extern "system" fn(i32, usize, isize) -> isize>,
-        hmod: *mut c_void,
-        dw_thread_id: u32,
-    ) -> *mut c_void;
-    pub fn UnhookWindowsHookEx(hhk: *mut c_void) -> i32;
-    pub fn CallNextHookEx(hhk: *mut c_void, n_code: i32, w_param: usize, l_param: isize) -> isize;
-    pub fn GetAsyncKeyState(v_key: i32) -> i16;
     pub fn SendMessageW(hwnd: *mut c_void, msg: u32, w_param: usize, l_param: isize) -> isize;
     pub fn SetClassLongPtrW(hwnd: *mut c_void, n_index: i32, dw_new_long: isize) -> isize;
     pub fn LoadIconW(hinstance: *mut c_void, lp_icon_name: *const u16) -> *mut c_void;

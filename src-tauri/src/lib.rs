@@ -126,6 +126,9 @@ pub fn run() {
             app::workers::spawn_memory_trimmer(trimmer_sync);
 
             #[cfg(target_os = "windows")]
+            domain::tweaks::gaming::clean_legacy_rust_ifeo();
+
+            #[cfg(target_os = "windows")]
             domain::color::black_holo::start_black_holo_hotkey_listener(Some(app.handle().clone()));
             domain::hotkeys::start_global_hotkey_listener(app.handle().clone());
             domain::hotkeys::sync_hotkeys(&initial.keybinds);

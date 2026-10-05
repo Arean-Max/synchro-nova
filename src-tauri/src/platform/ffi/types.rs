@@ -228,19 +228,3 @@ impl Default for ShellExecuteInfoW {
         s
     }
 }
-
-pub const WH_KEYBOARD_LL: i32 = 13;
-pub const WM_KEYDOWN: u32 = 0x0100;
-pub const WM_KEYUP: u32 = 0x0101;
-pub const WM_SYSKEYDOWN: u32 = 0x0104;
-pub const WM_SYSKEYUP: u32 = 0x0105;
-
-#[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub struct KbdllHookStruct {
-    pub vk_code: u32,
-    pub scan_code: u32,
-    pub flags: u32,
-    pub time: u32,
-    pub dw_extra_info: usize,
-}

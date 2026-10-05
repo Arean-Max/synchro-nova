@@ -6,7 +6,6 @@ export const tweakCatalog = [
     title: "Gaming & Latency",
     tweaks: [
       { id: "win32-priority-rust", title: "Win32 Priority Separation", description: "Allocates long fixed-length processor quantums to Rust and active games, stabilizing 1% Low FPS.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "rust-ifeo-high-priority", title: "Rust IFEO High CPU & I/O Priority", description: "Enforces automatic High CPU and High I/O priority for RustClient.exe via Windows Image File Execution Options.", badges: ["ADMIN", "VERIFIED"] },
       { id: "system-timer-resolution", title: "System Timer Resolution (0.5 ms)", description: "Forces Windows global timer resolution to 0.5 ms to smooth frame pacing and eliminate micro-stutters during weapon spray.", badges: ["ADMIN", "VERIFIED"] },
       { id: "kill-gamebar-presence", title: "Kill GameBar Presence Writer", description: "Completely disables GameBarPresenceWriter and GameDVR hooks that cause frame time spikes in Unity games.", badges: ["ADMIN", "VERIFIED"] },
       { id: "disable-hpet-synthetic", title: "Disable Dynamic Tick (Synthetic Timers)", description: "Disables dynamic tick in the Windows boot configuration to maintain steady clock cycles and prevent micro-stuttering.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
@@ -154,16 +153,8 @@ export const tweakAppImpacts = {
     appName: "Win32 Priority Separation",
     appNameEn: "Win32 Priority Separation",
     appNameRu: "Приоритеты Win32 / Кванты процессора",
-    impactEn: "Allocates long fixed-length processor quantums (0x26 / 38) to RustClient.exe and foreground games, dramatically boosting 1% Low FPS stability.",
-    impactRu: "Выделяет длинные фиксированные кванты времени процессора (0x26 / 38) активной игре (RustClient.exe), обеспечивая +5-12% к стабильности 1% Low FPS."
-  },
-  "rust-ifeo-high-priority": {
-    appId: "rust_ifeo",
-    appName: "Rust IFEO High Priority",
-    appNameEn: "Rust IFEO High Priority",
-    appNameRu: "Авто-приоритет RustClient (IFEO)",
-    impactEn: "Enforces automatic High CPU and High I/O priority for RustClient.exe in Windows Image File Execution Options, boosting 1% Low FPS without background apps.",
-    impactRu: "Автоматически задает высокий приоритет CPU и дискового ввода-вывода процессу RustClient.exe через реестр IFEO: гарантирует +5-8% к стабильности 1% Low FPS."
+    impactEn: "Allocates long fixed-length processor quantums (0x26 / 38) to foreground games, dramatically boosting 1% Low FPS stability.",
+    impactRu: "Выделяет длинные фиксированные кванты времени процессора (0x26 / 38) активной игре, обеспечивая +5-12% к стабильности 1% Low FPS."
   },
   "gpu-adaptive-power": {
     appId: "gpu_power",
@@ -227,7 +218,7 @@ export const tweakAppImpacts = {
     appNameEn: "Large System Cache",
     appNameRu: "Файловый кэш LargeSystemCache",
     impactEn: "Sets LargeSystemCache to 0, dedicating physical memory directly to game processes rather than Windows filesystem cache.",
-    impactRu: "Отключает LargeSystemCache, отдавая максимум оперативной памяти игровому процессу RustClient.exe вместо дискового кэша."
+    impactRu: "Отключает LargeSystemCache, отдавая максимум оперативной памяти активным играм вместо дискового кэша."
   },
   "network-udp-buffers": {
     appId: "raknet_udp",

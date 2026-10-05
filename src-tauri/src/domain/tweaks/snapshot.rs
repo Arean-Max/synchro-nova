@@ -86,16 +86,6 @@ pub static REGISTRY_BACKUP_TARGETS: &[RegistryTarget] = &[
     ),
     reg_dword(
         "HKLM",
-        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\RustClient.exe\\PerfOptions",
-        "CpuPriorityClass",
-    ),
-    reg_dword(
-        "HKLM",
-        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\RustClient.exe\\PerfOptions",
-        "IoPriority",
-    ),
-    reg_dword(
-        "HKLM",
         "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
         "DisablePageCombining",
     ),

@@ -183,4 +183,10 @@ impl SafeRegistry {
             }
         })
     }
+
+    pub fn delete_tree(root: RootKey, path: &str) -> Result<(), RegistryError> {
+        let hkey = RegKey::predef(root.to_hkey());
+        let _ = hkey.delete_subkey_all(path);
+        Ok(())
+    }
 }
