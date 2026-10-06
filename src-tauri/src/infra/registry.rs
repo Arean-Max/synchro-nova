@@ -123,9 +123,16 @@ impl SafeRegistry {
     }
 
     pub fn set_dword(root: RootKey, path: &str, name: &str, value: u32) -> Result<(), RegistryError> {
+        if let Err(msg) = crate::platform::security_guard::verify_registry_write_safety(path) {
+            return Err(RegistryError::SetValueFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                name: name.to_string(),
+                source: std::io::Error::new(std::io::ErrorKind::PermissionDenied, msg),
+            });
+        }
         let hkey = RegKey::predef(root.to_hkey());
         let (key, _) = hkey.create_subkey(path).map_err(|source| {
-            eprintln!("[SafeRegistry] Failed to create/open subkey {}\\{}: {}", root.as_str(), path, source);
             RegistryError::CreateKeyFailed {
                 root: root.as_str(),
                 path: path.to_string(),
@@ -133,7 +140,6 @@ impl SafeRegistry {
             }
         })?;
         key.set_value(name, &value).map_err(|source| {
-            eprintln!("[SafeRegistry] Failed to set DWORD {}\\{}\\{} = {}: {}", root.as_str(), path, name, value, source);
             RegistryError::SetValueFailed {
                 root: root.as_str(),
                 path: path.to_string(),
@@ -144,6 +150,14 @@ impl SafeRegistry {
     }
 
     pub fn set_string(root: RootKey, path: &str, name: &str, value: &str) -> Result<(), RegistryError> {
+        if let Err(msg) = crate::platform::security_guard::verify_registry_write_safety(path) {
+            return Err(RegistryError::SetValueFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                name: name.to_string(),
+                source: std::io::Error::new(std::io::ErrorKind::PermissionDenied, msg),
+            });
+        }
         let hkey = RegKey::predef(root.to_hkey());
         let (key, _) = hkey.create_subkey(path).map_err(|source| {
             eprintln!("[SafeRegistry] Failed to create/open subkey {}\\{}: {}", root.as_str(), path, source);

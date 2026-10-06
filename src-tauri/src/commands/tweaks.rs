@@ -54,6 +54,17 @@ pub fn apply_tweaks(
 }
 
 #[tauri::command]
+pub fn revert_tweaks(
+    ids: Vec<String>,
+    state: State<'_, RuntimeState>,
+) -> Result<Vec<TweakApplyResult>, String> {
+    let results = crate::domain::tweaks::revert_selected_tweaks(ids);
+    log_tweaks_audit(&state.app_dir, &results);
+    trim_process_memory();
+    Ok(results)
+}
+
+#[tauri::command]
 pub fn get_tweak_statuses() -> Vec<TweakStatus> {
     collect_tweak_statuses()
 }

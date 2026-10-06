@@ -821,7 +821,8 @@ function updateMainKeepingScroll(selector = ".scroll-panel") {
 function syncTweaksActionButtons() {
   const actionsEl = document.querySelector(".tweaks-actions");
   if (!actionsEl) return;
-  const hasSelected = viewState.selectedTweaks && viewState.selectedTweaks.size > 0;
+  const hasSelected = (viewState.selectedTweaks && viewState.selectedTweaks.size > 0) ||
+    (viewState.pendingRevertTweaks && viewState.pendingRevertTweaks.size > 0);
   let applyBtn = actionsEl.querySelector("[data-action='apply-tweaks']");
   if (hasSelected) {
     if (!applyBtn) {
@@ -844,12 +845,15 @@ function syncTweakTile(id) {
     updateMainKeepingScroll(".tweaks-page .scroll-panel");
     return;
   }
-  const installed = Boolean(viewState.installedTweaks?.has(id));
+  const isInstalled = Boolean(viewState.installedTweaks?.has(id));
+  const isPendingRevert = Boolean(viewState.pendingRevertTweaks?.has(id));
+  const installed = isInstalled && !isPendingRevert;
   const selected = Boolean(viewState.selectedTweaks?.has(id));
   tile.classList.toggle("installed", installed);
+  tile.classList.toggle("pending-revert", isPendingRevert);
   tile.classList.toggle("selected", selected);
-  tile.classList.toggle("not-installed", !installed && !selected);
-  tile.setAttribute("aria-pressed", (installed || selected) ? "true" : "false");
+  tile.classList.toggle("not-installed", !installed && !selected && !isPendingRevert);
+  tile.setAttribute("aria-pressed", (installed || selected || isPendingRevert) ? "true" : "false");
   syncTweaksActionButtons();
 }
 
@@ -961,8 +965,6 @@ function updateDriversPageContent() {
   }
 }
 
-const templateMemory = {};
-
 function saveNormalColorState() {
   if (!appState?.color || appState.color.activeFilter) return;
   const snapshot = {
@@ -987,14 +989,8 @@ function getSavedNormalColor() {
   return { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
 }
 
-function applyPreset(name) {
+async function applyPreset(name) {
   if (isTemplateActive(name, appState)) {
-    templateMemory[name] = {
-      saturation: appState.color.saturation,
-      hue: appState.color.hue,
-      contrast: appState.color.contrast,
-      gamma: appState.color.gamma
-    };
     appState.color = {
       ...appState.color,
       saturation: 100,
@@ -1006,14 +1002,12 @@ function applyPreset(name) {
     };
     saveNormalColorState();
     updateColorPage();
-    scheduleApplyColor();
-    saveSettings();
+    await applyColor();
     return;
   }
 
-  const remembered = templateMemory[name];
   const custom = appState.settings?.templateOverrides?.[name];
-  const preset = remembered || custom || defaultPresets[name];
+  const preset = custom || defaultPresets[name];
   if (!preset) return;
   appState.color = {
     ...appState.color,
@@ -1025,8 +1019,7 @@ function applyPreset(name) {
   };
   saveNormalColorState();
   updateColorPage();
-  scheduleApplyColor();
-  saveSettings();
+  await applyColor();
 }
 
 function stepColorSelection(step) {
@@ -1298,18 +1291,12 @@ async function handleAction(action) {
         return null;
       }
       if (viewState.applyingTweaks) return null;
-      const ids = Array.from(viewState.selectedTweaks).filter(
+      const idsToApply = Array.from(viewState.selectedTweaks).filter(
         (id) => !viewState.installedTweaks.has(id) || id === "clean-temp-junk"
       );
-      if (!ids.length) {
-        const isRu = lang() === "ru";
-        showToastBanner(
-          t("noSelection"),
-          viewState.selectedTweaks.size > 0
-            ? (isRu ? "Все выбранные твики уже установлены в системе" : "All selected tweaks are already active in the system")
-            : t("noSelection"),
-          "safe"
-        );
+      const idsToRevert = Array.from(viewState.pendingRevertTweaks || []);
+      if (!idsToApply.length && !idsToRevert.length) {
+        showToastBanner(t("noSelection"), t("noSelection"), "safe");
         return null;
       }
       viewState.applyingTweaks = true;
@@ -1330,7 +1317,19 @@ async function handleAction(action) {
       }, 45);
 
       try {
-        const results = await invokeCommand("apply_tweaks", { ids });
+        const results = [];
+        if (idsToRevert.length > 0) {
+          const revertResults = await invokeCommand("revert_tweaks", { ids: idsToRevert });
+          if (Array.isArray(revertResults)) {
+            results.push(...revertResults);
+          }
+        }
+        if (idsToApply.length > 0) {
+          const applyResults = await invokeCommand("apply_tweaks", { ids: idsToApply });
+          if (Array.isArray(applyResults)) {
+            results.push(...applyResults);
+          }
+        }
         clearInterval(progressInterval);
 
         await new Promise((resolve) => {
@@ -1350,15 +1349,16 @@ async function handleAction(action) {
         viewState.applyModal = {
           phase: "complete",
           progress: 100,
-          results: Array.isArray(results) ? results : []
+          results
         };
         renderApplyModalDom();
 
         if (results?.some((r) => r.status === "requiresAdmin") && !appState.isAdmin) {
           viewState.showAdminPrompt = true;
         }
-        await Promise.all([loadTweakStatuses(), loadLists()]);
         viewState.selectedTweaks.clear();
+        viewState.pendingRevertTweaks.clear();
+        await Promise.all([loadTweakStatuses(), loadLists()]);
         syncTweaksActionButtons();
       } catch (err) {
         clearInterval(progressInterval);
@@ -2174,8 +2174,13 @@ async function handleClick(event) {
     const isMaintenance = id === "clean-temp-junk";
 
     if (isInstalled && !isMaintenance) {
-      const isRu = lang() === "ru";
-      showPillToast(isRu ? "Этот твик уже активен в вашей системе" : "This tweak is already active in your system");
+      if (viewState.pendingRevertTweaks.has(id)) {
+        viewState.pendingRevertTweaks.delete(id);
+      } else {
+        viewState.pendingRevertTweaks.add(id);
+      }
+      if (tweak instanceof HTMLElement) tweak.blur();
+      syncTweakTile(id);
       return;
     }
 
@@ -2531,6 +2536,27 @@ function render() {
   window.requestAnimationFrame(syncNavIndicator);
 }
 
+async function checkSecurityIncidents() {
+  try {
+    const status = await invokeCommand("get_security_guard_status");
+    if (status && Array.isArray(status.recentIncidents) && status.recentIncidents.length > 0) {
+      const latest = status.recentIncidents[0];
+      const lastReported = Number(localStorage.getItem("synchro_last_sec_incident") || 0);
+      if (latest.timestamp > lastReported) {
+        localStorage.setItem("synchro_last_sec_incident", String(latest.timestamp));
+        const isRu = lang() === "ru";
+        showToastBanner(
+          isRu ? "Защита аккаунта Synchro Nova" : "Synchro Nova Security Shield",
+          isRu
+            ? `Заблокировано небезопасное обращение к ${latest.target}. Ваш игровой аккаунт находится в полной безопасности.`
+            : `Blocked unsafe access to ${latest.target}. Your gaming account is completely safe.`,
+          "safe"
+        );
+      }
+    }
+  } catch (e) {}
+}
+
 async function boot() {
   const statePromise = invokeCommand("get_app_state");
   const holoPromise = loadBlackHoloStatus();
@@ -2578,6 +2604,8 @@ async function boot() {
   }
   loadTweakStatuses();
   scheduleTrimMemory(600);
+  checkSecurityIncidents();
+  setInterval(checkSecurityIncidents, 15000);
 }
 
 document.addEventListener("input", handleInput);

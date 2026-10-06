@@ -15,12 +15,15 @@ import {
 function tweakTile(tweak, viewState, t) {
   const isRu = lang() === "ru";
   const installed = viewState.installedTweaks?.has(tweak.id);
+  const pendingRevert = viewState.pendingRevertTweaks?.has(tweak.id);
   const selected = viewState.selectedTweaks?.has(tweak.id);
   const category = tweakCategory(tweak);
   const title = tweakTitle(tweak, t);
   const desc = tweakDescription(tweak, t);
   const helpTitle = t("whatBreaks") || (isRu ? "Что меняет этот твик?" : "What does this tweak affect?");
-  const stateClass = installed ? "installed" : (selected ? "selected" : "not-installed");
+  const stateClass = pendingRevert
+    ? "pending-revert"
+    : (installed ? "installed" : (selected ? "selected" : "not-installed"));
 
   return `<div class="tweak-tile ${stateClass}" role="button" tabindex="0" data-tweak-id="${escapeAttr(tweak.id)}" data-category="${category}"><div class="tweak-head"><span class="tweak-title">${escapeHtml(title)}</span><button class="tweak-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(tweak.id)}" title="${escapeAttr(helpTitle)}" aria-label="${escapeAttr(helpTitle)}">?</button></div><p>${escapeHtml(desc)}</p></div>`;
 }
@@ -172,7 +175,8 @@ export function renderIosNotification(viewState, t) {
 export function renderTweaksPage(viewState, t) {
   const isLocked = !appState.isAdmin;
   const groups = tweakCatalog.map((group) => tweakGroup(group, viewState, t)).join("");
-  const hasSelected = viewState.selectedTweaks && viewState.selectedTweaks.size > 0;
+  const hasSelected = (viewState.selectedTweaks && viewState.selectedTweaks.size > 0) ||
+    (viewState.pendingRevertTweaks && viewState.pendingRevertTweaks.size > 0);
   const applyLabel = viewState.applyingTweaks ? t("loading") : t("applySelected");
 
   const applyBtnHtml = hasSelected

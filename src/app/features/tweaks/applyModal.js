@@ -61,7 +61,12 @@ export function renderApplyModal(modalState, t) {
       }
     }
 
-    if (item.status === "requiresAdmin") {
+    if (item.status === "reverted" || item.status === "restored") {
+      statusClass = "reverted";
+      iconContent = icon("rotate");
+      statusTag = isRu ? "Откачен" : "Restored";
+      desc = item.message || (isRu ? "Восстановлены значения Windows по умолчанию" : "Restored to Windows defaults");
+    } else if (item.status === "requiresAdmin") {
       statusClass = "requires-admin";
       iconContent = icon("shield");
       statusTag = isRu ? "Нужен админ" : "Requires Admin";

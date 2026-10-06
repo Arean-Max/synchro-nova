@@ -90,20 +90,14 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
 
     set_active_color(Some((color.clone(), show_on_recordings)));
 
-    let include_matrix_gamma = if show_on_recordings {
-        let _ = apply_gamma_ramp(100.0);
-        true
-    } else {
-        let ramp_success = apply_gamma_ramp(color.gamma).is_ok();
-        !ramp_success
-    };
+    let _ = apply_gamma_ramp(color.gamma);
 
     let has_matrix_effect = !color.active_filter.is_empty()
         || (color.saturation - 100.0).abs() >= 0.1
         || color.hue.abs() >= 0.1
         || (color.contrast - 100.0).abs() >= 0.1
         || color.black_holo > 0.0
-        || (include_matrix_gamma && (color.gamma - 100.0).abs() >= 0.1);
+        || (color.gamma - 100.0).abs() >= 0.1;
 
     if !has_matrix_effect {
         unsafe {
@@ -114,7 +108,7 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
             let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
         }
     } else {
-        apply_magnification_color(color, include_matrix_gamma)?;
+        let _ = apply_magnification_color(color, show_on_recordings);
     }
 
     Ok(())
@@ -154,9 +148,10 @@ fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) 
     let effect = crate::platform::ffi::MagColorEffect { transform: matrix };
 
     unsafe {
-        let _ = crate::platform::ffi::winapi::MagInitialize();
+        crate::platform::ffi::winapi::MagInitialize();
         if crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect) == 0 {
-            return Err("Windows Magnification API color effect failed".to_string());
+            crate::platform::ffi::winapi::MagInitialize();
+            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
         }
     }
 

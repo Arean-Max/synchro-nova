@@ -59,6 +59,7 @@ export const viewState = {
   driverSearch: "",
   selectedTweaks: new Set(),
   installedTweaks: new Set(),
+  pendingRevertTweaks: new Set(),
   tweakResults: [],
   applyingTweaks: false,
   sidebarCollapsed: false,

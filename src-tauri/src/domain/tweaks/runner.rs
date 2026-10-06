@@ -211,6 +211,21 @@ pub fn delete_hklm_value(_path: &str, _name: &str) -> Result<(), String> {
 }
 
 #[cfg(target_os = "windows")]
+pub fn delete_hkcu_value(path: &str, name: &str) -> Result<(), String> {
+    crate::infra::registry::SafeRegistry::delete_value(
+        crate::infra::registry::RootKey::Hkcu,
+        path,
+        name,
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn delete_hkcu_value(_path: &str, _name: &str) -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
 pub fn delete_hklm_tree(path: &str) -> Result<(), String> {
     crate::infra::registry::SafeRegistry::delete_tree(
         crate::infra::registry::RootKey::Hklm,

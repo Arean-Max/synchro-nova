@@ -124,3 +124,8 @@ pub fn open_windows_driver_updates() -> Result<(), String> {
 pub fn restart_graphics_driver() -> Result<(), String> {
     crate::platform::ffi::restart_graphics_driver()
 }
+
+#[tauri::command]
+pub fn get_security_guard_status() -> crate::platform::security_guard::SecurityGuardStatus {
+    crate::platform::security_guard::get_security_guard_status()
+}

@@ -227,7 +227,7 @@ function colorSummary(color) {
 export function isTemplateActive(id, appState) {
   const overrides = appState?.settings?.templateOverrides?.[id];
   const target = overrides || defaultPresets[id];
-  if (!target || !appState?.color) return false;
+  if (!target || !appState?.color || appState.color.activeFilter) return false;
   return (
     Math.round(Number(appState.color.saturation ?? 100)) === Math.round(Number(target.saturation)) &&
     Math.round(Number(appState.color.hue ?? 0)) === Math.round(Number(target.hue)) &&
