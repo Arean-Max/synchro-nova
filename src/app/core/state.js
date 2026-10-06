@@ -78,7 +78,7 @@ export const viewState = {
     gpuName: "",
     curveProfile: "",
     hotkey: "",
-    rustSynced: true,
+    rustSynced: false,
     error: null
   },
   recordingBindId: null,

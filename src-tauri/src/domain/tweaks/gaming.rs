@@ -283,7 +283,7 @@ pub fn apply_directx_thread_priority(id: &str) -> TweakApplyResult {
                 1,
             ),
         ],
-        "DirectX graphics scheduler preemption and TdrDelay optimized for Rust/Unity",
+        "DirectX graphics scheduler preemption and TdrDelay optimized for 3D games",
     )
 }
 

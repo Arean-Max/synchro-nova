@@ -203,7 +203,7 @@ pub fn apply_rss_adaptive_cores(id: &str) -> TweakApplyResult {
                 "Get-NetAdapter -Physical | ForEach-Object { Set-NetAdapterRss -Name $_.Name -BaseProcessorNumber 2 -ErrorAction SilentlyContinue }",
             ],
         );
-        format!("Receive-Side Scaling enabled with BaseProcessor=2 (network interrupts offloaded from Rust Core 0 across {cores} CPU cores)")
+        format!("Receive-Side Scaling enabled with BaseProcessor=2 (network interrupts offloaded from Core 0 across {cores} CPU cores)")
     } else {
         "Receive-Side Scaling enabled and distributed across CPU cores".to_string()
     };

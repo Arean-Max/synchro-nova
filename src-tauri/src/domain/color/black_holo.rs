@@ -159,7 +159,6 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
     if enabled {
         let _ = restore_original_system_ramp();
         IS_ACTIVE.store(true, Ordering::SeqCst);
-        let rust_res = crate::domain::games::set_rust_holosight_black(true);
 
         BlackHoloStatus {
             active: true,
@@ -167,13 +166,12 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
             gpu_name,
             curve_profile: "Cross-Channel Direct Matrix".to_string(),
             hotkey: "".to_string(),
-            rust_synced: rust_res.success,
+            rust_synced: false,
             error: None,
         }
     } else {
         let res = restore_original_system_ramp();
         IS_ACTIVE.store(false, Ordering::SeqCst);
-        let rust_res = crate::domain::games::set_rust_holosight_black(false);
 
         let err = match res {
             Ok(_) => None,
@@ -186,7 +184,7 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
             gpu_name,
             curve_profile: "Standard".to_string(),
             hotkey: "".to_string(),
-            rust_synced: rust_res.success,
+            rust_synced: false,
             error: err,
         }
     }
@@ -218,7 +216,7 @@ pub fn get_hardware_black_holo_status() -> BlackHoloStatus {
         gpu_name,
         curve_profile: vendor.curve_profile_name().to_string(),
         hotkey: "".to_string(),
-        rust_synced: true,
+        rust_synced: false,
         error: None,
     }
 }

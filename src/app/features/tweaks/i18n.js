@@ -33,7 +33,7 @@ export const tweakTranslations = {
     userBadgeTooltip: "Safe user-level tweak (no administrator rights needed)",
     adminBadgeTooltip: "Requires administrator privileges to apply system policies",
 
-    tweak_win32_priority_rust_title: "Win32 Priority Separation (Games & Rust)",
+    tweak_win32_priority_rust_title: "Win32 Priority Separation (Gaming)",
     tweak_win32_priority_rust_desc: "Allocates long fixed-length processor quantums (0x26 / 38) to foreground games, boosting 1% Low FPS and frame stability.",
     tweak_system_timer_resolution_title: "System Timer Resolution (0.5 ms)",
     tweak_system_timer_resolution_desc: "Forces Windows global timer resolution to 0.5 ms to smooth frame pacing and eliminate micro-stutters during weapon spray.",

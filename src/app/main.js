@@ -1981,8 +1981,8 @@ async function handleClick(event) {
           showToastBanner(
             t("blackHolo"),
             isRu
-              ? "Черный Холик активен (в консоли F1: accessibility.holosightcolour 2)"
-              : "Black Holosight enabled (Rust F1: accessibility.holosightcolour 2)",
+              ? "Режим Black Holo включен"
+              : "Black Holo mode enabled",
             "safe"
           );
         } else {
@@ -2654,8 +2654,8 @@ if (window.__TAURI__?.event?.listen) {
       showToastBanner(
         t("blackHolo"),
         isRu
-          ? "Черный Холик активен (в консоли F1: accessibility.holosightcolour 2)"
-          : "Black Holosight enabled (Rust F1: accessibility.holosightcolour 2)",
+          ? "Режим Black Holo включен"
+          : "Black Holo mode enabled",
         "safe"
       );
     } else {

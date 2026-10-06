@@ -202,7 +202,6 @@ pub fn run() {
             commands::detect_installed_apps,
             commands::restart_explorer,
             commands::restart_graphics_driver,
-            commands::set_rust_black_holo,
             commands::get_black_holo_status,
             commands::toggle_hardware_black_holo,
             commands::take_juicy_screenshot,
@@ -308,21 +307,6 @@ mod tests {
             assert!(val.is_finite());
         }
         assert_eq!(matrix[18], 1.0);
-    }
-
-    #[test]
-    fn test_rust_holosight_colour_parser() {
-        let cfg1 = "fps.limit 144\r\naccessibility.holosightcolour \"2\"\r\ngraphics.fov 90";
-        assert_eq!(domain::games::rust::parse_holosight_colour(cfg1), Some("2".to_string()));
-
-        let cfg2 = "accessibility.holosightcolour 1\r\ngraphics.fov 90";
-        assert_eq!(domain::games::rust::parse_holosight_colour(cfg2), Some("1".to_string()));
-
-        let cfg3 = "ACCESSIBILITY.HOLOSIGHTCOLOUR \"0\"\r\n";
-        assert_eq!(domain::games::rust::parse_holosight_colour(cfg3), Some("0".to_string()));
-
-        let cfg4 = "graphics.fov 90\r\ninput.sensitivity 0.5";
-        assert_eq!(domain::games::rust::parse_holosight_colour(cfg4), None);
     }
 
     #[test]

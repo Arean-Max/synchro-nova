@@ -5,7 +5,7 @@ export const tweakCatalog = [
     icon: "zap",
     title: "Gaming & Latency",
     tweaks: [
-      { id: "win32-priority-rust", title: "Win32 Priority Separation", description: "Allocates long fixed-length processor quantums to Rust and active games, stabilizing 1% Low FPS.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
+      { id: "win32-priority-rust", title: "Win32 Priority Separation", description: "Allocates long fixed-length processor quantums (0x26) to active foreground games, stabilizing 1% Low FPS.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
       { id: "system-timer-resolution", title: "System Timer Resolution (0.5 ms)", description: "Forces Windows global timer resolution to 0.5 ms to smooth frame pacing and eliminate micro-stutters during weapon spray.", badges: ["ADMIN", "VERIFIED"] },
       { id: "kill-gamebar-presence", title: "Kill GameBar Presence Writer", description: "Completely disables GameBarPresenceWriter and GameDVR hooks that cause frame time spikes in Unity games.", badges: ["ADMIN", "VERIFIED"] },
       { id: "directx-thread-priority", title: "DirectX GPU Scheduling & TdrDelay", description: "Enables GPU preemption and extends DirectX TDR delay to 10s to eliminate GPU hang spikes and driver timeouts.", badges: ["ADMIN", "VERIFIED"] },
@@ -72,7 +72,7 @@ export const tweakCatalog = [
     icon: "monitor",
     title: "Network Latency",
     tweaks: [
-      { id: "network-udp-buffers", title: "Hardware-Adaptive RakNet Buffers", description: "Optimizes AFD datagram thresholds and dynamically sizes socket buffers (512KB-1MB) based on RAM for zero packet loss.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
+      { id: "network-udp-buffers", title: "Hardware-Adaptive UDP Socket Buffers", description: "Optimizes AFD datagram thresholds and dynamically sizes socket buffers (512KB-1MB) based on RAM for zero packet loss.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
       { id: "tcp-nodelay-ack", title: "TCP NoDelay & AckFrequency", description: "Disables Nagle's algorithm and forces immediate TCP ACK without delay, cutting 40-200ms ping latency in online games.", badges: ["ADMIN", "VERIFIED"] },
       { id: "nic-energy-saving-off", title: "Disable NIC Energy Saving", description: "Disables Energy-Efficient Ethernet (EEE), Green Ethernet, and Flow Control on network cards to prevent ping spikes.", badges: ["ADMIN", "VERIFIED"] },
       { id: "tcp-heuristics-off", title: "Optimize TCP Windows & Heuristics", description: "Disables TCP heuristics and timestamps, setting autotuning to normal to eliminate packet loss and jitter.", badges: ["ADMIN", "VERIFIED"] },
@@ -168,7 +168,7 @@ export const tweakAppImpacts = {
     appName: "System Timer Resolution (0.5 ms)",
     appNameEn: "System Timer Resolution (0.5 ms)",
     appNameRu: "Системный таймер 0.5 мс",
-    impactEn: "Enforces 0.5 ms global timer resolution (GlobalTimerResolutionRequests = 1), smoothing frame delivery and spray tracking in Rust.",
+    impactEn: "Enforces 0.5 ms global timer resolution (GlobalTimerResolutionRequests = 1), smoothing frame delivery and weapon spray tracking in games.",
     impactRu: "Переводит системный таймер прерываний с 15.6 мс на 0.5 мс: выравнивает фреймтайм и делает спрей оружия идеально плавным."
   },
   "kill-gamebar-presence": {
@@ -212,12 +212,12 @@ export const tweakAppImpacts = {
     impactRu: "Отключает LargeSystemCache, отдавая максимум оперативной памяти активным играм вместо дискового кэша."
   },
   "network-udp-buffers": {
-    appId: "raknet_udp",
-    appName: "RakNet UDP Network Buffers",
-    appNameEn: "RakNet UDP Network Buffers",
-    appNameRu: "Буферы RakNet UDP в Rust",
-    impactEn: "Expands AFD FastSendDatagramThreshold and socket buffers for Rust's RakNet UDP networking, preventing packet loss in 50+ player fights.",
-    impactRu: "Оптимизирует буферы сокетов AFD для протокола RakNet в Rust: исключает потерю пакетов в масштабных файтах 50+ человек и рейдах."
+    appId: "udp_buffers",
+    appName: "UDP Socket Buffers (AFD)",
+    appNameEn: "UDP Socket Buffers (AFD)",
+    appNameRu: "Буферы сокетов UDP (AFD)",
+    impactEn: "Expands AFD FastSendDatagramThreshold and socket buffers for UDP multiplayer networking, preventing packet loss in high-tickrate servers.",
+    impactRu: "Оптимизирует буферы сокетов AFD для сетевого протокола UDP: исключает потерю пакетов в масштабных онлайн-файтах на серверах."
   },
   "modern-flip-model-on": {
     appId: "directx_flip",
@@ -392,8 +392,8 @@ export const tweakAppImpacts = {
     appName: "Hardware-Adaptive Receive-Side Scaling",
     appNameEn: "Hardware-Adaptive Receive-Side Scaling",
     appNameRu: "Адаптивный Receive-Side Scaling (RSS)",
-    impactEn: "Enables RSS and steers network packet processing off Core 0 to protect Rust's main game simulation thread from DPC interrupt lag.",
-    impactRu: "Включает RSS со смещением BaseProcessor=2: убирает сетевые прерывания с ядра 0, освобождая его для главного потока рендеринга Rust."
+    impactEn: "Enables RSS and steers network packet processing off Core 0 to protect the main game simulation thread from DPC interrupt lag.",
+    impactRu: "Включает RSS со смещением BaseProcessor=2: убирает сетевые прерывания с ядра 0, освобождая его для главного игрового потока рендеринга."
   },
   "rsc-off": {
     appId: "network_adapter",
