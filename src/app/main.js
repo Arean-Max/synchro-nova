@@ -997,7 +997,6 @@ async function applyPreset(name) {
       hue: 0,
       contrast: 100,
       gamma: 100,
-      blackHolo: 0,
       activeFilter: ""
     };
     saveNormalColorState();
@@ -1929,7 +1928,6 @@ async function handleClick(event) {
   const toggleBlackHolo = target.closest("[data-action='toggle-black-holo']");
   if (toggleBlackHolo) {
     const isCurrentlyActive = Boolean(
-      viewState.blackHoloStatus?.active ||
       toggleBlackHolo.classList.contains("active") ||
       Number(appState?.color?.blackHolo || 0) > 0
     );
@@ -1946,26 +1944,6 @@ async function handleClick(event) {
     if (nextActive && Math.abs(Number(appState?.color?.hue || 0)) > 0.1) {
       appState.color.hue = 0;
       updateSliderDom("hue", appState);
-    }
-
-    if (nextVal > 0) {
-      viewState.colorPreviewMode = "holo";
-      const img = document.getElementById("color-preview-image");
-      if (img instanceof HTMLImageElement) {
-        img.src = "./assets/blackholo.png";
-      }
-      document.querySelectorAll(".preview-mode-btn").forEach((btn) => {
-        btn.classList.toggle("active", btn.getAttribute("data-mode") === "holo");
-      });
-    } else if (viewState.colorPreviewMode === "holo") {
-      viewState.colorPreviewMode = "day";
-      const img = document.getElementById("color-preview-image");
-      if (img instanceof HTMLImageElement) {
-        img.src = "./assets/preview.png";
-      }
-      document.querySelectorAll(".preview-mode-btn").forEach((btn) => {
-        btn.classList.toggle("active", btn.getAttribute("data-mode") === "day");
-      });
     }
 
     try {
