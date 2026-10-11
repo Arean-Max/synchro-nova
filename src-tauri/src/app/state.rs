@@ -121,7 +121,10 @@ impl Default for AppSettings {
 
 impl AppSettings {
     pub fn sanitized(mut self) -> Self {
-        const VALID_LANGS: &[&str] = &["en", "ru"];
+        const VALID_LANGS: &[&str] = &[
+            "en", "ru", "zh", "zht", "ko", "de", "es", "fr", "it", "da", "ja", "pl",
+            "bs", "ar", "no", "br", "th", "tr", "uk", "bn", "gr", "vi",
+        ];
         if !VALID_LANGS.contains(&self.language.as_str()) {
             self.language = "en".to_string();
         }
