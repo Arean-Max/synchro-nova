@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.1] - 2026-10-11
+
+### Added
+- Automatic Windows system language detection on first boot (Russian or English).
+- Custom scrollable language dropdown menu supporting all 22 languages with native display names.
+- Expanded i18n dictionaries and graceful English fallback for all 22 supported locales.
+- DeepWiki documentation and interactive GitDiagram architecture diagram in README.
+
+### Fixed
+- Fixed Rust backend state sanitizer resetting selected languages back to default.
+- Added click-outside and Escape key dismissal for the language dropdown menu.
+
+---
+
 ## [2.3.0] - 2026-10-04
 
 ### Added
