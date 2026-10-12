@@ -52,7 +52,7 @@
 
 Téléchargez la dernière version sur [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) :
 
-- **Version portable (`Synchro-Nova-*-Portable.zip`)** — Décompressez et lancez `synchro.exe`. Aucune installation requise.
+- **Version portable (`synchro.exe`)** — Décompressez et lancez `synchro.exe`. Aucune installation requise.
 - **Installateur (`Synchro.Nova_*_x64-setup.exe`)** — Programme d'installation standard pour Windows.
 
 ---

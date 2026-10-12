@@ -1,8 +1,25 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build / packaging artifacts
 node_modules/
 src-tauri/target/
 dist/
+dist-artifacts/
 .tmp/
 .pnpm-store/
+__pycache__/
+*.pyc
+
+# Binary / build outputs
 *.log
 *.pdb
 *.tmp
@@ -11,6 +28,4 @@ dist/
 *.zip
 *.txt
 *.dll
-dist-artifacts/
-__pycache__/
-
+!src-tauri/crates/webview2-com-sys/**/WebView2Loader.dll

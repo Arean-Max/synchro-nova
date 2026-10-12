@@ -52,7 +52,7 @@
 
 قم بتنزيل أحدث إصدار من صفحة [**Releases**](https://github.com/Arean-Max/synchro-nova/releases):
 
-- **نسخة محمولة (`Synchro-Nova-*-Portable.zip`)** — فك الضغط وشغّل `synchro.exe` مباشرة بدون تثبيت.
+- **نسخة محمولة (`synchro.exe`)** — فك الضغط وشغّل `synchro.exe` مباشرة بدون تثبيت.
 - **برنامج التثبيت (`Synchro.Nova_*_x64-setup.exe`)** — مثبت نظام Windows القياسي مع اختصارات سطح المكتب.
 
 ---

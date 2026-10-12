@@ -52,7 +52,7 @@
 
 Tải bản dựng mới nhất tại trang [**Releases**](https://github.com/Arean-Max/synchro-nova/releases):
 
-- **Bản Portable (`Synchro-Nova-*-Portable.zip`)** — Giải nén và chạy `synchro.exe`. Không cần cài đặt.
+- **Bản Portable (`synchro.exe`)** — Giải nén và chạy `synchro.exe`. Không cần cài đặt.
 - **Bộ cài đặt (`Synchro.Nova_*_x64-setup.exe`)** — Bộ cài Windows tiêu chuẩn có phím tắt và trình gỡ cài đặt.
 
 ---

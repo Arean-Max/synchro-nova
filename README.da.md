@@ -52,7 +52,7 @@
 
 Hent den nyeste udgave fra [**Releases**](https://github.com/Arean-Max/synchro-nova/releases):
 
-- **Portabel version (`Synchro-Nova-*-Portable.zip`)** — Udpak og kør `synchro.exe`. Kræver ingen installation.
+- **Portabel version (`synchro.exe`)** — Udpak og kør `synchro.exe`. Kræver ingen installation.
 - **Installationsprogram (`Synchro.Nova_*_x64-setup.exe`)** — Standard installationsprogram til Windows.
 
 ---

@@ -52,7 +52,7 @@
 
 Preuzmite najnoviju verziju sa stranice [**Releases**](https://github.com/Arean-Max/synchro-nova/releases):
 
-- **Portabilna verzija (`Synchro-Nova-*-Portable.zip`)** — Raspakujte i pokrenite `synchro.exe`. Instalacija nije potrebna.
+- **Portabilna verzija (`synchro.exe`)** — Raspakujte i pokrenite `synchro.exe`. Instalacija nije potrebna.
 - **Instaler (`Synchro.Nova_*_x64-setup.exe`)** — Standardni instalacioni paket za Windows.
 
 ---

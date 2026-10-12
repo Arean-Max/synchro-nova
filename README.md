@@ -52,7 +52,7 @@
 
 Grab the latest build from [**Releases**](https://github.com/Arean-Max/synchro-nova/releases):
 
-- **Portable (`Synchro-Nova-*-Portable.zip`)** — Extract and run `synchro.exe`. No install required.
+- **Portable (`synchro.exe`)** — Standalone executable. Run without installation.
 - **Installer (`Synchro.Nova_*_x64-setup.exe`)** — Standard Windows setup with shortcuts and uninstaller.
 
 ---

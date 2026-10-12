@@ -52,7 +52,7 @@
 
 [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) পেজ থেকে সর্বশেষ সংস্করণটি ডাউনলোড করুন:
 
-- **পোর্টেবল সংস্করণ (`Synchro-Nova-*-Portable.zip`)** — আনজিপ করে `synchro.exe` চালু করুন। কোনো ইনস্টলেশনের প্রয়োজন নেই।
+- **পোর্টেবল সংস্করণ (`synchro.exe`)** — আনজিপ করে `synchro.exe` চালু করুন। কোনো ইনস্টলেশনের প্রয়োজন নেই।
 - **ইনস্টলার (`Synchro.Nova_*_x64-setup.exe`)** — শর্টকাট ও আনইনস্টলার সহ সাধারণ Windows সেটআপ।
 
 ---

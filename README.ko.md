@@ -52,7 +52,7 @@
 
 [**Releases**](https://github.com/Arean-Max/synchro-nova/releases)에서 최신 빌드를 다운로드하세요:
 
-- **포터블 버전 (`Synchro-Nova-*-Portable.zip`)** — 압축을 풀고 `synchro.exe`를 실행하세요. 설치가 필요 없습니다.
+- **포터블 버전 (`synchro.exe`)** — 압축을 풀고 `synchro.exe`를 실행하세요. 설치가 필요 없습니다.
 - **설치 프로그램 (`Synchro.Nova_*_x64-setup.exe`)** — 바로가기 및 제거 프로그램을 포함한 기본 설치 파일.
 
 ---

@@ -52,7 +52,7 @@
 
 ดาวน์โหลดเวอร์ชันล่าสุดได้ที่หน้า [**Releases**](https://github.com/Arean-Max/synchro-nova/releases):
 
-- **เวอร์ชันพกพา (`Synchro-Nova-*-Portable.zip`)** — แตกไฟล์แล้วเปิด `synchro.exe` ได้ทันทีโดยไม่ต้องติดตั้ง
+- **เวอร์ชันพกพา (`synchro.exe`)** — แตกไฟล์แล้วเปิด `synchro.exe` ได้ทันทีโดยไม่ต้องติดตั้ง
 - **ตัวติดตั้ง (`Synchro.Nova_*_x64-setup.exe`)** — ตัวติดตั้งมาตรฐานสำหรับ Windows พร้อมทางลัดและตัวถอนการติดตั้ง
 
 ---

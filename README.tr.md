@@ -52,7 +52,7 @@
 
 En güncel sürümü [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) sayfasından indirin:
 
-- **Taşınabilir Sürüm (`Synchro-Nova-*-Portable.zip`)** — Arşivi açın ve `synchro.exe` dosyasını çalıştırın. Kurulum gerektirmez.
+- **Taşınabilir Sürüm (`synchro.exe`)** — Arşivi açın ve `synchro.exe` dosyasını çalıştırın. Kurulum gerektirmez.
 - **Yükleyici (`Synchro.Nova_*_x64-setup.exe`)** — Masaüstü kısayolları ve kaldırıcı içeren standart Windows kurulumu.
 
 ---
