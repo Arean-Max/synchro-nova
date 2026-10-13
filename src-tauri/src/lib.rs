@@ -122,7 +122,6 @@ pub fn run() {
                 }
             }
 
-            trim_process_memory();
             app::workers::spawn_memory_trimmer(trimmer_sync);
 
             #[cfg(target_os = "windows")]
@@ -144,9 +143,7 @@ pub fn run() {
             }
 
             match event {
-                WindowEvent::Focused(false) => {
-                    trim_process_memory();
-                }
+                WindowEvent::Focused(_) => {}
                 WindowEvent::CloseRequested { api, .. } => {
                     let app = window.app_handle();
                     let state = app.state::<RuntimeState>();

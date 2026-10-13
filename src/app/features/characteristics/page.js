@@ -85,7 +85,7 @@ export function renderCharacteristicsPage(viewState, t) {
 
     if (!items.length) return "";
 
-    const title = isRu ? cat.titleRu : cat.titleEn;
+    const title = t("driverGroup_" + cat.id) || (isRu ? cat.titleRu : cat.titleEn);
     const tiles = items.map((driver) => renderDriverTile(driver, t, isRu)).join("");
 
     return [
@@ -105,7 +105,7 @@ export function renderCharacteristicsPage(viewState, t) {
   });
   const remaining = drivers.filter((d) => !categorized.has(d));
   if (remaining.length) {
-    const title = isRu ? "Прочие устройства" : "Other Hardware";
+    const title = t("driverGroup_other") || (isRu ? "Прочие устройства" : "Other Hardware");
     const tiles = remaining.map((driver) => renderDriverTile(driver, t, isRu)).join("");
     groupCards.push([
       '<section class="card driver-group">',
@@ -125,7 +125,7 @@ export function renderCharacteristicsPage(viewState, t) {
     '  <div class="actions tweaks-actions drivers-actions">',
     button(scanLabel, "rotate", "primary", "scan-drivers"),
     button(
-      t("updateViaWindows") || (isRu ? "Обновить через Windows" : "Windows Update"),
+      t("driverUpdateViaWindows") || t("updateViaWindows") || (isRu ? "Обновить через Windows" : "Windows Update"),
       "settings",
       "outline",
       "open-windows-update-drivers"
@@ -192,21 +192,21 @@ function renderDriverTile(driver, t, isRu) {
   let statusLabel;
   if (isOutdated) {
     statusLabel = cleanLatest && cleanLatest !== "-"
-      ? (isRu ? `Доступна v${cleanLatest}` : `v${cleanLatest} Available`)
-      : (isRu ? "Доступно обновление" : "Update Available");
+      ? `${t("driverAvailableVersion") || (isRu ? "Доступна" : "Available")} v${cleanLatest}`
+      : (t("driverUpdateAvailable") || (isRu ? "Доступно обновление" : "Update Available"));
   } else {
-    statusLabel = isRu ? "Актуален" : "Up to Date";
+    statusLabel = t("driverUpToDate") || (isRu ? "Актуален" : "Up to Date");
   }
 
   const btnLabel = isOutdated
-    ? (isRu ? "Скачать обновление" : "Download Update")
-    : (isRu ? "Официальный сайт" : "Official Site");
+    ? (t("driverDownloadUpdate") || (isRu ? "Скачать обновление" : "Download Update"))
+    : (t("driverOfficialSite") || (isRu ? "Официальный сайт" : "Official Site"));
 
   const dateText = driver.date || "-";
   const providerText = driver.provider || "-";
   const newVerSpec = isOutdated
-    ? `<div class="driver-spec-item update-hint"><span class="spec-label">${isRu ? "Доступна:" : "Available:"}</span> <span class="spec-val highlight-new">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : "-"}</span></div>`
-    : `<div class="driver-spec-item uptodate-hint"><span class="spec-label">${isRu ? "Актуальная:" : "Latest:"}</span> <span class="spec-val highlight-uptodate">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : (versionText !== "-" ? escapeHtml(versionText) : "-")}</span></div>`;
+    ? `<div class="driver-spec-item update-hint"><span class="spec-label">${escapeHtml(t("driverAvailableVersion") || (isRu ? "Доступна:" : "Available:"))}</span> <span class="spec-val highlight-new">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : "-"}</span></div>`
+    : `<div class="driver-spec-item uptodate-hint"><span class="spec-label">${escapeHtml(t("driverLatestVersion") || (isRu ? "Актуальная:" : "Latest:"))}</span> <span class="spec-val highlight-uptodate">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : (versionText !== "-" ? escapeHtml(versionText) : "-")}</span></div>`;
 
   return [
     `<div class="driver-tile ${isOutdated ? "has-update" : "uptodate"}">`,

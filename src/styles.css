@@ -205,6 +205,7 @@ button {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  will-change: grid-template-columns;
   transition: grid-template-columns 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -246,6 +247,8 @@ button {
   border-right: 1px solid var(--border-subtle);
   transition: padding 260ms cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  contain: layout style;
+  will-change: width, transform;
 }
 
 .workspace.sidebar-collapsed .sidebar {
@@ -567,6 +570,7 @@ button {
   height: 100%;
   padding: 22px 28px 18px;
   overflow: hidden;
+  contain: layout;
 }
 
 @keyframes iosPagePush {

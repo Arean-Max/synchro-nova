@@ -284,16 +284,16 @@ function showErrorToast(title, err) {
   const isRu = lang() === "ru";
   const msg = (err && typeof err === "object" && err.message)
     ? err.message
-    : (typeof err === "string" ? err : (err ? JSON.stringify(err) : "Unknown error"));
-  showToastBanner(title || (isRu ? "Ошибка" : "Error"), msg, "danger");
+    : (typeof err === "string" ? err : (err ? JSON.stringify(err) : (t("unknownError") || "Unknown error")));
+  showToastBanner(title || t("notification_error") || (isRu ? "Ошибка" : "Error"), msg, "danger");
 }
 
 function showToastBanner(title, impactText, category = "safe") {
   clearImpactBannerTimer();
   const isRu = lang() === "ru";
   const defaultAppName = category === "danger"
-    ? (isRu ? "ОШИБКА" : "ERROR")
-    : (isRu ? "УВЕДОМЛЕНИЕ" : "NOTIFICATION");
+    ? (t("notification_error") || (isRu ? "ОШИБКА" : "ERROR"))
+    : (t("notification_info") || (isRu ? "УВЕДОМЛЕНИЕ" : "NOTIFICATION"));
   viewState.activeImpactBanner = {
     title,
     category,
@@ -331,14 +331,14 @@ function showTweakErrorBanner(tweakId, errorMsg) {
   const tweaks = allTweaks();
   const tweak = tweaks.find((t) => t.id === tweakId);
   const isRu = lang() === "ru";
-  const title = tweak ? tweakTitle(tweak, t) : (tweakId || (isRu ? "Ошибка твика" : "Tweak Error"));
-  const impactText = errorMsg || (isRu ? "Не удалось применить данный твик в системе." : "Failed to apply this tweak to the system.");
+  const title = tweak ? tweakTitle(tweak, t) : (tweakId || t("tweakErrorTitle") || (isRu ? "Ошибка твика" : "Tweak Error"));
+  const impactText = errorMsg || t("tweakErrorMsg") || (isRu ? "Не удалось применить данный твик в системе." : "Failed to apply this tweak to the system.");
 
   viewState.activeImpactBanner = {
     tweakId,
-    title: isRu ? `Сбой: ${title}` : `Failed: ${title}`,
+    title: `${t("statusFailed") || (isRu ? "Сбой" : "Failed")}: ${title}`,
     category: "danger",
-    appName: isRu ? "СБОЙ ТВИКА" : "TWEAK ERROR",
+    appName: t("notification_error") || (isRu ? "СБОЙ ТВИКА" : "TWEAK ERROR"),
     impactText
   };
   renderNotificationBannerDom();
@@ -351,12 +351,12 @@ function showRiskWarningBanner(tweak) {
   const title = tweakTitle(tweak, t);
   viewState.activeImpactBanner = {
     tweakId: tweak.id,
-    title: isRu ? `Внимание: ${title}` : `Warning: ${title}`,
+    title: `${t("warning") || (isRu ? "Внимание" : "Warning")}: ${title}`,
     category: "risk",
-    appName: isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY BACKUP",
-    impactText: isRu
+    appName: t("safetyBackup") || (isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY BACKUP"),
+    impactText: t("riskWarningMsg") || (isRu
       ? "Перед жестким твиком сделай быстрый снимок системы, чтобы не сломать винду."
-      : "Take a quick safety snapshot before applying system-level tweaks."
+      : "Take a quick safety snapshot before applying system-level tweaks.")
   };
   renderNotificationBannerDom();
   startImpactBannerTimer(3000);
@@ -368,7 +368,7 @@ function showBackupNotificationBanner() {
   viewState.activeImpactBanner = {
     isBackupPrompt: true,
     category: "safe",
-    appName: isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY SNAPSHOT",
+    appName: t("safetySnapshot") || (isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY SNAPSHOT"),
     title: t("backupNotificationTitle") || (isRu ? "Снимок Системы" : "Safety Snapshot"),
     impactText: t("backupNotificationMsg") || (isRu ? "Кликни здесь, чтобы задать имя снимка" : "Click here to set custom snapshot name")
   };
@@ -387,7 +387,7 @@ function showAdminNotificationBanner() {
   viewState.activeImpactBanner = {
     isAdminPrompt: true,
     category: "admin",
-    appName: isRu ? "НУЖЕН АДМИН" : "ADMIN REQUIRED",
+    appName: t("adminRequired") || (isRu ? "НУЖЕН АДМИН" : "ADMIN REQUIRED"),
     title: t("adminNotificationTitle") || (isRu ? "Требуются права администратора" : "Administrator Rights Required"),
     impactText: t("adminNotificationMsg") || (isRu ? "Кликни здесь, чтобы перезапустить Synchro с правами админа" : "Click here to restart Synchro with admin rights")
   };
@@ -522,9 +522,11 @@ function formatKeyLabel(event) {
   return parts.join(" + ");
 }
 
-async function syncKeybinds() {
+function syncKeybinds() {
   try {
-    await invokeCommand("sync_keybinds", { keybinds: appState.keybinds || [] });
+    invokeCommand("sync_keybinds", { keybinds: appState.keybinds || [] }).catch((err) => {
+      console.error("Failed to sync keybinds:", err);
+    });
   } catch (err) {
     console.error("Failed to sync keybinds:", err);
   }
@@ -577,7 +579,9 @@ function updateMain() {
       if (nextBody) router.mount(activePage, nextBody, mountContext);
     }
   }
-  syncAllSliders(appState, viewState);
+  if (activePage === "color" || activePage === "gameColor") {
+    syncAllSliders(appState, viewState);
+  }
   updateNavState();
   renderBackupModalDom();
   renderApplyModalDom();
@@ -585,7 +589,6 @@ function updateMain() {
     showAdminNotificationBanner();
   }
   window.requestAnimationFrame(syncNavIndicator);
-  scheduleTrimMemory(350);
 }
 
 let isLanguageSwitching = false;
@@ -1084,9 +1087,7 @@ async function handleAction(action) {
           toggleBtn.setAttribute("title", title);
           toggleBtn.setAttribute("aria-label", title);
         }
-        syncNavIndicator();
-        setTimeout(syncNavIndicator, 140);
-        setTimeout(syncNavIndicator, 280);
+        window.requestAnimationFrame(syncNavIndicator);
       } else {
         render();
       }
@@ -1193,7 +1194,7 @@ async function handleAction(action) {
         const textToCopy = [banner.title, banner.impactText].filter(Boolean).join(": ");
         if (textToCopy) {
           copyTextToClipboard(textToCopy);
-          showPillToast(lang() === "ru" ? "Скопировано в буфер обмена" : "Copied to clipboard");
+          showPillToast(t("copiedToClipboard") || (lang() === "ru" ? "Скопировано в буфер обмена" : "Copied to clipboard"));
         }
       }
       dismissNotificationBanner();
@@ -1680,7 +1681,7 @@ async function handleClick(event) {
       const textToCopy = [banner.title, banner.impactText].filter(Boolean).join(": ");
       if (textToCopy) {
         copyTextToClipboard(textToCopy);
-        showPillToast(lang() === "ru" ? "Скопировано в буфер обмена" : "Copied to clipboard");
+        showPillToast(t("copiedToClipboard") || (lang() === "ru" ? "Скопировано в буфер обмена" : "Copied to clipboard"));
       }
     }
     dismissNotificationBanner();
@@ -1737,7 +1738,7 @@ async function handleClick(event) {
     if (!nextPage || !pageDefs[nextPage] || nextPage === activePage) return;
     viewState.languageDropdownOpen = false;
     viewState.openDropdownBindId = null;
-    if (nextPage !== "tweaks" && viewState.activeImpactBanner?.isAdminPrompt) {
+    if (nextPage !== "tweaks" && viewState.activeImpactBanner) {
       dismissNotificationBanner(true);
     }
     router.navigate(nextPage, {
@@ -1973,15 +1974,13 @@ async function handleClick(event) {
         } else if (status.active) {
           showToastBanner(
             t("blackHolo"),
-            isRu
-              ? "Режим Black Holo включен"
-              : "Black Holo mode enabled",
+            t("blackHoloEnabled") || (isRu ? "Режим Black Holo включен" : "Black Holo mode enabled"),
             "safe"
           );
         } else {
           showToastBanner(
             t("blackHolo"),
-            isRu ? "Черный Холик отключен" : "Black Holosight disabled",
+            t("blackHoloDisabled") || (isRu ? "Черный Холик отключен" : "Black Holosight disabled"),
             "safe"
           );
         }
@@ -2007,9 +2006,9 @@ async function handleClick(event) {
       if (res?.success) {
         showToastBanner(
           t("screenshot"),
-          lang() === "ru"
+          t("screenshotCopiedToast") || (lang() === "ru"
             ? "Сочный скриншот скопирован в буфер обмена (Ctrl+V)!"
-            : "Juicy screenshot copied to clipboard (Ctrl+V)!",
+            : "Juicy screenshot copied to clipboard (Ctrl+V)!"),
           "safe"
         );
       } else if (res?.message) {
@@ -2623,9 +2622,6 @@ window.addEventListener("resize", syncNavIndicator);
 window.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     clearImpactBannerTimer();
-    scheduleTrimMemory(100);
-  } else {
-    scheduleTrimMemory(1000);
   }
 });
 window.addEventListener("keydown", async (event) => {
@@ -2635,9 +2631,9 @@ window.addEventListener("keydown", async (event) => {
       if (res?.success) {
         showToastBanner(
           t("screenshot"),
-          lang() === "ru"
+          t("screenshotCopiedToast") || (lang() === "ru"
             ? "Сочный скриншот скопирован в буфер обмена (Ctrl+V)!"
-            : "Juicy screenshot copied to clipboard (Ctrl+V)!",
+            : "Juicy screenshot copied to clipboard (Ctrl+V)!"),
           "safe"
         );
       }
@@ -2658,12 +2654,12 @@ if (window.__TAURI__?.event?.listen) {
       const active = Boolean(payload.active);
       appState.color.blackHolo = active ? 100 : 0;
       updateBlackHoloDom(active, viewState.blackHoloStatus);
-      showToastBanner(t("blackHolo"), active ? (isRu ? "Черный Холик активен" : "Black Holosight enabled") : (isRu ? "Черный Холик отключен" : "Black Holosight disabled"), "safe");
+      showToastBanner(t("blackHolo"), active ? (t("blackHoloEnabled") || (isRu ? "Черный Холик активен" : "Black Holosight enabled")) : (t("blackHoloDisabled") || (isRu ? "Черный Холик отключен" : "Black Holosight disabled")), "safe");
     } else if (payload.color) {
       appState.color = { ...appState.color, ...payload.color };
       syncAllSliders(appState);
       updateColorPage();
-      const label = payload.name ? `${t("templateAppliedToast") || (isRu ? "Применён шаблон" : "Template applied")}: ${payload.name}` : (isRu ? "Цвета обновлены" : "Colors updated");
+      const label = payload.name ? `${t("templateAppliedToast") || (isRu ? "Применён шаблон" : "Template applied")}: ${payload.name}` : (t("colorsUpdatedToast") || (isRu ? "Цвета обновлены" : "Colors updated"));
       showToastBanner(t("colorTitle"), label, "safe");
     }
     updateMain();
@@ -2686,15 +2682,13 @@ if (window.__TAURI__?.event?.listen) {
     } else if (isAct) {
       showToastBanner(
         t("blackHolo"),
-        isRu
-          ? "Режим Black Holo включен"
-          : "Black Holo mode enabled",
+        t("blackHoloEnabled") || (isRu ? "Режим Black Holo включен" : "Black Holo mode enabled"),
         "safe"
       );
     } else {
       showToastBanner(
         t("blackHolo"),
-        isRu ? "Черный Холик отключен" : "Black Holosight disabled",
+        t("blackHoloDisabled") || (isRu ? "Черный Холик отключен" : "Black Holosight disabled"),
         "safe"
       );
     }

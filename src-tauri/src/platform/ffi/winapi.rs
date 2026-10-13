@@ -149,10 +149,35 @@ unsafe extern "system" {
 }
 
 #[cfg(target_os = "windows")]
-#[link(name = "Magnification")]
-unsafe extern "system" {
-    pub fn MagInitialize() -> i32;
-    pub fn MagSetFullscreenColorEffect(effect: *const MagColorEffect) -> i32;
+#[allow(non_snake_case)]
+pub unsafe fn MagInitialize() -> i32 {
+    let wide_name: Vec<u16> = "Magnification.dll\0".encode_utf16().collect();
+    let mod_handle = LoadLibraryW(wide_name.as_ptr());
+    if mod_handle.is_null() {
+        return 0;
+    }
+    let proc = GetProcAddress(mod_handle, b"MagInitialize\0".as_ptr());
+    if proc.is_null() {
+        return 0;
+    }
+    let func: unsafe extern "system" fn() -> i32 = std::mem::transmute(proc);
+    func()
+}
+
+#[cfg(target_os = "windows")]
+#[allow(non_snake_case)]
+pub unsafe fn MagSetFullscreenColorEffect(effect: *const MagColorEffect) -> i32 {
+    let wide_name: Vec<u16> = "Magnification.dll\0".encode_utf16().collect();
+    let mod_handle = LoadLibraryW(wide_name.as_ptr());
+    if mod_handle.is_null() {
+        return 0;
+    }
+    let proc = GetProcAddress(mod_handle, b"MagSetFullscreenColorEffect\0".as_ptr());
+    if proc.is_null() {
+        return 0;
+    }
+    let func: unsafe extern "system" fn(*const MagColorEffect) -> i32 = std::mem::transmute(proc);
+    func(effect)
 }
 
 #[cfg(target_os = "windows")]

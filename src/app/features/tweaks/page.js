@@ -89,10 +89,10 @@ export function getTweakImpactDetails(tweak, t, isRu) {
 
   const note = tweakNote(tweak, t);
   if (note && note !== t("noKnownConflict")) {
-    let catLabel = isRu ? "Безопасный твик" : "Safe Tweak";
-    if (category === "risk") catLabel = isRu ? "Рискованный твик" : "Risk Tweak";
-    else if (category === "experimental") catLabel = isRu ? "Экспериментальный твик" : "Experimental Tweak";
-    else if (category === "admin") catLabel = isRu ? "Системный твик" : "System Tweak";
+    let catLabel = t("safeTweak") || (isRu ? "Безопасный твик" : "Safe Tweak");
+    if (category === "risk") catLabel = t("riskTweak") || (isRu ? "Рискованный твик" : "Risk Tweak");
+    else if (category === "experimental") catLabel = t("experimentalTweak") || (isRu ? "Экспериментальный твик" : "Experimental Tweak");
+    else if (category === "admin") catLabel = t("systemTweak") || (isRu ? "Системный твик" : "System Tweak");
 
     return {
       appName: catLabel,
@@ -102,36 +102,36 @@ export function getTweakImpactDetails(tweak, t, isRu) {
 
   if (category === "risk") {
     return {
-      appName: isRu ? "Рискованный твик" : "Risk Tweak",
-      impactText: isRu
+      appName: t("riskTweak") || (isRu ? "Рискованный твик" : "Risk Tweak"),
+      impactText: t("riskTweakDesc") || (isRu
         ? "Агрессивный твик: может приводить к повышенному нагреву, сбоям или нестабильности. Перед применением создайте бэкап."
-        : "Aggressive tweak: may cause excessive heat, crashes, or instability. Creating a backup is recommended."
+        : "Aggressive tweak: may cause excessive heat, crashes, or instability. Creating a backup is recommended.")
     };
   }
 
   if (category === "experimental") {
     return {
-      appName: isRu ? "Экспериментальный твик" : "Experimental Tweak",
-      impactText: isRu
+      appName: t("experimentalTweak") || (isRu ? "Экспериментальный твик" : "Experimental Tweak"),
+      impactText: t("experimentalTweakDesc") || (isRu
         ? "Экспериментальная настройка: находится в стадии тестирования, её поведение зависит от конфигурации системы."
-        : "Experimental setting: currently in testing; behavior depends on your system hardware configuration."
+        : "Experimental setting: currently in testing; behavior depends on your system hardware configuration.")
     };
   }
 
   if (category === "admin") {
     return {
-      appName: isRu ? "Системный твик (Admin)" : "System Tweak (Admin)",
-      impactText: isRu
+      appName: t("systemTweak") || (isRu ? "Системный твик (Admin)" : "System Tweak (Admin)"),
+      impactText: t("systemTweakDesc") || (isRu
         ? "Требует прав администратора и изменяет системные параметры Windows."
-        : "Requires administrator privileges and modifies system-level Windows parameters."
+        : "Requires administrator privileges and modifies system-level Windows parameters.")
     };
   }
 
   return {
-    appName: isRu ? "Безопасный твик" : "Safe Tweak",
-    impactText: isRu
+    appName: t("safeTweak") || (isRu ? "Безопасный твик" : "Safe Tweak"),
+    impactText: t("safeTweakDesc") || (isRu
       ? "У этого твика нет подтверждённых конфликтов с играми и приложениями."
-      : "This tweak has no confirmed conflicts with games or apps."
+      : "This tweak has no confirmed conflicts with games or apps.")
   };
 }
 
@@ -139,7 +139,7 @@ export function renderIosNotification(viewState, t) {
   const banner = viewState.activeImpactBanner;
   if (!banner) return "";
 
-  const isRu = typeof t === "function" && t("language") === "ru";
+  const isRu = lang() === "ru";
   const category = banner.category || "safe";
   const iconName = banner.isAdminPrompt
     ? "shield"
@@ -149,7 +149,7 @@ export function renderIosNotification(viewState, t) {
     : (banner.isBackupPrompt ? "open-backup-name-modal" : "click-impact-banner");
   const clickHint = banner.isAdminPrompt
     ? ""
-    : (isRu ? "Нажмите, чтобы скопировать в буфер обмена" : "Click to copy to clipboard");
+    : (t("clickToCopy") || (isRu ? "Нажмите, чтобы скопировать в буфер обмена" : "Click to copy to clipboard"));
 
   return [
     '<div class="ios-banner-container">',

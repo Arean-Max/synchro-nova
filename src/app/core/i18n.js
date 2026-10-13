@@ -25,6 +25,7 @@ export const supportedLanguages = [
 ];
 
 import { tweakTranslations } from "../features/tweaks/i18n.js";
+import { localizedExtensions } from "./i18n_extensions.js";
 
 const dictionaries = {
   en: {
@@ -2463,6 +2464,12 @@ const dictionaries = {
   }
 };
 
+for (const [langCode, dict] of Object.entries(localizedExtensions)) {
+  if (dictionaries[langCode]) {
+    Object.assign(dictionaries[langCode], dict);
+  }
+}
+
 const ruOverrides = {
   appSubtitle: "all in one.",
   maximize: "Развернуть"
@@ -2470,5 +2477,10 @@ const ruOverrides = {
 
 export function translate(language, key) {
   if (language === "ru" && ruOverrides[key]) return ruOverrides[key];
-  return dictionaries[language]?.[key] ?? dictionaries.en[key] ?? key;
+  return dictionaries[language]?.[key]
+    ?? (language === "ru" ? tweakTranslations.ru?.[key] : null)
+    ?? tweakTranslations[language]?.[key]
+    ?? tweakTranslations.en?.[key]
+    ?? dictionaries.en?.[key]
+    ?? key;
 }

@@ -57,10 +57,10 @@ class Router {
 
     if (typeof context.onNavigate === "function") {
       context.onNavigate(pageName);
+    } else {
+      const container = document.querySelector(`.page-${pageName}`) || document.querySelector(".page-body");
+      this.mount(pageName, container, context);
     }
-
-    const container = document.querySelector(`.page-${pageName}`) || document.querySelector(".page-body");
-    this.mount(pageName, container, context);
   }
 }
 
