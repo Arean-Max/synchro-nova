@@ -173,10 +173,11 @@ button {
   height: 34px;
   padding: 0;
   color: #b7b7bc;
-  background: var(--bg-main);
+  background: transparent;
   border: 0;
   border-radius: 0;
   cursor: default;
+  transition: background-color 140ms ease, color 140ms ease;
 }
 
 .window-btn .icon {
@@ -866,33 +867,32 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-tertiary, #94a3b8);
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary, #71717a);
   cursor: pointer;
-  transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  transition: color 150ms ease, background-color 150ms ease, transform 150ms ease;
   outline: none;
 }
 
 .toggle-help-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.28);
-  color: var(--text-primary, #ffffff);
-  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 .toggle-help-btn:active {
-  transform: scale(0.95);
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.14);
+  transform: scale(0.92);
 }
 
 .toggle-help-btn .icon {
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
   pointer-events: none;
 }
 
@@ -2896,47 +2896,46 @@ button {
 }
 
 .tweak-help-btn {
-  display: inline-grid;
-  place-items: center;
-  width: 19px;
-  height: 19px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary, #71717a);
   padding: 0;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 160ms cubic-bezier(0.2, 0, 0, 1);
+  transition: color 150ms ease, background-color 150ms ease, transform 150ms ease;
+  outline: none;
 }
 
 .tweak-help-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
-  transform: scale(1.12);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .tweak-help-btn:active {
+  background: rgba(255, 255, 255, 0.14);
   transform: scale(0.92);
 }
 
+.tweak-help-btn .icon {
+  width: 15px;
+  height: 15px;
+  pointer-events: none;
+}
+
 .tweak-help-btn.tweak-error-btn {
-  background: rgba(239, 68, 68, 0.22);
-  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(239, 68, 68, 0.16);
   color: #f87171;
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
 }
 
 .tweak-help-btn.tweak-error-btn:hover {
-  background: rgba(239, 68, 68, 0.38);
-  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.32);
   color: #ffffff;
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
 }
 
 
@@ -5183,33 +5182,36 @@ button {
 }
 
 .apply-result-help-btn {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text-secondary, #d4d4d8);
-  font-size: 13px;
-  font-weight: 750;
-  line-height: 1;
-  display: inline-grid;
-  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary, #71717a);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 150ms ease, background-color 150ms ease, transform 150ms ease;
+  outline: none;
 }
 
 .apply-result-help-btn:hover {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
-  transform: scale(1.12);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
 }
 
 .apply-result-help-btn:active {
+  background: rgba(255, 255, 255, 0.14);
   transform: scale(0.92);
+}
+
+.apply-result-help-btn .icon {
+  width: 15px;
+  height: 15px;
+  pointer-events: none;
 }
 
 .apply-result-info {
@@ -6292,9 +6294,9 @@ button {
   align-items: center;
   justify-content: center;
   min-width: 120px;
-  height: 34px;
+  height: 36px;
   padding: 0 14px;
-  border-radius: 7px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--text-primary, #ffffff);
@@ -6557,8 +6559,8 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.07);

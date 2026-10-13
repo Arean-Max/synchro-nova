@@ -271,7 +271,7 @@ export function renderGpuVendorIcon(vendor) {
   if (v === "intel") {
     return '<span class="holo-gpu-icon intel" title="Intel Graphics"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 8h2v8H9zm4 3h2v5h-2zm0-3h2v2h-2z"/></svg></span>';
   }
-  return '<span class="holo-gpu-icon nvidia" title="NVIDIA GeForce"><svg width="24" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M8.948 8.798v-1.43a6.7 6.7 0 0 1 .424-.018c3.922-.124 6.493 3.374 6.493 3.374s-2.774 3.851-5.75 3.851c-.398 0-.787-.062-1.158-.185v-4.346c1.528.185 1.837.857 2.747 2.385l2.04-1.714s-1.492-1.952-4-1.952a6.016 6.016 0 0 0-.796.035m0-4.735v2.138l.424-.027c5.45-.185 9.01 4.47 9.01 4.47s-4.08 4.964-8.33 4.964c-.37 0-.733-.035-1.095-.097v1.325c.3.035.61.062.91.062 3.957 0 6.82-2.023 9.593-4.408.459.371 2.34 1.263 2.73 1.652-2.633 2.208-8.772 3.984-12.253 3.984-.335 0-.653-.018-.971-.053v1.864H24V4.063zm0 10.326v1.131c-3.657-.654-4.673-4.46-4.673-4.46s1.758-1.944 4.673-2.262v1.237H8.94c-1.528-.186-2.73 1.245-2.73 1.245s.68 2.412 2.739 3.11M2.456 10.9s2.164-3.197 6.5-3.533V6.201C4.153 6.59 0 10.653 0 10.653s2.35 6.802 8.948 7.42v-1.237c-4.84-.6-6.492-5.936-6.492-5.936z"/></svg></span>';
+  return '<span class="holo-gpu-icon generic" title="Hardware GPU"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"></rect><path d="M7 14h.01"></path><path d="M11 14h6"></path></svg></span>';
 }
 
 function renderTemplates(appState, viewState, t) {
@@ -373,31 +373,31 @@ export function renderTemplateConfigModal(appState, viewState, t) {
   const templateColor = viewState.editingTemplateColor || { saturation: 100, hue: 0, contrast: 100, gamma: 100 };
   const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => templateSlider(field, templateColor, t)).join("");
 
-  return [
-    '<div class="smart-tips-backdrop">',
-    '  <div class="backdrop-dismiss-area" data-action="close-template-config" style="position:absolute;inset:0;z-index:0;"></div>',
-    '  <div class="template-config-dialog" style="position:relative;z-index:1;">',
-    '    <div class="template-config-header">',
-    '      <div class="template-config-title">',
-    `        <h3>${escapeHtml(t("configureTemplate"))}</h3>`,
-    `        <p>${escapeHtml(t("configureTemplateDesc"))}</p>`,
-    '      </div>',
-    `      <button class="dialog-close-btn" type="button" data-action="close-template-config" title="${escapeAttr(t("close"))}">${icon("x")}</button>`,
-    '    </div>',
-    '    <div class="template-config-body">',
-    '      <div class="template-name-group">',
-    `        <label class="template-name-label" for="template-name-input">${escapeHtml(t("templateName"))}</label>`,
-    `        <input id="template-name-input" class="template-name-input" type="text" data-field="editingTemplateName" value="${escapeAttr(currentName)}" placeholder="${escapeAttr(defaultName)}" maxlength="28" spellcheck="false" autocomplete="off">`,
-    '      </div>',
-    `      <div class="stack template-sliders-stack">${controls}</div>`,
-    '    </div>',
-    '    <div class="template-config-footer">',
-    `      <button class="btn btn-outline template-reset-btn" type="button" data-action="reset-template-preset" data-preset="${escapeAttr(presetKey)}"><span>${escapeHtml(t("resetToDefault"))}</span></button>`,
-    `      <button class="btn btn-primary template-done-btn" type="button" data-action="close-template-config"><span>${escapeHtml(t("done"))}</span></button>`,
-    '    </div>',
-    '  </div>',
-    '</div>'
-  ].join("");
+  return `
+    <div class="smart-tips-backdrop">
+      <div class="backdrop-dismiss-area" data-action="close-template-config"></div>
+      <div class="template-config-dialog">
+        <div class="template-config-header">
+          <div class="template-config-title">
+            <h3>${escapeHtml(t("configureTemplate"))}</h3>
+            <p>${escapeHtml(t("configureTemplateDesc"))}</p>
+          </div>
+          <button class="dialog-close-btn" type="button" data-action="close-template-config" title="${escapeAttr(t("close"))}">${icon("x")}</button>
+        </div>
+        <div class="template-config-body">
+          <div class="template-name-group">
+            <label class="template-name-label" for="template-name-input">${escapeHtml(t("templateName"))}</label>
+            <input id="template-name-input" class="template-name-input" type="text" data-field="editingTemplateName" value="${escapeAttr(currentName)}" placeholder="${escapeAttr(defaultName)}" maxlength="28" spellcheck="false" autocomplete="off">
+          </div>
+          <div class="stack template-sliders-stack">${controls}</div>
+        </div>
+        <div class="template-config-footer">
+          <button class="btn btn-outline template-reset-btn" type="button" data-action="reset-template-preset" data-preset="${escapeAttr(presetKey)}"><span>${escapeHtml(t("resetToDefault"))}</span></button>
+          <button class="btn btn-primary template-done-btn" type="button" data-action="close-template-config"><span>${escapeHtml(t("done"))}</span></button>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderColorSettingsPanel(appState, viewState, t) {
@@ -414,27 +414,27 @@ function renderColorSettingsPanel(appState, viewState, t) {
       ? `<img class="color-game-head-mark image" src="${escapeAttr(headLogoSrc)}" alt="" aria-hidden="true">`
       : `<span class="color-game-head-mark" aria-hidden="true">${gameLogoText(selected.name)}</span>`
     : "";
-  const gameHeader = [
-    `<div class="color-game-head"${headStyle}>`,
-    headMark,
-    '<div class="color-game-head-info">',
-    `<span class="color-game-head-label">${t("selectedGame")}</span>`,
-    `<strong class="color-game-head-title">${safeValue(selected?.name)}</strong>`,
-    "</div>",
-    `<div class="color-game-head-actions">${launch}${closeBtn}</div>`,
-    "</div>"
-  ].join("");
+  const gameHeader = `
+    <div class="color-game-head"${headStyle}>
+      ${headMark}
+      <div class="color-game-head-info">
+        <span class="color-game-head-label">${t("selectedGame")}</span>
+        <strong class="color-game-head-title">${safeValue(selected?.name)}</strong>
+      </div>
+      <div class="color-game-head-actions">${launch}${closeBtn}</div>
+    </div>
+  `;
 
-  return [
-    '<div class="color-game-panel">',
-    '<div class="stack">',
-    gameHeader,
-    card(t("controls"), controls),
-    card(t("templates"), renderTemplates(appState, viewState, t)),
-    "</div>",
-    viewState.editingTemplate ? renderTemplateConfigModal(appState, viewState, t) : "",
-    "</div>"
-  ].join("");
+  return `
+    <div class="color-game-panel">
+      <div class="stack">
+        ${gameHeader}
+        ${card(t("controls"), controls)}
+        ${card(t("templates"), renderTemplates(appState, viewState, t))}
+      </div>
+      ${viewState.editingTemplate ? renderTemplateConfigModal(appState, viewState, t) : ""}
+    </div>
+  `;
 }
 
 export function getPreviewFilterStyle(color) {
@@ -587,29 +587,29 @@ export function renderColorPage(appState, viewState, t) {
       clear_sight: t("clearSight")
     };
     const activeLabel = filterNameMap[activeFilter] || activeFilter;
-    hintHtml = [
-      '<div class="filter-active-hint">',
-      '  <span class="filter-active-hint-dot"></span>',
-      `  <span class="filter-active-hint-text">${escapeHtml(t("activeFilter"))}: <strong>${escapeHtml(activeLabel)}</strong></span>`,
-      `  <button class="filter-hint-disable-btn" type="button" data-action="disable-color-filter" title="${escapeAttr(t("clearFilter"))}" aria-label="${escapeAttr(t("clearFilter"))}">${icon("x")}</button>`,
-      '</div>'
-    ].join("");
+    hintHtml = `
+      <div class="filter-active-hint">
+        <span class="filter-active-hint-dot"></span>
+        <span class="filter-active-hint-text">${escapeHtml(t("activeFilter"))}: <strong>${escapeHtml(activeLabel)}</strong></span>
+        <button class="filter-hint-disable-btn" type="button" data-action="disable-color-filter" title="${escapeAttr(t("clearFilter"))}" aria-label="${escapeAttr(t("clearFilter"))}">${icon("x")}</button>
+      </div>
+    `;
   }
 
   const fineTuningBody = currentTab === "vibrance"
     ? `<div class="fine-tuning-panel fine-tuning-vibrance">${controls}${hintHtml}</div>`
     : `<div class="fine-tuning-panel fine-tuning-filters">${renderFiltersSection(appState, t)}</div>`;
 
-  return [
-    '<div class="global-color-page">',
-    preview,
-    '<div class="global-color-grid">',
-    card(fineTuningTitle, fineTuningBody, "color-controls-card"),
-    card(templatesTitle, renderTemplates(appState, viewState, t), "color-templates-card"),
-    "</div>",
-    viewState.editingTemplate ? renderTemplateConfigModal(appState, viewState, t) : "",
-    "</div>"
-  ].join("");
+  return `
+    <div class="global-color-page">
+      ${preview}
+      <div class="global-color-grid">
+        ${card(fineTuningTitle, fineTuningBody, "color-controls-card")}
+        ${card(templatesTitle, renderTemplates(appState, viewState, t), "color-templates-card")}
+      </div>
+      ${viewState.editingTemplate ? renderTemplateConfigModal(appState, viewState, t) : ""}
+    </div>
+  `;
 }
 
 export function renderGameColorPage(appState, viewState, t) {

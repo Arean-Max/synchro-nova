@@ -25,13 +25,13 @@ export function renderBackupNameModal(viewState, t) {
     ? `Бэкап ${now.toLocaleDateString("ru-RU")} ${now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`
     : `Backup ${now.toLocaleDateString("en-US")} ${now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
 
-  return [
-    '<div class="backup-modal-backdrop" data-action="dismiss-backup-modal">',
-    '  <div class="backup-minimal-dialog" onclick="event.stopPropagation()">',
-    `    <input id="custom-backup-name-input" class="backup-minimal-input" type="text" data-field="backupName" value="${escapeAttr(viewState.backupName || "")}" placeholder="${escapeAttr(defaultPlaceholder)}" maxlength="50" spellcheck="false" autocomplete="off" autofocus>`,
-    '  </div>',
-    '</div>'
-  ].join("");
+  return `
+    <div class="backup-modal-backdrop" data-action="dismiss-backup-modal">
+      <div class="backup-minimal-dialog">
+        <input id="custom-backup-name-input" class="backup-minimal-input" type="text" data-field="backupName" value="${escapeAttr(viewState.backupName || "")}" placeholder="${escapeAttr(defaultPlaceholder)}" maxlength="50" spellcheck="false" autocomplete="off" autofocus>
+      </div>
+    </div>
+  `;
 }
 
 export function renderBackupsPage(viewState, t) {
@@ -43,20 +43,20 @@ export function renderBackupsPage(viewState, t) {
 
   const rows = viewState.backups.length
     ? viewState.backups.map((item) => `<button class="config-row backup-row ${viewState.selectedBackup === item.id ? "selected" : ""}" type="button" data-backup-id="${escapeAttr(item.id)}"><span class="config-check">${viewState.selectedBackup === item.id ? icon("check") : ""}</span><span class="backup-name"><strong>${escapeHtml(item.name)}</strong><small>${formatDate(item.createdAt)}</small></span></button>`).join("")
-    : `<div class="empty-state">${t("noBackups")}</div>`;
+    : `<div class="empty-state">${escapeHtml(t("noBackups"))}</div>`;
 
-  return [
-    '<section class="card backup-card">',
-    `<h2>${t("backupManager")}</h2>`,
-    '<div class="toolbar-row backup-tools">',
-    button(t("createBackup"), "save", "outline", "create-backup"),
-    restoreBtn,
-    button(t("deleteBackup"), "trash", "outline", "delete-backup"),
-    button(t("openFolder"), "folder", "outline", "open-backups-folder"),
-    '</div>',
-    `<div class="config-list backup-list">${rows}</div>`,
-    '</section>'
-  ].join("");
+  return `
+    <section class="card backup-card">
+      <h2>${escapeHtml(t("backupManager"))}</h2>
+      <div class="toolbar-row backup-tools">
+        ${button(t("createBackup"), "save", "outline", "create-backup")}
+        ${restoreBtn}
+        ${button(t("deleteBackup"), "trash", "outline", "delete-backup")}
+        ${button(t("openFolder"), "folder", "outline", "open-backups-folder")}
+      </div>
+      <div class="config-list backup-list">${rows}</div>
+    </section>
+  `;
 }
 
 export function renderConfigsPage(viewState, t) {

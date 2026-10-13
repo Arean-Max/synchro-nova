@@ -126,7 +126,7 @@ export function setActivePage(page) {
 }
 
 export function cloneState(state) {
-  return JSON.parse(JSON.stringify(state));
+  return typeof structuredClone === "function" ? structuredClone(state) : JSON.parse(JSON.stringify(state));
 }
 
 export function lang() {

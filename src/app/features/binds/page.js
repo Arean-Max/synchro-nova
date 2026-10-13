@@ -1,5 +1,5 @@
 import { escapeAttr, escapeHtml } from "../../core/html.js";
-import { lang } from "../../core/state.js";
+import { appState, lang } from "../../core/state.js";
 import { icon } from "../../ui/icons.js";
 
 export function renderBindsPage(appState, viewState, t) {
@@ -62,36 +62,36 @@ export function renderBindsPage(appState, viewState, t) {
           const itemsHtml = g.items
             .map((it) => {
               const isSelected = it.value === currentValue;
-              return [
-                `<button class="bind-dropdown-item ${isSelected ? "selected" : ""}" type="button" data-action="select-bind-action" data-bind-id="${escapeAttr(bindId)}" data-value="${escapeAttr(it.value)}">`,
-                `  <span>${escapeHtml(it.label)}</span>`,
-                isSelected ? `  <span class="bind-item-check">${icon("check")}</span>` : "",
-                `</button>`
-              ].join("");
+              return `
+                <button class="bind-dropdown-item ${isSelected ? "selected" : ""}" type="button" data-action="select-bind-action" data-bind-id="${escapeAttr(bindId)}" data-value="${escapeAttr(it.value)}">
+                  <span>${escapeHtml(it.label)}</span>
+                  ${isSelected ? `<span class="bind-item-check">${icon("check")}</span>` : ""}
+                </button>
+              `;
             })
             .join("");
 
-          return [
-            `<div class="bind-dropdown-group">`,
-            `  <div class="bind-dropdown-group-title">${escapeHtml(g.label)}</div>`,
-            itemsHtml,
-            `</div>`
-          ].join("");
+          return `
+            <div class="bind-dropdown-group">
+              <div class="bind-dropdown-group-title">${escapeHtml(g.label)}</div>
+              ${itemsHtml}
+            </div>
+          `;
         })
         .join("");
 
       menuHtml = `<div class="bind-dropdown-menu">${groupsHtml}</div>`;
     }
 
-    return [
-      `<div class="bind-custom-dropdown ${isOpen ? "open" : ""}" data-bind-id="${escapeAttr(bindId)}">`,
-      `  <button class="bind-dropdown-trigger" type="button" data-action="toggle-bind-dropdown" data-bind-id="${escapeAttr(bindId)}">`,
-      `    <span class="bind-dropdown-label">${escapeHtml(currentLabel)}</span>`,
-      `    <span class="bind-dropdown-arrow">${icon("chevronDown")}</span>`,
-      `  </button>`,
-      menuHtml,
-      `</div>`
-    ].join("");
+    return `
+      <div class="bind-custom-dropdown ${isOpen ? "open" : ""}" data-bind-id="${escapeAttr(bindId)}">
+        <button class="bind-dropdown-trigger" type="button" data-action="toggle-bind-dropdown" data-bind-id="${escapeAttr(bindId)}">
+          <span class="bind-dropdown-label">${escapeHtml(currentLabel)}</span>
+          <span class="bind-dropdown-arrow">${icon("chevronDown")}</span>
+        </button>
+        ${menuHtml}
+      </div>
+    `;
   };
 
   const rows = binds
@@ -109,54 +109,54 @@ export function renderBindsPage(appState, viewState, t) {
       const recClass = isRecording ? " recording" : "";
       const emptyClass = !bind.key && !isRecording ? " empty" : "";
 
-      return [
-        `<div class="bind-row ${isRecording ? "recording-row" : ""}" data-bind-id="${escapeAttr(bind.id)}">`,
-        `  <div class="bind-key-col">`,
-        `    <button class="bind-key-badge${recClass}${emptyClass}" type="button" data-action="record-bind" data-bind-id="${escapeAttr(bind.id)}" title="${escapeAttr(t("clickToRecord"))}">`,
-        badgeContent,
-        `    </button>`,
-        `  </div>`,
-        `  <div class="bind-arrow">${icon("arrowRight")}</div>`,
-        `  <div class="bind-action-wrap">`,
-        renderDropdown(bind.action, bind.id),
-        `  </div>`,
-        `  <div class="bind-controls">`,
-        `    <button class="bind-toggle-btn ${bind.enabled ? "active" : ""}" type="button" data-action="toggle-bind" data-bind-id="${escapeAttr(bind.id)}" role="switch" aria-checked="${bind.enabled ? "true" : "false"}" title="${escapeAttr(t("bindActive"))}">`,
-        `      <span class="ios-switch ${bind.enabled ? "active" : ""}"><span class="ios-switch-thumb"></span></span>`,
-        `    </button>`,
-        `    <button class="bind-delete-btn" type="button" data-action="delete-bind" data-bind-id="${escapeAttr(bind.id)}" title="${escapeAttr(t("deleteBind"))}">`,
-        `      ${icon("trash")}`,
-        `    </button>`,
-        `  </div>`,
-        `</div>`
-      ].join("");
+      return `
+        <div class="bind-row ${isRecording ? "recording-row" : ""}" data-bind-id="${escapeAttr(bind.id)}">
+          <div class="bind-key-col">
+            <button class="bind-key-badge${recClass}${emptyClass}" type="button" data-action="record-bind" data-bind-id="${escapeAttr(bind.id)}" title="${escapeAttr(t("clickToRecord"))}">
+              ${badgeContent}
+            </button>
+          </div>
+          <div class="bind-arrow">${icon("arrowRight")}</div>
+          <div class="bind-action-wrap">
+            ${renderDropdown(bind.action, bind.id)}
+          </div>
+          <div class="bind-controls">
+            <button class="bind-toggle-btn ${bind.enabled ? "active" : ""}" type="button" data-action="toggle-bind" data-bind-id="${escapeAttr(bind.id)}" role="switch" aria-checked="${bind.enabled ? "true" : "false"}" title="${escapeAttr(t("bindActive"))}">
+              <span class="ios-switch ${bind.enabled ? "active" : ""}"><span class="ios-switch-thumb"></span></span>
+            </button>
+            <button class="bind-delete-btn" type="button" data-action="delete-bind" data-bind-id="${escapeAttr(bind.id)}" title="${escapeAttr(t("deleteBind"))}">
+              ${icon("trash")}
+            </button>
+          </div>
+        </div>
+      `;
     })
     .join("");
 
   if (!binds.length) {
-    return [
-      '<section class="card binds-card empty-card">',
-      '  <div class="binds-empty-state">',
-      `    <div class="binds-empty-icon">${icon("keyboard")}</div>`,
-      `    <h3 class="binds-empty-title">${escapeHtml(t("noBinds"))}</h3>`,
-      `    <p class="binds-empty-desc">${escapeHtml(t("noBindsDesc"))}</p>`,
-      `    <button class="btn btn-primary" type="button" data-action="add-bind">${icon("plus")}<span>${escapeHtml(t("createFirstBind"))}</span></button>`,
-      '  </div>',
-      '</section>'
-    ].join("");
+    return `
+      <section class="card binds-card empty-card">
+        <div class="binds-empty-state">
+          <div class="binds-empty-icon">${icon("keyboard")}</div>
+          <h3 class="binds-empty-title">${escapeHtml(t("noBinds"))}</h3>
+          <p class="binds-empty-desc">${escapeHtml(t("noBindsDesc"))}</p>
+          <button class="btn btn-primary" type="button" data-action="add-bind">${icon("plus")}<span>${escapeHtml(t("createFirstBind"))}</span></button>
+        </div>
+      </section>
+    `;
   }
 
-  return [
-    '<section class="card binds-card">',
-    `  <div class="binds-list">${rows}</div>`,
-    '  <div class="binds-footer-row">',
-    `    <button class="btn btn-primary bind-add-btn" type="button" data-action="add-bind" title="${escapeAttr(t("addBind"))}">`,
-    `      ${icon("plus")}`,
-    `      <span>${escapeHtml(t("addBind"))}</span>`,
-    '    </button>',
-    '  </div>',
-    '</section>'
-  ].join("");
+  return `
+    <section class="card binds-card">
+      <div class="binds-list">${rows}</div>
+      <div class="binds-footer-row">
+        <button class="btn btn-primary bind-add-btn" type="button" data-action="add-bind" title="${escapeAttr(t("addBind"))}">
+          ${icon("plus")}
+          <span>${escapeHtml(t("addBind"))}</span>
+        </button>
+      </div>
+    </section>
+  `;
 }
 
 export const bindsFeature = {

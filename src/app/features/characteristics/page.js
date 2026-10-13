@@ -68,13 +68,13 @@ export function renderCharacteristicsPage(viewState, t) {
   const drivers = rawDrivers.filter((d) => d && d.name && d.name !== "Unknown");
 
   if (isScanning && !drivers.length) {
-    return [
-      '<div class="drivers-page">',
-      '  <div class="scroll-panel">',
-      `    <div class="empty-state"><div class="empty-state-spinner">${icon("rotate", "spin")}</div><span>${escapeHtml(t("scanningDrivers") || (isRu ? "Сканирование ПК..." : "Scanning system..."))}</span></div>`,
-      '  </div>',
-      '</div>'
-    ].join("");
+    return `
+      <div class="drivers-page">
+        <div class="scroll-panel">
+          <div class="empty-state"><div class="empty-state-spinner">${icon("rotate", "spin")}</div><span>${escapeHtml(t("scanningDrivers") || (isRu ? "Сканирование ПК..." : "Scanning system..."))}</span></div>
+        </div>
+      </div>
+    `;
   }
 
   const groupCards = DRIVER_CATEGORIES.map((cat) => {
@@ -88,12 +88,12 @@ export function renderCharacteristicsPage(viewState, t) {
     const title = t("driverGroup_" + cat.id) || (isRu ? cat.titleRu : cat.titleEn);
     const tiles = items.map((driver) => renderDriverTile(driver, t, isRu)).join("");
 
-    return [
-      '<section class="card driver-group">',
-      `  <h2 class="group-title">${icon(cat.icon)}<span>${escapeHtml(title)}</span></h2>`,
-      `  <div class="driver-grid">${tiles}</div>`,
-      '</section>'
-    ].join("");
+    return `
+      <section class="card driver-group">
+        <h2 class="group-title">${icon(cat.icon)}<span>${escapeHtml(title)}</span></h2>
+        <div class="driver-grid">${tiles}</div>
+      </section>
+    `;
   }).filter(Boolean);
 
   const categorized = new Set();
@@ -107,32 +107,32 @@ export function renderCharacteristicsPage(viewState, t) {
   if (remaining.length) {
     const title = t("driverGroup_other") || (isRu ? "Прочие устройства" : "Other Hardware");
     const tiles = remaining.map((driver) => renderDriverTile(driver, t, isRu)).join("");
-    groupCards.push([
-      '<section class="card driver-group">',
-      `  <h2 class="group-title">${icon("layers")}<span>${escapeHtml(title)}</span></h2>`,
-      `  <div class="driver-grid">${tiles}</div>`,
-      '</section>'
-    ].join(""));
+    groupCards.push(`
+      <section class="card driver-group">
+        <h2 class="group-title">${icon("layers")}<span>${escapeHtml(title)}</span></h2>
+        <div class="driver-grid">${tiles}</div>
+      </section>
+    `);
   }
 
   const scrollContent = groupCards.length
     ? groupCards.join("")
     : `<div class="empty-state">${escapeHtml(t("noDriversFound") || (isRu ? "Устройства не обнаружены" : "No hardware drivers found"))}</div>`;
 
-  return [
-    '<div class="drivers-page">',
-    `  <div class="scroll-panel">${scrollContent}</div>`,
-    '  <div class="actions tweaks-actions drivers-actions">',
-    button(scanLabel, "rotate", "primary", "scan-drivers"),
-    button(
-      t("driverUpdateViaWindows") || t("updateViaWindows") || (isRu ? "Обновить через Windows" : "Windows Update"),
-      "settings",
-      "outline",
-      "open-windows-update-drivers"
-    ),
-    '  </div>',
-    '</div>'
-  ].join("");
+  return `
+    <div class="drivers-page">
+      <div class="scroll-panel">${scrollContent}</div>
+      <div class="actions tweaks-actions drivers-actions">
+        ${button(scanLabel, "rotate", "primary", "scan-drivers")}
+        ${button(
+          t("driverUpdateViaWindows") || t("updateViaWindows") || (isRu ? "Обновить через Windows" : "Windows Update"),
+          "settings",
+          "outline",
+          "open-windows-update-drivers"
+        )}
+      </div>
+    </div>
+  `;
 }
 
 function renderDriverTile(driver, t, isRu) {
@@ -208,34 +208,34 @@ function renderDriverTile(driver, t, isRu) {
     ? `<div class="driver-spec-item update-hint"><span class="spec-label">${escapeHtml(t("driverAvailableVersion") || (isRu ? "Доступна:" : "Available:"))}</span> <span class="spec-val highlight-new">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : "-"}</span></div>`
     : `<div class="driver-spec-item uptodate-hint"><span class="spec-label">${escapeHtml(t("driverLatestVersion") || (isRu ? "Актуальная:" : "Latest:"))}</span> <span class="spec-val highlight-uptodate">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : (versionText !== "-" ? escapeHtml(versionText) : "-")}</span></div>`;
 
-  return [
-    `<div class="driver-tile ${isOutdated ? "has-update" : "uptodate"}">`,
-    '  <div class="driver-tile-top">',
-    '    <div class="driver-vendor-box">',
-    `      ${logo}`,
-    '    </div>',
-    '    <div class="driver-tile-info">',
-    `      <span class="driver-tile-name" title="${escapeAttr(driver.name)}">${escapeHtml(driver.name)}</span>`,
-    `      <span class="driver-tile-provider">${escapeHtml(providerText)}</span>`,
-    '    </div>',
-    `    <span class="driver-tile-badge ${isOutdated ? "update" : "uptodate"}">`,
-    `      ${isOutdated ? icon("alert") : icon("check")}`,
-    `      <span>${escapeHtml(statusLabel)}</span>`,
-    '    </span>',
-    '  </div>',
-    '  <div class="driver-tile-specs">',
-    `    <div class="driver-spec-item" title="${escapeAttr(driver.version || "")}"><span class="spec-label">${escapeHtml(t("version"))}:</span> <span class="spec-val version">${escapeHtml(versionText)}</span></div>`,
-    newVerSpec,
-    `    <div class="driver-spec-item"><span class="spec-label">${escapeHtml(t("date"))}:</span> <span class="spec-val">${escapeHtml(dateText)}</span></div>`,
-    '  </div>',
-    '  <div class="driver-tile-footer">',
-    `    <button class="btn ${isOutdated ? "btn-primary" : "btn-outline"} driver-tile-btn ${isOutdated ? "" : "is-uptodate"}" type="button" data-action="open-driver-url" data-url="${escapeAttr(officialUrl)}" title="${escapeAttr(driver.name)}">`,
-    `      ${isOutdated ? icon("zap") : icon("rotate")}`,
-    `      <span>${escapeHtml(btnLabel)}</span>`,
-    '    </button>',
-    '  </div>',
-    '</div>'
-  ].filter(Boolean).join("");
+  return `
+    <div class="driver-tile ${isOutdated ? "has-update" : "uptodate"}">
+      <div class="driver-tile-top">
+        <div class="driver-vendor-box">
+          ${logo}
+        </div>
+        <div class="driver-tile-info">
+          <span class="driver-tile-name" title="${escapeAttr(driver.name)}">${escapeHtml(driver.name)}</span>
+          <span class="driver-tile-provider">${escapeHtml(providerText)}</span>
+        </div>
+        <span class="driver-tile-badge ${isOutdated ? "update" : "uptodate"}">
+          ${isOutdated ? icon("alert") : icon("check")}
+          <span>${escapeHtml(statusLabel)}</span>
+        </span>
+      </div>
+      <div class="driver-tile-specs">
+        <div class="driver-spec-item" title="${escapeAttr(driver.version || "")}"><span class="spec-label">${escapeHtml(t("version"))}:</span> <span class="spec-val version">${escapeHtml(versionText)}</span></div>
+        ${newVerSpec}
+        <div class="driver-spec-item"><span class="spec-label">${escapeHtml(t("date"))}:</span> <span class="spec-val">${escapeHtml(dateText)}</span></div>
+      </div>
+      <div class="driver-tile-footer">
+        <button class="btn ${isOutdated ? "btn-primary" : "btn-outline"} driver-tile-btn ${isOutdated ? "" : "is-uptodate"}" type="button" data-action="open-driver-url" data-url="${escapeAttr(officialUrl)}" title="${escapeAttr(driver.name)}">
+          ${isOutdated ? icon("zap") : icon("rotate")}
+          <span>${escapeHtml(btnLabel)}</span>
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 export const characteristicsFeature = {

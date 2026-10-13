@@ -89,8 +89,8 @@ export function renderApplyModal(modalState, t) {
       : (t("whatBreaks") || (isRu ? "Что меняет этот твик?" : "What does this tweak affect?"));
 
     const helpBtnHtml = isFailed
-      ? `<button class="tweak-help-btn tweak-error-btn apply-result-help-btn" type="button" data-action="show-tweak-error" data-tweak-id="${escapeAttr(item.id)}" data-error-msg="${escapeAttr(item.message || (isRu ? "Ошибка применения твика в системе" : "Tweak application error"))}" title="${escapeAttr(helpTooltip)}">?</button>`
-      : `<button class="tweak-help-btn apply-result-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(item.id)}" title="${escapeAttr(helpTooltip)}">?</button>`;
+      ? `<button class="tweak-help-btn tweak-error-btn apply-result-help-btn" type="button" data-action="show-tweak-error" data-tweak-id="${escapeAttr(item.id)}" data-error-msg="${escapeAttr(item.message || (isRu ? "Ошибка применения твика в системе" : "Tweak application error"))}" title="${escapeAttr(helpTooltip)}">${icon("alert")}</button>`
+      : `<button class="tweak-help-btn apply-result-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(item.id)}" title="${escapeAttr(helpTooltip)}">${icon("helpCircle")}</button>`;
 
     return [
       `<div class="apply-result-item ${escapeAttr(statusClass)}">`,
