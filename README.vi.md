@@ -65,7 +65,7 @@ Một tiện ích nhẹ dành cho game thủ. Giúp màu sắc trong game trở 
 #### Có bị cấm (ban) trong game không?
 Không hề. Synchro Nova không can thiệp vào bộ nhớ game, không chèn DLL và không vẽ overlay. Màu sắc được điều chỉnh thông qua WinAPI chính thức của Windows, tương tự bảng điều khiển NVIDIA/AMD. Hoàn toàn an toàn với VAC, Faceit, Vanguard, EAC và BattlEye.
 
-#### Có gì vượt trội hơn VibranceGUI?
+#### Synchro Nova có gì vượt trội hơn bảng điều khiển GPU thông thường?
 Được viết bằng Rust + Tauri: khởi động tức thì, tiêu tốn 0% CPU và chỉ khoảng 4 MB RAM ở khay hệ thống. Hỗ trợ tự động chuyển đổi cấu hình theo game cùng các tinh chỉnh độ trễ an toàn.
 
 #### Tinh chỉnh có làm lỗi Windows không?

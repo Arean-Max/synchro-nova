@@ -65,7 +65,7 @@
 #### アンチチートでBANされますか？
 いいえ、100% 安全です。Synchro Nova はゲームのメモリを読み取らず、DLL 注入やオーバーレイも使用しません。NVIDIA や AMD の公式パネルと同様に標準 Windows WinAPI 経由で調整するため、VAC、Faceit、Vanguard、EAC、BattlEye でも安全です。
 
-#### VibranceGUI や GPU コントロールパネルより何が優れていますか？
+#### Synchro Nova は通常の GPU コントロールパネルより何が優れていますか？
 Rust + Tauri で開発されており、瞬時に起動し、トレイ待機時の CPU 使用率は 0%、メモリ消費は約 4 MB のみです。ゲームごとの自動プロファイル切り替えや安全なレイテンシ調整を備えています。
 
 #### Windows を壊す心配はありませんか？

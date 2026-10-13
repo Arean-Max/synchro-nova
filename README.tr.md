@@ -65,7 +65,7 @@ Oyuncular için hafif bir optimizasyon aracıdır. Rekabetçi oyunlarda renkleri
 #### Anti-cheat sistemlerinden ban yer miyim?
 Hayır. Synchro Nova oyunların belleğine müdahale etmez, DLL enjekte etmez veya overlay kullanmaz. Renkleri NVIDIA veya AMD panelleri gibi standart Windows WinAPI üzerinden değiştirir. VAC, Faceit, Vanguard, EAC ve BattlEye için %100 güvenlidir.
 
-#### VibranceGUI veya ekran kartı panellerinden farkı nedir?
+#### Synchro Nova'nın standart ekran kartı panellerinden farkı nedir?
 Rust + Tauri ile geliştirilmiştir: anında açılır, arka planda %0 CPU ve sadece ~4 MB RAM tüketir. Oyunlara özel otomatik profil geçişi ve güvenli sistem gecikme optimizasyonları sunar.
 
 #### Sistem ayarları Windows'u bozar mı?

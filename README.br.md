@@ -65,7 +65,7 @@ Uma ferramenta leve para gamers. Deixa as cores dos jogos mais nítidas e vivas,
 #### Posso ser banido por usar?
 Não. O Synchro Nova não acessa a memória dos jogos, não injeta DLLs e não usa overlays. Ele altera as cores usando as APIs oficiais do Windows, exatamente como os painéis da NVIDIA ou AMD. Seguro para VAC, Faceit, Vanguard, EAC e BattlEye.
 
-#### Por que é melhor que o VibranceGUI?
+#### Por que escolher o Synchro Nova em vez dos painéis de GPU?
 Desenvolvido em Rust + Tauri: inicialização instantânea, 0% de uso de CPU e apenas ~4 MB de RAM na bandeja. Possui perfis automáticos por jogo e otimizações seguras de latência.
 
 #### Os ajustes podem danificar meu Windows?

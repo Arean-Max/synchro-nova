@@ -65,7 +65,7 @@
 #### 会被反作弊封号吗？
 不会。Synchro Nova 不读写游戏内存、不注入 DLL、不创建屏幕覆盖层。它仅通过标准 Windows WinAPI 调节色彩，与 NVIDIA/AMD 显卡控制面板完全一致，对 VAC、Faceit、Vanguard、EAC 和 BattlEye 绝对安全。
 
-#### 相比 VibranceGUI 或显卡驱动面板有何优势？
+#### 相比普通显卡驱动面板，Synchro Nova 有何优势？
 基于 Rust + Tauri 开发：秒级启动，在系统托盘仅占用约 4 MB 内存和 0% CPU。支持游戏专属自动配置切换与安全的系统延迟优化。
 
 #### 系统优化会损坏 Windows 吗？

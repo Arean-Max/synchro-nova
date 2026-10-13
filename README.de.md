@@ -65,7 +65,7 @@ Ein leichtgewichtiges Tool für Gamer. Es sorgt für kräftige Farben, verbesser
 #### Kann ich dafür gebannt werden?
 Nein. Das Tool greift weder auf den Spielspeicher zu, noch nutzt es Overlays oder DLL-Injektionen. Die Farbanpassung läuft über standardmäßige Windows-WinAPIs (wie im NVIDIA/AMD Control Panel). Völlig sicher für VAC, Faceit, Vanguard, EAC und BattlEye.
 
-#### Warum besser als VibranceGUI oder Treiber-Panels?
+#### Warum Synchro Nova statt Standard-Treiber-Panels?
 Mit Rust + Tauri entwickelt: Startet blitzschnell, verbraucht 0% CPU und nur ~4 MB RAM im Tray. Bietet automatische Profile pro Spiel und sichere Timer-Optimierungen.
 
 #### Können die Tweaks Windows beschädigen?

@@ -65,7 +65,7 @@
 #### 會被防作弊系統封鎖嗎？
 不會。Synchro Nova 不讀寫遊戲記憶體、不注入 DLL、不繪製懸浮窗。完全使用原生 Windows WinAPI 調整螢幕輸出，對 VAC、Faceit、Vanguard、EAC 與 BattlEye 100% 安全。
 
-#### 比起 VibranceGUI 或顯卡控制面板好在哪裡？
+#### 比起一般顯卡控制面板，Synchro Nova 好在哪裡？
 採用 Rust + Tauri 架構：極速啟動，背景常駐僅耗用約 4 MB 記憶體及 0% CPU。支援遊戲專屬自動設定切換與安全的系統延遲調校。
 
 #### 系統優化會損壞 Windows 嗎？

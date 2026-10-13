@@ -65,7 +65,7 @@ Kompaktna aplikacija za gejmere. Čini boje u igrama živopisnim, olakšava uoč
 #### Mogu li dobiti ban?
 Ne. Synchro Nova ne dira memoriju igara, ne ubacuje DLL-ove i ne koristi preklapanja (overlays). Boje podešava kroz zvanični Windows WinAPI, identično kao NVIDIA ili AMD paneli. Potpuno sigurno za VAC, Faceit, Vanguard, EAC i BattlEye.
 
-#### Zašto je bolja od VibranceGUI programa?
+#### Zašto odabrati Synchro Nova umjesto standardnih GPU panela?
 Napisana u Rust + Tauri: pokreće se u sekundi, troši 0% procesora i samo oko 4 MB RAM-a. Posjeduje automatske profile za igre i bezbjedne optimizacije sistema.
 
 #### Mogu li podešavanja oštetiti Windows?

@@ -65,7 +65,7 @@ Et hendig verktøy for gamere. Det gjør farger i spill mer levende, gjør det e
 #### Blir man bannet?
 Nei. Synchro Nova berører ikke spillminnet, bruker ingen overlegg og injiserer ingen DLL-er. Justeringene skjer via standard Windows WinAPI, nøyaktig som i NVIDIA- eller AMD-kontrollpanelet. 100% trygt for VAC, Faceit, Vanguard, EAC og BattlEye.
 
-#### Hvorfor er det bedre enn VibranceGUI?
+#### Hvorfor velge Synchro Nova fremfor standard GPU-paneler?
 Bygget i Rust + Tauri: starter lynraskt, bruker 0% CPU og rundt 4 MB RAM i bakgrunnen. Støtter automatiske spillprofiler og sikre optimaliseringer.
 
 #### Vil systemjusteringene skade Windows?

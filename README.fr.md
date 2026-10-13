@@ -65,7 +65,7 @@ Un utilitaire ultra-léger pour les joueurs. Il renforce les couleurs en jeu, am
 #### Est-ce bannissable par les anticheats ?
 Non. Synchro Nova n'accède pas à la mémoire du jeu, n'injecte aucune DLL et n'utilise pas d'overlay. L'affichage est ajusté via les WinAPI standards de Windows, exactement comme les panneaux NVIDIA ou AMD. 100% sûr pour VAC, Faceit, Vanguard, EAC et BattlEye.
 
-#### Pourquoi est-ce meilleur que VibranceGUI ?
+#### Pourquoi choisir Synchro Nova par rapport aux panneaux GPU classiques ?
 Développé en Rust + Tauri : démarrage instantané, 0% de CPU et seulement ~4 Mo de RAM en arrière-plan. Prend en charge les profils automatiques par jeu et des optimisations saines de latence.
 
 #### Les réglages peuvent-ils endommager Windows ?

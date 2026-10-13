@@ -65,7 +65,7 @@ Niezwykle lekki program dla graczy. Zwiększa nasycenie kolorów w grach, ułatw
 #### Czy dostanę za to bana?
 Nie. Program nie ingeruje w pamięć gier, nie używa nakładek ani nie wstrzykuje bibliotek DLL. Zmienia barwy przez oficjalny WinAPI, dokładnie jak panele NVIDIA czy AMD. W 100% bezpieczny dla VAC, Faceit, Vanguard, EAC i BattlEye.
 
-#### Dlaczego jest lepszy niż VibranceGUI?
+#### Dlaczego warto wybrać Synchro Nova zamiast paneli GPU?
 Napisany w Rust + Tauri: błyskawiczny start, 0% CPU i zaledwie ~4 MB RAM w zasobniku systemowym. Oferuje automatyczne profile dla gier i bezpieczne optymalizacje czasu reakcji.
 
 #### Czy optymalizacje nie uszkodzą Windowsa?
