@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.2] - 2026-10-13
+
+### Added
+- Complete localization for the tweaks catalog across all 22 supported languages (group headings, impact ratings, safety badges, descriptions).
+- Full translation support for driver and hardware categories on the characteristics page.
+- Native translations for "Day", "Night", "Holo" display modes and the "Black Holo" enhancement toggle across all locales.
+- Multilingual toast notifications for screenshot triggers, clipboard clearing, profile resets, and system alerts.
+
+### Fixed
+- Fixed UI thread hangs and stutter when navigating away from the tweaks page and toggling keybind sidebar items.
+- Removed synchronous aggressive working set memory trimming (`EmptyWorkingSet`) that stalled rendering pipelines.
+- Added CSS containment (`contain: layout style`, `will-change`) for instant layout recalculation during sidebar transitions.
+
+---
+
 ## [2.3.1] - 2026-10-11
 
 ### Added
