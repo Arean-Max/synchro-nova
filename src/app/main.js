@@ -304,6 +304,22 @@ function showToastBanner(title, impactText, category = "safe") {
   startImpactBannerTimer(category === "danger" ? 6000 : 3000);
 }
 
+function showSettingHelpBanner(key) {
+  const titles = {
+    autostartWindows: t("startWithWindows"),
+    closeToTray: t("closeToTray"),
+    startMinimized: t("startMinimized"),
+    autoBackupOnStart: t("autoBackupOnStart"),
+    showOnRecordings: t("showOnRecordings"),
+    autoUpdate: t("autoUpdate"),
+    disableSplash: t("disableSplash"),
+    disableAnimations: t("disableAnimations")
+  };
+  const title = titles[key] || t(key) || key;
+  const helpText = t(`help_${key}`);
+  showToastBanner(title, helpText, "safe");
+}
+
 function showTweakImpactBanner(tweakId) {
   clearImpactBannerTimer();
   const tweaks = allTweaks();
@@ -1108,24 +1124,26 @@ async function handleAction(action) {
     case "audit-anticheat": {
       try {
         const report = await invokeCommand("audit_anticheat_environment");
-        const isRu = lang() === "ru";
-        if (report.isEacCompatible) {
-          const gameMsg = report.activeGameDetected ? ` (${isRu ? "Активна игра:" : "Game running:"} ${report.activeGameDetected})` : "";
+        if (report?.isEacCompatible) {
+          const gameMsg = report.activeGameDetected ? ` (${t("activeGame")}: ${report.activeGameDetected})` : "";
           showToastBanner(
-            isRu ? "Совместимость с EAC подтверждена" : "EAC Compatibility Verified",
-            isRu ? `Система на 100% чиста: Testsigning выключен, хуков нет, IFEO чист${gameMsg}.` : `System is 100% compliant: testsigning disabled, zero hooks, clean IFEO${gameMsg}.`,
+            t("eacVerifiedTitle"),
+            `${t("eacVerifiedMsg")}${gameMsg}`,
             "safe"
           );
         } else {
-          const issues = report.detectedIssues.join("; ");
+          const issues = Array.isArray(report?.detectedIssues) && report.detectedIssues.length
+            ? `: ${report.detectedIssues.join("; ")}`
+            : "";
           showToastBanner(
-            isRu ? "Внимание: риски для EAC" : "Anti-Cheat Integrity Warning",
-            isRu ? `Обнаружены уязвимости: ${issues}. Нажмите «Исправить для EAC».` : `Detected issues: ${issues}. Click Restore Anti-Cheat Compliance.`,
-            "error"
+            t("eacWarningTitle"),
+            `${t("eacWarningMsg")}${issues}`,
+            "danger"
           );
         }
-      } catch (e) {
-        console.error("audit_anticheat_environment failed:", e);
+      } catch (err) {
+        console.error("audit_anticheat_environment failed:", err);
+        showErrorToast(t("eacShieldTitle"), err);
       }
       return null;
     }
@@ -1133,14 +1151,14 @@ async function handleAction(action) {
     case "fix-anticheat": {
       try {
         const res = await invokeCommand("fix_anticheat_environment");
-        const isRu = lang() === "ru";
         showToastBanner(
-          isRu ? "Целостность Anti-Cheat восстановлена" : "Anti-Cheat Integrity Restored",
-          res.message || (isRu ? "Система полностью очищена и безопасна для EAC." : "System cleaned and safe for EAC."),
+          t("eacFixedTitle"),
+          res?.message || t("eacFixedMsg"),
           "safe"
         );
-      } catch (e) {
-        console.error("fix_anticheat_environment failed:", e);
+      } catch (err) {
+        console.error("fix_anticheat_environment failed:", err);
+        showErrorToast(t("eacShieldTitle"), err);
       }
       return null;
     }
@@ -1817,6 +1835,15 @@ async function handleClick(event) {
         else updateMain();
       });
     }
+    return;
+  }
+
+  const helpBtn = target.closest("[data-action='setting-help']");
+  if (helpBtn) {
+    event.preventDefault();
+    event.stopPropagation();
+    const key = helpBtn.getAttribute("data-setting-key");
+    if (key) showSettingHelpBanner(key);
     return;
   }
 
@@ -2503,6 +2530,11 @@ async function handleKeydown(event) {
     if (viewState.activeImpactBanner.isAdminPrompt) return;
     event.preventDefault();
     dismissNotificationBanner();
+    return;
+  }
+  if ((event.key === "Enter" || event.key === " ") && document.activeElement?.classList?.contains("check-row")) {
+    event.preventDefault();
+    document.activeElement.click();
     return;
   }
   if (activePage !== "gameColor") return;
