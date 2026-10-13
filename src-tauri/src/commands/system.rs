@@ -129,3 +129,14 @@ pub fn restart_graphics_driver() -> Result<(), String> {
 pub fn get_security_guard_status() -> crate::platform::security_guard::SecurityGuardStatus {
     crate::platform::security_guard::get_security_guard_status()
 }
+
+#[tauri::command]
+pub fn audit_anticheat_environment() -> crate::platform::security_guard::AntiCheatAuditReport {
+    crate::platform::security_guard::audit_anticheat_integrity()
+}
+
+#[tauri::command]
+pub fn fix_anticheat_environment() -> crate::platform::security_guard::AntiCheatFixResult {
+    crate::platform::security_guard::fix_anticheat_integrity()
+}
+

@@ -12,12 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.3.2] - 2026-10-13
 
 ### Added
+- Comprehensive **Anti-Cheat & EAC Safe Guard** engine: verified safe for Easy Anti-Cheat, BattlEye, Vanguard, and Ricochet.
+- Automated system integrity auditing (checking `testsigning`, `debug`, `nointegritychecks`, game IFEO hijackings, and vulnerable driver blocklists).
+- 1-click Anti-Cheat integrity recovery tool to proactively prevent kicks and bans in EAC games.
+- Real-time Game Shield: automatically silences background process checks and memory trimming during active game sessions.
 - Complete localization for the tweaks catalog across all 22 supported languages (group headings, impact ratings, safety badges, descriptions).
 - Full translation support for driver and hardware categories on the characteristics page.
 - Native translations for "Day", "Night", "Holo" display modes and the "Black Holo" enhancement toggle across all locales.
 - Multilingual toast notifications for screenshot triggers, clipboard clearing, profile resets, and system alerts.
 
 ### Fixed
+- Fixed critical display adapter class GUID bug in `apply_gpu_adaptive_power` and revert logic (replaced Network GUID with Display Adapter GUID `{4d36e968-e325-11ce-bfc1-08002be10318}`).
+- Hardened `delete_tree` registry methods against root Windows hive corruption.
+- Hardened process trimming to prevent opening handles to game or anti-cheat processes.
 - Fixed UI thread hangs and stutter when navigating away from the tweaks page and toggling keybind sidebar items.
 - Removed synchronous aggressive working set memory trimming (`EmptyWorkingSet`) that stalled rendering pipelines.
 - Added CSS containment (`contain: layout style`, `will-change`) for instant layout recalculation during sidebar transitions.

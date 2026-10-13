@@ -310,7 +310,7 @@ pub fn apply_gpu_adaptive_power(id: &str) -> TweakApplyResult {
     {
         use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
         let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-        let class_path = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}";
+        let class_path = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}";
         let mut modified = 0;
         if let Ok(class_key) = hklm.open_subkey(class_path) {
             for subkey_name in class_key.enum_keys().flatten() {
@@ -350,7 +350,7 @@ pub fn is_gpu_adaptive_power_applied() -> bool {
     {
         use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
         let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-        let class_path = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}";
+        let class_path = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}";
         if let Ok(class_key) = hklm.open_subkey(class_path) {
             for subkey_name in class_key.enum_keys().flatten() {
                 if let Ok(key) = class_key.open_subkey(&subkey_name) {

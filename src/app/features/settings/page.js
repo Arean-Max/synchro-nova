@@ -113,6 +113,17 @@ export function renderSettingsPage(appState, viewState, t) {
     '<div class="settings-section-divider"></div>',
     '<div class="settings-toggles-section">',
     appToggles,
+    '</div>',
+    '<div class="settings-section-divider"></div>',
+    '<div class="settings-security-card">',
+    '  <div class="security-card-header">',
+    `    <div class="security-card-badge">${icon("shieldCheck")} <span>${escapeHtml(t("eacShieldTitle"))}</span></div>`,
+    '  </div>',
+    `  <p class="security-card-desc">${escapeHtml(t("eacShieldDesc"))}</p>`,
+    '  <div class="security-card-actions">',
+    `    <button class="btn btn-outline btn-sm" type="button" data-action="audit-anticheat">${icon("shield")} <span>${escapeHtml(t("auditAntiCheat"))}</span></button>`,
+    `    <button class="btn btn-primary btn-sm" type="button" data-action="fix-anticheat">${icon("check")} <span>${escapeHtml(t("fixAntiCheat"))}</span></button>`,
+    '  </div>',
     '</div>'
   ].join("");
 

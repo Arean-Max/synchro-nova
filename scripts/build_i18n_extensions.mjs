@@ -70,7 +70,13 @@ const localizedExtensions = {
     statusSuccess: "Applied",
     statusSkipped: "Skipped",
     statusFailed: "Failed",
-    statusRequiresAdmin: "Requires Admin"
+    statusRequiresAdmin: "Requires Admin",
+    eacShieldTitle: "Anti-Cheat & EAC Safe Guard",
+    eacShieldDesc: "Zero DLL injections, zero system hooks, 100% clean hardware display calibration. Verified safe for Easy Anti-Cheat, BattlEye, Vanguard and Ricochet.",
+    auditAntiCheat: "Audit EAC Integrity",
+    fixAntiCheat: "Restore Anti-Cheat Compliance",
+    eacStatusSafe: "EAC Status: Safe & Protected",
+    eacStatusIssues: "EAC Status: Issues Detected"
   },
   ru: {
     day: "День",
@@ -138,7 +144,13 @@ const localizedExtensions = {
     statusSuccess: "Применён",
     statusSkipped: "Пропущен",
     statusFailed: "Сбой",
-    statusRequiresAdmin: "Требуются права админа"
+    statusRequiresAdmin: "Требуются права админа",
+    eacShieldTitle: "Защита и совместимость с Anti-Cheat (EAC)",
+    eacShieldDesc: "Без инъекций DLL, без системных хуков, 100% аппаратная калибровка. Безопасно для Easy Anti-Cheat, BattlEye, Vanguard и Ricochet.",
+    auditAntiCheat: "Проверить совместимость с EAC",
+    fixAntiCheat: "Исправить целостность для EAC",
+    eacStatusSafe: "Статус EAC: Безопасно и защищено",
+    eacStatusIssues: "Статус EAC: Обнаружены проблемы"
   },
   zh: {
     day: "白天",

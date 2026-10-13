@@ -4000,6 +4000,50 @@ button.check-row:active {
   gap: 4px;
 }
 
+.settings-security-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: var(--radius-md, 8px);
+  margin-top: 4px;
+}
+
+.security-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.security-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.security-card-badge .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.security-card-desc {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.security-card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+
 .page-settings .card {
   padding: 14px 18px;
 }

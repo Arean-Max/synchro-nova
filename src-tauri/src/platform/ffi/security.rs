@@ -112,6 +112,11 @@ pub fn trim_working_set() {
     const CACHE_TTL: Duration = Duration::from_secs(30);
 
     unsafe {
+        // If an EAC-protected game is running, strictly avoid any process inspection or memory adjustments
+        if crate::platform::security_guard::is_protected_game_running().is_some() {
+            return;
+        }
+
         let heap = winapi::GetProcessHeap();
         if !heap.is_null() {
             let _ = winapi::HeapCompact(heap, 0);
@@ -187,6 +192,9 @@ pub fn trim_working_set() {
 
         const PROCESS_TRIM_ACCESS: u32 = 0x0100 | 0x0400;
         for pid in webview_pids {
+            if !crate::platform::security_guard::is_safe_child_pid(pid) {
+                continue;
+            }
             let handle = winapi::OpenProcess(PROCESS_TRIM_ACCESS, 0, pid);
             if !handle.is_null() && handle as isize != -1 {
                 let _ = winapi::SetProcessWorkingSetSize(handle, usize::MAX, usize::MAX);

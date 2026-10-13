@@ -1105,6 +1105,46 @@ async function handleAction(action) {
       return null;
     }
 
+    case "audit-anticheat": {
+      try {
+        const report = await invokeCommand("audit_anticheat_environment");
+        const isRu = lang() === "ru";
+        if (report.isEacCompatible) {
+          const gameMsg = report.activeGameDetected ? ` (${isRu ? "Активна игра:" : "Game running:"} ${report.activeGameDetected})` : "";
+          showToastBanner(
+            isRu ? "Совместимость с EAC подтверждена" : "EAC Compatibility Verified",
+            isRu ? `Система на 100% чиста: Testsigning выключен, хуков нет, IFEO чист${gameMsg}.` : `System is 100% compliant: testsigning disabled, zero hooks, clean IFEO${gameMsg}.`,
+            "safe"
+          );
+        } else {
+          const issues = report.detectedIssues.join("; ");
+          showToastBanner(
+            isRu ? "Внимание: риски для EAC" : "Anti-Cheat Integrity Warning",
+            isRu ? `Обнаружены уязвимости: ${issues}. Нажмите «Исправить для EAC».` : `Detected issues: ${issues}. Click Restore Anti-Cheat Compliance.`,
+            "error"
+          );
+        }
+      } catch (e) {
+        console.error("audit_anticheat_environment failed:", e);
+      }
+      return null;
+    }
+
+    case "fix-anticheat": {
+      try {
+        const res = await invokeCommand("fix_anticheat_environment");
+        const isRu = lang() === "ru";
+        showToastBanner(
+          isRu ? "Целостность Anti-Cheat восстановлена" : "Anti-Cheat Integrity Restored",
+          res.message || (isRu ? "Система полностью очищена и безопасна для EAC." : "System cleaned and safe for EAC."),
+          "safe"
+        );
+      } catch (e) {
+        console.error("fix_anticheat_environment failed:", e);
+      }
+      return null;
+    }
+
     case "save-color-template": {
       const name = (viewState.colorTemplateName || "").trim() || "Default";
       const configs = await invokeCommand("save_config", { name });

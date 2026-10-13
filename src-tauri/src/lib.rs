@@ -203,6 +203,8 @@ pub fn run() {
             commands::get_black_holo_status,
             commands::toggle_hardware_black_holo,
             commands::get_security_guard_status,
+            commands::audit_anticheat_environment,
+            commands::fix_anticheat_environment,
             commands::take_juicy_screenshot,
             commands::scan_drivers,
             commands::open_official_driver_url,
@@ -335,5 +337,28 @@ mod tests {
         let _ = std::fs::remove_file(&target_file);
         let res = domain::updater::installer::apply_install();
         assert!(res.is_err(), "Expected apply_install to fail when update file does not exist");
+    }
+
+    #[test]
+    fn test_security_guard_anticheat_blocks() {
+        use platform::security_guard::{verify_process_access_safety, verify_registry_write_safety, verify_registry_delete_safety};
+        assert!(verify_process_access_safety("RustClient.exe", 0x0020).is_err());
+        assert!(verify_process_access_safety("EasyAntiCheat.exe", 0x0010).is_err());
+        assert!(verify_process_access_safety("cs2.exe", 0x0020).is_err());
+        assert!(verify_process_access_safety("notepad.exe", 0x0001).is_ok());
+
+        assert!(verify_registry_write_safety("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\RustClient.exe").is_err());
+        assert!(verify_registry_write_safety("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\FortniteClient-Win64-Shipping.exe").is_err());
+        assert!(verify_registry_write_safety("Software\\Microsoft\\GameBar").is_ok());
+
+        assert!(verify_registry_delete_safety("SYSTEM\\CurrentControlSet").is_err());
+        assert!(verify_registry_delete_safety("").is_err());
+        assert!(verify_registry_delete_safety("Software\\Synchro\\Custom").is_ok());
+    }
+
+    #[test]
+    fn test_anticheat_audit_runs_cleanly() {
+        let audit = platform::security_guard::audit_anticheat_integrity();
+        assert!(audit.active_shield);
     }
 }

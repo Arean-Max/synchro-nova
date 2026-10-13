@@ -80,11 +80,22 @@ fn revert_one(id: &str) -> TweakApplyResult {
         ),
 
         "gpu-adaptive-power" => {
-            let _ = delete_hklm_value(
-                "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e972-e325-11ce-bfc1-08002be10318}\\0000",
-                "PowerMizerEnable",
-            );
-            applied(id, "GPU power state settings restored to default")
+            #[cfg(target_os = "windows")]
+            {
+                use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+                let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+                let class_path = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}";
+                if let Ok(class_key) = hklm.open_subkey(class_path) {
+                    for subkey_name in class_key.enum_keys().flatten() {
+                        let full_path = format!("{class_path}\\{subkey_name}");
+                        let _ = delete_hklm_value(&full_path, "PowerMizerEnable");
+                        let _ = delete_hklm_value(&full_path, "PerfLevelSrc");
+                        let _ = delete_hklm_value(&full_path, "EnableUlps");
+                        let _ = delete_hklm_value(&full_path, "EnableUlps_NA");
+                    }
+                }
+            }
+            applied(id, "GPU power state settings restored to default across all display adapters")
         }
 
         "game-mode-on" => collect_revert(
