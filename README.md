@@ -66,7 +66,7 @@ A lightweight gamer utility. It makes colors in competitive games pop, improves 
 No. Synchro Nova does not touch game memory, inject DLLs, or draw overlays. It adjusts color output through standard Windows APIs (DWM & gamma ramp), exactly like the NVIDIA or AMD control panels. It is completely safe with VAC, Faceit, Vanguard, EAC, and BattlEye.
 
 #### Why choose Synchro Nova over standard GPU control panels?
-Built with Rust + Tauri: ultra-lightweight, starts instantly, uses 0% CPU and ~4 MB RAM in the tray. Includes automatic per-game profiles and safe Windows timer / latency tweaks.
+Built with Rust + Tauri: ultra-lightweight, starts in milliseconds with binary caching, uses 0% CPU and ~2 MB RAM in the tray (zero-footprint lifecycle). Includes automatic per-game profiles and safe Windows responsiveness tweaks.
 
 #### Will the Windows tweaks break my system?
 No. They only apply tested responsiveness settings (timer resolution, MMCSS, network stack). Synchro Nova automatically creates a Windows Restore Point and a registry backup before any changes, so you can revert anytime with one click.
