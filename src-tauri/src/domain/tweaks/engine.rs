@@ -15,8 +15,11 @@ pub fn apply_selected_tweaks(ids: Vec<String>) -> Vec<TweakApplyResult> {
 }
 
 pub fn collect_tweak_statuses() -> Vec<TweakStatus> {
-    system::clean_legacy_csrss_override();
-    gaming::clean_legacy_rust_ifeo();
+    static CLEANED_ONCE: std::sync::OnceLock<()> = std::sync::OnceLock::new();
+    CLEANED_ONCE.get_or_init(|| {
+        system::clean_legacy_csrss_override();
+        gaming::clean_legacy_rust_ifeo();
+    });
     known_tweak_ids()
         .iter()
         .map(|id| TweakStatus {

@@ -2514,7 +2514,14 @@ for (const [langCode, dict] of Object.entries(localizedExtensions)) {
 
 const ruOverrides = {
   appSubtitle: "all in one.",
-  maximize: "Развернуть"
+  maximize: "Развернуть",
+  day: "День",
+  night: "Ночь",
+  holo: "Холо",
+  blackHolo: "Черный Холо",
+  previewDay: "Дневной режим",
+  previewNight: "Ночной режим",
+  previewHolo: "Режим Черный Холо"
 };
 
 export function translate(language, key) {

@@ -554,7 +554,9 @@ export function renderColorPage(appState, viewState, t) {
 
   const currentTab = viewState?.fineTuningTab || "vibrance";
   const activeFilter = appState.color?.activeFilter || "";
-  const filterDot = activeFilter ? '<span class="tab-indicator-dot" aria-hidden="true"></span>' : '';
+  const filterDot = (activeFilter && currentTab !== "filters")
+    ? '<span class="tab-indicator-dot" aria-hidden="true"></span>'
+    : '';
 
   const switchHtml = [
     '<div class="color-preview-switch fine-tuning-switch">',

@@ -2172,6 +2172,7 @@ button {
 
 .fine-tuning-switch .preview-mode-btn,
 .fine-tuning-switch .fine-tuning-btn {
+  position: relative;
   min-width: 0;
   justify-content: center;
   gap: 3px;
@@ -2179,16 +2180,23 @@ button {
   font-size: 10.5px;
   white-space: nowrap;
   border-radius: 5px;
+  border: 1px solid transparent;
 }
 
 .tab-indicator-dot {
+  position: absolute;
+  top: 2px;
+  right: 3px;
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
-  display: inline-block;
-  margin-left: 3px;
+  background: var(--ui-accent-dot, #38bdf8);
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
+  pointer-events: none;
+}
+
+.fine-tuning-switch .fine-tuning-btn.active .tab-indicator-dot {
+  display: none;
 }
 
 .fine-tuning-panel {

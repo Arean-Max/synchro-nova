@@ -215,11 +215,31 @@ pub fn record_incident(target: &str, reason: &str, action: &str) {
     }
 }
 
+static CACHED_PROTECTED_GAME: Mutex<Option<(std::time::Instant, Option<String>)>> = Mutex::new(None);
+static CACHED_AUDIT_REPORT: Mutex<Option<(std::time::Instant, AntiCheatAuditReport)>> = Mutex::new(None);
+
+pub fn invalidate_security_caches() {
+    if let Ok(mut guard) = CACHED_AUDIT_REPORT.lock() {
+        *guard = None;
+    }
+    if let Ok(mut guard) = CACHED_PROTECTED_GAME.lock() {
+        *guard = None;
+    }
+}
+
 #[cfg(target_os = "windows")]
 pub fn is_protected_game_running() -> Option<String> {
+    if let Ok(guard) = CACHED_PROTECTED_GAME.lock() {
+        if let Some((instant, ref game)) = *guard {
+            if instant.elapsed() < std::time::Duration::from_secs(3) {
+                return game.clone();
+            }
+        }
+    }
+
     use crate::platform::ffi::{winapi, ProcessEntry32W, TH32CS_SNAPPROCESS};
 
-    unsafe {
+    let result = unsafe {
         let snapshot = winapi::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
         if snapshot.is_null() || snapshot as isize == -1 {
             return None;
@@ -252,7 +272,12 @@ pub fn is_protected_game_running() -> Option<String> {
 
         winapi::CloseHandle(snapshot);
         detected
+    };
+
+    if let Ok(mut guard) = CACHED_PROTECTED_GAME.lock() {
+        *guard = Some((std::time::Instant::now(), result.clone()));
     }
+    result
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -413,6 +438,14 @@ fn check_vulnerable_drivers() -> (bool, Vec<String>) {
 pub fn audit_anticheat_integrity() -> AntiCheatAuditReport {
     #[cfg(target_os = "windows")]
     {
+        if let Ok(guard) = CACHED_AUDIT_REPORT.lock() {
+            if let Some((instant, ref report)) = *guard {
+                if instant.elapsed() < std::time::Duration::from_secs(120) {
+                    return report.clone();
+                }
+            }
+        }
+
         let (testsigning_clean, kernel_debug_clean, integrity_checks_clean) = check_bcd_integrity();
         let (ifeo_clean, ifeo_flagged) = check_ifeo_integrity();
         let (vulnerable_drivers_clean, vulnerable_flagged) = check_vulnerable_drivers();
@@ -448,7 +481,7 @@ pub fn audit_anticheat_integrity() -> AntiCheatAuditReport {
             && ifeo_clean
             && vulnerable_drivers_clean;
 
-        AntiCheatAuditReport {
+        let report = AntiCheatAuditReport {
             is_eac_compatible,
             testsigning_clean,
             kernel_debug_clean,
@@ -458,7 +491,12 @@ pub fn audit_anticheat_integrity() -> AntiCheatAuditReport {
             active_game_detected,
             detected_issues,
             active_shield: true,
+        };
+
+        if let Ok(mut guard) = CACHED_AUDIT_REPORT.lock() {
+            *guard = Some((std::time::Instant::now(), report.clone()));
         }
+        report
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -478,6 +516,7 @@ pub fn audit_anticheat_integrity() -> AntiCheatAuditReport {
 }
 
 pub fn fix_anticheat_integrity() -> AntiCheatFixResult {
+    invalidate_security_caches();
     let mut fixed_items = Vec::new();
 
     #[cfg(target_os = "windows")]

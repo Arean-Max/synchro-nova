@@ -1,6 +1,6 @@
 [package]
 name = "synchro"
-version = "2.3.2"
+version = "2.3.3"
 description = "Windows display calibration and system performance optimization utility"
 authors = ["Arean-Max"]
 license = "AGPL-3.0-or-later"
@@ -37,9 +37,9 @@ strip = false
 codegen-units = 1
 debug = false
 incremental = false
-lto = false
-opt-level = "z"
-overflow-checks = true
+lto = "thin"
+opt-level = 3
+overflow-checks = false
 panic = "abort"
 strip = true
 

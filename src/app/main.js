@@ -2613,6 +2613,7 @@ function render() {
 }
 
 async function checkSecurityIncidents() {
+  if (typeof document !== "undefined" && document.hidden) return;
   try {
     const status = await invokeCommand("get_security_guard_status");
     if (status && Array.isArray(status.recentIncidents) && status.recentIncidents.length > 0) {
@@ -2630,7 +2631,7 @@ async function checkSecurityIncidents() {
         );
       }
     }
-  } catch (e) {}
+  } catch (_) {}
 }
 
 async function boot() {
@@ -2681,7 +2682,7 @@ async function boot() {
   loadTweakStatuses();
   scheduleTrimMemory(600);
   checkSecurityIncidents();
-  setInterval(checkSecurityIncidents, 15000);
+  setInterval(checkSecurityIncidents, 30000);
 }
 
 document.addEventListener("input", handleInput);
@@ -2694,6 +2695,8 @@ window.addEventListener("resize", syncNavIndicator);
 window.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     clearImpactBannerTimer();
+  } else {
+    checkSecurityIncidents();
   }
 });
 window.addEventListener("keydown", async (event) => {

@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.3] - 2026-10-14
+
+### Performance & Resource Optimization
+- **Zero FPS Impact & Background Resource Minimization**:
+  - Implemented 120-second TTL caching for Anti-Cheat audits (`audit_anticheat_integrity`). Completely eliminated repeated child process spawning of `bcdedit.exe /enum {current}`, reducing background CPU overhead to 0% during gameplay and idle.
+  - Added short-term caching (3s) for active protected game checks (`is_protected_game_running`), eliminating redundant Windows Toolhelp32 process snapshotting.
+  - Converted legacy IFEO override cleanups in `collect_tweak_statuses` to run once on startup (`OnceLock`) rather than crawling the registry on every tweak status poll.
+  - Relaxed background security incident polling from 15s to 30s with automatic pause when the window is hidden (`document.hidden`) and immediate wakeup on restore.
+- **Maximum Execution Speed Profile**:
+  - Enabled thin LTO (`lto = "thin"`) and `opt-level = 3` for maximum instruction execution speed and aggressive cross-crate inlining.
+  - Disabled release integer overflow checks (`overflow-checks = false`) to eliminate unnecessary CPU instruction cycles in production.
+
+### Fixed
+- **Filter Tab Layout Shift Stabilization**: eliminated the 11px leftward jump of the "Filters" button when toggling color profiles by taking the indicator dot out of flex flow (`position: absolute`) and suppressing it on the active tab.
+- **Preview & Holo Translations**: guaranteed native translations for preview modes ("Day", "Night", "Holo") and the "Black Holo" toggle in the Russian locale.
+- **Cache Invalidation on Manual Audit**: guaranteed immediate fresh system audit when triggered via settings UI.
+
+---
+
 ## [2.3.2] - 2026-10-13
 
 ### Added

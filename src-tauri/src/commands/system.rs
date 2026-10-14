@@ -132,6 +132,7 @@ pub fn get_security_guard_status() -> crate::platform::security_guard::SecurityG
 
 #[tauri::command]
 pub fn audit_anticheat_environment() -> crate::platform::security_guard::AntiCheatAuditReport {
+    crate::platform::security_guard::invalidate_security_caches();
     crate::platform::security_guard::audit_anticheat_integrity()
 }
 
