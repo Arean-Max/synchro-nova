@@ -1,5 +1,5 @@
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -10,7 +10,7 @@ pub const MAX_IMAGE_SCAN_ENTRIES: usize = 150;
 pub const MAX_LOGO_SCAN_DEPTH: usize = 2;
 pub const MAX_LOGO_SCAN_ENTRIES: usize = 150;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InstalledGame {
     pub id: String,

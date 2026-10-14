@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Mutex, OnceLock};
 
 pub const BLOCKED_PROCESS_TARGETS: &[&str] = &[
-    // Anti-Cheat binaries and services
     "easyanticheat.exe",
     "easyanticheat_eos.exe",
     "easyanticheat_x64.exe",
@@ -14,7 +13,6 @@ pub const BLOCKED_PROCESS_TARGETS: &[&str] = &[
     "anticheat_expert.exe",
     "ace-base.sys",
     "gameguard.des",
-    // Protected Game Executables
     "rustclient.exe",
     "rust.exe",
     "cs2.exe",
@@ -175,7 +173,6 @@ pub fn verify_registry_delete_safety(key_path: &str) -> Result<(), String> {
     let trimmed = key_path.trim().trim_matches('\\');
     let lower = trimmed.to_lowercase();
 
-    // Prevent deleting entire hives or vital Windows roots
     if lower.is_empty()
         || lower == "system"
         || lower == "software"
@@ -316,12 +313,10 @@ pub fn is_safe_child_pid(pid: u32) -> bool {
                         .unwrap_or(entry.sz_exe_file.len());
                     let name = String::from_utf16_lossy(&entry.sz_exe_file[..len]).to_lowercase();
 
-                    // Only msedgewebview2.exe belonging to Tauri webview is allowed
                     if name == "msedgewebview2.exe" {
                         is_safe = true;
                     }
 
-                    // Strict exclusion for any game or anti-cheat target
                     for blocked in BLOCKED_PROCESS_TARGETS {
                         if name.contains(blocked) {
                             is_safe = false;
@@ -361,7 +356,7 @@ fn check_bcd_integrity() -> (bool, bool, bool) {
     if bcdedit_path.is_file() {
         let mut cmd = std::process::Command::new(bcdedit_path);
         cmd.args(["/enum", "{current}"]);
-        cmd.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
+        cmd.creation_flags(0x0800_0000);
 
         if let Ok(output) = cmd.output() {
             if output.status.success() {
@@ -521,7 +516,6 @@ pub fn fix_anticheat_integrity() -> AntiCheatFixResult {
 
     #[cfg(target_os = "windows")]
     {
-        // 1. Clean IFEO hijack entries for all protected games
         let (ifeo_clean, flagged) = check_ifeo_integrity();
         if !ifeo_clean {
             for subkey in flagged {
@@ -537,7 +531,6 @@ pub fn fix_anticheat_integrity() -> AntiCheatFixResult {
             }
         }
 
-        // 2. Restore BCD integrity if elevated
         if crate::admin::is_running_elevated() {
             let _ = crate::domain::tweaks::runner::run_command("bcdedit", &["/set", "testsigning", "off"]);
             let _ = crate::domain::tweaks::runner::run_command("bcdedit", &["/set", "nointegritychecks", "off"]);
@@ -546,7 +539,6 @@ pub fn fix_anticheat_integrity() -> AntiCheatFixResult {
             fixed_items.push("Enforced Windows Driver Signature Policies (testsigning: off, nointegritychecks: off)".to_string());
         }
 
-        // 3. Clear legacy tweak IFEO overrides
         crate::domain::tweaks::gaming::clean_legacy_rust_ifeo();
         crate::domain::tweaks::system::clean_legacy_csrss_override();
     }

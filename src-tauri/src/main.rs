@@ -185,6 +185,8 @@ mod prerequisites_check {
 fn main() {
     #[cfg(target_os = "windows")]
     {
+        synchro_lib::infra::fast_cache::try_early_warmup();
+
         let mut restarted_from_pid: Option<u32> = None;
         let args: Vec<String> = std::env::args().collect();
         for i in 0..args.len() {
@@ -241,7 +243,7 @@ fn main() {
              --no-first-run \
              --no-default-browser-check \
              --memory-model=low \
-             --js-flags=\"--max-old-space-size=32 --lite-mode --optimize-for-size --memory-reducer\"",
+             --js-flags=\"--max-old-space-size=16 --lite-mode --optimize-for-size --jitless --memory-reducer\"",
         );
 
         prerequisites_check::ensure_runtime_prerequisites();

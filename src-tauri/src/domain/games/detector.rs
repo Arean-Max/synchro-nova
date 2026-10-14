@@ -12,6 +12,12 @@ static GAME_CACHE: Mutex<(Vec<GameEntry>, Option<Instant>)> = Mutex::new((Vec::n
 const GAME_CACHE_TTL: Duration = Duration::from_secs(60);
 
 pub fn list_installed_games() -> Vec<InstalledGame> {
+    if let Some(snapshot) = crate::infra::fast_cache::get_cached_snapshot() {
+        if !snapshot.games.is_empty() {
+            return snapshot.games;
+        }
+    }
+
     let mut games = collect_game_entries()
         .into_iter()
         .map(|entry| entry.public)
@@ -23,6 +29,11 @@ pub fn list_installed_games() -> Vec<InstalledGame> {
             .then_with(|| left.source.cmp(&right.source))
     });
     games.truncate(MAX_GAMES);
+
+    if let Some(color) = crate::domain::color::get_active_color() {
+        crate::infra::fast_cache::update_disk_cache(&color, true, Some(games.clone()), None);
+    }
+
     games
 }
 

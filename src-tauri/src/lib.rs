@@ -41,6 +41,115 @@ fn calculate_adaptive_window_size(screen_w: f64, screen_h: f64) -> (f64, f64) {
     (final_w, final_h)
 }
 
+#[cfg(target_os = "windows")]
+pub fn suspend_window_webview(window: &tauri::Window) {
+    if let Some(wv) = window.app_handle().get_webview_window(window.label()) {
+        let _ = wv.with_webview(|webview| {
+            use windows_core::Interface;
+            use webview2_com_sys::Microsoft::Web::WebView2::Win32::{ICoreWebView2_3, ICoreWebView2TrySuspendCompletedHandler};
+            let controller = webview.controller();
+            unsafe {
+                let _ = controller.SetIsVisible(false);
+                if let Ok(core) = controller.CoreWebView2() {
+                    if let Ok(core3) = core.cast::<ICoreWebView2_3>() {
+                        let _ = core3.TrySuspend(None::<&ICoreWebView2TrySuspendCompletedHandler>);
+                    }
+                }
+            }
+        });
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn resume_window_webview(window: &tauri::Window) {
+    if let Some(wv) = window.app_handle().get_webview_window(window.label()) {
+        let _ = wv.with_webview(|webview| {
+            use windows_core::Interface;
+            use webview2_com_sys::Microsoft::Web::WebView2::Win32::ICoreWebView2_3;
+            let controller = webview.controller();
+            unsafe {
+                if let Ok(core) = controller.CoreWebView2() {
+                    if let Ok(core3) = core.cast::<ICoreWebView2_3>() {
+                        let _ = core3.Resume();
+                    }
+                }
+                let _ = controller.SetIsVisible(true);
+            }
+        });
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn suspend_window_webview(_window: &tauri::Window) {}
+#[cfg(not(target_os = "windows"))]
+pub fn resume_window_webview(_window: &tauri::Window) {}
+
+pub fn configure_main_window(window: &tauri::WebviewWindow) {
+    let _ = window.set_resizable(false);
+    let _ = window.set_maximizable(false);
+
+    let (target_w, target_h) = if let Some(monitor) = window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .or_else(|| window.primary_monitor().ok().flatten())
+    {
+        let scale_factor = monitor.scale_factor();
+        let physical_size = monitor.size();
+        let screen_w = physical_size.width as f64 / scale_factor;
+        let screen_h = physical_size.height as f64 / scale_factor;
+
+        calculate_adaptive_window_size(screen_w, screen_h)
+    } else {
+        (980.0, 620.0)
+    };
+
+    let target_size = tauri::LogicalSize::new(target_w, target_h);
+    let _ = window.set_size(target_size);
+    let _ = window.set_min_size(Some(target_size));
+    let _ = window.set_max_size(Some(target_size));
+    let _ = window.set_shadow(false);
+
+    if let Some(icon) = window.app_handle().default_window_icon().cloned() {
+        let _ = window.set_icon(icon);
+    }
+
+    #[cfg(target_os = "windows")]
+    if let Ok(hwnd) = window.hwnd() {
+        platform::ffi::eliminate_window_borders(hwnd.0 as isize);
+        platform::ffi::set_window_taskbar_icon(hwnd.0 as isize);
+    }
+    #[cfg(target_os = "windows")]
+    let _ = window.with_webview(|webview| {
+        let controller = webview.controller();
+        if let Ok(core) = unsafe { controller.CoreWebView2() } {
+            let mut pid = 0u32;
+            if unsafe { core.BrowserProcessId(&mut pid) }.is_ok() && pid != 0 {
+                platform::ffi::register_webview_pid(pid);
+            }
+        }
+    });
+
+    let _ = window.center();
+}
+
+pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::WebviewWindow> {
+    let window = tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
+        .title("Synchro Nova")
+        .inner_size(980.0, 620.0)
+        .resizable(false)
+        .maximizable(false)
+        .decorations(false)
+        .shadow(false)
+        .center()
+        .build()?;
+
+    configure_main_window(&window);
+    let _ = window.show();
+    let _ = window.set_focus();
+    Ok(window)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -62,60 +171,17 @@ pub fn run() {
             app.manage(runtime);
 
             let _ = domain::color::apply_color_transform(&initial.color, initial.settings.show_on_recordings);
+            infra::fast_cache::update_disk_cache(&initial.color, initial.settings.show_on_recordings, None, None);
             domain::color::start_color_guard();
             infra::screenshot::start_global_screenshot_listener();
             let _ = settings::set_autostart(app.handle(), initial.settings.autostart_windows);
             app::tray::install_tray(app.handle())?;
 
             if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_resizable(false);
-                let _ = window.set_maximizable(false);
-
-                let (target_w, target_h) = if let Some(monitor) = window
-                    .current_monitor()
-                    .ok()
-                    .flatten()
-                    .or_else(|| window.primary_monitor().ok().flatten())
-                {
-                    let scale_factor = monitor.scale_factor();
-                    let physical_size = monitor.size();
-                    let screen_w = physical_size.width as f64 / scale_factor;
-                    let screen_h = physical_size.height as f64 / scale_factor;
-
-                    calculate_adaptive_window_size(screen_w, screen_h)
-                } else {
-                    (980.0, 620.0)
-                };
-
-                let target_size = tauri::LogicalSize::new(target_w, target_h);
-                let _ = window.set_size(target_size);
-                let _ = window.set_min_size(Some(target_size));
-                let _ = window.set_max_size(Some(target_size));
-                let _ = window.set_shadow(false);
-
-                if let Some(icon) = app.default_window_icon().cloned() {
-                    let _ = window.set_icon(icon);
-                }
-
-                #[cfg(target_os = "windows")]
-                if let Ok(hwnd) = window.hwnd() {
-                    platform::ffi::eliminate_window_borders(hwnd.0 as isize);
-                    platform::ffi::set_window_taskbar_icon(hwnd.0 as isize);
-                }
-                #[cfg(target_os = "windows")]
-                let _ = window.with_webview(|webview| {
-                    let controller = webview.controller();
-                    if let Ok(core) = unsafe { controller.CoreWebView2() } {
-                        let mut pid = 0u32;
-                        if unsafe { core.BrowserProcessId(&mut pid) }.is_ok() && pid != 0 {
-                            platform::ffi::register_webview_pid(pid);
-                        }
-                    }
-                });
-
-                let _ = window.center();
+                configure_main_window(&window);
                 if initial.settings.start_minimized {
-                    let _ = window.hide();
+                    let _ = window.destroy();
+                    trim_process_memory();
                 } else {
                     let _ = window.show();
                     let _ = window.set_focus();
@@ -145,7 +211,10 @@ pub fn run() {
             match event {
                 WindowEvent::Focused(focused) => {
                     if !focused {
+                        suspend_window_webview(window);
                         trim_process_memory();
+                    } else {
+                        resume_window_webview(window);
                     }
                 }
                 WindowEvent::CloseRequested { api, .. } => {
@@ -158,7 +227,7 @@ pub fn run() {
                     if let Ok(snapshot) = state.snapshot() {
                         if snapshot.settings.close_to_tray {
                             api.prevent_close();
-                            let _ = window.hide();
+                            let _ = window.destroy();
                             trim_process_memory();
                         } else {
                             state.signal_shutdown();

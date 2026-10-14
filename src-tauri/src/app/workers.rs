@@ -29,7 +29,6 @@ pub fn spawn_memory_trimmer(trimmer_sync: Arc<TrimmerSync>) {
             }
             trim_process_memory();
 
-            // Catch late-spawning webview renderer/utility processes
             let (l3, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_millis(3000)) {
                 Ok(res) => res,
                 Err(e) => e.into_inner(),
@@ -40,7 +39,6 @@ pub fn spawn_memory_trimmer(trimmer_sync: Arc<TrimmerSync>) {
             }
             trim_process_memory();
 
-            // Periodic lightweight working-set purge to keep background RAM footprint near zero
             while !*lock {
                 let (next_lock, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_secs(30)) {
                     Ok(res) => res,

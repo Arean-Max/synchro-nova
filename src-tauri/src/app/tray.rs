@@ -56,8 +56,11 @@ pub fn install_tray(app: &AppHandle) -> tauri::Result<()> {
 
 pub fn show_main_window(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
+        crate::resume_window_webview(&window.as_ref().window());
         let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
+    } else {
+        let _ = crate::create_main_window(app);
     }
 }

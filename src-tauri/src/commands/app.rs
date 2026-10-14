@@ -60,6 +60,16 @@ pub fn update_app_settings(
 
 #[tauri::command]
 pub fn minimize_window(window: Window) {
+    let app = window.app_handle().clone();
+    let state = app.state::<crate::RuntimeState>();
+    if let Ok(snapshot) = state.snapshot() {
+        if snapshot.settings.close_to_tray {
+            let _ = window.destroy();
+            crate::app::workers::trim_process_memory();
+            return;
+        }
+    }
+    crate::suspend_window_webview(&window);
     let _ = window.minimize();
     crate::app::workers::trim_process_memory();
 }

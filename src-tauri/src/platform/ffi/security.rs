@@ -112,7 +112,6 @@ pub fn trim_working_set() {
     const CACHE_TTL: Duration = Duration::from_secs(10);
 
     unsafe {
-        // If an EAC-protected game is running, strictly avoid any process inspection or memory adjustments
         if crate::platform::security_guard::is_protected_game_running().is_some() {
             return;
         }

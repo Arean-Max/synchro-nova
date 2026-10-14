@@ -24,6 +24,7 @@ pub fn apply_color_settings(
 
         if snapshot.settings.save_color_correction {
             state.save(&snapshot)?;
+            crate::infra::fast_cache::update_disk_cache(&snapshot.color, snapshot.settings.show_on_recordings, None, None);
         }
     }
 
