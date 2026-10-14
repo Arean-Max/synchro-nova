@@ -109,7 +109,7 @@ pub fn trim_working_set() {
     use std::time::{Duration, Instant};
 
     static CHILD_CACHE: Mutex<(Vec<u32>, Option<Instant>)> = Mutex::new((Vec::new(), None));
-    const CACHE_TTL: Duration = Duration::from_secs(30);
+    const CACHE_TTL: Duration = Duration::from_secs(10);
 
     unsafe {
         // If an EAC-protected game is running, strictly avoid any process inspection or memory adjustments
@@ -128,7 +128,7 @@ pub fn trim_working_set() {
 
         if let Ok(guard) = CHILD_CACHE.lock() {
             if let Some(updated_at) = guard.1 {
-                if updated_at.elapsed() < CACHE_TTL && !guard.0.is_empty() {
+                if updated_at.elapsed() < CACHE_TTL && guard.0.len() >= 3 {
                     webview_pids = guard.0.clone();
                     needs_refresh = false;
                 }

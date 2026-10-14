@@ -143,7 +143,11 @@ pub fn run() {
             }
 
             match event {
-                WindowEvent::Focused(_) => {}
+                WindowEvent::Focused(focused) => {
+                    if !focused {
+                        trim_process_memory();
+                    }
+                }
                 WindowEvent::CloseRequested { api, .. } => {
                     let app = window.app_handle();
                     let state = app.state::<RuntimeState>();

@@ -221,17 +221,27 @@ fn main() {
         std::env::set_var("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0xFF121214");
         std::env::set_var(
             "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
-            "--renderer-process-limit=1 \
+            "--disable-gpu \
+             --renderer-process-limit=1 \
+             --disable-breakpad \
+             --disable-crash-reporter \
+             --disable-gpu-watchdog \
+             --disable-gpu-shader-disk-cache \
              --disable-background-networking \
              --disable-component-update \
              --disable-sync \
-             --disable-features=Translate,OptimizationHints,MediaRouter,CalculateNativeWinOcclusion \
+             --disable-features=Translate,OptimizationHints,MediaRouter,CalculateNativeWinOcclusion,AudioServiceOutOfProcess,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,ChromeLabs,PrivacySandboxSettings4,BackForwardCache,GlobalMediaControls \
+             --enable-features=TrimOnMemoryPressure \
+             --enable-low-end-device-mode \
+             --disk-cache-size=1048576 \
+             --media-cache-size=1048576 \
              --disable-speech-api \
              --disable-pinch \
              --disable-domain-reliability \
              --no-first-run \
              --no-default-browser-check \
-             --js-flags=\"--max-old-space-size=64 --lite-mode\"",
+             --memory-model=low \
+             --js-flags=\"--max-old-space-size=32 --lite-mode --optimize-for-size --memory-reducer\"",
         );
 
         prerequisites_check::ensure_runtime_prerequisites();

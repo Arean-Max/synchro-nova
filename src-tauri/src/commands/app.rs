@@ -61,6 +61,7 @@ pub fn update_app_settings(
 #[tauri::command]
 pub fn minimize_window(window: Window) {
     let _ = window.minimize();
+    crate::app::workers::trim_process_memory();
 }
 
 #[tauri::command]
