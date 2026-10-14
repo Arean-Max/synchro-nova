@@ -88,7 +88,7 @@ function slider(field, appState, t) {
   const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
   const fillStyle = sliderFillStyle(field, value);
   const zeroMark = def?.zero ? '<span class="zero-mark"></span>' : '';
-  return `<div class="slider-row" data-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span class="slider-value-badge" data-slider-value="${field}" data-field="${field}" tabindex="0" role="button" title="Click to enter value">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${pct}%">${zeroMark}<span class="slider-fill" style="${fillStyle}"></span><span class="slider-thumb" style="left:${pct}%"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
+  return `<div class="slider-row" data-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span class="slider-value-badge" data-slider-value="${field}" data-field="${field}" tabindex="0" role="button">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${pct}%">${zeroMark}<span class="slider-fill" style="${fillStyle}"></span><span class="slider-thumb" style="left:${pct}%"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
 }
 
 function hashString(value) {
@@ -325,7 +325,7 @@ function templateSlider(field, templateColor, t) {
   const value = Number(templateColor?.[field] ?? 100);
   const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
   const fillStyle = sliderFillStyle(field, value);
-  return `<div class="slider-row" data-template-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span class="slider-value-badge" data-template-slider-value="${field}" tabindex="0" role="button" title="Click to enter value">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${pct}%"><span class="zero-mark"></span><span class="slider-fill" style="${fillStyle}"></span><span class="slider-thumb" style="left:${pct}%"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-template-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
+  return `<div class="slider-row" data-template-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span class="slider-value-badge" data-template-slider-value="${field}" tabindex="0" role="button">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${pct}%"><span class="zero-mark"></span><span class="slider-fill" style="${fillStyle}"></span><span class="slider-thumb" style="left:${pct}%"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-template-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
 }
 
 export function updateTemplateSliderDom(field, values) {
@@ -525,7 +525,7 @@ export function renderFiltersSection(appState, t) {
   const tiles = filters.map((f) => {
     const isActive = activeFilter === f.id;
     return [
-      `<div class="color-filter-tile ${isActive ? "active" : ""}" data-filter-id="${escapeAttr(f.id)}" data-action="toggle-color-filter" role="button" tabindex="0" title="${escapeAttr(f.desc)}">`,
+      `<div class="color-filter-tile ${isActive ? "active" : ""}" data-filter-id="${escapeAttr(f.id)}" data-action="toggle-color-filter" role="button" tabindex="0">`,
       '  <div class="filter-tile-left">',
       '    <div class="filter-tile-icon-box">',
       `      ${icon(f.icon)}`,
