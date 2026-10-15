@@ -180,7 +180,8 @@ pub fn run() {
             if let Some(window) = app.get_webview_window("main") {
                 configure_main_window(&window);
                 if initial.settings.start_minimized {
-                    let _ = window.destroy();
+                    suspend_window_webview(&window.as_ref().window());
+                    let _ = window.hide();
                     trim_process_memory();
                 } else {
                     let _ = window.show();
@@ -209,14 +210,6 @@ pub fn run() {
             }
 
             match event {
-                WindowEvent::Focused(focused) => {
-                    if !focused {
-                        suspend_window_webview(window);
-                        trim_process_memory();
-                    } else {
-                        resume_window_webview(window);
-                    }
-                }
                 WindowEvent::CloseRequested { api, .. } => {
                     let app = window.app_handle();
                     let state = app.state::<RuntimeState>();
@@ -227,7 +220,8 @@ pub fn run() {
                     if let Ok(snapshot) = state.snapshot() {
                         if snapshot.settings.close_to_tray {
                             api.prevent_close();
-                            let _ = window.destroy();
+                            suspend_window_webview(window);
+                            let _ = window.hide();
                             trim_process_memory();
                         } else {
                             state.signal_shutdown();
@@ -289,8 +283,16 @@ pub fn run() {
             commands::get_update_progress,
             commands::install_update,
         ])
-        .run(tauri::generate_context!())
-        .expect("failed to run Synchro");
+        .build(tauri::generate_context!())
+        .expect("failed to build Synchro")
+        .run(|app, event| {
+            if let tauri::RunEvent::ExitRequested { api, .. } = event {
+                let state = app.state::<RuntimeState>();
+                if !state.exiting.load(Ordering::SeqCst) {
+                    api.prevent_exit();
+                }
+            }
+        });
 }
 
 #[cfg(test)]
