@@ -15,14 +15,11 @@ function renderTitlebar(t) {
   const controls = isMacLights
     ? `
       <div class="window-controls mac-traffic-lights">
-        <button class="mac-light close" type="button" data-action="window-close" title="${escapeHtml(t("close"))}" aria-label="${escapeHtml(t("close"))}">
-          <span class="mac-light-symbol">×</span>
-        </button>
         <button class="mac-light minimize" type="button" data-action="window-minimize" title="${escapeHtml(t("minimize"))}" aria-label="${escapeHtml(t("minimize"))}">
           <span class="mac-light-symbol">−</span>
         </button>
-        <button class="mac-light maximize" type="button" data-action="window-maximize" title="${escapeHtml(t("maximize"))}" aria-label="${escapeHtml(t("maximize"))}">
-          <span class="mac-light-symbol">+</span>
+        <button class="mac-light close" type="button" data-action="window-close" title="${escapeHtml(t("close"))}" aria-label="${escapeHtml(t("close"))}">
+          <span class="mac-light-symbol">×</span>
         </button>
       </div>
     `

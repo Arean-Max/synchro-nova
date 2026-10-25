@@ -557,9 +557,13 @@ test("Titlebar: macTrafficLights toggle switches window controls to macOS traffi
   appState.settings.macTrafficLights = true;
   const macTitlebar = renderShell({ sidebarCollapsed: false }, t);
   assert.ok(macTitlebar.includes("mac-traffic-lights"), "Must render macOS traffic lights when enabled");
-  assert.ok(macTitlebar.includes("mac-light close"), "Must render close dot");
   assert.ok(macTitlebar.includes("mac-light minimize"), "Must render minimize dot");
-  assert.ok(macTitlebar.includes("mac-light maximize"), "Must render maximize dot");
+  assert.ok(macTitlebar.includes("mac-light close"), "Must render close dot");
+  assert.ok(!macTitlebar.includes("mac-light maximize"), "Maximize dot must be removed");
+  assert.ok(
+    macTitlebar.indexOf("mac-light minimize") < macTitlebar.indexOf("mac-light close"),
+    "Minimize must appear before close"
+  );
 
   // Reset
   appState.settings.macTrafficLights = false;
