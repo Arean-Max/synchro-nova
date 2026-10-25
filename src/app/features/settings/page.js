@@ -3,6 +3,7 @@ import { icon } from "../../ui/icons.js";
 import { escapeAttr, escapeHtml } from "../../core/html.js";
 import { supportedLanguages } from "../../core/i18n.js";
 import { lang } from "../../core/state.js";
+import { THEMES } from "../../ui/themes.js";
 
 const ACCENT_PRESETS = [
   { color: "#ffffff", name: "White" },
@@ -99,12 +100,45 @@ export function renderSettingsPage(appState, viewState, t) {
     </div>
   `;
 
+  const currentTheme = appState?.settings?.theme || "default";
+
+  const themeCards = THEMES.map((theme) => {
+    const isSelected = currentTheme === theme.id;
+    const name = isRu ? theme.nameRu : theme.nameEn;
+    const desc = isRu ? theme.descRu : theme.descEn;
+    const gradient = `linear-gradient(135deg, ${theme.previewColors[0]} 0%, ${theme.previewColors[1]} 55%, ${theme.previewColors[2]} 100%)`;
+
+    return `
+      <button class="theme-card ${isSelected ? "active" : ""}" type="button" data-action="select-theme" data-theme="${escapeAttr(theme.id)}" title="${escapeAttr(name)}">
+        <div class="theme-card-preview" style="background:${gradient};">
+          <span class="theme-card-icon">${icon(theme.icon)}</span>
+          <span class="theme-card-badge">${escapeHtml(theme.badge)}</span>
+        </div>
+        <div class="theme-card-info">
+          <span class="theme-card-name">${escapeHtml(name)}</span>
+          <span class="theme-card-desc">${escapeHtml(desc)}</span>
+        </div>
+      </button>
+    `;
+  }).join("");
+
+  const themeSection = `
+    <div class="form-label">${escapeHtml(t("themeTitle") || (isRu ? "Тема оформления" : "Interface Theme"))}</div>
+    <div class="theme-cards-grid">
+      ${themeCards}
+    </div>
+  `;
+
   const appToggles = SETTING_TOGGLE_KEYS.map(({ key, labelKey }) => {
     const checked = Boolean(appState?.settings?.[key]);
     return checkbox(t(labelKey), checked, key);
   }).join("");
 
   const unifiedCardBody = `
+    <div class="settings-theme-section">
+      ${themeSection}
+    </div>
+    <div class="settings-section-divider"></div>
     <div class="settings-top-row">
       <div class="settings-top-left">
         ${languageDropdown}

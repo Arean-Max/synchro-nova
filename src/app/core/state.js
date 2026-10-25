@@ -23,6 +23,7 @@ export const defaultState = {
     language: detectDefaultLanguage(),
     showOnRecordings: true,
     accentColor: "#ffffff",
+    theme: "default",
     autoUpdate: true,
     disableSplash: false,
     disableAnimations: false,

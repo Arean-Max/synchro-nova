@@ -29,6 +29,16 @@ import { localizedExtensions } from "./i18n_extensions.js";
 
 const dictionaries = {
   en: {
+    themeTitle: "Interface Theme",
+    themeSubtitle: "Seasonal themes with atmospheric visual effects",
+    theme_default: "Default",
+    theme_default_desc: "Clean minimalist dark style",
+    theme_winter: "New Year",
+    theme_winter_desc: "Frosty winter midnight with drifting snow",
+    theme_autumn: "Autumn",
+    theme_autumn_desc: "Warm amber glow with golden falling leaves",
+    theme_spring: "Spring",
+    theme_spring_desc: "Blooming sakura with drifting petals",
     appSubtitle: "all in one.",
     main: "MAIN",
     community: "COMMUNITY PROFILE",
@@ -365,6 +375,16 @@ const dictionaries = {
   },
 
   ru: {
+    themeTitle: "Тема оформления",
+    themeSubtitle: "Сезонные темы с визуальными эффектами и атмосферой",
+    theme_default: "Дефолт",
+    theme_default_desc: "Строгий тёмный стиль",
+    theme_winter: "Новогодняя",
+    theme_winter_desc: "Морозная ночь и падающий снег",
+    theme_autumn: "Осенняя",
+    theme_autumn_desc: "Тёплый янтарь и золотой листопад",
+    theme_spring: "Весенняя",
+    theme_spring_desc: "Цветущая сакура и весенний бриз",
     appSubtitle: "all in one.",
     main: "ГЛАВНОЕ",
     community: "COMMUNITY PROFILE",
@@ -2553,6 +2573,11 @@ for (const [langCode, dict] of Object.entries(localizedExtensions)) {
 }
 
 const ruOverrides = {
+  themeTitle: "Тема оформления",
+  theme_default: "Дефолт",
+  theme_winter: "Новогодняя",
+  theme_autumn: "Осенняя",
+  theme_spring: "Весенняя",
   appSubtitle: "all in one.",
   maximize: "Развернуть",
   day: "День",

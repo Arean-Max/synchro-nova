@@ -3,13 +3,16 @@ import assert from "node:assert/strict";
 
 // Global DOM mock for Node environment tests
 globalThis.window = globalThis;
+const docAttrs = new Map();
 globalThis.document = {
   documentElement: {
     lang: "en",
     dir: "ltr",
     style: {
       setProperty: () => {}
-    }
+    },
+    setAttribute: (name, val) => docAttrs.set(name, String(val)),
+    getAttribute: (name) => docAttrs.get(name) || null
   },
   querySelectorAll: () => [],
   querySelector: () => null,
@@ -410,4 +413,65 @@ test("Characteristics Page: Outdated driver omits current version row and shows 
   }, t);
   assert.ok(!html.includes("v6.0.9000.1"), "Outdated driver must not show current version");
   assert.ok(html.includes("v6.0.9735.1"), "Outdated driver must show available version");
+});
+
+
+test("Themes: definitions contain 4 seasonal themes with valid properties", async () => {
+  const { THEMES } = await import("../src/app/ui/themes.js");
+  assert.strictEqual(THEMES.length, 4, "Must define 4 seasonal themes");
+  const ids = THEMES.map((t) => t.id);
+  assert.deepStrictEqual(ids, ["default", "winter", "autumn", "spring"]);
+  for (const theme of THEMES) {
+    assert.ok(theme.nameRu, `Theme ${theme.id} must have Russian name`);
+    assert.ok(theme.nameEn, `Theme ${theme.id} must have English name`);
+    assert.ok(theme.badge, `Theme ${theme.id} must have badge`);
+    assert.ok(theme.icon, `Theme ${theme.id} must have icon`);
+    assert.strictEqual(theme.previewColors.length, 3, `Theme ${theme.id} must have 3 preview colors`);
+  }
+});
+
+test("Themes: Settings page renders theme picker grid with active card selection", async () => {
+  const { renderSettingsPage } = await import("../src/app/features/settings/page.js");
+  const t = (k) => k;
+  const mockState = {
+    settings: {
+      language: "ru",
+      theme: "winter"
+    }
+  };
+  const html = renderSettingsPage(mockState, {}, t);
+  assert.ok(html.includes("settings-theme-section"), "Must render theme section");
+  assert.ok(html.includes("theme-cards-grid"), "Must render theme cards grid");
+  assert.ok(html.includes('class="theme-card active"') && html.includes('data-theme="winter"'), "Winter theme must be active");
+  assert.ok(html.includes('data-theme="default"') && !html.includes('data-theme="default" class="theme-card active"'), "Default theme must be inactive");
+  assert.ok(html.includes('data-theme="autumn"') && !html.includes('data-theme="autumn" class="theme-card active"'), "Autumn theme must be inactive");
+  assert.ok(html.includes('data-theme="spring"') && !html.includes('data-theme="spring" class="theme-card active"'), "Spring theme must be inactive");
+});
+
+test("Themes: applyTheme validates and sets data-theme attribute on documentElement", async () => {
+  const { applyTheme } = await import("../src/app/ui/themes.js");
+  assert.strictEqual(applyTheme("winter"), "winter");
+  assert.strictEqual(document.documentElement.getAttribute("data-theme"), "winter");
+
+  assert.strictEqual(applyTheme("spring"), "spring");
+  assert.strictEqual(document.documentElement.getAttribute("data-theme"), "spring");
+
+  assert.strictEqual(applyTheme("autumn"), "autumn");
+  assert.strictEqual(document.documentElement.getAttribute("data-theme"), "autumn");
+
+  assert.strictEqual(applyTheme("invalid_theme_name"), "default");
+  assert.strictEqual(document.documentElement.getAttribute("data-theme"), "default");
+});
+
+test("Icons: seasonal theme icons render valid SVGs", async () => {
+  const { icon } = await import("../src/app/ui/icons.js");
+  const snowflakeSvg = icon("snowflake");
+  const leafSvg = icon("leaf");
+  const flowerSvg = icon("flower");
+  const sparklesSvg = icon("sparkles");
+
+  assert.ok(snowflakeSvg.includes("<svg") && snowflakeSvg.includes("x1="), "Snowflake icon must be SVG");
+  assert.ok(leafSvg.includes("<svg") && leafSvg.includes("<path"), "Leaf icon must be SVG");
+  assert.ok(flowerSvg.includes("<svg") && flowerSvg.includes("<circle"), "Flower icon must be SVG");
+  assert.ok(sparklesSvg.includes("<svg") && sparklesSvg.includes("<path"), "Sparkles icon must be SVG");
 });

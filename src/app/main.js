@@ -46,6 +46,7 @@ import { button } from "./ui/components.js";
 import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget, renderNavList } from "./ui/layout.js";
 import { escapeHtml } from "./core/html.js";
 import { runIntroSplash } from "./ui/splash.js";
+import { applyTheme } from "./ui/themes.js";
 
 
 router.register("color", colorFeature);
@@ -2064,6 +2065,7 @@ async function handleClick(event) {
     if (key === "showOnRecordings") await applyColor();
     if (key === "disableAnimations") {
       document.body.classList.toggle("no-animations", Boolean(appState.settings.disableAnimations));
+      applyTheme(appState.settings?.theme || "default", { disableAnimations: appState.settings.disableAnimations });
     }
     if (key === "eacAutoProtect" && nextVal) {
       try {
@@ -2097,6 +2099,18 @@ async function handleClick(event) {
   }
 
   const accentSwatch = target.closest("[data-action='set-accent-color']");
+  const themeCard = target.closest("[data-action='select-theme']");
+  if (themeCard) {
+    const nextTheme = themeCard.getAttribute("data-theme") || "default";
+    appState.settings.theme = nextTheme;
+    applyTheme(nextTheme, { updateAccent: true, disableAnimations: appState.settings?.disableAnimations });
+    document.querySelectorAll(".theme-card").forEach((c) => {
+      c.classList.toggle("active", c.getAttribute("data-theme") === nextTheme);
+    });
+    await saveSettings();
+    return;
+  }
+
   if (accentSwatch) {
     const color = accentSwatch.getAttribute("data-color");
     if (color) {
@@ -2818,6 +2832,7 @@ function handleImageError(event) {
 function render() {
   const app = document.getElementById("app");
   document.documentElement.lang = lang();
+  applyTheme(appState.settings?.theme || "default", { disableAnimations: appState.settings?.disableAnimations });
   applyInterfaceAccent(appState.settings.accentColor);
   app.className = "app-shell";
   app.innerHTML = renderShell(viewState, t);
