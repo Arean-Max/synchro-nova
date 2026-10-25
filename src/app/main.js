@@ -373,7 +373,7 @@ function showRiskWarningBanner(tweak) {
     category: "risk",
     appName: t("safetyBackup") || (isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY BACKUP"),
     impactText: t("riskWarningMsg") || (isRu
-      ? "Перед жестким твиком сделай быстрый снимок системы, чтобы не сломать винду."
+      ? "Перед применением системных настроек рекомендуется создать резервную копию параметров Windows."
       : "Take a quick safety snapshot before applying system-level tweaks.")
   };
   renderNotificationBannerDom();
@@ -388,7 +388,7 @@ function showBackupNotificationBanner() {
     category: "safe",
     appName: t("safetySnapshot") || (isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY SNAPSHOT"),
     title: t("backupNotificationTitle") || (isRu ? "Снимок Системы" : "Safety Snapshot"),
-    impactText: t("backupNotificationMsg") || (isRu ? "Кликни здесь, чтобы задать имя снимка" : "Click here to set custom snapshot name")
+    impactText: t("backupNotificationMsg") || (isRu ? "Нажмите здесь, чтобы задать имя резервной копии" : "Click here to set custom snapshot name")
   };
   renderNotificationBannerDom();
   startImpactBannerTimer(3000);
@@ -407,7 +407,7 @@ function showAdminNotificationBanner() {
     category: "admin",
     appName: t("adminRequired") || (isRu ? "НУЖЕН АДМИН" : "ADMIN REQUIRED"),
     title: t("adminNotificationTitle") || (isRu ? "Требуются права администратора" : "Administrator Rights Required"),
-    impactText: t("adminNotificationMsg") || (isRu ? "Кликни здесь, чтобы перезапустить Synchro с правами админа" : "Click here to restart Synchro with admin rights")
+    impactText: t("adminNotificationMsg") || (isRu ? "Нажмите для перезапуска Synchro с правами администратора" : "Click here to restart Synchro with admin rights")
   };
   renderNotificationBannerDom();
 }
@@ -1949,12 +1949,20 @@ async function handleClick(event) {
     const sectionId = scrollSectionBtn.getAttribute("data-section");
     if (sectionId) {
       viewState.activeSubSection = sectionId;
+      document.querySelectorAll(".nav-sub-item").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-section") === sectionId);
+      });
       const targetEl = document.getElementById(sectionId);
       if (targetEl) {
-        targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        document.querySelectorAll(".nav-sub-item").forEach((btn) => {
-          btn.classList.toggle("active", btn.getAttribute("data-section") === sectionId);
-        });
+        const scrollPanel = targetEl.closest(".scroll-panel") || document.querySelector(".scroll-panel") || document.querySelector(".page-body");
+        if (scrollPanel) {
+          const prevBehavior = scrollPanel.style.scrollBehavior;
+          scrollPanel.style.scrollBehavior = "auto";
+          targetEl.scrollIntoView({ behavior: "auto", block: "start" });
+          scrollPanel.style.scrollBehavior = prevBehavior;
+        } else {
+          targetEl.scrollIntoView({ behavior: "auto", block: "start" });
+        }
       }
     }
     return;
@@ -2271,7 +2279,7 @@ async function handleClick(event) {
         showToastBanner(
           t("screenshot"),
           t("screenshotCopiedToast") || (lang() === "ru"
-            ? "Сочный скриншот скопирован в буфер обмена (Ctrl+V)!"
+            ? "Снимок экрана скопирован в буфер обмена (Ctrl+V)"
             : "Juicy screenshot copied to clipboard (Ctrl+V)!"),
           "safe"
         );
@@ -2917,6 +2925,7 @@ async function boot() {
 
 document.addEventListener("input", handleInput);
 document.addEventListener("click", handleClick);
+document.addEventListener("contextmenu", (e) => e.preventDefault(), { capture: true });
 document.addEventListener("pointerdown", handlePointerDown);
 document.addEventListener("error", handleImageError, true);
 document.addEventListener("wheel", handleWheel, { passive: false });
@@ -2939,7 +2948,7 @@ window.addEventListener("keydown", async (event) => {
         showToastBanner(
           t("screenshot"),
           t("screenshotCopiedToast") || (lang() === "ru"
-            ? "Сочный скриншот скопирован в буфер обмена (Ctrl+V)!"
+            ? "Снимок экрана скопирован в буфер обмена (Ctrl+V)"
             : "Juicy screenshot copied to clipboard (Ctrl+V)!"),
           "safe"
         );

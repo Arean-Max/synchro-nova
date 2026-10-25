@@ -83,7 +83,6 @@ export function renderBackupsPage(viewState, t) {
         </div>
         <div class="config-list backup-list">${rows}</div>
       </section>
-      ${renderConfigsPage(viewState, t)}
     </div>
   `;
 }

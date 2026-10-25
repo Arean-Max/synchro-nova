@@ -177,6 +177,10 @@ function renderDriverTile(driver, t, isRu) {
     ? `<div class="driver-spec-item update-hint"><span class="spec-label">${escapeHtml(t("driverAvailableVersion") || (isRu ? "Доступна:" : "Available:"))}</span> <span class="spec-val">${escapeHtml(`v${cleanLatest}`)}</span></div>`
     : "";
 
+  const currentVerSpec = !isOutdated
+    ? `<div class="driver-spec-item" title="${escapeAttr(driver.version || "")}"><span class="spec-label">${escapeHtml(t("version"))}:</span> <span class="spec-val version">${escapeHtml(versionText)}</span></div>`
+    : "";
+
   return `
     <div class="driver-tile ${isOutdated ? "has-update" : "uptodate"}">
       <div class="driver-tile-top">
@@ -189,7 +193,7 @@ function renderDriverTile(driver, t, isRu) {
         </div>
       </div>
       <div class="driver-tile-specs">
-        <div class="driver-spec-item" title="${escapeAttr(driver.version || "")}"><span class="spec-label">${escapeHtml(t("version"))}:</span> <span class="spec-val version">${escapeHtml(versionText)}</span></div>
+        ${currentVerSpec}
         ${newVerSpec}
         <div class="driver-spec-item"><span class="spec-label">${escapeHtml(t("date"))}:</span> <span class="spec-val">${escapeHtml(dateText)}</span></div>
       </div>

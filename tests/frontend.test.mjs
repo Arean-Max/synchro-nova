@@ -377,3 +377,37 @@ test("Layout Navigation: renderNavList generates smooth-scroll sub-buttons under
   // Reset active page to color
   setActivePage("color");
 });
+
+test("Backups Page: configs block is removed from backups page", async () => {
+  const { renderBackupsPage } = await import("../src/app/features/storage/page.js");
+  const t = (k) => k;
+  const mockView = {
+    backups: [],
+    configs: [],
+    selectedBackup: null
+  };
+  const html = renderBackupsPage(mockView, t);
+  assert.ok(html.includes("backup-card"), "Backup card must be present");
+  assert.ok(!html.includes("configs-card"), "Configs card must be removed from backups page");
+  assert.ok(!html.includes("savedConfigs"), "Saved configs title must be removed from backups page");
+});
+
+test("Characteristics Page: Outdated driver omits current version row and shows available update", async () => {
+  const { renderCharacteristicsPage } = await import("../src/app/features/characteristics/page.js");
+  const t = (k) => k;
+  const html = renderCharacteristicsPage({
+    drivers: [
+      {
+        name: "Realtek High Definition Audio",
+        vendor: "realtek",
+        className: "media",
+        version: "6.0.9000.1",
+        latestVersion: "6.0.9735.1",
+        isOutdated: true,
+        date: "8/4/2020"
+      }
+    ]
+  }, t);
+  assert.ok(!html.includes("v6.0.9000.1"), "Outdated driver must not show current version");
+  assert.ok(html.includes("v6.0.9735.1"), "Outdated driver must show available version");
+});
