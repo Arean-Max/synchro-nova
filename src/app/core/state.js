@@ -114,7 +114,7 @@ export const sliderDefs = {
 
 export const pageDefs = {
   color: { title: "colorTitle", subtitle: "colorSubtitle", nav: "colorTitle", icon: "layers" },
-  tweaks: { title: "tweaksTitle", subtitle: "tweaksSubtitle", nav: "tweaksTitle", icon: "fileText" },
+  tweaks: { title: "tweaksTitle", subtitle: "tweaksSubtitle", nav: "tweaksTitle", icon: "sliders" },
   binds: { title: "bindsTitle", subtitle: "bindsSubtitle", nav: "bindsTitle", icon: "keyboard" },
   characteristics: { title: "characteristicsTitle", subtitle: "characteristicsSubtitle", nav: "characteristicsTitle", icon: "cpu" },
   backups: { title: "backupsTitle", subtitle: "backupsSubtitle", nav: "backupsTitle", icon: "archive" },

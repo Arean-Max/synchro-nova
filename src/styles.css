@@ -1,3 +1,46 @@
+/* ==========================================================================
+   Typography: Bundled Inter Variable Font
+   ========================================================================== */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/inter-cyrillic-ext-wght-normal.woff2') format('woff2-variations'),
+       url('./assets/fonts/inter-cyrillic-ext-wght-normal.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/inter-cyrillic-wght-normal.woff2') format('woff2-variations'),
+       url('./assets/fonts/inter-cyrillic-wght-normal.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/inter-latin-ext-wght-normal.woff2') format('woff2-variations'),
+       url('./assets/fonts/inter-latin-ext-wght-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/inter-latin-wght-normal.woff2') format('woff2-variations'),
+       url('./assets/fonts/inter-latin-wght-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   color-scheme: dark;
   --bg-sidebar: #131313;
@@ -66,7 +109,12 @@ body {
   overflow: hidden;
   background: #141414;
   color: var(--text-primary);
-  font-family: "Segoe UI Variable", "Segoe UI", Inter, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  letter-spacing: -0.011em;
 }
 
 body {
@@ -77,6 +125,38 @@ body {
 button {
   font: inherit;
 }
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  letter-spacing: -0.01em;
+}
+
+h1, h2, h3, h4 {
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+
+p, .description {
+  text-wrap: pretty;
+}
+
+.tabular-nums,
+.stat-value,
+.stat-number,
+.metric-value,
+.chip-version,
+.driver-version,
+.slider-value,
+.badge,
+.tab-count,
+.setting-counter,
+.tweak-count {
+  font-variant-numeric: tabular-nums;
+}
+
 
 .app-shell {
   position: relative;
@@ -354,7 +434,9 @@ button {
 
 .nav-section-head .nav-label {
   margin: 0;
-}
+
+  text-transform: uppercase;
+  letter-spacing: 0.08em;}
 
 .sidebar-toggle-btn {
   display: flex;
@@ -566,7 +648,9 @@ button {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.075);
   border-color: rgba(255, 255, 255, 0.015);
-}
+
+  font-weight: 600;
+  letter-spacing: -0.012em;}
 
 .nav-item.active .icon {
   color: var(--text-primary);
@@ -705,16 +789,20 @@ button {
   margin: 0;
   color: var(--text-primary);
   font-size: 26px;
-  font-weight: 680;
-  letter-spacing: 0;
-  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  text-wrap: balance;
 }
 
 .page-header p {
   margin: 6px 0 0;
   color: var(--text-secondary);
   font-size: 13px;
-  line-height: 1.35;
+  font-weight: 400;
+  letter-spacing: -0.008em;
+  line-height: 1.4;
+  text-wrap: pretty;
 }
 
 .page-body {
@@ -758,9 +846,10 @@ button {
   margin: 0 0 16px;
   color: var(--text-primary);
   font-size: 15px;
-  font-weight: 660;
-  letter-spacing: 0;
-  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  text-wrap: balance;
 }
 
 .slider-row {
