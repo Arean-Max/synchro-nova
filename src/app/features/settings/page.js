@@ -1,14 +1,8 @@
-import { checkbox } from "../../ui/components.js";
+import { card, checkbox } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
 import { escapeAttr, escapeHtml } from "../../core/html.js";
 import { supportedLanguages } from "../../core/i18n.js";
 import { lang } from "../../core/state.js";
-
-export const SETTINGS_SECTIONS = [
-  { id: "appearance", titleKey: "settingsAppearance", titleEn: "Appearance", titleRu: "Внешний вид", icon: "monitor" },
-  { id: "community", titleKey: "community", titleEn: "Community & Links", titleRu: "Сообщество и ссылки", icon: "network" },
-  { id: "system", titleKey: "settingsSystem", titleEn: "System Behavior", titleRu: "Системные параметры", icon: "settings" }
-];
 
 const ACCENT_PRESETS = [
   { color: "#ffffff", name: "White" },
@@ -85,14 +79,24 @@ export function renderSettingsPage(appState, viewState, t) {
     </div>
   `;
 
-  const appearanceCard = `
-    <section class="card settings-group" id="settings-section-appearance">
-      <h2 class="group-title">${icon("monitor")}<span>${escapeHtml(t("settingsAppearance") || (isRu ? "Внешний вид" : "Appearance"))}</span></h2>
-      <div class="settings-group-body">
-        ${languageDropdown}
-        ${accentControl}
-      </div>
-    </section>
+  const communityLinks = `
+    <div class="form-label">${escapeHtml(t("community") || (isRu ? "Сообщество и ссылки" : "Community & Links"))}</div>
+    <div class="settings-community-list">
+      <button class="settings-tall-card-btn compact" type="button" data-action="open-external-url" data-url="https://github.com/Arean-Max/synchro-nova">
+        <div class="tall-card-icon-wrap">${icon("github")}</div>
+        <div class="tall-card-content">
+          <span class="tall-card-title">${escapeHtml(t("sourceCodeCaps") || (isRu ? "ИСХОДНЫЙ КОД" : "SOURCE CODE"))}</span>
+          <span class="tall-card-sub">github.com/Arean-Max</span>
+        </div>
+      </button>
+      <button class="settings-tall-card-btn compact" type="button" data-action="open-external-url" data-url="https://t.me/synchronova">
+        <div class="tall-card-icon-wrap">${icon("telegram")}</div>
+        <div class="tall-card-content">
+          <span class="tall-card-title">${escapeHtml(t("weOnTelegramCaps") || (isRu ? "МЫ В TELEGRAM" : "TELEGRAM CHANNEL"))}</span>
+          <span class="tall-card-sub">t.me/synchronova</span>
+        </div>
+      </button>
+    </div>
   `;
 
   const appToggles = SETTING_TOGGLE_KEYS.map(({ key, labelKey }) => {
@@ -100,44 +104,25 @@ export function renderSettingsPage(appState, viewState, t) {
     return checkbox(t(labelKey), checked, key);
   }).join("");
 
-  const systemCard = `
-    <section class="card settings-group" id="settings-section-system">
-      <h2 class="group-title">${icon("settings")}<span>${escapeHtml(t("settingsSystem") || (isRu ? "Системные параметры" : "System Behavior"))}</span></h2>
-      <div class="settings-toggles-section">
-        ${appToggles}
+  const unifiedCardBody = `
+    <div class="settings-top-row">
+      <div class="settings-top-left">
+        ${languageDropdown}
+        ${accentControl}
       </div>
-    </section>
-  `;
-
-  const communityCard = `
-    <section class="card settings-group" id="settings-section-community">
-      <h2 class="group-title">${icon("network")}<span>${escapeHtml(t("community") || (isRu ? "Сообщество и ссылки" : "Community & Links"))}</span></h2>
-      <div class="settings-community-list">
-        <button class="settings-tall-card-btn compact" type="button" data-action="open-external-url" data-url="https://github.com/Arean-Max/synchro-nova">
-          <div class="tall-card-icon-wrap">${icon("github")}</div>
-          <div class="tall-card-content">
-            <span class="tall-card-title">${escapeHtml(t("sourceCodeCaps") || (isRu ? "ИСХОДНЫЙ КОД" : "SOURCE CODE"))}</span>
-            <span class="tall-card-sub">github.com/Arean-Max</span>
-          </div>
-        </button>
-        <button class="settings-tall-card-btn compact" type="button" data-action="open-external-url" data-url="https://t.me/synchronova">
-          <div class="tall-card-icon-wrap">${icon("telegram")}</div>
-          <div class="tall-card-content">
-            <span class="tall-card-title">${escapeHtml(t("weOnTelegramCaps") || (isRu ? "МЫ В TELEGRAM" : "TELEGRAM CHANNEL"))}</span>
-            <span class="tall-card-sub">t.me/synchronova</span>
-          </div>
-        </button>
+      <div class="settings-top-right">
+        ${communityLinks}
       </div>
-    </section>
+    </div>
+    <div class="settings-section-divider"></div>
+    <div class="settings-toggles-section">
+      ${appToggles}
+    </div>
   `;
 
   return `
-    <div class="settings-page">
-      <div class="scroll-panel">
-        ${appearanceCard}
-        ${communityCard}
-        ${systemCard}
-      </div>
+    <div class="settings-page settings-unified-page">
+      ${card(t("application") || (isRu ? "Параметры приложения" : "Application"), unifiedCardBody, "settings-unified-card")}
     </div>
   `;
 }

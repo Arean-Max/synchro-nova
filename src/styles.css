@@ -202,7 +202,7 @@ button {
 
 .workspace {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-columns: 248px minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -243,7 +243,7 @@ button {
   flex-direction: column;
   min-width: 0;
   height: 100%;
-  padding: 18px 12px 14px;
+  padding: 16px 12px 14px;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-subtle);
   transition: padding 260ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -275,9 +275,9 @@ button {
 
 .brand {
   display: block;
-  min-height: 52px;
+  min-height: 48px;
   flex-shrink: 0;
-  margin: 0 4px 10px;
+  margin: 0 4px 8px;
   transition: margin 260ms ease, min-height 260ms ease;
 }
 
@@ -349,8 +349,8 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 6px 8px;
-  min-height: 24px;
+  margin: 0 4px 6px;
+  min-height: 22px;
   flex-shrink: 0;
 }
 
@@ -505,64 +505,53 @@ button {
 .nav-list {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: hidden;
-  padding-right: 2px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .nav-list::-webkit-scrollbar {
-  width: 3px;
-}
-
-.nav-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.nav-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-}
-
-.nav-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  display: none;
 }
 
 .nav-item {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  min-height: 40px;
-  height: 40px;
+  min-height: 36px;
+  height: 36px;
   flex-shrink: 0;
   padding: 0 12px;
   color: var(--text-secondary);
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 9px;
   text-align: left;
   cursor: default;
   box-sizing: border-box;
+  transition: background 140ms ease, color 140ms ease;
 }
 
 .exit-button {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  min-height: 42px;
-  height: 42px;
+  min-height: 38px;
+  height: 38px;
   flex-shrink: 0;
-  margin-top: 8px;
-  padding: 0 14px;
+  margin-top: auto;
+  padding: 0 12px;
   color: var(--text-primary);
   border: 1px solid #2D2D2D;
-  border-radius: 10px;
+  border-radius: 9px;
   background: #1E1E1E;
   text-align: left;
   cursor: default;
@@ -571,9 +560,9 @@ button {
 
 .nav-item .icon,
 .exit-button .icon {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 20px;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
 }
 
 .nav-item:hover,
@@ -592,45 +581,18 @@ button {
   color: var(--text-primary);
 }
 
-.nav-chevron {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: auto;
-  width: 14px;
-  height: 14px;
-  color: var(--text-tertiary, #8e8e93);
-  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), color 150ms ease;
-}
-
-.nav-chevron .icon {
-  width: 13px;
-  height: 13px;
-}
-
-.nav-item.active .nav-chevron {
-  transform: rotate(180deg);
-  color: var(--text-primary, #ffffff);
-}
-
-.nav-item:hover .nav-chevron {
-  color: var(--text-primary, #ffffff);
-}
-
-.workspace.sidebar-collapsed .nav-chevron {
-  display: none !important;
-}
+/* nav-chevron removed */
 
 .nav-sub-list {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin: 3px 0 6px 20px;
+  margin: 2px 0 4px 18px;
   padding: 0 0 0 10px;
   flex-shrink: 0;
   overflow: hidden;
-  animation: navSubExpand 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: navSubExpand 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes navSubExpand {
@@ -641,7 +603,7 @@ button {
   }
   100% {
     opacity: 1;
-    max-height: 280px;
+    max-height: 220px;
     transform: translateY(0);
   }
 }
@@ -650,10 +612,10 @@ button {
   content: "";
   position: absolute;
   left: 0;
-  top: -4px;
-  bottom: 14px;
+  top: -2px;
+  bottom: 12px;
   width: 1px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .nav-sub-item {
@@ -661,15 +623,15 @@ button {
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 28px;
-  height: 28px;
+  min-height: 26px;
+  height: 26px;
   flex-shrink: 0;
-  padding: 4px 10px;
+  padding: 3px 8px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 6px;
   color: var(--text-secondary, #9da3af);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 460;
   text-align: left;
   cursor: default;
@@ -677,17 +639,17 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   box-sizing: border-box;
-  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
 }
 
 .nav-sub-item::before {
   content: "";
   position: absolute;
-  left: -12px;
+  left: -10px;
   top: 50%;
-  width: 12px;
+  width: 10px;
   height: 1px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .nav-sub-item:hover {

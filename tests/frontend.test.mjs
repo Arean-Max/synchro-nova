@@ -296,8 +296,8 @@ test("Settings: does not render manual check for updates button or row", async (
   assert.ok(!html.includes("checkForUpdates"), "Check for updates label must be removed from settings");
 });
 
-test("Settings: divided into 3 modular section blocks with scrollable panel and eacAutoProtect toggle", async () => {
-  const { renderSettingsPage, SETTINGS_SECTIONS } = await import("../src/app/features/settings/page.js");
+test("Settings: unified card layout with eacAutoProtect toggle and without deprecated buttons", async () => {
+  const { renderSettingsPage } = await import("../src/app/features/settings/page.js");
   const t = (k) => k;
   const mockState = {
     settings: {
@@ -307,12 +307,12 @@ test("Settings: divided into 3 modular section blocks with scrollable panel and 
     }
   };
   const html = renderSettingsPage(mockState, {}, t);
-  assert.ok(html.includes('id="settings-section-appearance"'), "Must contain appearance section anchor");
-  assert.ok(html.includes('id="settings-section-community"'), "Must contain community section anchor");
-  assert.ok(html.includes('id="settings-section-system"'), "Must contain system section anchor");
-  assert.ok(!html.includes('id="settings-section-security"'), "Security section block must be removed");
+  assert.ok(html.includes("settings-unified-card"), "Must contain unified settings card");
   assert.ok(html.includes('data-setting="eacAutoProtect"'), "Must contain eacAutoProtect setting toggle");
-  assert.equal(SETTINGS_SECTIONS.length, 3);
+  assert.ok(!html.includes("check-updates-manually"), "Manual check for updates button must not be present");
+  assert.ok(!html.includes("audit-anticheat"), "Manual EAC audit button must not be present");
+  assert.ok(!html.includes("fix-anticheat"), "Manual EAC fix button must not be present");
+  assert.ok(!html.includes("sotoykor-source"), "Upstream repository button must not be present");
 });
 
 test("Characteristics: driver group sections have anchor IDs and unconstrained search bar is removed", async () => {
@@ -354,10 +354,14 @@ test("Layout Navigation: renderNavList generates smooth-scroll sub-buttons under
   setActivePage("tweaks");
   const tweaksNavHtml = renderNavList(t, { sidebarCollapsed: false });
   assert.ok(tweaksNavHtml.includes('class="nav-sub-list"'), "Sub-navigation list must be rendered");
-  assert.ok(tweaksNavHtml.includes('class="nav-chevron"'), "Expandable items must have chevron indicator");
+  assert.ok(!tweaksNavHtml.includes('class="nav-chevron"'), "Chevron indicator must be removed");
   assert.ok(tweaksNavHtml.includes('data-action="scroll-to-section"'), "Sub-buttons must have scroll action");
   assert.ok(tweaksNavHtml.includes('data-section="tweak-section-gaming_latency"'), "Must scroll to gaming_latency");
   assert.ok(tweaksNavHtml.includes('data-section="tweak-section-scheduler"'), "Must scroll to scheduler");
+
+  // Tweaks active but toggled closed (accordion behavior)
+  const tweaksCollapsedHtml = renderNavList(t, { sidebarCollapsed: false, collapsedSubNav: { tweaks: true } });
+  assert.ok(!tweaksCollapsedHtml.includes('class="nav-sub-list"'), "Sub-navigation list must be hidden when toggled closed");
 
   // Characteristics active
   setActivePage("characteristics");
@@ -365,13 +369,10 @@ test("Layout Navigation: renderNavList generates smooth-scroll sub-buttons under
   assert.ok(driversNavHtml.includes('data-section="driver-section-display"'), "Must scroll to driver-section-display");
   assert.ok(driversNavHtml.includes('data-section="driver-section-media"'), "Must scroll to driver-section-media");
 
-  // Settings active
+  // Settings active (unified card: no sub-items)
   setActivePage("settings");
   const settingsNavHtml = renderNavList(t, { sidebarCollapsed: false });
-  assert.ok(settingsNavHtml.includes('data-section="settings-section-appearance"'), "Must scroll to settings-section-appearance");
-  assert.ok(settingsNavHtml.includes('data-section="settings-section-community"'), "Must scroll to settings-section-community");
-  assert.ok(settingsNavHtml.includes('data-section="settings-section-system"'), "Must scroll to settings-section-system");
-  assert.ok(!settingsNavHtml.includes('data-section="settings-section-security"'), "Security section sub-button must be removed");
+  assert.ok(!settingsNavHtml.includes('class="nav-sub-list"'), "Settings must not render sub-navigation in unified layout");
 
   // Reset active page to color
   setActivePage("color");

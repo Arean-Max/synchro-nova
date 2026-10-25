@@ -572,6 +572,7 @@ function updateNavState() {
   const navList = document.querySelector(".nav-list");
   if (navList) {
     navList.innerHTML = renderNavList(t, viewState);
+    navList.scrollTop = 0;
     navList.onscroll = syncNavIndicator;
   }
   syncNavIndicator();
@@ -1964,15 +1965,22 @@ async function handleClick(event) {
     const nextPage = navItem.getAttribute("data-page");
     if (!nextPage || !pageDefs[nextPage]) return;
     if (nextPage === activePage) {
+      const hasSubNav = nextPage === "tweaks" || nextPage === "characteristics";
+      if (hasSubNav) {
+        if (!viewState.collapsedSubNav) viewState.collapsedSubNav = {};
+        viewState.collapsedSubNav[nextPage] = !viewState.collapsedSubNav[nextPage];
+        updateNavState();
+        return;
+      }
       viewState.activeSubSection = null;
       const scrollPanel = document.querySelector(".scroll-panel") || document.querySelector(".page-body");
       if (scrollPanel) {
         scrollPanel.scrollTo({ top: 0, behavior: "smooth" });
       }
-      document.querySelectorAll(".nav-sub-item").forEach((btn, index) => {
-        btn.classList.toggle("active", index === 0);
-      });
       return;
+    }
+    if (viewState.collapsedSubNav) {
+      viewState.collapsedSubNav[nextPage] = false;
     }
     viewState.activeSubSection = null;
     viewState.languageDropdownOpen = false;

@@ -2,7 +2,7 @@ import { activePage, appState, lang, pageDefs, pageOrder } from "../core/state.j
 import { escapeAttr, escapeHtml } from "../core/html.js";
 import { renderCharacteristicsPage, DRIVER_CATEGORIES } from "../features/characteristics/page.js";
 import { renderColorPage, renderGameColorPage } from "../features/color/page.js";
-import { renderSettingsPage, SETTINGS_SECTIONS } from "../features/settings/page.js";
+import { renderSettingsPage } from "../features/settings/page.js";
 import { renderBackupsPage, renderConfigsPage } from "../features/storage/page.js";
 import { renderTweaksPage } from "../features/tweaks/page.js";
 import { tweakCatalog, tweakGroupTitle } from "../features/tweaks/catalog.js";
@@ -107,11 +107,11 @@ export function renderNavList(t, viewState) {
       const page = pageDefs[key];
       const active = key === activePage ? "active" : "";
       const label = t(page.nav);
-      const hasSubNav = key === "tweaks" || key === "characteristics" || key === "settings";
-      const chevron = hasSubNav ? `<span class="nav-chevron">${icon("chevronDown")}</span>` : "";
-      const topBtn = `<button class="nav-item ${active}" type="button" data-page="${key}" title="${escapeHtml(label)}">${icon(page.icon)}<span>${escapeHtml(label)}</span>${chevron}</button>`;
+      const hasSubNav = key === "tweaks" || key === "characteristics";
+      const topBtn = `<button class="nav-item ${active}" type="button" data-page="${key}" title="${escapeHtml(label)}">${icon(page.icon)}<span>${escapeHtml(label)}</span></button>`;
 
-      if (isCollapsed || key !== activePage) {
+      const isSubNavCollapsed = Boolean(viewState?.collapsedSubNav?.[key]);
+      if (isCollapsed || key !== activePage || isSubNavCollapsed) {
         return topBtn;
       }
 
@@ -130,15 +130,6 @@ export function renderNavList(t, viewState) {
           .map((cat, index) => {
             const title = t("driverGroup_" + cat.id) || (isRu ? cat.titleRu : cat.titleEn);
             const sectionId = `driver-section-${cat.id}`;
-            const isSubActive = viewState?.activeSubSection ? viewState.activeSubSection === sectionId : index === 0;
-            return `<button class="nav-sub-item ${isSubActive ? "active" : ""}" type="button" data-action="scroll-to-section" data-section="${escapeAttr(sectionId)}" title="${escapeAttr(title)}"><span>${escapeHtml(title)}</span></button>`;
-          })
-          .join("");
-      } else if (key === "settings") {
-        subItems = SETTINGS_SECTIONS
-          .map((sec, index) => {
-            const title = t(sec.titleKey) || (isRu ? sec.titleRu : sec.titleEn);
-            const sectionId = `settings-section-${sec.id}`;
             const isSubActive = viewState?.activeSubSection ? viewState.activeSubSection === sectionId : index === 0;
             return `<button class="nav-sub-item ${isSubActive ? "active" : ""}" type="button" data-action="scroll-to-section" data-section="${escapeAttr(sectionId)}" title="${escapeAttr(title)}"><span>${escapeHtml(title)}</span></button>`;
           })
