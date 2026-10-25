@@ -193,11 +193,19 @@ export function mergeState(state) {
   const existingOverrides = appState?.settings?.templateOverrides || {};
   const incomingOverrides = state?.settings?.templateOverrides || {};
 
+  const existingTheme = appState?.settings?.theme;
+  let storedTheme = null;
+  try {
+    storedTheme = typeof localStorage !== "undefined" ? localStorage.getItem("synchro_theme") : null;
+  } catch (_) {}
+  const resolvedTheme = state?.settings?.theme || existingTheme || storedTheme || "default";
+
   appState = {
     color: { ...defaultState.color, ...(state?.color || {}) },
     settings: {
       ...defaultState.settings,
       ...(state?.settings || {}),
+      theme: resolvedTheme,
       templateOverrides: {
         ...(defaultState.settings.templateOverrides || {}),
         ...existingOverrides,

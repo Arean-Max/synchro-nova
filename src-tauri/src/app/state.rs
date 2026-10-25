@@ -106,8 +106,14 @@ pub struct AppSettings {
     pub disable_splash: bool,
     pub disable_animations: bool,
     pub eac_auto_protect: bool,
+    #[serde(default = "default_theme")]
+    pub theme: String,
     #[serde(default)]
     pub template_overrides: std::collections::HashMap<String, ColorTemplateOverride>,
+}
+
+fn default_theme() -> String {
+    "default".to_string()
 }
 
 #[cfg(windows)]
@@ -147,6 +153,7 @@ impl Default for AppSettings {
             disable_splash: false,
             disable_animations: false,
             eac_auto_protect: true,
+            theme: default_theme(),
             template_overrides: std::collections::HashMap::new(),
         }
     }
@@ -169,6 +176,11 @@ impl AppSettings {
             self.accent_color = "#ffffff".to_string();
         } else {
             self.accent_color = trimmed_accent.to_lowercase();
+        }
+
+        const VALID_THEMES: &[&str] = &["default", "winter", "autumn", "spring"];
+        if !VALID_THEMES.contains(&self.theme.as_str()) {
+            self.theme = "default".to_string();
         }
 
         for (_, template) in self.template_overrides.iter_mut() {
@@ -665,5 +677,15 @@ mod tests {
         s2.accent_color = "#FF00AA".to_string();
         let sanitized2 = s2.sanitized();
         assert_eq!(sanitized2.accent_color, "#ff00aa");
+
+        let mut s3 = AppSettings::default();
+        s3.theme = "invalid_theme".to_string();
+        let sanitized3 = s3.sanitized();
+        assert_eq!(sanitized3.theme, "default");
+
+        let mut s4 = AppSettings::default();
+        s4.theme = "winter".to_string();
+        let sanitized4 = s4.sanitized();
+        assert_eq!(sanitized4.theme, "winter");
     }
 }

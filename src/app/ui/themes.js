@@ -153,8 +153,9 @@ class ParticleSystem {
       cancelAnimationFrame(this.animId);
       this.animId = null;
     }
+    this.particles = [];
     if (this.ctx && this.canvas) {
-      this.ctx.clearRect(0, 0, this.width, this.height);
+      this.ctx.clearRect(0, 0, this.width || this.canvas.width || 2000, this.height || this.canvas.height || 2000);
     }
   }
 
@@ -248,6 +249,12 @@ export const themeFx = new ParticleSystem();
 export function applyTheme(themeId, options = {}) {
   const validThemes = ["default", "winter", "autumn", "spring"];
   const selectedTheme = validThemes.includes(themeId) ? themeId : "default";
+
+  try {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("synchro_theme", selectedTheme);
+    }
+  } catch (_) {}
 
   if (typeof document !== "undefined" && document.documentElement) {
     document.documentElement.setAttribute("data-theme", selectedTheme);

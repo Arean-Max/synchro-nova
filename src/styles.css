@@ -319,6 +319,7 @@ p, .description {
 
 .sidebar {
   position: relative;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -619,16 +620,16 @@ p, .description {
   height: 52px;
   margin-top: auto;
   padding: 0 18px;
-  color: var(--text-primary);
-  border: 1px solid #2D2D2D;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
-  background: #1E1E1E;
+  background: var(--bg-card);
   text-align: left;
-  cursor: default;
+  cursor: pointer;
   box-sizing: border-box;
   font-size: 14px;
   font-weight: 500;
-  transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
+  transition: color 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 .nav-item .icon,
@@ -733,8 +734,10 @@ p, .description {
 
 .exit-button:hover {
   color: var(--text-primary);
-  border-color: #3a3a3a;
-  background: #232323;
+  border-color: var(--ui-accent);
+  background: var(--bg-card-strong);
+  box-shadow: 0 0 14px -2px var(--ui-accent-glow);
+  transform: translateY(-1px);
 }
 
 .main-panel {
@@ -7278,7 +7281,7 @@ body.paused-animations *::after {
 
 
 /* ==========================================================================
-   Seasonal Themes & Particle Shader Canvas
+   Seasonal Themes & Particle Canvas Architecture
    ========================================================================== */
 
 .theme-fx-canvas {
@@ -7287,20 +7290,23 @@ body.paused-animations *::after {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 10;
+  z-index: 1;
 }
 
+/* Base Theme Palettes */
 [data-theme="winter"] {
   --bg-sidebar: #090e17;
   --bg-main: #0c131f;
   --bg-card: #111a2b;
   --bg-card-strong: #162238;
   --bg-field: #131d2e;
-  --border-subtle: rgba(56, 189, 248, 0.14);
-  --border-strong: rgba(56, 189, 248, 0.28);
+  --border-subtle: rgba(56, 189, 248, 0.16);
+  --border-strong: rgba(56, 189, 248, 0.32);
   --text-secondary: #94a3b8;
   --text-tertiary: #64748b;
-  --ui-accent-glow: rgba(56, 189, 248, 0.38);
+  --ui-accent: #38bdf8;
+  --ui-accent-fg: #38bdf8;
+  --ui-accent-glow: rgba(56, 189, 248, 0.45);
 }
 
 [data-theme="autumn"] {
@@ -7309,11 +7315,13 @@ body.paused-animations *::after {
   --bg-card: #1f1612;
   --bg-card-strong: #291d17;
   --bg-field: #201713;
-  --border-subtle: rgba(245, 158, 11, 0.14);
-  --border-strong: rgba(245, 158, 11, 0.28);
+  --border-subtle: rgba(245, 158, 11, 0.16);
+  --border-strong: rgba(245, 158, 11, 0.32);
   --text-secondary: #a89f91;
   --text-tertiary: #78716c;
-  --ui-accent-glow: rgba(245, 158, 11, 0.38);
+  --ui-accent: #f59e0b;
+  --ui-accent-fg: #f59e0b;
+  --ui-accent-glow: rgba(245, 158, 11, 0.45);
 }
 
 [data-theme="spring"] {
@@ -7322,50 +7330,184 @@ body.paused-animations *::after {
   --bg-card: #1c1424;
   --bg-card-strong: #261b31;
   --bg-field: #1e1526;
-  --border-subtle: rgba(244, 114, 182, 0.14);
-  --border-strong: rgba(244, 114, 182, 0.28);
+  --border-subtle: rgba(244, 114, 182, 0.16);
+  --border-strong: rgba(244, 114, 182, 0.32);
   --text-secondary: #a79cb0;
   --text-tertiary: #71647a;
-  --ui-accent-glow: rgba(244, 114, 182, 0.38);
+  --ui-accent: #f472b6;
+  --ui-accent-fg: #f472b6;
+  --ui-accent-glow: rgba(244, 114, 182, 0.45);
 }
 
+/* Ambient Backdrops */
 [data-theme="winter"] .app-shell {
-  background: radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.07), transparent 50%),
+  background: radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.08), transparent 52%),
               radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.05), transparent 45%),
               var(--bg-main);
 }
 
 [data-theme="autumn"] .app-shell {
-  background: radial-gradient(circle at 85% 15%, rgba(245, 158, 11, 0.08), transparent 50%),
+  background: radial-gradient(circle at 85% 15%, rgba(245, 158, 11, 0.09), transparent 52%),
               radial-gradient(circle at 15% 85%, rgba(234, 88, 12, 0.06), transparent 45%),
               var(--bg-main);
 }
 
 [data-theme="spring"] .app-shell {
-  background: radial-gradient(circle at 85% 15%, rgba(244, 114, 182, 0.08), transparent 50%),
+  background: radial-gradient(circle at 85% 15%, rgba(244, 114, 182, 0.09), transparent 52%),
               radial-gradient(circle at 15% 85%, rgba(192, 132, 252, 0.06), transparent 45%),
               var(--bg-main);
 }
 
+/* Scrollbars */
 [data-theme="winter"] ::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.22);
+  background: rgba(56, 189, 248, 0.25);
 }
 [data-theme="winter"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.45);
 }
 
 [data-theme="autumn"] ::-webkit-scrollbar-thumb {
-  background: rgba(245, 158, 11, 0.22);
+  background: rgba(245, 158, 11, 0.25);
 }
 [data-theme="autumn"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.45);
 }
 
 [data-theme="spring"] ::-webkit-scrollbar-thumb {
-  background: rgba(244, 114, 182, 0.22);
+  background: rgba(244, 114, 182, 0.25);
 }
 [data-theme="spring"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(244, 114, 182, 0.4);
+  background: rgba(244, 114, 182, 0.45);
+}
+
+/* Themed Button Details & Snow / Ember / Sakura Caps */
+[data-theme="winter"] .nav-item.active,
+[data-theme="winter"] .theme-card.active,
+[data-theme="winter"] .btn-primary {
+  position: relative;
+  box-shadow: 0 0 16px -2px rgba(56, 189, 248, 0.42), inset 0 1px 0 0 rgba(224, 242, 254, 0.7);
+}
+
+[data-theme="winter"] .nav-item.active::before,
+[data-theme="winter"] .exit-button:hover::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(224, 242, 254, 0.85) 20%, #ffffff 50%, rgba(224, 242, 254, 0.85) 80%, transparent);
+  border-radius: 999px;
+  filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.8));
+  pointer-events: none;
+}
+
+[data-theme="winter"] .exit-button {
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+[data-theme="winter"] .exit-button:hover {
+  border-color: #38bdf8;
+  color: #e0f2fe;
+  box-shadow: 0 0 14px -2px rgba(56, 189, 248, 0.45), inset 0 1px 0 0 rgba(224, 242, 254, 0.6);
+}
+
+/* Autumn Warm Ember Details */
+[data-theme="autumn"] .nav-item.active,
+[data-theme="autumn"] .theme-card.active,
+[data-theme="autumn"] .btn-primary {
+  position: relative;
+  box-shadow: 0 0 18px -2px rgba(245, 158, 11, 0.38), inset 0 1px 0 0 rgba(251, 191, 36, 0.6);
+}
+
+[data-theme="autumn"] .nav-item.active::before,
+[data-theme="autumn"] .exit-button:hover::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.9) 20%, #fbbf24 50%, rgba(234, 88, 12, 0.9) 80%, transparent);
+  border-radius: 999px;
+  filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.8));
+  pointer-events: none;
+}
+
+[data-theme="autumn"] .exit-button {
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="autumn"] .exit-button:hover {
+  border-color: #f59e0b;
+  color: #fef3c7;
+  box-shadow: 0 0 14px -2px rgba(245, 158, 11, 0.45), inset 0 1px 0 0 rgba(251, 191, 36, 0.5);
+}
+
+/* Spring Sakura Night Details */
+[data-theme="spring"] .nav-item.active,
+[data-theme="spring"] .theme-card.active,
+[data-theme="spring"] .btn-primary {
+  position: relative;
+  box-shadow: 0 0 18px -2px rgba(244, 114, 182, 0.38), inset 0 1px 0 0 rgba(249, 168, 212, 0.6);
+}
+
+[data-theme="spring"] .nav-item.active::before,
+[data-theme="spring"] .exit-button:hover::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(244, 114, 182, 0.9) 20%, #f472b6 50%, rgba(192, 132, 252, 0.9) 80%, transparent);
+  border-radius: 999px;
+  filter: drop-shadow(0 0 3px rgba(244, 114, 182, 0.8));
+  pointer-events: none;
+}
+
+[data-theme="spring"] .exit-button {
+  border-color: rgba(244, 114, 182, 0.2);
+}
+
+[data-theme="spring"] .exit-button:hover {
+  border-color: #f472b6;
+  color: #fce7f3;
+  box-shadow: 0 0 14px -2px rgba(244, 114, 182, 0.45), inset 0 1px 0 0 rgba(249, 168, 212, 0.5);
+}
+
+/* Intro Splash Screen Theming */
+[data-theme="winter"] .intro-splash-screen {
+  background: radial-gradient(circle at 50% 45%, rgba(56, 189, 248, 0.15), transparent 65%), #090e17;
+}
+[data-theme="winter"] .intro-splash-logo-img {
+  filter: drop-shadow(0 0 24px rgba(56, 189, 248, 0.55));
+}
+[data-theme="winter"] .splash-word-nova {
+  color: #38bdf8;
+  text-shadow: 0 0 22px rgba(56, 189, 248, 0.65);
+}
+
+[data-theme="autumn"] .intro-splash-screen {
+  background: radial-gradient(circle at 50% 45%, rgba(245, 158, 11, 0.15), transparent 65%), #100b09;
+}
+[data-theme="autumn"] .intro-splash-logo-img {
+  filter: drop-shadow(0 0 24px rgba(245, 158, 11, 0.55));
+}
+[data-theme="autumn"] .splash-word-nova {
+  color: #f59e0b;
+  text-shadow: 0 0 22px rgba(245, 158, 11, 0.65);
+}
+
+[data-theme="spring"] .intro-splash-screen {
+  background: radial-gradient(circle at 50% 45%, rgba(244, 114, 182, 0.15), transparent 65%), #0f0a14;
+}
+[data-theme="spring"] .intro-splash-logo-img {
+  filter: drop-shadow(0 0 24px rgba(244, 114, 182, 0.55));
+}
+[data-theme="spring"] .splash-word-nova {
+  color: #f472b6;
+  text-shadow: 0 0 22px rgba(244, 114, 182, 0.65);
 }
 
 /* Theme picker in settings */
@@ -7390,7 +7532,7 @@ body.paused-animations *::after {
   border-radius: var(--radius-card);
   padding: 8px;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -7414,7 +7556,7 @@ body.paused-animations *::after {
 }
 
 .theme-card-preview {
-  height: 56px;
+  height: 52px;
   border-radius: 8px;
   position: relative;
   overflow: hidden;
@@ -7433,49 +7575,27 @@ body.paused-animations *::after {
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.theme-card-icon .icon,
+.theme-card-icon svg {
+  width: 26px;
+  height: 26px;
+  stroke: currentColor;
+}
+
 .theme-card:hover .theme-card-icon {
-  transform: scale(1.12);
-}
-
-.theme-card-badge {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.theme-card.active .theme-card-badge {
-  background: rgba(255, 255, 255, 0.92);
-  color: #111113;
-  border-color: transparent;
+  transform: scale(1.14);
 }
 
 .theme-card-info {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 0 2px 2px;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 0 2px;
 }
 
 .theme-card-name {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--text-primary);
-}
-
-.theme-card-desc {
-  font-size: 11px;
-  color: var(--text-secondary);
-  line-height: 1.35;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
 }

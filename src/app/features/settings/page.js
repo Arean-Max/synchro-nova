@@ -50,13 +50,15 @@ export function renderSettingsPage(appState, viewState, t) {
     `;
   }).join("");
 
+  const langSecondary = currentLang.nativeName !== currentLang.name ? `<span class="language-label-name">${escapeHtml(currentLang.name)}</span>` : "";
+
   const languageDropdown = `
     <div class="form-label">${escapeHtml(t("language") || (isRu ? "Язык интерфейса" : "Interface Language"))}</div>
     <div class="language-custom-dropdown ${isDropdownOpen ? "open" : ""}">
       <button class="language-dropdown-trigger" type="button" data-action="toggle-language-dropdown">
         <span class="language-dropdown-label">
           <span class="language-label-native">${escapeHtml(currentLang.nativeName)}</span>
-          <span class="language-label-name">${escapeHtml(currentLang.name)}</span>
+          ${langSecondary}
         </span>
         <span class="language-dropdown-arrow">${icon("chevronDown")}</span>
       </button>
@@ -100,23 +102,20 @@ export function renderSettingsPage(appState, viewState, t) {
     </div>
   `;
 
-  const currentTheme = appState?.settings?.theme || "default";
+  const currentTheme = appState?.settings?.theme || (typeof localStorage !== "undefined" && localStorage.getItem("synchro_theme")) || "default";
 
   const themeCards = THEMES.map((theme) => {
     const isSelected = currentTheme === theme.id;
     const name = isRu ? theme.nameRu : theme.nameEn;
-    const desc = isRu ? theme.descRu : theme.descEn;
     const gradient = `linear-gradient(135deg, ${theme.previewColors[0]} 0%, ${theme.previewColors[1]} 55%, ${theme.previewColors[2]} 100%)`;
 
     return `
       <button class="theme-card ${isSelected ? "active" : ""}" type="button" data-action="select-theme" data-theme="${escapeAttr(theme.id)}" title="${escapeAttr(name)}">
         <div class="theme-card-preview" style="background:${gradient};">
           <span class="theme-card-icon">${icon(theme.icon)}</span>
-          <span class="theme-card-badge">${escapeHtml(theme.badge)}</span>
         </div>
         <div class="theme-card-info">
           <span class="theme-card-name">${escapeHtml(name)}</span>
-          <span class="theme-card-desc">${escapeHtml(desc)}</span>
         </div>
       </button>
     `;

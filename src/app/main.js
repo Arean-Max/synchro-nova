@@ -2890,6 +2890,13 @@ async function checkSecurityIncidents() {
 }
 
 async function boot() {
+  let savedTheme = "default";
+  try {
+    savedTheme = localStorage.getItem("synchro_theme") || "default";
+  } catch (_) {}
+  applyTheme(savedTheme, { disableAnimations: false });
+  if (appState.settings) appState.settings.theme = savedTheme;
+
   const statePromise = invokeCommand("get_app_state");
   const holoPromise = loadBlackHoloStatus();
   try {

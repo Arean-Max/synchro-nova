@@ -446,6 +446,25 @@ test("Themes: Settings page renders theme picker grid with active card selection
   assert.ok(html.includes('data-theme="default"') && !html.includes('data-theme="default" class="theme-card active"'), "Default theme must be inactive");
   assert.ok(html.includes('data-theme="autumn"') && !html.includes('data-theme="autumn" class="theme-card active"'), "Autumn theme must be inactive");
   assert.ok(html.includes('data-theme="spring"') && !html.includes('data-theme="spring" class="theme-card active"'), "Spring theme must be inactive");
+  assert.ok(!html.includes("theme-card-desc"), "Theme cards must not render description text");
+  assert.ok(!html.includes("theme-card-badge"), "Theme cards must not render top-right badges");
+});
+
+test("State: mergeState preserves active theme across backend syncs", async () => {
+  const { mergeState } = await import("../src/app/core/state.js");
+  const stateWithWinter = mergeState({
+    settings: {
+      theme: "winter"
+    }
+  });
+  assert.strictEqual(stateWithWinter.settings.theme, "winter", "Must store winter theme");
+
+  const syncedState = mergeState({
+    settings: {
+      accentColor: "#38bdf8"
+    }
+  });
+  assert.strictEqual(syncedState.settings.theme, "winter", "Must preserve winter theme across sync");
 });
 
 test("Themes: applyTheme validates and sets data-theme attribute on documentElement", async () => {
