@@ -167,24 +167,15 @@ function renderDriverTile(driver, t, isRu) {
     }
   }
 
-  let statusLabel;
-  if (isOutdated) {
-    statusLabel = cleanLatest && cleanLatest !== "-"
-      ? `${t("driverAvailableVersion") || (isRu ? "Доступна" : "Available")} v${cleanLatest}`
-      : (t("driverUpdateAvailable") || (isRu ? "Доступно обновление" : "Update Available"));
-  } else {
-    statusLabel = t("driverUpToDate") || (isRu ? "Актуален" : "Up to Date");
-  }
-
   const btnLabel = isOutdated
     ? (t("driverDownloadUpdate") || (isRu ? "Скачать обновление" : "Download Update"))
     : (t("driverOfficialSite") || (isRu ? "Официальный сайт" : "Official Site"));
 
   const dateText = driver.date || "-";
   const providerText = driver.provider || "-";
-  const newVerSpec = isOutdated
-    ? `<div class="driver-spec-item update-hint"><span class="spec-label">${escapeHtml(t("driverAvailableVersion") || (isRu ? "Доступна:" : "Available:"))}</span> <span class="spec-val highlight-new">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : escapeHtml(t("updateAvailableUnspecified") || (isRu ? "Обновление доступно" : "Update available"))}</span></div>`
-    : `<div class="driver-spec-item uptodate-hint"><span class="spec-label">${escapeHtml(t("driverLatestVersion") || (isRu ? "Актуальная:" : "Latest:"))}</span> <span class="spec-val highlight-uptodate">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : (versionText !== "-" ? escapeHtml(versionText) : "-")}</span></div>`;
+  const newVerSpec = isOutdated && cleanLatest && cleanLatest !== "-"
+    ? `<div class="driver-spec-item update-hint"><span class="spec-label">${escapeHtml(t("driverAvailableVersion") || (isRu ? "Доступна:" : "Available:"))}</span> <span class="spec-val">${escapeHtml(`v${cleanLatest}`)}</span></div>`
+    : "";
 
   return `
     <div class="driver-tile ${isOutdated ? "has-update" : "uptodate"}">
@@ -196,10 +187,6 @@ function renderDriverTile(driver, t, isRu) {
           <span class="driver-tile-name" title="${escapeAttr(driver.name)}">${escapeHtml(driver.name)}</span>
           <span class="driver-tile-provider">${escapeHtml(providerText)}</span>
         </div>
-        <span class="driver-tile-badge ${isOutdated ? "update" : "uptodate"}">
-          ${isOutdated ? icon("alert") : icon("check")}
-          <span>${escapeHtml(statusLabel)}</span>
-        </span>
       </div>
       <div class="driver-tile-specs">
         <div class="driver-spec-item" title="${escapeAttr(driver.version || "")}"><span class="spec-label">${escapeHtml(t("version"))}:</span> <span class="spec-val version">${escapeHtml(versionText)}</span></div>

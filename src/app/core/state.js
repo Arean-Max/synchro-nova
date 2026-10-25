@@ -26,6 +26,7 @@ export const defaultState = {
     autoUpdate: true,
     disableSplash: false,
     disableAnimations: false,
+    eacAutoProtect: true,
     templateOverrides: {}
   },
   keybinds: [],

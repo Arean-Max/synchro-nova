@@ -6,9 +6,8 @@ import { lang } from "../../core/state.js";
 
 export const SETTINGS_SECTIONS = [
   { id: "appearance", titleKey: "settingsAppearance", titleEn: "Appearance", titleRu: "Внешний вид", icon: "monitor" },
-  { id: "system", titleKey: "settingsSystem", titleEn: "System Behavior", titleRu: "Системные параметры", icon: "settings" },
-  { id: "security", titleKey: "eacShieldTitle", titleEn: "Anti-Cheat Compatibility (EAC)", titleRu: "Безопасность EAC", icon: "shield" },
-  { id: "community", titleKey: "community", titleEn: "Community & Links", titleRu: "Сообщество и ссылки", icon: "network" }
+  { id: "community", titleKey: "community", titleEn: "Community & Links", titleRu: "Сообщество и ссылки", icon: "network" },
+  { id: "system", titleKey: "settingsSystem", titleEn: "System Behavior", titleRu: "Системные параметры", icon: "settings" }
 ];
 
 const ACCENT_PRESETS = [
@@ -23,6 +22,7 @@ const ACCENT_PRESETS = [
 ];
 
 const SETTING_TOGGLE_KEYS = [
+  { key: "eacAutoProtect", labelKey: "eacAutoProtect" },
   { key: "autostartWindows", labelKey: "startWithWindows" },
   { key: "closeToTray", labelKey: "closeToTray" },
   { key: "zeroDaemonMode", labelKey: "zeroDaemonMode" },
@@ -109,22 +109,6 @@ export function renderSettingsPage(appState, viewState, t) {
     </section>
   `;
 
-  const securityCard = `
-    <section class="card settings-group" id="settings-section-security">
-      <h2 class="group-title">${icon("shield")}<span>${escapeHtml(t("eacShieldTitle") || (isRu ? "Безопасность EAC" : "Anti-Cheat Compatibility (EAC)"))}</span></h2>
-      <div class="settings-actions-row">
-        <button class="btn btn-outline" type="button" data-action="audit-anticheat">
-          ${icon("shield")}
-          <span>${escapeHtml(t("auditAntiCheat") || (isRu ? "Проверить совместимость с EAC" : "Audit EAC Integrity"))}</span>
-        </button>
-        <button class="btn btn-outline" type="button" data-action="fix-anticheat">
-          ${icon("shieldCheck")}
-          <span>${escapeHtml(t("fixAntiCheat") || (isRu ? "Исправить целостность для EAC" : "Restore Anti-Cheat Compliance"))}</span>
-        </button>
-      </div>
-    </section>
-  `;
-
   const communityCard = `
     <section class="card settings-group" id="settings-section-community">
       <h2 class="group-title">${icon("network")}<span>${escapeHtml(t("community") || (isRu ? "Сообщество и ссылки" : "Community & Links"))}</span></h2>
@@ -151,9 +135,8 @@ export function renderSettingsPage(appState, viewState, t) {
     <div class="settings-page">
       <div class="scroll-panel">
         ${appearanceCard}
-        ${systemCard}
-        ${securityCard}
         ${communityCard}
+        ${systemCard}
       </div>
     </div>
   `;

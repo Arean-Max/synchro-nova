@@ -296,21 +296,23 @@ test("Settings: does not render manual check for updates button or row", async (
   assert.ok(!html.includes("checkForUpdates"), "Check for updates label must be removed from settings");
 });
 
-test("Settings: divided into 4 modular section blocks with scrollable panel", async () => {
+test("Settings: divided into 3 modular section blocks with scrollable panel and eacAutoProtect toggle", async () => {
   const { renderSettingsPage, SETTINGS_SECTIONS } = await import("../src/app/features/settings/page.js");
   const t = (k) => k;
   const mockState = {
     settings: {
       language: "en",
-      accentColor: "#ffffff"
+      accentColor: "#ffffff",
+      eacAutoProtect: true
     }
   };
   const html = renderSettingsPage(mockState, {}, t);
   assert.ok(html.includes('id="settings-section-appearance"'), "Must contain appearance section anchor");
-  assert.ok(html.includes('id="settings-section-system"'), "Must contain system section anchor");
-  assert.ok(html.includes('id="settings-section-security"'), "Must contain security section anchor");
   assert.ok(html.includes('id="settings-section-community"'), "Must contain community section anchor");
-  assert.equal(SETTINGS_SECTIONS.length, 4);
+  assert.ok(html.includes('id="settings-section-system"'), "Must contain system section anchor");
+  assert.ok(!html.includes('id="settings-section-security"'), "Security section block must be removed");
+  assert.ok(html.includes('data-setting="eacAutoProtect"'), "Must contain eacAutoProtect setting toggle");
+  assert.equal(SETTINGS_SECTIONS.length, 3);
 });
 
 test("Characteristics: driver group sections have anchor IDs and unconstrained search bar is removed", async () => {
@@ -367,9 +369,9 @@ test("Layout Navigation: renderNavList generates smooth-scroll sub-buttons under
   setActivePage("settings");
   const settingsNavHtml = renderNavList(t, { sidebarCollapsed: false });
   assert.ok(settingsNavHtml.includes('data-section="settings-section-appearance"'), "Must scroll to settings-section-appearance");
-  assert.ok(settingsNavHtml.includes('data-section="settings-section-system"'), "Must scroll to settings-section-system");
-  assert.ok(settingsNavHtml.includes('data-section="settings-section-security"'), "Must scroll to settings-section-security");
   assert.ok(settingsNavHtml.includes('data-section="settings-section-community"'), "Must scroll to settings-section-community");
+  assert.ok(settingsNavHtml.includes('data-section="settings-section-system"'), "Must scroll to settings-section-system");
+  assert.ok(!settingsNavHtml.includes('data-section="settings-section-security"'), "Security section sub-button must be removed");
 
   // Reset active page to color
   setActivePage("color");

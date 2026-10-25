@@ -196,6 +196,9 @@ pub fn run() {
             domain::color::start_color_guard();
             infra::screenshot::start_global_screenshot_listener();
             let _ = settings::set_autostart(app.handle(), initial.settings.autostart_windows);
+            if initial.settings.eac_auto_protect {
+                let _ = platform::security_guard::fix_anticheat_integrity();
+            }
             app::tray::install_tray(app.handle())?;
 
             if let Some(window) = app.get_webview_window("main") {

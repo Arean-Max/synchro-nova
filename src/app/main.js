@@ -306,6 +306,7 @@ function showToastBanner(title, impactText, category = "safe") {
 
 function showSettingHelpBanner(key) {
   const titles = {
+    eacAutoProtect: t("eacAutoProtect"),
     autostartWindows: t("startWithWindows"),
     closeToTray: t("closeToTray"),
     zeroDaemonMode: t("zeroDaemonMode"),
@@ -558,8 +559,11 @@ function syncNavIndicator() {
   const sidebar = document.querySelector(".sidebar");
   const activeItem = document.querySelector(".nav-item.active");
   if (!sidebar || !activeItem) return;
-  const indicatorHeight = Math.min(24, activeItem.offsetHeight);
-  const y = activeItem.offsetTop + (activeItem.offsetHeight - indicatorHeight) / 2;
+  const sidebarRect = sidebar.getBoundingClientRect();
+  const itemRect = activeItem.getBoundingClientRect();
+  const itemHeight = itemRect.height || 40;
+  const indicatorHeight = Math.min(24, itemHeight);
+  const y = (itemRect.top - sidebarRect.top) + (itemHeight - indicatorHeight) / 2;
   sidebar.style.setProperty("--nav-indicator-y", `${Math.round(y)}px`);
   sidebar.style.setProperty("--nav-indicator-height", `${indicatorHeight}px`);
 }
@@ -568,6 +572,7 @@ function updateNavState() {
   const navList = document.querySelector(".nav-list");
   if (navList) {
     navList.innerHTML = renderNavList(t, viewState);
+    navList.onscroll = syncNavIndicator;
   }
   syncNavIndicator();
 }
@@ -2043,6 +2048,13 @@ async function handleClick(event) {
     if (key === "showOnRecordings") await applyColor();
     if (key === "disableAnimations") {
       document.body.classList.toggle("no-animations", Boolean(appState.settings.disableAnimations));
+    }
+    if (key === "eacAutoProtect" && nextVal) {
+      try {
+        await invokeCommand("fix_anticheat_environment");
+      } catch (err) {
+        console.error("eac auto-protect fix failed:", err);
+      }
     }
     return;
   }

@@ -105,6 +105,7 @@ pub struct AppSettings {
     pub auto_update: bool,
     pub disable_splash: bool,
     pub disable_animations: bool,
+    pub eac_auto_protect: bool,
     #[serde(default)]
     pub template_overrides: std::collections::HashMap<String, ColorTemplateOverride>,
 }
@@ -145,6 +146,7 @@ impl Default for AppSettings {
             auto_update: true,
             disable_splash: false,
             disable_animations: false,
+            eac_auto_protect: true,
             template_overrides: std::collections::HashMap::new(),
         }
     }

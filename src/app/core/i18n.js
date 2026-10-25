@@ -202,6 +202,8 @@ const dictionaries = {
     settingsSystem: "System Behavior",
     settingsSecurity: "Anti-Cheat Compatibility (EAC)",
     settingsCommunity: "Community & Links",
+    eacAutoProtect: "Automatic Easy Anti-Cheat Compatibility",
+    help_eacAutoProtect: "Automatically audits and restores system parameters for EAC compliance on startup.",
     weOnGithub: "Source Code on GitHub",
     weOnTelegram: "Synchro on Telegram",
     weOnGithubCaps: "SOURCE CODE",
@@ -536,6 +538,8 @@ const dictionaries = {
     settingsSystem: "Системные параметры",
     settingsSecurity: "Безопасность EAC",
     settingsCommunity: "Сообщество и ссылки",
+    eacAutoProtect: "Автоматическая совместимость с Easy Anti-Cheat",
+    help_eacAutoProtect: "Автоматически проверяет и восстанавливает параметры системы для безопасности EAC.",
     weOnGithub: "Мы на GitHub",
     weOnTelegram: "Мы в Telegram",
     weOnGithubCaps: "ИСХОДНЫЙ КОД",
@@ -1008,6 +1012,8 @@ const dictionaries = {
     settingsSystem: "System Behavior",
     settingsSecurity: "Anti-Cheat Compatibility (EAC)",
     settingsCommunity: "Community & Links",
+    eacAutoProtect: "Automatic Easy Anti-Cheat Compatibility",
+    help_eacAutoProtect: "Automatically audits and restores system parameters for EAC compliance on startup.",
     sourceCodeCaps: "QUELLCODE",
     weOnTelegramCaps: "TELEGRAM-KANAL",
     exit: "Beenden",
@@ -2559,7 +2565,8 @@ const ruOverrides = {
   settingsAppearance: "Внешний вид",
   settingsSystem: "Системные параметры",
   settingsSecurity: "Безопасность EAC",
-  settingsCommunity: "Сообщество и ссылки"
+  settingsCommunity: "Сообщество и ссылки",
+  eacAutoProtect: "Автоматическая совместимость с Easy Anti-Cheat"
 };
 
 export function translate(language, key) {

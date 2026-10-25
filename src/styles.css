@@ -243,7 +243,7 @@ button {
   flex-direction: column;
   min-width: 0;
   height: 100%;
-  padding: 24px 14px 16px;
+  padding: 18px 12px 14px;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-subtle);
   transition: padding 260ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -253,7 +253,7 @@ button {
 }
 
 .workspace.sidebar-collapsed .sidebar {
-  padding: 24px 10px 16px;
+  padding: 18px 10px 14px;
 }
 
 .nav-indicator {
@@ -275,8 +275,9 @@ button {
 
 .brand {
   display: block;
-  min-height: 72px;
-  margin: 0 4px 18px;
+  min-height: 52px;
+  flex-shrink: 0;
+  margin: 0 4px 10px;
   transition: margin 260ms ease, min-height 260ms ease;
 }
 
@@ -348,8 +349,9 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 6px 14px;
-  min-height: 28px;
+  margin: 0 6px 8px;
+  min-height: 24px;
+  flex-shrink: 0;
 }
 
 .nav-section-head .nav-label {
@@ -501,25 +503,70 @@ button {
 }
 
 .nav-list {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2px;
 }
 
-.nav-item,
-.exit-button {
+.nav-list::-webkit-scrollbar {
+  width: 3px;
+}
+
+.nav-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+
+.nav-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.nav-item {
   position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
-  min-height: 44px;
-  padding: 0 14px;
+  min-height: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0 12px;
   color: var(--text-secondary);
   background: transparent;
   border: 1px solid transparent;
   border-radius: 10px;
   text-align: left;
   cursor: default;
+  box-sizing: border-box;
+}
+
+.exit-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  margin-top: 8px;
+  padding: 0 14px;
+  color: var(--text-primary);
+  border: 1px solid #2D2D2D;
+  border-radius: 10px;
+  background: #1E1E1E;
+  text-align: left;
+  cursor: default;
+  box-sizing: border-box;
 }
 
 .nav-item .icon,
@@ -578,19 +625,23 @@ button {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin: 4px 0 8px 23px;
-  padding: 0 0 0 12px;
-  animation: navSubSlide 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  gap: 2px;
+  margin: 3px 0 6px 20px;
+  padding: 0 0 0 10px;
+  flex-shrink: 0;
+  overflow: hidden;
+  animation: navSubExpand 220ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes navSubSlide {
+@keyframes navSubExpand {
   0% {
     opacity: 0;
-    transform: translateY(-3px);
+    max-height: 0;
+    transform: translateY(-4px);
   }
   100% {
     opacity: 1;
+    max-height: 280px;
     transform: translateY(0);
   }
 }
@@ -611,7 +662,9 @@ button {
   align-items: center;
   width: 100%;
   min-height: 28px;
-  padding: 5px 10px;
+  height: 28px;
+  flex-shrink: 0;
+  padding: 4px 10px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -623,6 +676,7 @@ button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  box-sizing: border-box;
   transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
 }
 
@@ -642,10 +696,10 @@ button {
 }
 
 .nav-sub-item.active {
-  color: var(--text-primary, #ffffff);
+  color: #ffffff !important;
   font-weight: 550;
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.04);
 }
 
 .workspace.sidebar-collapsed .nav-sub-list {
@@ -653,16 +707,10 @@ button {
 }
 
 .sidebar-spacer {
-  flex: 1;
+  display: none;
 }
 
-.exit-button {
-  min-height: 62px;
-  padding: 0 18px;
-  color: var(--text-primary);
-  border-color: #2D2D2D;
-  background: #1E1E1E;
-}
+/* exit-button base defined above */
 
 .exit-button:hover {
   color: var(--text-primary);
@@ -4121,7 +4169,7 @@ button {
 .settings-group .group-title .icon {
   width: 18px;
   height: 18px;
-  color: var(--accent, #38bdf8);
+  color: var(--text-primary);
 }
 
 .settings-legacy-page {
@@ -5669,14 +5717,14 @@ button {
 }
 
 .driver-tile.has-update {
-  border-color: rgba(245, 158, 11, 0.35);
-  background: rgba(245, 158, 11, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--bg-card);
 }
 
 .driver-tile.has-update:hover {
-  border-color: rgba(245, 158, 11, 0.55);
-  background: rgba(245, 158, 11, 0.06);
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.32);
 }
 
 .driver-tile-top {
