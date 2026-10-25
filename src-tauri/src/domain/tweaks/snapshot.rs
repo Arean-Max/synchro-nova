@@ -226,6 +226,48 @@ pub fn registry_backup_targets() -> &'static [RegistryTarget] {
     REGISTRY_BACKUP_TARGETS
 }
 
+fn is_valid_guid_format(s: &str) -> bool {
+    let bytes = s.as_bytes();
+    if bytes.len() != 38 || bytes[0] != b'{' || bytes[37] != b'}' {
+        return false;
+    }
+    for (i, &b) in bytes[1..37].iter().enumerate() {
+        if i == 8 || i == 13 || i == 18 || i == 23 {
+            if b != b'-' {
+                return false;
+            }
+        } else if !b.is_ascii_hexdigit() {
+            return false;
+        }
+    }
+    true
+}
+
+pub fn is_allowed_restore_target(hive: &str, path: &str, name: &str) -> bool {
+    let matches_static = REGISTRY_BACKUP_TARGETS.iter().any(|target| {
+        target.hive.eq_ignore_ascii_case(hive)
+            && target.path.eq_ignore_ascii_case(path)
+            && target.name.eq_ignore_ascii_case(name)
+    });
+    if matches_static {
+        return true;
+    }
+
+    if hive.eq_ignore_ascii_case("HKLM") {
+        let prefix = r"system\currentcontrolset\services\tcpip\parameters\interfaces\";
+        let path_lower = path.to_lowercase();
+        if path_lower.starts_with(prefix) {
+            let guid_part = &path_lower[prefix.len()..];
+            if is_valid_guid_format(guid_part) {
+                let name_lower = name.to_lowercase();
+                return matches!(name_lower.as_str(), "tcpackfrequency" | "tcpnodelay" | "tcpdelackticks");
+            }
+        }
+    }
+
+    false
+}
+
 pub fn collect_tweak_registry_snapshot() -> Vec<TweakRegistrySnapshot> {
     let mut snapshots: Vec<TweakRegistrySnapshot> = registry_backup_targets()
         .iter()
@@ -304,6 +346,13 @@ pub fn read_registry_value(_target: &RegistryTarget) -> Option<TweakRegistryValu
 
 #[cfg(target_os = "windows")]
 pub fn restore_registry_value(entry: &TweakRegistrySnapshot) -> Result<(), String> {
+    if !is_allowed_restore_target(&entry.hive, &entry.path, &entry.name) {
+        return Err(format!(
+            "Restoration rejected: target {}\\{}\\{} is not on the tweak allowlist",
+            entry.hive, entry.path, entry.name
+        ));
+    }
+
     use winreg::{
         enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE},
         RegKey,

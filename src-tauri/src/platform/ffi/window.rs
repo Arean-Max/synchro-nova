@@ -175,9 +175,8 @@ pub fn ensure_single_instance_retry(mutex_name: &str, window_title: &str, is_res
                     winapi::ShowWindow(hwnd, SW_RESTORE);
                     winapi::SetForegroundWindow(hwnd);
                 }
-                return false;
             }
-            return true;
+            return false;
         }
 
         SINGLE_INSTANCE_MUTEX_HANDLE.store(handle, std::sync::atomic::Ordering::SeqCst);

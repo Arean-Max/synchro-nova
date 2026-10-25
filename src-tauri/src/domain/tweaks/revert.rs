@@ -1,6 +1,6 @@
 use super::engine::is_admin_tweak;
 use super::runner::{
-    delete_hklm_value, run_command_result, run_netsh, run_powercfg, set_hkcu_dword,
+    delete_hkcu_value, delete_hklm_value, run_command_result, run_netsh, run_powercfg, set_hkcu_dword,
     set_hkcu_string, set_hklm_dword,
 };
 use super::types::{applied, failed, skipped, TweakApplyResult};
@@ -154,11 +154,22 @@ fn revert_one(id: &str) -> TweakApplyResult {
             "MPO multiplane overlay restored to default",
         ),
 
-        "pcie-aspm-off" => run_powercfg(
-            id,
-            &["/setacvalueindex", "SCHEME_CURRENT", "SUB_PCIEXPRESS", "EXPRESS", "1"],
-            "PCIe ASPM link state power management restored to default",
-        ),
+        "pcie-aspm-off" => {
+            let _ = super::runner::run_command(
+                "powercfg",
+                &["/setacvalueindex", "SCHEME_CURRENT", "SUB_PCIEXPRESS", "ASPM", "1"],
+            );
+            let _ = super::runner::run_command(
+                "powercfg",
+                &["/setdcvalueindex", "SCHEME_CURRENT", "SUB_PCIEXPRESS", "ASPM", "1"],
+            );
+            let r3 = super::runner::run_command("powercfg", &["/setactive", "SCHEME_CURRENT"]);
+            if r3.is_ok() {
+                applied(id, "PCIe ASPM link state power management restored to default")
+            } else {
+                failed(id, "Failed to restore PCIe ASPM in current power plan; run as administrator")
+            }
+        }
 
         "power-plan-high" | "ultimate-performance-plan" => run_powercfg(
             id,
@@ -361,18 +372,53 @@ fn revert_one(id: &str) -> TweakApplyResult {
         ),
 
         "tcp-nodelay-ack" => {
-            let _ = delete_hklm_value(
-                "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces",
-                "TcpAckFrequency",
-            );
-            let _ = delete_hklm_value(
-                "SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces",
-                "TCPNoDelay",
-            );
-            applied(id, "TCP ACK frequency and Nagle algorithm restored to defaults")
+            #[cfg(target_os = "windows")]
+            {
+                use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+                let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+                let base_path = r"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces";
+                if let Ok(interfaces) = hklm.open_subkey(base_path) {
+                    for subkey_name in interfaces.enum_keys().flatten() {
+                        let full_path = format!("{base_path}\\{subkey_name}");
+                        let _ = delete_hklm_value(&full_path, "TcpAckFrequency");
+                        let _ = delete_hklm_value(&full_path, "TCPNoDelay");
+                        let _ = delete_hklm_value(&full_path, "TcpDelAckTicks");
+                    }
+                }
+            }
+            applied(id, "TCP ACK frequency and Nagle algorithm restored to defaults across all interfaces")
         }
 
         "nic-energy-saving-off" => {
+            #[cfg(target_os = "windows")]
+            {
+                use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+                let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+                let class_path = r"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}";
+                if let Ok(class_key) = hklm.open_subkey(class_path) {
+                    for subkey_name in class_key.enum_keys().flatten() {
+                        let full_path = format!("{class_path}\\{subkey_name}");
+                        let _ = delete_hklm_value(&full_path, "*EEE");
+                        let _ = delete_hklm_value(&full_path, "*FlowControl");
+                        let _ = delete_hklm_value(&full_path, "AutoPowerSaveModeEnabled");
+                        let _ = delete_hklm_value(&full_path, "SavePowerNowEnabled");
+                        let _ = delete_hklm_value(&full_path, "ReduceSpeedOnPowerDown");
+                        let _ = delete_hklm_value(&full_path, "GreenEthernet");
+                        let _ = delete_hklm_value(&full_path, "AdvancedEEE");
+                        let _ = delete_hklm_value(&full_path, "EnablePME");
+                    }
+                }
+                let _ = super::runner::run_command(
+                    "powershell.exe",
+                    &[
+                        "-NoProfile",
+                        "-ExecutionPolicy",
+                        "Bypass",
+                        "-Command",
+                        "Get-NetAdapter -Physical | ForEach-Object { Enable-NetAdapterPowerManagement -Name $_.Name -ErrorAction SilentlyContinue }",
+                    ],
+                );
+            }
             applied(id, "Network adapter energy saving configuration restored")
         }
 
@@ -406,20 +452,33 @@ fn revert_one(id: &str) -> TweakApplyResult {
 
         "disable-bg-recording" => collect_revert(
             id,
-            [set_hkcu_dword(
-                "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
-                "HistoricalCaptureEnabled",
-                1,
-            )],
+            [
+                set_hkcu_dword(
+                    "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+                    "HistoricalCaptureEnabled",
+                    1,
+                ),
+                set_hkcu_dword(
+                    "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR",
+                    "AppCaptureEnabled",
+                    1,
+                ),
+            ],
             "Background video recording capability restored to default",
         ),
 
         "wer-off" => collect_revert(
             id,
-            [delete_hklm_value(
-                "SOFTWARE\\Microsoft\\Windows\\Windows Error Reporting",
-                "Disabled",
-            )],
+            [
+                delete_hkcu_value(
+                    "Software\\Microsoft\\Windows\\Windows Error Reporting",
+                    "Disabled",
+                ),
+                delete_hkcu_value(
+                    "Software\\Microsoft\\Windows\\Windows Error Reporting",
+                    "DontShowUI",
+                ),
+            ],
             "Windows Error Reporting service policy restored to default",
         ),
 

@@ -5,18 +5,18 @@ export const tweakCatalog = [
     icon: "zap",
     title: "Gaming & Latency",
     tweaks: [
-      { id: "win32-priority-rust", title: "Win32 Priority Separation", description: "Allocates long fixed-length processor quantums (0x26) to active foreground games, stabilizing 1% Low FPS.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "system-timer-resolution", title: "System Timer Resolution (0.5 ms)", description: "Forces Windows global timer resolution to 0.5 ms to smooth frame pacing and eliminate micro-stutters during weapon spray.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "kill-gamebar-presence", title: "Kill GameBar Presence Writer", description: "Completely disables GameBarPresenceWriter and GameDVR hooks that cause frame time spikes in Unity games.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "directx-thread-priority", title: "DirectX GPU Scheduling & TdrDelay", description: "Enables GPU preemption and extends DirectX TDR delay to 10s to eliminate GPU hang spikes and driver timeouts.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "gpu-adaptive-power", title: "Hardware-Adaptive GPU Power", description: "Detects GPU vendor: disables PowerMizer downclocking on NVIDIA or disables ULPS sleep state on AMD for locked framerates.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "game-mode-on", title: "Enable Game Mode", description: "Enables Windows Game Mode hints and priority for active games.", badges: ["SAFE", "VERIFIED"] },
-      { id: "modern-flip-model-on", title: "Modern Flip Model upgrade", description: "Forces Modern Flip presentation model for windowed and borderless games to prevent gamma resets and reduce latency.", badges: ["SAFE", "VERIFIED"] },
-      { id: "gamedvr-fse-mode", title: "DirectX FSE mode", description: "Enforces true Full Screen Exclusive presentation for games to minimize latency.", badges: ["SAFE", "VERIFIED"] },
-      { id: "disable-fso-globally", title: "Disable Fullscreen Optimizations", description: "Globally disables Windows FSO (Fullscreen Optimizations) for pure exclusive fullscreen and minimal display latency.", badges: ["SAFE", "VERIFIED"] },
-      { id: "hags-on", title: "Hardware GPU scheduling", description: "Enables Windows Hardware-accelerated GPU Scheduling when the driver supports it.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "mpo-disable", title: "Disable MPO", description: "Disables Multiplane Overlay for systems with flicker, black screens or overlay stutter.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "pcie-aspm-off", title: "Disable PCIe ASPM", description: "Disables PCIe Active State Power Management to lock PCI Express link at maximum throughput and eliminate bus latency.", badges: ["SAFE", "VERIFIED"] }
+      { id: "win32-priority-rust", title: "Win32 Priority Separation", description: "Configures process priority separation quantums (0x26) for active foreground games.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "system-timer-resolution", title: "System Timer Resolution (0.5 ms)", description: "Requests 0.5 ms global timer resolution for smoother frame pacing in latency-sensitive titles.", badges: ["ADMIN", "EXPERIMENTAL"] },
+      { id: "kill-gamebar-presence", title: "Disable GameBar Presence Writer", description: "Suppresses GameBarPresenceWriter background hooks to prevent frame pacing stutter.", badges: ["ADMIN", "EXPERIMENTAL"] },
+      { id: "directx-thread-priority", title: "DirectX GPU Scheduling & TdrDelay", description: "Adjusts GPU scheduler preemption and extends TDR timeout to mitigate driver reset spikes.", badges: ["ADMIN", "EXPERIMENTAL"] },
+      { id: "gpu-adaptive-power", title: "Hardware-Adaptive GPU Power", description: "Applies performance-oriented power management hints for NVIDIA and AMD display drivers.", badges: ["ADMIN", "EXPERIMENTAL"] },
+      { id: "game-mode-on", title: "Enable Game Mode", description: "Enables Windows Game Mode hints and priority for active games.", badges: ["SAFE", "RECOMMENDED"] },
+      { id: "modern-flip-model-on", title: "Modern Flip Model upgrade", description: "Forces Modern Flip presentation model for windowed games to reduce display latency.", badges: ["SAFE", "RECOMMENDED"] },
+      { id: "gamedvr-fse-mode", title: "DirectX FSE mode", description: "Enforces true Full Screen Exclusive presentation for games to minimize latency.", badges: ["SAFE", "RECOMMENDED"] },
+      { id: "disable-fso-globally", title: "Disable Fullscreen Optimizations", description: "Globally disables Windows FSO for pure exclusive fullscreen presentation.", badges: ["SAFE", "RECOMMENDED"] },
+      { id: "hags-on", title: "Hardware GPU scheduling", description: "Enables Windows Hardware-accelerated GPU Scheduling when the driver supports it.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "mpo-disable", title: "Disable MPO", description: "Disables Multiplane Overlay for systems with display driver flicker or stutter.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "pcie-aspm-off", title: "Disable PCIe ASPM", description: "Disables PCIe Active State Power Management to prevent link power-state latency.", badges: ["SAFE", "EXPERIMENTAL"] }
     ]
   },
   {
@@ -25,15 +25,15 @@ export const tweakCatalog = [
     icon: "cpu",
     title: "CPU & Performance",
     tweaks: [
-      { id: "power-plan-high", title: "High performance plan", description: "Switches to the supported Windows high performance power scheme.", badges: ["SAFE", "VERIFIED"] },
-      { id: "ultimate-performance-plan", title: "Ultimate performance plan", description: "Activates the hidden Windows Ultimate Performance power scheme.", badges: ["SAFE", "VERIFIED"] },
-      { id: "cpu-unpark-cores", title: "Unpark CPU Cores", description: "Disables CPU core parking so 100% of logical cores remain active, eliminating core wake-up micro-stutters in games.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "power-throttling-off", title: "Disable Power Throttling", description: "Globally disables Windows Power Throttling to prevent Windows from downclocking game threads.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "cpu-adaptive-scheduling", title: "Hardware-Adaptive CPU Scheduling", description: "Detects Intel Hybrid P/E-cores or AMD Ryzen: pins game threads to high-performance P-cores or locks multi-core quantums.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "system-worker-threads", title: "Adaptive System Worker Threads", description: "Dynamically expands Windows kernel executive worker threads based on detected CPU core count to eliminate I/O starvation.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "mmcss-games-priority", title: "MMCSS game priority", description: "Raises the Games multimedia task priority hints used by MMCSS.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "system-responsiveness-0", title: "Dedicated 100% CPU to Games", description: "Sets MMCSS system responsiveness reserve to 0% to allocate full processor capacity to active games.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "network-throttle-off", title: "Network throttling off", description: "Removes MMCSS network throttling for latency-sensitive games and streams.", badges: ["ADMIN", "REBOOT", "VERIFIED"] }
+      { id: "power-plan-high", title: "High performance plan", description: "Switches to the supported Windows high performance power scheme.", badges: ["SAFE", "RECOMMENDED"] },
+      { id: "ultimate-performance-plan", title: "Ultimate performance plan", description: "Activates the hidden Windows Ultimate Performance power scheme.", badges: ["SAFE", "RECOMMENDED"] },
+      { id: "cpu-unpark-cores", title: "Unpark CPU Cores", description: "Disables CPU core parking so all logical cores remain active for game worker threads.", badges: ["ADMIN", "EXPERIMENTAL"] },
+      { id: "power-throttling-off", title: "Disable Power Throttling", description: "Disables Windows Power Throttling policy for foreground game execution.", badges: ["ADMIN", "EXPERIMENTAL"] },
+      { id: "cpu-adaptive-scheduling", title: "Hardware-Adaptive CPU Scheduling", description: "Applies scheduling hints for heterogeneous P/E-cores or AMD Ryzen chiplets.", badges: ["ADMIN", "EXPERIMENTAL"] },
+      { id: "system-worker-threads", title: "Adaptive System Worker Threads", description: "Expands Windows kernel executive worker thread allocations based on CPU core count.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "mmcss-games-priority", title: "MMCSS game priority", description: "Raises Multimedia Class Scheduler Service priority hints for gaming threads.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "system-responsiveness-0", title: "Dedicated 100% CPU to Games", description: "Sets MMCSS system responsiveness reserve to 0% to maximize foreground CPU allocation.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "network-throttle-off", title: "Network throttling off", description: "Removes MMCSS network throttling for latency-sensitive network traffic.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] }
     ]
   },
   {
@@ -42,11 +42,11 @@ export const tweakCatalog = [
     icon: "settings",
     title: "Input & Responsiveness",
     tweaks: [
-      { id: "pointer-precision-off", title: "Disable pointer precision", description: "Turns off Windows mouse acceleration for consistent 1:1 raw aim feel.", badges: ["SAFE", "VERIFIED"] },
-      { id: "input-response-fast", title: "Ultra-fast Input Queue", description: "Minimizes keyboard repeat delay, sets instant mouse hover time, and expands mouse/keyboard driver buffer queues.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "usb-selective-suspend-off", title: "USB selective suspend off", description: "Prevents USB devices from entering selective suspend to eliminate wake latency.", badges: ["SAFE", "VERIFIED"] },
-      { id: "visual-effects-performance", title: "Visual effects performance", description: "Switches Explorer visual effects to the Windows performance profile.", badges: ["SAFE", "VERIFIED"], note: "Some window animations and visual polish will be reduced." },
-      { id: "transparency-off", title: "Transparency off", description: "Disables Windows transparency effects for a lighter desktop compositor path.", badges: ["SAFE", "VERIFIED"], note: "Acrylic and translucent shell surfaces will become solid." }
+      { id: "pointer-precision-off", title: "Disable pointer precision", description: "Turns off Windows mouse acceleration for consistent 1:1 raw aim feel.", badges: ["SAFE", "RECOMMENDED"] },
+      { id: "input-response-fast", title: "Ultra-fast Input Queue", description: "Minimizes keyboard repeat delay and configures responsive mouse driver buffer queues.", badges: ["ADMIN", "EXPERIMENTAL"] },
+      { id: "usb-selective-suspend-off", title: "USB selective suspend off", description: "Prevents USB devices from entering selective suspend to eliminate wake latency.", badges: ["SAFE", "RECOMMENDED"] },
+      { id: "visual-effects-performance", title: "Visual effects performance", description: "Switches Explorer visual effects to the Windows performance profile.", badges: ["SAFE", "RECOMMENDED"], note: "Some window animations and visual polish will be reduced." },
+      { id: "transparency-off", title: "Transparency off", description: "Disables Windows transparency effects for a lighter desktop compositor path.", badges: ["SAFE", "RECOMMENDED"], note: "Acrylic and translucent shell surfaces will become solid." }
     ]
   },
   {
@@ -55,15 +55,15 @@ export const tweakCatalog = [
     icon: "archive",
     title: "Storage & Debloat",
     tweaks: [
-      { id: "clean-temp-junk", title: "Clean Windows & Shader Junk", description: "Cleans temporary junk files, crash dumps, and DirectX shader cache to free gigabytes and eliminate stutters.", badges: ["SAFE", "VERIFIED"] },
-      { id: "disable-paging-executive", title: "Lock Kernel & Drivers in RAM", description: "Forces Windows to keep system kernel and drivers in physical RAM instead of paging them to disk, eliminating asset-load freezes.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "disable-memory-compression", title: "Disable Memory Compression", description: "Disables Windows background memory compression to free CPU cores and avoid compression overhead during intense gunfights.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "disable-page-combining", title: "Disable Memory Deduplication", description: "Disables background Windows Page Combining RAM scans that induce micro-stutters during heavy gameplay.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "adaptive-io-page-lock", title: "Hardware-Adaptive IoPageLockLimit", description: "Dynamically allocates 512MB-1GB physical memory I/O transfer limits based on total RAM for zero-hitch monument streaming.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "large-system-cache-off", title: "Prioritize RAM for Game Execution", description: "Sets LargeSystemCache to 0 so Windows dedicates physical RAM to game processes rather than filesystem cache.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "hibernate-off", title: "Hibernate off", description: "Disables hibernation to remove hiberfil.sys (freeing 8-32GB) and eliminates Fast Startup state corruption.", badges: ["ADMIN", "REBOOT", "VERIFIED"], note: "Hibernate and Windows Fast Startup will stop working." },
-      { id: "ntfs-last-access-off", title: "NTFS last access off", description: "Disables last-access timestamp updates to reduce metadata writes and disk I/O.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "trim-enable", title: "Ensure TRIM enabled", description: "Enables Windows delete notifications for SSD/NVMe cleanup and write consistency.", badges: ["ADMIN", "VERIFIED"], note: "Useful for SSDs; preserves flash cell lifespan and write speed." }
+      { id: "clean-temp-junk", title: "Clean Temporary Junk & Dumps", description: "Cleans temporary files and crash dumps from %TEMP% and Windows Temp directories.", badges: ["SAFE", "RECOMMENDED"] },
+      { id: "disable-paging-executive", title: "Lock Kernel & Drivers in RAM", description: "Instructs Windows to keep kernel executive and driver code in physical memory.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "disable-memory-compression", title: "Disable Memory Compression", description: "Disables background Windows RAM compression on high-memory systems.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "disable-page-combining", title: "Disable Memory Deduplication", description: "Disables periodic page combining scans to prevent background CPU cycles.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "adaptive-io-page-lock", title: "Hardware-Adaptive IoPageLockLimit", description: "Configures physical memory I/O page lock thresholds based on installed RAM.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "large-system-cache-off", title: "Prioritize RAM for Game Execution", description: "Sets LargeSystemCache to 0 so Windows prioritizes application working sets over filesystem cache.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "hibernate-off", title: "Hibernate off", description: "Disables hibernation to reclaim hiberfil.sys storage space.", badges: ["ADMIN", "REBOOT", "RECOMMENDED"], note: "Hibernate and Windows Fast Startup will stop working." },
+      { id: "ntfs-last-access-off", title: "NTFS last access off", description: "Disables last-access timestamp updates to reduce metadata disk I/O.", badges: ["ADMIN", "RECOMMENDED"] },
+      { id: "trim-enable", title: "Ensure TRIM enabled", description: "Enables Windows delete notifications for SSD/NVMe cleanup and write consistency.", badges: ["ADMIN", "RECOMMENDED"], note: "Useful for SSDs; preserves flash cell lifespan and write speed." }
     ]
   },
   {
@@ -72,12 +72,12 @@ export const tweakCatalog = [
     icon: "monitor",
     title: "Network Latency",
     tweaks: [
-      { id: "network-udp-buffers", title: "Hardware-Adaptive UDP Socket Buffers", description: "Optimizes AFD datagram thresholds and dynamically sizes socket buffers (512KB-1MB) based on RAM for zero packet loss.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "tcp-nodelay-ack", title: "TCP NoDelay & AckFrequency", description: "Disables Nagle's algorithm and forces immediate TCP ACK without delay, cutting 40-200ms ping latency in online games.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "nic-energy-saving-off", title: "Disable NIC Energy Saving", description: "Disables Energy-Efficient Ethernet (EEE), Green Ethernet, and Flow Control on network cards to prevent ping spikes.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "tcp-heuristics-off", title: "Optimize TCP Windows & Heuristics", description: "Disables TCP heuristics and timestamps, setting autotuning to normal to eliminate packet loss and jitter.", badges: ["ADMIN", "VERIFIED"] },
-      { id: "rss-adaptive-cores", title: "Hardware-Adaptive RSS Core Affinity", description: "Enables Receive-Side Scaling with BaseProcessor=2 to steer network interrupts off Core 0 and protect game simulation threads.", badges: ["ADMIN", "REBOOT", "VERIFIED"] },
-      { id: "rsc-off", title: "Receive segment coalescing off", description: "Reduces packet batching latency on network adapters for online multiplayer games.", badges: ["ADMIN", "VERIFIED"] }
+      { id: "network-udp-buffers", title: "Hardware-Adaptive UDP Socket Buffers", description: "Configures AFD socket buffer thresholds based on system memory capacity.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "tcp-nodelay-ack", title: "TCP NoDelay & AckFrequency", description: "Configures TCP NoDelay and AckFrequency for low-latency TCP connections.", badges: ["ADMIN", "EXPERIMENTAL"] },
+      { id: "nic-energy-saving-off", title: "Disable NIC Energy Saving", description: "Disables Energy-Efficient Ethernet (EEE) and Green Ethernet on network adapters.", badges: ["ADMIN", "EXPERIMENTAL"] },
+      { id: "tcp-heuristics-off", title: "Optimize TCP Windows & Heuristics", description: "Disables TCP heuristics and timestamps, setting autotuning to normal.", badges: ["ADMIN", "EXPERIMENTAL"] },
+      { id: "rss-adaptive-cores", title: "Hardware-Adaptive RSS Core Affinity", description: "Enables Receive-Side Scaling to distribute network interrupt handling across cores.", badges: ["ADMIN", "REBOOT", "EXPERIMENTAL"] },
+      { id: "rsc-off", title: "Receive segment coalescing off", description: "Disables packet batching on network adapters for latency-critical connections.", badges: ["ADMIN", "EXPERIMENTAL"] }
     ]
   },
   {
@@ -86,9 +86,9 @@ export const tweakCatalog = [
     icon: "shield",
     title: "Background & Telemetry",
     tweaks: [
-      { id: "disable-gamedvr", title: "Disable GameDVR", description: "Disables Windows GameDVR capture policy to free GPU video encoder resources.", badges: ["ADMIN", "VERIFIED"], note: "Xbox Game Bar recording and Win+Alt+R capture will stop working." },
-      { id: "disable-bg-recording", title: "Disable background recording", description: "Stops passive clip recording and continuous video writing to disk.", badges: ["SAFE", "VERIFIED"], note: "Background clips and instant replay in Xbox Game Bar will be unavailable." },
-      { id: "wer-off", title: "Disable Error Reporting", description: "Disables Windows Error Reporting (WerFault) to eliminate crash lag spikes.", badges: ["SAFE", "VERIFIED"], note: "WerFault background diagnostics will be turned off." }
+      { id: "disable-gamedvr", title: "Disable GameDVR", description: "Disables Windows GameDVR capture policy to free GPU video encoder resources.", badges: ["ADMIN", "RECOMMENDED"], note: "Xbox Game Bar recording and Win+Alt+R capture will stop working." },
+      { id: "disable-bg-recording", title: "Disable background recording", description: "Stops passive clip recording and continuous video writing to disk.", badges: ["SAFE", "RECOMMENDED"], note: "Background clips and instant replay in Xbox Game Bar will be unavailable." },
+      { id: "wer-off", title: "Disable Error Reporting", description: "Disables Windows Error Reporting (WerFault) background error collection.", badges: ["SAFE", "EXPERIMENTAL"], note: "WerFault background diagnostics will be turned off." }
     ]
   }
 ];
@@ -128,6 +128,9 @@ export function tweakGroupTitle(group, t) {
 
 export function tweakCategory(tweak) {
   const badges = tweakBadges(tweak);
+  if (badges.includes("EXPERIMENTAL")) {
+    return "experimental";
+  }
   if (badges.includes("ADMIN")) {
     return "admin";
   }
@@ -341,11 +344,11 @@ export const tweakAppImpacts = {
   },
   "clean-temp-junk": {
     appId: "storage_cleaner",
-    appName: "Junk & Shader Cache Cleaner",
-    appNameEn: "Junk & Shader Cache Cleaner",
-    appNameRu: "Очистка мусора и кэша шейдеров",
-    impactEn: "Safely cleans %TEMP%, Windows temp files, DirectX D3D shader cache, and crash dumps, freeing gigabytes and fixing stutters.",
-    impactRu: "Безопасно удаляет временные файлы (%TEMP%), кэш шейдеров DirectX и дампы ошибок: освобождает гигабайты и убирает статтеры."
+    appName: "Temporary Files & Crash Dump Cleaner",
+    appNameEn: "Temporary Files & Crash Dump Cleaner",
+    appNameRu: "Очистка временных файлов и дампов",
+    impactEn: "Safely clears %TEMP% and Windows temp directories. DirectX shader cache is preserved to prevent shader recompilation stutters in games.",
+    impactRu: "Безопасно очищает %TEMP% и системные временные файлы. Кэш шейдеров DirectX сохраняется для предотвращения фризов компиляции в играх."
   },
   "disable-page-combining": {
     appId: "memory_dedup",
@@ -472,8 +475,8 @@ export const tweakAppImpacts = {
     appName: "Nagle's Algorithm (TCP NoDelay)",
     appNameEn: "Nagle's Algorithm (TCP NoDelay)",
     appNameRu: "Алгоритм Нагла (TCP NoDelay)",
-    impactEn: "Enables TCP NoDelay and AckFrequency=1 across all network adapters, eliminating the 40-200ms delayed ACK buffering and lowering multiplayer ping.",
-    impactRu: "Отключает алгоритм Нагла и задержку подтверждения (AckFrequency=1): сетевые пакеты отправляются мгновенно, снижая пинг в онлайн-играх на 40-200 мс."
+    impactEn: "Configures TCP NoDelay and AckFrequency=1 on network adapters. Note: Real-time game traffic operates over UDP and is unaffected.",
+    impactRu: "Включает TCP NoDelay и AckFrequency=1 на сетевых картах. Примечание: игровой трафик в реальном времени работает по UDP и не затрагивается."
   },
   "nic-energy-saving-off": {
     appId: "network_adapter",

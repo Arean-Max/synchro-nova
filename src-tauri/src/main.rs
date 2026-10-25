@@ -183,12 +183,32 @@ mod prerequisites_check {
 }
 
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|a| a == "--updater-helper") {
+        synchro_lib::domain::updater::helper::run_updater_helper(&args);
+        return;
+    }
+
     #[cfg(target_os = "windows")]
     {
+        if args.iter().any(|a| a == "--post-update-check" || a == "--updated-successfully") {
+            synchro_lib::domain::updater::logging::log(
+                "BOOT",
+                "New version successfully booted following automated update",
+            );
+            if let Ok(current_exe) = std::env::current_exe() {
+                let mut old = current_exe.clone();
+                old.set_extension("exe.old");
+                let _ = std::fs::remove_file(&old);
+                let mut bak = current_exe;
+                bak.set_extension("exe.bak");
+                let _ = std::fs::remove_file(&bak);
+            }
+        }
+
         synchro_lib::infra::fast_cache::try_early_warmup();
 
         let mut restarted_from_pid: Option<u32> = None;
-        let args: Vec<String> = std::env::args().collect();
         for i in 0..args.len() {
             if args[i] == "--restarted-from-pid" && i + 1 < args.len() {
                 if let Ok(pid) = args[i + 1].parse::<u32>() {
@@ -223,27 +243,21 @@ fn main() {
         std::env::set_var("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0xFF121214");
         std::env::set_var(
             "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
-            "--disable-gpu \
-             --renderer-process-limit=1 \
+            "--renderer-process-limit=1 \
              --disable-breakpad \
              --disable-crash-reporter \
-             --disable-gpu-watchdog \
-             --disable-gpu-shader-disk-cache \
              --disable-background-networking \
              --disable-component-update \
              --disable-sync \
              --disable-features=Translate,OptimizationHints,MediaRouter,CalculateNativeWinOcclusion,AudioServiceOutOfProcess,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,ChromeLabs,PrivacySandboxSettings4,BackForwardCache,GlobalMediaControls \
              --enable-features=TrimOnMemoryPressure \
-             --enable-low-end-device-mode \
-             --disk-cache-size=1048576 \
-             --media-cache-size=1048576 \
+             --disk-cache-size=10485760 \
+             --media-cache-size=10485760 \
              --disable-speech-api \
              --disable-pinch \
              --disable-domain-reliability \
              --no-first-run \
-             --no-default-browser-check \
-             --memory-model=low \
-             --js-flags=\"--max-old-space-size=64 --lite-mode --optimize-for-size --jitless --memory-reducer\"",
+             --no-default-browser-check",
         );
 
         prerequisites_check::ensure_runtime_prerequisites();

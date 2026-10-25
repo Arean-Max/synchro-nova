@@ -208,7 +208,15 @@ impl SafeRegistry {
             });
         }
         let hkey = RegKey::predef(root.to_hkey());
-        let _ = hkey.delete_subkey_all(path);
-        Ok(())
+        match hkey.delete_subkey_all(path) {
+            Ok(_) => Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(e) => Err(RegistryError::DeleteValueFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                name: path.to_string(),
+                source: e,
+            }),
+        }
     }
 }

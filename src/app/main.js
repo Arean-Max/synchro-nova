@@ -308,6 +308,7 @@ function showSettingHelpBanner(key) {
   const titles = {
     autostartWindows: t("startWithWindows"),
     closeToTray: t("closeToTray"),
+    zeroDaemonMode: t("zeroDaemonMode"),
     startMinimized: t("startMinimized"),
     autoBackupOnStart: t("autoBackupOnStart"),
     showOnRecordings: t("showOnRecordings"),
@@ -730,22 +731,104 @@ function updateSidebarUpdateWidgetDom() {
 
 let updatePollTimer = 0;
 
-async function checkForUpdates() {
+function syncUpdateStatus(progress) {
+  if (!progress) return;
+  const oldStatus = viewState.updateStatus;
+  const newStatus = progress.status;
+
+  if (progress.latest_version) {
+    viewState.latestVersion = progress.latest_version;
+  }
+
+  if (newStatus === "downloading" || newStatus === "verifying") {
+    viewState.updateStatus = "downloading";
+    viewState.updatePercent = progress.percent || 0;
+
+    const pctEl = document.querySelector("#sidebar-update-wrapper .update-progress-pct");
+    if (pctEl) pctEl.textContent = `${progress.percent}%`;
+    const barFill = document.querySelector("#sidebar-update-wrapper .update-progress-bar-fill");
+    if (barFill) barFill.style.width = `${progress.percent}%`;
+
+    if (oldStatus !== "downloading") {
+      updateSidebarUpdateWidgetDom();
+    }
+  } else if (newStatus === "ready") {
+    viewState.updateStatus = "ready";
+    viewState.updatePercent = 100;
+    if (oldStatus !== "ready") {
+      updateSidebarUpdateWidgetDom();
+    }
+  } else if (newStatus === "available") {
+    viewState.updateStatus = "available";
+    if (oldStatus !== "available") {
+      updateSidebarUpdateWidgetDom();
+    }
+  } else if (newStatus === "error") {
+    viewState.updateStatus = "error";
+    if (oldStatus !== "error") {
+      updateSidebarUpdateWidgetDom();
+    }
+  } else if (newStatus === "idle") {
+    if (oldStatus && oldStatus !== "hidden" && oldStatus !== "available" && oldStatus !== "ready") {
+      viewState.updateStatus = "hidden";
+      updateSidebarUpdateWidgetDom();
+    }
+  }
+}
+
+function startGlobalUpdatePoller() {
+  if (updatePollTimer) return;
+  updatePollTimer = window.setInterval(async () => {
+    // Only poll IPC during active download or installation to eliminate idle wakeups
+    if (viewState.updateStatus !== "downloading" && viewState.updateStatus !== "installing") {
+      return;
+    }
+    try {
+      const progress = await invokeCommand("get_update_progress");
+      syncUpdateStatus(progress);
+    } catch (_) {}
+  }, 1000);
+}
+
+async function checkForUpdates(manual = false) {
+  if (manual) {
+    viewState.updateCheckMessage = t("checkingUpdates");
+    if (activePage === "settings") updateMain();
+  }
+
   try {
     const res = await invokeCommand("check_for_updates");
+    viewState.lastUpdateCheck = new Date().toLocaleTimeString();
+    if (res?.currentVersion) {
+      viewState.appVersion = res.currentVersion;
+    }
+
     if (res && res.updateAvailable) {
       viewState.updateStatus = "available";
       viewState.latestVersion = res.latestVersion;
       viewState.downloadUrl = res.downloadUrl;
       viewState.assetSize = res.assetSize;
+      viewState.shaManifestUrl = res.shaManifestUrl;
+      viewState.updateCheckMessage = "";
       updateSidebarUpdateWidgetDom();
 
-      if (appState.settings.autoUpdate) {
+      if (appState.settings && appState.settings.autoUpdate) {
         startUpdateDownload();
+      }
+    } else {
+      if (manual) {
+        viewState.updateCheckMessage = t("latestVersionInstalled");
       }
     }
   } catch (err) {
     console.warn("Check for updates failed:", err);
+    if (manual) {
+      viewState.updateCheckMessage = t("updateError");
+    }
+  }
+
+  if (manual && activePage === "settings") {
+    updateMain();
   }
 }
 
@@ -758,38 +841,10 @@ async function startUpdateDownload() {
   try {
     await invokeCommand("download_update", {
       url: viewState.downloadUrl || null,
-      size: viewState.assetSize || null
+      size: viewState.assetSize || null,
+      version: viewState.latestVersion || null,
+      manifestUrl: viewState.shaManifestUrl || null
     });
-
-    if (updatePollTimer) window.clearInterval(updatePollTimer);
-    updatePollTimer = window.setInterval(async () => {
-      try {
-        const progress = await invokeCommand("get_update_progress");
-        if (!progress) return;
-
-        viewState.updatePercent = progress.percent || 0;
-
-        const pctEl = document.querySelector("#sidebar-update-wrapper .update-progress-pct");
-        if (pctEl) pctEl.textContent = `${progress.percent}%`;
-        const barFill = document.querySelector("#sidebar-update-wrapper .update-progress-bar-fill");
-        if (barFill) barFill.style.width = `${progress.percent}%`;
-
-        if (progress.status === "ready") {
-          window.clearInterval(updatePollTimer);
-          updatePollTimer = 0;
-          viewState.updateStatus = "ready";
-          viewState.updatePercent = 100;
-          updateSidebarUpdateWidgetDom();
-        } else if (progress.status === "error") {
-          window.clearInterval(updatePollTimer);
-          updatePollTimer = 0;
-          viewState.updateStatus = "error";
-          updateSidebarUpdateWidgetDom();
-        }
-      } catch (err) {
-        console.warn("Error polling update progress:", err);
-      }
-    }, 100);
   } catch (err) {
     console.error("Start download failed:", err);
     viewState.updateStatus = "error";
@@ -799,9 +854,13 @@ async function startUpdateDownload() {
 
 async function applyUpdateInstall() {
   try {
+    viewState.updateStatus = "installing";
+    updateSidebarUpdateWidgetDom();
     await invokeCommand("install_update");
   } catch (err) {
     console.error("Apply update failed:", err);
+    viewState.updateStatus = "error";
+    updateSidebarUpdateWidgetDom();
   }
 }
 
@@ -1850,8 +1909,9 @@ async function handleClick(event) {
   const setting = target.closest("[data-setting]");
   if (setting) {
     const key = setting.getAttribute("data-setting");
-    if (!Object.hasOwn(appState.settings, key)) return;
-    const nextVal = !appState.settings[key];
+    if (!key) return;
+    if (!appState.settings) appState.settings = {};
+    const nextVal = !Boolean(appState.settings[key]);
     appState.settings[key] = nextVal;
 
     setting.classList.toggle("active", nextVal);
@@ -2103,6 +2163,12 @@ async function handleClick(event) {
   const manualDownloadBtn = target.closest("[data-action='open-manual-download']");
   if (manualDownloadBtn) {
     invokeCommand("open_external_url", { url: "https://github.com/Arean-Max/synchro-nova/releases" });
+    return;
+  }
+
+  const checkUpdatesBtn = target.closest("[data-action='check-updates-manually']");
+  if (checkUpdatesBtn) {
+    checkForUpdates(true);
     return;
   }
 
@@ -2676,13 +2742,12 @@ async function boot() {
     updateMainKeepingScroll();
   });
 
-  if (appState.settings && appState.settings.autoUpdate) {
-    checkForUpdates();
-  }
+  startGlobalUpdatePoller();
+  checkForUpdates(false);
+  window.setInterval(() => checkForUpdates(false), 4 * 60 * 60 * 1000);
   loadTweakStatuses();
   scheduleTrimMemory(600);
   checkSecurityIncidents();
-  setInterval(checkSecurityIncidents, 30000);
 }
 
 document.addEventListener("input", handleInput);
@@ -2695,7 +2760,9 @@ window.addEventListener("resize", syncNavIndicator);
 window.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     clearImpactBannerTimer();
+    document.body.classList.add("paused-animations");
   } else {
+    document.body.classList.remove("paused-animations");
     checkSecurityIncidents();
   }
 });

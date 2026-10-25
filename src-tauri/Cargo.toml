@@ -2,7 +2,7 @@
 name = "synchro"
 version = "2.3.4"
 description = "Windows display calibration and system performance optimization utility"
-authors = ["Arean-Max"]
+authors = ["Arean-Max", "sotoykor-source <sotoykor@gmail.com>"]
 license = "AGPL-3.0-or-later"
 repository = "https://github.com/Arean-Max/synchro-nova"
 homepage = "https://github.com/Arean-Max/synchro-nova"
@@ -39,13 +39,13 @@ debug = false
 strip = false
 
 [profile.release]
-codegen-units = 1
+codegen-units = 16
 debug = false
 incremental = false
-lto = "thin"
-opt-level = 3
+lto = false
+opt-level = 0
 overflow-checks = false
-panic = "abort"
+panic = "unwind"
 strip = true
 
 [profile.release.build-override]

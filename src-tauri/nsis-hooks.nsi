@@ -36,21 +36,15 @@
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "Synchro Nova"
   DeleteRegValue HKLM "Software\Microsoft\Windows\CurrentVersion\Run" "Synchro Nova"
 
-  DeleteRegKey HKCU "Software\Synchro"
-  DeleteRegKey HKLM "Software\Synchro"
   DeleteRegKey HKCU "Software\SynchroNova"
   DeleteRegKey HKLM "Software\SynchroNova"
-  DeleteRegKey HKCU "Software\synchro"
 
   RMDir /r "$LOCALAPPDATA\SynchroNova"
-  RMDir /r "$LOCALAPPDATA\synchro"
   RMDir /r "$LOCALAPPDATA\app.synchro.performance"
   RMDir /r "$APPDATA\SynchroNova"
-  RMDir /r "$APPDATA\synchro"
   RMDir /r "$APPDATA\app.synchro.performance"
 
   RMDir /r "$TEMP\SynchroNova"
-  RMDir /r "$TEMP\synchro"
 
   RMDir /r "$INSTDIR"
 !macroend

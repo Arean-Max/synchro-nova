@@ -71,6 +71,18 @@ export function renderSidebarUpdateWidget(t, viewState) {
     `;
   }
 
+  if (status === "installing") {
+    return `
+      <div id="sidebar-update-wrapper" class="sidebar-update-wrapper installing">
+        <div class="update-progress-container">
+          <div class="update-progress-header">
+            <span class="update-progress-title">${escapeHtml(t("installing"))}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   if (status === "error") {
     return `
       <div id="sidebar-update-wrapper" class="sidebar-update-wrapper error">

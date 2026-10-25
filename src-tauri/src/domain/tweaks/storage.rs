@@ -17,14 +17,6 @@ pub fn apply_clean_temp_junk(id: &str) -> TweakApplyResult {
         paths_to_clean.push(std::path::PathBuf::from(system_root).join("Temp"));
     }
 
-    if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
-        let local_path = std::path::PathBuf::from(local_app_data);
-        paths_to_clean.push(local_path.join("D3DSCache"));
-        paths_to_clean.push(local_path.join("CrashDumps"));
-        paths_to_clean.push(local_path.join("Microsoft").join("Windows").join("WER").join("ReportArchive"));
-        paths_to_clean.push(local_path.join("Microsoft").join("Windows").join("WER").join("ReportQueue"));
-    }
-
     for dir in paths_to_clean {
         if dir.is_dir() {
             clean_directory_contents(&dir, &mut total_bytes_freed, &mut files_removed);
@@ -34,7 +26,7 @@ pub fn apply_clean_temp_junk(id: &str) -> TweakApplyResult {
     let mb_freed = total_bytes_freed as f64 / (1024.0 * 1024.0);
     applied(
         id,
-        &format!("Cleaned {files_removed} temporary files ({mb_freed:.1} MB junk and DirectX shader cache)"),
+        &format!("Cleaned {files_removed} temporary junk files ({mb_freed:.1} MB freed; shader caches preserved)"),
     )
 }
 

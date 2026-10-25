@@ -10,6 +10,7 @@ pub fn trim_process_memory() {
 pub fn spawn_memory_trimmer(trimmer_sync: Arc<TrimmerSync>) {
     std::thread::Builder::new()
         .name("synchro-memory-trimmer".to_string())
+        .stack_size(64 * 1024)
         .spawn(move || {
             let mut lock = match trimmer_sync.exited.lock() {
                 Ok(l) => l,
@@ -40,15 +41,11 @@ pub fn spawn_memory_trimmer(trimmer_sync: Arc<TrimmerSync>) {
             trim_process_memory();
 
             while !*lock {
-                let (next_lock, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_secs(30)) {
+                let next_lock = match trimmer_sync.condvar.wait(lock) {
                     Ok(res) => res,
                     Err(e) => e.into_inner(),
                 };
                 lock = next_lock;
-                if *lock {
-                    break;
-                }
-                trim_process_memory();
             }
         })
         .ok();

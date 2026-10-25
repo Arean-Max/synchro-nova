@@ -1,4 +1,7 @@
-use crate::domain::updater::client::{fetch_latest_release_info, spawn_download_worker, UpdateCheckResult};
+pub use crate::domain::updater::client::validate_update_url;
+use crate::domain::updater::client::{
+    fetch_latest_release_info, spawn_download_worker, UpdateCheckResult,
+};
 use crate::domain::updater::installer::apply_install;
 use crate::domain::updater::{get_progress, UpdateProgress};
 
@@ -7,35 +10,32 @@ pub fn check_for_updates() -> Result<UpdateCheckResult, String> {
     fetch_latest_release_info()
 }
 
-pub fn validate_update_url(url: &str) -> Result<(), String> {
-    crate::commands::system::validate_external_url(url)?;
-    let lower = url.to_lowercase();
-    let is_valid_source = lower.starts_with("https://github.com/arean-max/synchro-nova/releases/")
-        || lower.starts_with("https://objects.githubusercontent.com/");
-    if !is_valid_source {
-        return Err("Update URL must originate from official Synchro Nova GitHub releases".to_string());
-    }
-    Ok(())
-}
-
 #[tauri::command]
-pub fn download_update(url: Option<String>, size: Option<u64>) -> Result<(), String> {
-    let (target_url, target_size) = match (url, size) {
-        (Some(u), Some(s)) => {
+pub fn download_update(
+    url: Option<String>,
+    size: Option<u64>,
+    version: Option<String>,
+    manifest_url: Option<String>,
+) -> Result<(), String> {
+    let (target_url, target_size, target_version, target_manifest) = match (url, size, version, manifest_url) {
+        (Some(u), Some(s), Some(v), m) => {
             validate_update_url(&u)?;
-            (u, s)
+            if let Some(ref m_url) = m {
+                validate_update_url(m_url)?;
+            }
+            (u, s, v, m)
         }
         _ => {
             let info = fetch_latest_release_info()?;
             let u = info
                 .download_url
-                .ok_or_else(|| "No downloadable update asset found".to_string())?;
+                .ok_or_else(|| "No downloadable update asset found in latest release".to_string())?;
             validate_update_url(&u)?;
-            (u, info.asset_size)
+            (u, info.asset_size, info.latest_version, info.sha_manifest_url)
         }
     };
 
-    spawn_download_worker(target_url, target_size)
+    spawn_download_worker(target_url, target_size, target_version, target_manifest)
 }
 
 #[tauri::command]

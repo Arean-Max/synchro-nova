@@ -69,6 +69,7 @@ pub struct AppSettings {
     pub save_color_correction: bool,
     pub autostart_windows: bool,
     pub close_to_tray: bool,
+    pub zero_daemon_mode: bool,
     pub start_minimized: bool,
     pub auto_backup_on_start: bool,
     pub accepted_agreement: bool,
@@ -106,13 +107,14 @@ impl Default for AppSettings {
             save_color_correction: true,
             autostart_windows: false,
             close_to_tray: true,
+            zero_daemon_mode: false,
             start_minimized: false,
             auto_backup_on_start: false,
             accepted_agreement: true,
             language: detect_system_language(),
             show_on_recordings: true,
             accent_color: "#ffffff".to_string(),
-            auto_update: false,
+            auto_update: true,
             disable_splash: false,
             disable_animations: false,
         }
@@ -297,15 +299,27 @@ impl RuntimeState {
     }
 
     pub fn signal_shutdown(&self) {
+        let preserve_color = self
+            .data
+            .lock()
+            .map(|d| d.settings.zero_daemon_mode || d.settings.save_color_correction)
+            .unwrap_or(false);
+        self.signal_shutdown_with_behavior(preserve_color);
+    }
+
+    pub fn signal_shutdown_with_behavior(&self, preserve_color: bool) {
         self.exiting.store(true, Ordering::SeqCst);
         if let Ok(mut lock) = self.trimmer_sync.exited.lock() {
             *lock = true;
             self.trimmer_sync.condvar.notify_all();
         }
         color::stop_color_guard();
-        let _ = color::reset_color_transform();
-        let _ = color::black_holo::restore_original_system_ramp();
+        if !preserve_color {
+            let _ = color::reset_color_transform();
+            let _ = color::black_holo::restore_original_system_ramp();
+        }
         color::black_holo::stop_ramp_watchdog();
+        crate::platform::ffi::terminate_webview_tree();
     }
 
     pub fn snapshot(&self) -> Result<PersistedState, String> {

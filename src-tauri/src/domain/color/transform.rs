@@ -1,3 +1,20 @@
+static ORIGINAL_GAMMA_RAMP: std::sync::OnceLock<crate::platform::ffi::GammaRamp> = std::sync::OnceLock::new();
+
+#[cfg(target_os = "windows")]
+fn ensure_original_gamma_captured() {
+    if ORIGINAL_GAMMA_RAMP.get().is_none() {
+        unsafe {
+            let hdc = crate::platform::ffi::winapi::GetDC(std::ptr::null_mut());
+            if !hdc.is_null() {
+                let mut orig = crate::platform::ffi::GammaRamp::default();
+                if crate::platform::ffi::winapi::GetDeviceGammaRamp(hdc, &mut orig) != 0 {
+                    let _ = ORIGINAL_GAMMA_RAMP.set(orig);
+                }
+                let _ = crate::platform::ffi::winapi::ReleaseDC(std::ptr::null_mut(), hdc);
+            }
+        }
+    }
+}
 use crate::app::state::ColorSettings;
 use std::sync::{Arc, Condvar, Mutex, OnceLock};
 
@@ -27,6 +44,7 @@ pub fn start_color_guard() {
         let sync = Arc::clone(get_guard_sync());
         std::thread::Builder::new()
             .name("synchro-color-guard".to_string())
+            .stack_size(64 * 1024)
             .spawn(move || {
                 let (lock, cvar) = &*sync;
                 loop {
@@ -132,7 +150,17 @@ pub fn reset_color_transform() -> Result<(), String> {
         let _ = crate::platform::ffi::winapi::mag_uninitialize();
     }
     if !super::black_holo::is_black_holo_active() {
-        let _ = apply_gamma_ramp(100.0);
+        if let Some(orig) = ORIGINAL_GAMMA_RAMP.get() {
+            unsafe {
+                let hdc = crate::platform::ffi::winapi::GetDC(std::ptr::null_mut());
+                if !hdc.is_null() {
+                    let _ = crate::platform::ffi::winapi::SetDeviceGammaRamp(hdc, orig);
+                    let _ = crate::platform::ffi::winapi::ReleaseDC(std::ptr::null_mut(), hdc);
+                }
+            }
+        } else {
+            let _ = apply_gamma_ramp(100.0);
+        }
     }
     Ok(())
 }
@@ -160,6 +188,7 @@ fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) 
 
 #[cfg(target_os = "windows")]
 fn apply_gamma_ramp(gamma_percent: f32) -> Result<(), String> {
+    ensure_original_gamma_captured();
     let gamma = (gamma_percent / 100.0).clamp(0.5, 1.5);
     let exponent = 1.0 / gamma;
     let mut ramp = crate::platform::ffi::GammaRamp::default();
@@ -374,4 +403,34 @@ fn multiply_matrix(left: [f32; 25], right: [f32; 25]) -> [f32; 25] {
     }
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_identity_matrix() {
+        let id = identity_matrix();
+        assert_eq!(id[0], 1.0);
+        assert_eq!(id[6], 1.0);
+        assert_eq!(id[12], 1.0);
+        assert_eq!(id[18], 1.0);
+        assert_eq!(id[24], 1.0);
+        assert_eq!(id[1], 0.0);
+    }
+
+    #[test]
+    fn test_multiply_identity() {
+        let id = identity_matrix();
+        let mult = multiply_matrix(id, id);
+        assert_eq!(id, mult);
+    }
+
+    #[test]
+    fn test_black_holo_matrix_bounds() {
+        let m = black_holo_matrix(0.5);
+        assert_eq!(m[0], 1.0);
+        assert_eq!(m[24], 1.0);
+    }
 }

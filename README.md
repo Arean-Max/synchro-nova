@@ -17,6 +17,7 @@
   <a href="https://github.com/Arean-Max/synchro-nova/releases"><img alt="Releases" src="https://img.shields.io/github/v/release/Arean-Max/synchro-nova?style=flat-square&color=emerald" /></a>
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square" /></a>
   <a href="https://microsoft.com/windows"><img alt="Platform" src="https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20(x64)-informational?style=flat-square" /></a>
+  <a href="https://github.com/sotoykor-source/synchro-nova"><img alt="Fork of" src="https://img.shields.io/badge/Fork-sotoykor--source%2Fsynchro--nova-blue?style=flat-square&logo=github" /></a>
 </p>
 
 <p align="center">
@@ -87,6 +88,13 @@ npm install
 npm run dev       # run in development mode
 npm run build     # build release installer
 ```
+
+---
+
+### Contributors
+
+- [sotoykor-source](https://github.com/sotoykor-source) — Original creator and upstream author
+- [Arean-Max](https://github.com/Arean-Max) — Maintainer
 
 ---
 

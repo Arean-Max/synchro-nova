@@ -9,6 +9,7 @@ unsafe extern "system" {
     pub fn GetCurrentProcess() -> *mut c_void;
     pub fn GetCurrentProcessId() -> u32;
     pub fn OpenProcess(desired_access: u32, inherit_handle: i32, process_id: u32) -> *mut c_void;
+    pub fn TerminateProcess(process: *mut c_void, exit_code: u32) -> i32;
     pub fn WaitForSingleObject(handle: *mut c_void, milliseconds: u32) -> u32;
     pub fn CreateMutexW(
         mutex_attributes: *mut c_void,
@@ -56,6 +57,13 @@ unsafe extern "system" {
     pub fn SetPriorityClass(process: *mut c_void, priority_class: u32) -> i32;
     pub fn GetCurrentThreadId() -> u32;
     pub fn GetModuleHandleW(module_name: *const u16) -> *mut c_void;
+    pub fn GetProcessHeaps(number_of_heaps: u32, process_heaps: *mut *mut c_void) -> u32;
+    pub fn SetProcessInformation(
+        process: *mut c_void,
+        process_information_class: i32,
+        process_information: *mut c_void,
+        process_information_size: u32,
+    ) -> i32;
 }
 
 #[cfg(target_os = "windows")]
@@ -140,11 +148,20 @@ unsafe extern "system" {
         msg_filter_max: u32,
         remove_msg: u32,
     ) -> i32;
+    pub fn GetForegroundWindow() -> *mut c_void;
+    pub fn GetWindowRect(hwnd: *mut c_void, rect: *mut RECT) -> i32;
+    pub fn MonitorFromWindow(hwnd: *mut c_void, flags: u32) -> *mut c_void;
+    pub fn GetMonitorInfoW(h_monitor: *mut c_void, lpmi: *mut MONITORINFO) -> i32;
+    pub fn GetWindowThreadProcessId(hwnd: *mut c_void, lpdw_process_id: *mut u32) -> u32;
+    pub fn GetClassNameW(hwnd: *mut c_void, lp_class_name: *mut u16, n_max_count: i32) -> i32;
+    pub fn IsWindowVisible(hwnd: *mut c_void) -> i32;
+    pub fn IsIconic(hwnd: *mut c_void) -> i32;
 }
 
 #[cfg(target_os = "windows")]
 #[link(name = "Gdi32")]
 unsafe extern "system" {
+    pub fn GetDeviceGammaRamp(hdc: *mut c_void, ramp: *mut GammaRamp) -> i32;
     pub fn SetDeviceGammaRamp(hdc: *mut c_void, ramp: *const GammaRamp) -> i32;
 }
 

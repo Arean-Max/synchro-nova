@@ -295,13 +295,15 @@ pub fn is_directx_thread_priority_applied() -> bool {
 }
 
 pub fn clean_legacy_rust_ifeo() {
-    let _ = super::runner::delete_hklm_tree(
+    // Only delete suspicious debugger injection values, never the entire subkey
+    let _ = super::runner::delete_hklm_value(
         "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\RustClient.exe",
+        "Debugger",
     );
-    let _ = super::runner::delete_hklm_tree(
+    let _ = super::runner::delete_hklm_value(
         "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\rust.exe",
+        "Debugger",
     );
-    let _ = super::runner::run_command_output("bcdedit", &["/deletevalue", "disabledynamictick"]);
 }
 
 pub fn apply_gpu_adaptive_power(id: &str) -> TweakApplyResult {

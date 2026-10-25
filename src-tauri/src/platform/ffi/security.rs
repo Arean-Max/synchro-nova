@@ -116,10 +116,14 @@ pub fn trim_working_set() {
             return;
         }
 
-        let heap = winapi::GetProcessHeap();
-        if !heap.is_null() {
-            let _ = winapi::HeapCompact(heap, 0);
+        let mut heaps = [std::ptr::null_mut(); 32];
+        let count = winapi::GetProcessHeaps(32, heaps.as_mut_ptr());
+        for i in 0..count.min(32) as usize {
+            if !heaps[i].is_null() {
+                let _ = winapi::HeapCompact(heaps[i], 0);
+            }
         }
+        enable_process_eco_qos();
         let _ = winapi::SetProcessWorkingSetSize(winapi::GetCurrentProcess(), usize::MAX, usize::MAX);
 
         let mut webview_pids = Vec::new();
@@ -202,6 +206,135 @@ pub fn trim_working_set() {
         }
     }
 }
+
+#[cfg(target_os = "windows")]
+pub fn enable_process_eco_qos() {
+    #[repr(C)]
+    struct ProcessPowerThrottlingState {
+        version: u32,
+        control_mask: u32,
+        state_mask: u32,
+    }
+    const PROCESS_POWER_THROTTLING_CURRENT_VERSION: u32 = 1;
+    const PROCESS_POWER_THROTTLING_EXECUTION_SPEED: u32 = 0x1;
+    const PROCESS_POWER_THROTTLING: i32 = 4;
+
+    let mut state = ProcessPowerThrottlingState {
+        version: PROCESS_POWER_THROTTLING_CURRENT_VERSION,
+        control_mask: PROCESS_POWER_THROTTLING_EXECUTION_SPEED,
+        state_mask: PROCESS_POWER_THROTTLING_EXECUTION_SPEED,
+    };
+
+    unsafe {
+        let _ = winapi::SetProcessInformation(
+            winapi::GetCurrentProcess(),
+            PROCESS_POWER_THROTTLING,
+            &mut state as *mut _ as *mut std::ffi::c_void,
+            std::mem::size_of::<ProcessPowerThrottlingState>() as u32,
+        );
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn disable_process_eco_qos() {
+    #[repr(C)]
+    struct ProcessPowerThrottlingState {
+        version: u32,
+        control_mask: u32,
+        state_mask: u32,
+    }
+    const PROCESS_POWER_THROTTLING_CURRENT_VERSION: u32 = 1;
+    const PROCESS_POWER_THROTTLING_EXECUTION_SPEED: u32 = 0x1;
+    const PROCESS_POWER_THROTTLING: i32 = 4;
+
+    let mut state = ProcessPowerThrottlingState {
+        version: PROCESS_POWER_THROTTLING_CURRENT_VERSION,
+        control_mask: PROCESS_POWER_THROTTLING_EXECUTION_SPEED,
+        state_mask: 0,
+    };
+
+    unsafe {
+        let _ = winapi::SetProcessInformation(
+            winapi::GetCurrentProcess(),
+            PROCESS_POWER_THROTTLING,
+            &mut state as *mut _ as *mut std::ffi::c_void,
+            std::mem::size_of::<ProcessPowerThrottlingState>() as u32,
+        );
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn enable_process_eco_qos() {}
+#[cfg(not(target_os = "windows"))]
+pub fn disable_process_eco_qos() {}
+
+#[cfg(target_os = "windows")]
+pub fn terminate_webview_tree() {
+    let my_pid = unsafe { winapi::GetCurrentProcessId() };
+    let snapshot = unsafe { winapi::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) };
+    if snapshot.is_null() || snapshot as isize == -1 {
+        return;
+    }
+    let mut entry = ProcessEntry32W::default();
+    let mut all_entries = Vec::with_capacity(128);
+
+    if unsafe { winapi::Process32FirstW(snapshot, &mut entry) } != 0 {
+        loop {
+            all_entries.push((
+                entry.th32_process_id,
+                entry.th32_parent_process_id,
+                entry.sz_exe_file,
+            ));
+            if unsafe { winapi::Process32NextW(snapshot, &mut entry) } == 0 {
+                break;
+            }
+        }
+    }
+    unsafe { winapi::CloseHandle(snapshot); }
+
+    let mut tree_pids = Vec::with_capacity(8);
+    tree_pids.push(my_pid);
+
+    let mut discovered = Vec::with_capacity(8);
+    let root_wv = REGISTERED_WEBVIEW_PID.load(std::sync::atomic::Ordering::Relaxed);
+    if root_wv != 0 && root_wv != my_pid {
+        tree_pids.push(root_wv);
+        discovered.push(root_wv);
+    }
+
+    let mut added = true;
+    while added {
+        added = false;
+        for (pid, parent_pid, exe_name) in &all_entries {
+            if *pid != my_pid && !tree_pids.contains(pid) && tree_pids.contains(parent_pid) {
+                let len = exe_name.iter().position(|&c| c == 0).unwrap_or(exe_name.len());
+                let name = String::from_utf16_lossy(&exe_name[..len]);
+                if name.eq_ignore_ascii_case("msedgewebview2.exe") {
+                    tree_pids.push(*pid);
+                    discovered.push(*pid);
+                    added = true;
+                }
+            }
+        }
+    }
+
+    const PROCESS_TERMINATE: u32 = 0x0001;
+    for pid in discovered {
+        if crate::platform::security_guard::is_safe_child_pid(pid) {
+            let handle = unsafe { winapi::OpenProcess(PROCESS_TERMINATE, 0, pid) };
+            if !handle.is_null() && handle as isize != -1 {
+                unsafe {
+                    let _ = winapi::TerminateProcess(handle, 0);
+                    winapi::CloseHandle(handle);
+                }
+            }
+        }
+    }
+    REGISTERED_WEBVIEW_PID.store(0, std::sync::atomic::Ordering::Relaxed);
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn terminate_webview_tree() {}
 
 #[cfg(not(target_os = "windows"))]
 pub fn trim_working_set() {}

@@ -531,29 +531,54 @@ pub fn fix_anticheat_integrity() -> AntiCheatFixResult {
             }
         }
 
-        if crate::admin::is_running_elevated() {
-            let _ = crate::domain::tweaks::runner::run_command("bcdedit", &["/set", "testsigning", "off"]);
-            let _ = crate::domain::tweaks::runner::run_command("bcdedit", &["/set", "nointegritychecks", "off"]);
-            let _ = crate::domain::tweaks::runner::run_command("bcdedit", &["/set", "debug", "off"]);
-            let _ = crate::domain::tweaks::runner::run_command("bcdedit", &["/deletevalue", "disabledynamictick"]);
-            fixed_items.push("Enforced Windows Driver Signature Policies (testsigning: off, nointegritychecks: off)".to_string());
+        let (testsigning_clean, kernel_debug_clean, integrity_checks_clean) = check_bcd_integrity();
+        let bcd_needs_fix = !testsigning_clean || !kernel_debug_clean || !integrity_checks_clean;
+
+        if bcd_needs_fix {
+            if crate::admin::is_running_elevated() {
+                let r1 = crate::domain::tweaks::runner::run_command("bcdedit", &["/set", "testsigning", "off"]);
+                let r2 = crate::domain::tweaks::runner::run_command("bcdedit", &["/set", "nointegritychecks", "off"]);
+                let r3 = crate::domain::tweaks::runner::run_command("bcdedit", &["/set", "debug", "off"]);
+                let _ = crate::domain::tweaks::runner::run_command("bcdedit", &["/deletevalue", "disabledynamictick"]);
+                if r1.is_ok() || r2.is_ok() || r3.is_ok() {
+                    fixed_items.push("Enforced Windows Driver Signature Policies (testsigning: off, nointegritychecks: off)".to_string());
+                }
+            } else {
+                return AntiCheatFixResult {
+                    success: false,
+                    fixed_items,
+                    message: "Administrator privileges are required to modify BCD boot policies for Anti-Cheat compliance".to_string(),
+                };
+            }
         }
 
         crate::domain::tweaks::gaming::clean_legacy_rust_ifeo();
         crate::domain::tweaks::system::clean_legacy_csrss_override();
     }
 
-    AntiCheatFixResult {
-        success: true,
-        message: if fixed_items.is_empty() {
-            "System is already 100% compliant with Easy Anti-Cheat and BattlEye requirements".to_string()
+    invalidate_security_caches();
+    let audit_after = audit_anticheat_integrity();
+    let success = audit_after.is_eac_compatible;
+    let message = if success {
+        if fixed_items.is_empty() {
+            "System is fully compliant with Easy Anti-Cheat and BattlEye requirements".to_string()
         } else {
             format!(
                 "Successfully applied {} security fixes for Anti-Cheat integrity",
                 fixed_items.len()
             )
-        },
+        }
+    } else {
+        format!(
+            "Anti-Cheat compliance issues remain: {}",
+            audit_after.detected_issues.join("; ")
+        )
+    };
+
+    AntiCheatFixResult {
+        success,
         fixed_items,
+        message,
     }
 }
 
@@ -567,11 +592,17 @@ pub fn get_security_guard_status() -> SecurityGuardStatus {
     let active_game = is_protected_game_running();
     let audit = audit_anticheat_integrity();
 
+    // Genuine security indicators reflecting actual process and registry audit state
+    let anticheat_safe_mode = audit.is_eac_compatible;
+    let ifeo_tamper_blocker_active = audit.ifeo_clean;
+    let memory_shield_active = audit.kernel_debug_clean && audit.testsigning_clean;
+    let injection_blocker_active = audit.integrity_checks_clean;
+
     SecurityGuardStatus {
-        memory_shield_active: true,
-        anticheat_safe_mode: true,
-        injection_blocker_active: true,
-        ifeo_tamper_blocker_active: true,
+        memory_shield_active,
+        anticheat_safe_mode,
+        injection_blocker_active,
+        ifeo_tamper_blocker_active,
         game_shield_active: active_game.is_some(),
         active_protected_game: active_game,
         eac_compatible: audit.is_eac_compatible,

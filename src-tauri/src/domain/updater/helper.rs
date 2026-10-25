@@ -1,0 +1,379 @@
+use super::logging::log;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::time::{Duration, Instant};
+
+#[derive(Debug, Clone)]
+pub struct HelperArgs {
+    pub target: PathBuf,
+    pub payload: PathBuf,
+    pub wait_pid: u32,
+    pub backup: PathBuf,
+    pub expected_sha256: Option<String>,
+}
+
+impl HelperArgs {
+    pub fn parse(args: &[String]) -> Option<Self> {
+        let mut target = None;
+        let mut payload = None;
+        let mut wait_pid = None;
+        let mut backup = None;
+        let mut expected_sha256 = None;
+
+        let mut i = 0;
+        while i < args.len() {
+            match args[i].as_str() {
+                "--target" => {
+                    if i + 1 < args.len() {
+                        target = Some(PathBuf::from(&args[i + 1]));
+                        i += 1;
+                    }
+                }
+                "--payload" => {
+                    if i + 1 < args.len() {
+                        payload = Some(PathBuf::from(&args[i + 1]));
+                        i += 1;
+                    }
+                }
+                "--wait-pid" => {
+                    if i + 1 < args.len() {
+                        wait_pid = args[i + 1].parse::<u32>().ok();
+                        i += 1;
+                    }
+                }
+                "--backup" => {
+                    if i + 1 < args.len() {
+                        backup = Some(PathBuf::from(&args[i + 1]));
+                        i += 1;
+                    }
+                }
+                "--expected-sha256" => {
+                    if i + 1 < args.len() {
+                        expected_sha256 = Some(args[i + 1].trim().to_string());
+                        i += 1;
+                    }
+                }
+                _ => {}
+            }
+            i += 1;
+        }
+
+        let target_path = target?;
+        let payload_path = payload?;
+        let pid = wait_pid.unwrap_or(0);
+        let backup_path = backup.unwrap_or_else(|| {
+            let mut b = target_path.clone();
+            b.set_extension("exe.old");
+            b
+        });
+
+        Some(Self {
+            target: target_path,
+            payload: payload_path,
+            wait_pid: pid,
+            backup: backup_path,
+            expected_sha256,
+        })
+    }
+}
+
+pub fn validate_target_path(target: &Path) -> Result<(), String> {
+    let file_name = target
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or_else(|| "Target path lacks a valid file name".to_string())?
+        .to_lowercase();
+
+    if file_name != "synchro.exe" {
+        return Err(format!(
+            "Target executable name must be 'synchro.exe', got '{}'",
+            file_name
+        ));
+    }
+
+    let target_str = target.to_string_lossy().to_lowercase();
+    let sys_root = std::env::var("SystemRoot")
+        .unwrap_or_else(|_| "c:\\windows".to_string())
+        .to_lowercase();
+
+    if target_str.starts_with(&sys_root)
+        || target_str.contains("\\system32")
+        || target_str.contains("\\syswow64")
+        || target_str.contains("\\winre")
+    {
+        return Err("Target path cannot point into Windows system directories".to_string());
+    }
+
+    Ok(())
+}
+
+pub fn verify_payload_integrity(payload: &Path, expected_sha: Option<&str>) -> Result<(), String> {
+    if !payload.is_file() {
+        return Err(format!("Payload file does not exist at '{}'", payload.display()));
+    }
+
+    let meta = fs::metadata(payload).map_err(|e| format!("Failed to read payload metadata: {}", e))?;
+    if meta.len() < 500_000 || meta.len() > 150_000_000 {
+        return Err(format!(
+            "Payload size {} bytes is outside valid boundaries [500KB - 150MB]",
+            meta.len()
+        ));
+    }
+
+    // Check PE 'MZ' magic bytes
+    use std::io::Read;
+    let mut f = fs::File::open(payload).map_err(|e| format!("Cannot open payload: {}", e))?;
+    let mut header = [0u8; 2];
+    f.read_exact(&mut header).map_err(|e| format!("Failed to read payload header: {}", e))?;
+    if &header != b"MZ" {
+        return Err("Payload is not a valid Windows PE binary (missing MZ header)".to_string());
+    }
+
+    // Cryptographic SHA-256 verification inside the elevated process
+    if let Some(expected) = expected_sha {
+        let actual_hash = crate::infra::hash::sha256_file(payload)
+            .map_err(|e| format!("Failed to compute payload SHA-256: {}", e))?
+            .to_lowercase();
+        if actual_hash != expected.to_lowercase() {
+            return Err(format!(
+                "Payload SHA-256 mismatch inside helper: expected {}, got {}",
+                expected, actual_hash
+            ));
+        }
+        log("HELPER", &format!("Payload SHA-256 verified inside helper: {}", actual_hash));
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let payload_signed = crate::platform::ffi::verify_embedded_signature(payload);
+        if !payload_signed {
+            log("HELPER_WARN", "Payload is not digitally signed; proceeding with hash verification");
+        }
+    }
+
+    Ok(())
+}
+
+pub fn run_updater_helper(args: &[String]) {
+    log("HELPER", "Updater helper spawned");
+
+    let parsed = match HelperArgs::parse(args) {
+        Some(p) => p,
+        None => {
+            log("HELPER_ERR", "Missing required CLI arguments for helper execution");
+            std::process::exit(1);
+        }
+    };
+
+    log(
+        "HELPER",
+        &format!(
+            "Target: '{}', Payload: '{}', WaitPID: {}, HasExpectedSha: {}",
+            parsed.target.display(),
+            parsed.payload.display(),
+            parsed.wait_pid,
+            parsed.expected_sha256.is_some()
+        ),
+    );
+
+    // Strict validation before taking any elevated action
+    if let Err(e) = validate_target_path(&parsed.target) {
+        log("HELPER_ERR", &format!("Target validation rejected: {}", e));
+        std::process::exit(1);
+    }
+
+    if let Err(e) = verify_payload_integrity(&parsed.payload, parsed.expected_sha256.as_deref()) {
+        log("HELPER_ERR", &format!("Payload integrity verification rejected: {}", e));
+        std::process::exit(1);
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        // 1. Synchronize: Wait for old process to exit
+        if parsed.wait_pid > 0 {
+            log("HELPER", &format!("Waiting for parent process PID {} to exit...", parsed.wait_pid));
+            crate::platform::ffi::wait_for_process_exit(parsed.wait_pid, 30_000);
+
+            // Double check process handle
+            use crate::platform::ffi::{winapi, SYNCHRONIZE};
+            let handle = unsafe { winapi::OpenProcess(SYNCHRONIZE, 0, parsed.wait_pid) };
+            if !handle.is_null() {
+                let status = unsafe { winapi::WaitForSingleObject(handle, 2000) };
+                unsafe { winapi::CloseHandle(handle) };
+                if status == 0x0000_0102 { // WAIT_TIMEOUT
+                    log("HELPER_ERR", "Parent process still running after 32 seconds; aborting to prevent lock collision");
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        // Small grace period for Windows handle deallocations
+        std::thread::sleep(Duration::from_millis(250));
+
+        // 2. Move target -> backup
+        if parsed.backup.is_file() {
+            let _ = fs::remove_file(&parsed.backup);
+        }
+
+        let mut backup_ok = false;
+        for attempt in 1..=10 {
+            if !parsed.target.is_file() {
+                // Portable run or target deleted
+                backup_ok = true;
+                break;
+            }
+            if fs::rename(&parsed.target, &parsed.backup).is_ok() {
+                backup_ok = true;
+                log("HELPER", &format!("Existing binary backed up to '{}' (attempt {attempt})", parsed.backup.display()));
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(150 + attempt * 50));
+        }
+
+        if !backup_ok {
+            log("HELPER_ERR", &format!("Failed to rename target '{}' to backup; file may still be locked", parsed.target.display()));
+            std::process::exit(1);
+        }
+
+        // 3. Move payload -> target
+        let mut install_ok = false;
+        for attempt in 1..=5 {
+            if fs::rename(&parsed.payload, &parsed.target).is_ok() {
+                install_ok = true;
+                break;
+            }
+            if fs::copy(&parsed.payload, &parsed.target).is_ok() {
+                let _ = fs::remove_file(&parsed.payload);
+                install_ok = true;
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(150 + attempt * 50));
+        }
+
+        if !install_ok {
+            log("HELPER_ERR", "Failed to place new payload at target; initiating immediate rollback");
+            if parsed.backup.is_file() {
+                let _ = fs::rename(&parsed.backup, &parsed.target);
+            }
+            std::process::exit(1);
+        }
+
+        log("HELPER", "Binary replacement succeeded; launching updated application");
+
+        // 4. Spawn new binary with post-update flags
+        let mut cmd = Command::new(&parsed.target);
+        cmd.arg("--post-update-check");
+        cmd.arg("--restarted-from-pid");
+        cmd.arg(std::process::id().to_string());
+
+        let mut child = match cmd.spawn() {
+            Ok(c) => c,
+            Err(e) => {
+                log("HELPER_ERR", &format!("Failed to spawn updated binary: {}; rolling back...", e));
+                rollback_and_restore(&parsed.target, &parsed.backup);
+                std::process::exit(1);
+            }
+        };
+
+        // 5. Watchdog: ensure new binary doesn't crash on boot (5 second verification)
+        let watchdog_start = Instant::now();
+        let watchdog_timeout = Duration::from_secs(5);
+        let mut crashed = false;
+
+        while watchdog_start.elapsed() < watchdog_timeout {
+            std::thread::sleep(Duration::from_millis(200));
+            match child.try_wait() {
+                Ok(Some(status)) => {
+                    // Child exited prematurely within 5 seconds!
+                    log(
+                        "HELPER_ERR",
+                        &format!("New version crashed during startup with exit status: {:?}; initiating rollback", status.code()),
+                    );
+                    crashed = true;
+                    break;
+                }
+                Ok(None) => {
+                    // Process is still running smoothly
+                }
+                Err(e) => {
+                    log("HELPER_WARN", &format!("Could not inspect child process: {}", e));
+                }
+            }
+        }
+
+        if crashed {
+            rollback_and_restore(&parsed.target, &parsed.backup);
+            std::process::exit(2);
+        }
+
+        // 6. Success confirmation & cleanup
+        log("SUCCESS", "Updated application is running stably; cleaning up backup and staging files");
+        if parsed.backup.is_file() {
+            let _ = fs::remove_file(&parsed.backup);
+        }
+        if let Some(parent) = parsed.payload.parent() {
+            if parent.to_string_lossy().contains("synchro_update") {
+                let _ = fs::remove_dir_all(parent);
+            }
+        }
+
+        std::process::exit(0);
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        log("HELPER", "Helper execution simulated on non-windows platform");
+        std::process::exit(0);
+    }
+}
+
+fn rollback_and_restore(target: &Path, backup: &Path) {
+    if backup.is_file() {
+        let _ = fs::remove_file(target);
+        if fs::rename(backup, target).is_ok() {
+            log("ROLLBACK", "Successfully restored previous working binary");
+            let _ = Command::new(target).spawn();
+        } else {
+            log("ROLLBACK_CRIT", "Failed to restore backup binary during rollback");
+        }
+    } else {
+        log("ROLLBACK_CRIT", "Backup binary missing; cannot perform rollback");
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_helper_args_parsing() {
+        let args = vec![
+            "--target".to_string(),
+            r"C:\Apps\synchro.exe".to_string(),
+            "--payload".to_string(),
+            r"C:\Temp\update.bin".to_string(),
+            "--wait-pid".to_string(),
+            "1234".to_string(),
+            "--expected-sha256".to_string(),
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".to_string(),
+        ];
+        let parsed = HelperArgs::parse(&args).expect("Should parse valid args");
+        assert_eq!(parsed.target, PathBuf::from(r"C:\Apps\synchro.exe"));
+        assert_eq!(parsed.payload, PathBuf::from(r"C:\Temp\update.bin"));
+        assert_eq!(parsed.wait_pid, 1234);
+        assert_eq!(parsed.expected_sha256, Some("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".to_string()));
+    }
+
+    #[test]
+    fn test_validate_target_path() {
+        assert!(validate_target_path(Path::new(r"C:\Users\test\AppData\Local\Programs\synchro\synchro.exe")).is_ok());
+        assert!(validate_target_path(Path::new(r"C:\Program Files\Synchro Nova\synchro.exe")).is_ok());
+
+        // Rejection tests
+        assert!(validate_target_path(Path::new(r"C:\Windows\System32\cmd.exe")).is_err());
+        assert!(validate_target_path(Path::new(r"C:\Windows\System32\synchro.exe")).is_err());
+        assert!(validate_target_path(Path::new(r"C:\Apps\other_app.exe")).is_err());
+    }
+}

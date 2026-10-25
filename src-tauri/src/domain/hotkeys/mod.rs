@@ -52,6 +52,7 @@ pub fn start_global_hotkey_listener(app: AppHandle) {
     STARTED.get_or_init(|| {
         std::thread::Builder::new()
             .name("synchro-global-hotkeys".to_string())
+            .stack_size(64 * 1024)
             .spawn(move || {
                 let tid = unsafe { winapi::GetCurrentThreadId() };
                 LISTENER_THREAD_ID.store(tid, Ordering::SeqCst);
@@ -139,10 +140,14 @@ fn execute_action(action: &str, app: &AppHandle) {
                 let is_visible = window.is_visible().unwrap_or(false);
                 let is_minimized = window.is_minimized().unwrap_or(false);
                 if !is_visible || is_minimized {
+                    crate::platform::set_user_summoned(true);
+                    crate::resume_window_webview(&window.as_ref().window());
                     let _ = window.unminimize();
                     let _ = window.show();
                     let _ = window.set_focus();
                 } else {
+                    crate::platform::set_user_summoned(false);
+                    crate::suspend_window_webview(&window.as_ref().window());
                     let _ = window.hide();
                     crate::app::workers::trim_process_memory();
                 }

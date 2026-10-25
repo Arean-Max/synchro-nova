@@ -17,6 +17,7 @@ const ACCENT_PRESETS = [
 const SETTING_TOGGLE_KEYS = [
   { key: "autostartWindows", labelKey: "startWithWindows" },
   { key: "closeToTray", labelKey: "closeToTray" },
+  { key: "zeroDaemonMode", labelKey: "zeroDaemonMode" },
   { key: "startMinimized", labelKey: "startMinimized" },
   { key: "autoBackupOnStart", labelKey: "autoBackupOnStart" },
   { key: "showOnRecordings", labelKey: "showOnRecordings" },
@@ -85,6 +86,13 @@ export function renderSettingsPage(appState, viewState, t) {
           <span class="tall-card-sub">github.com/Arean-Max</span>
         </div>
       </button>
+      <button class="settings-tall-card-btn compact" type="button" data-action="open-external-url" data-url="https://github.com/sotoykor-source/synchro-nova">
+        <div class="tall-card-icon-wrap">${icon("github")}</div>
+        <div class="tall-card-content">
+          <span class="tall-card-title">${escapeHtml(t("upstreamRepoCaps"))}</span>
+          <span class="tall-card-sub">github.com/sotoykor-source</span>
+        </div>
+      </button>
       <button class="settings-tall-card-btn compact" type="button" data-action="open-external-url" data-url="https://t.me/synchronova">
         <div class="tall-card-icon-wrap">${icon("telegram")}</div>
         <div class="tall-card-content">
@@ -130,6 +138,19 @@ export function renderSettingsPage(appState, viewState, t) {
     </div>
     <div class="settings-section-divider"></div>
     ${securitySection}
+    <div class="settings-section-divider"></div>
+    <div class="form-label">${escapeHtml(t("updates"))}</div>
+    <div class="settings-actions-row settings-update-row">
+      <button class="btn btn-outline" type="button" data-action="check-updates-manually">
+        ${icon("refresh")}
+        <span>${escapeHtml(t("checkForUpdates"))}</span>
+      </button>
+      <div class="settings-update-meta" style="display:inline-flex;align-items:center;gap:12px;font-size:12px;color:rgba(255,255,255,0.7);">
+        <span>${escapeHtml(t("currentVersion"))}: <strong>v${escapeHtml(viewState?.appVersion || "1.0.0")}</strong></span>
+        ${viewState?.lastUpdateCheck ? `<span>${escapeHtml(t("lastChecked"))}: ${escapeHtml(viewState.lastUpdateCheck)}</span>` : ""}
+        ${viewState?.updateCheckMessage ? `<span style="color:var(--accent,#38bdf8);">${escapeHtml(viewState.updateCheckMessage)}</span>` : ""}
+      </div>
+    </div>
   `;
 
   return `

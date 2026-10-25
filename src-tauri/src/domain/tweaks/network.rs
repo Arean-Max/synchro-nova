@@ -139,21 +139,52 @@ pub fn apply_tcp_heuristics_off(id: &str) -> TweakApplyResult {
 }
 
 pub fn is_tcp_heuristics_off_applied() -> bool {
-    run_command_output("netsh", &["interface", "tcp", "show", "heuristics"])
-        .map(|o| String::from_utf8_lossy(&o.stdout).contains("disabled"))
-        .unwrap_or(false)
+    if let Ok(output) = run_command_output("netsh", &["interface", "tcp", "show", "heuristics"]) {
+        let text = String::from_utf8_lossy(&output.stdout);
+        for line in text.lines() {
+            let lower = line.to_lowercase();
+            if (lower.contains("heuristics") || lower.contains("эвристик")) && lower.contains("disabled") {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 pub fn is_rss_applied() -> bool {
-    run_command_output("netsh", &["interface", "tcp", "show", "global"])
-        .map(|o| String::from_utf8_lossy(&o.stdout).contains("Receive-Side Scaling State          : enabled"))
-        .unwrap_or(false)
+    if let Ok(output) = run_command_output("netsh", &["interface", "tcp", "show", "global"]) {
+        let text = String::from_utf8_lossy(&output.stdout);
+        for line in text.lines() {
+            let lower = line.to_lowercase();
+            if (lower.contains("scaling") || lower.contains("масштабирования")) && lower.contains("enabled") {
+                return true;
+            }
+        }
+    }
+    run_command_output(
+        "powershell",
+        &["-NoProfile", "-NonInteractive", "-Command", "(Get-NetOffloadGlobalSetting).ReceiveSideScaling"],
+    )
+    .map(|o| String::from_utf8_lossy(&o.stdout).trim().eq_ignore_ascii_case("Enabled"))
+    .unwrap_or(false)
 }
 
 pub fn is_rsc_applied() -> bool {
-    run_command_output("netsh", &["interface", "tcp", "show", "global"])
-        .map(|o| String::from_utf8_lossy(&o.stdout).contains("Receive Segment Coalescing State    : disabled"))
-        .unwrap_or(false)
+    if let Ok(output) = run_command_output("netsh", &["interface", "tcp", "show", "global"]) {
+        let text = String::from_utf8_lossy(&output.stdout);
+        for line in text.lines() {
+            let lower = line.to_lowercase();
+            if (lower.contains("coalescing") || lower.contains("объединения")) && lower.contains("disabled") {
+                return true;
+            }
+        }
+    }
+    run_command_output(
+        "powershell",
+        &["-NoProfile", "-NonInteractive", "-Command", "(Get-NetOffloadGlobalSetting).ReceiveSegmentCoalescing"],
+    )
+    .map(|o| String::from_utf8_lossy(&o.stdout).trim().eq_ignore_ascii_case("Disabled"))
+    .unwrap_or(false)
 }
 
 pub fn apply_network_udp_buffers(id: &str) -> TweakApplyResult {

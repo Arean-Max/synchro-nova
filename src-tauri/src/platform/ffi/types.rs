@@ -228,3 +228,29 @@ impl Default for ShellExecuteInfoW {
         s
     }
 }
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct RECT {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct MONITORINFO {
+    pub cb_size: u32,
+    pub rc_monitor: RECT,
+    pub rc_work: RECT,
+    pub dw_flags: u32,
+}
+
+impl Default for MONITORINFO {
+    fn default() -> Self {
+        let mut m: Self = unsafe { std::mem::zeroed() };
+        m.cb_size = std::mem::size_of::<Self>() as u32;
+        m
+    }
+}

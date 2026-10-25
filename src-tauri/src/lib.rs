@@ -134,20 +134,40 @@ pub fn configure_main_window(window: &tauri::WebviewWindow) {
 }
 
 pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::WebviewWindow> {
-    let window = tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
-        .title("Synchro Nova")
-        .inner_size(980.0, 620.0)
-        .resizable(false)
-        .maximizable(false)
-        .decorations(false)
-        .shadow(false)
-        .center()
-        .build()?;
+    for attempt in 0..10 {
+        if let Some(existing) = app.get_webview_window("main") {
+            configure_main_window(&existing);
+            let _ = existing.unminimize();
+            let _ = existing.show();
+            let _ = existing.set_focus();
+            return Ok(existing);
+        }
 
-    configure_main_window(&window);
-    let _ = window.show();
-    let _ = window.set_focus();
-    Ok(window)
+        match tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
+            .title("Synchro Nova")
+            .inner_size(980.0, 620.0)
+            .resizable(false)
+            .maximizable(false)
+            .decorations(false)
+            .shadow(false)
+            .center()
+            .build()
+        {
+            Ok(window) => {
+                configure_main_window(&window);
+                let _ = window.show();
+                let _ = window.set_focus();
+                return Ok(window);
+            }
+            Err(e) => {
+                if attempt == 9 {
+                    return Err(e);
+                }
+                std::thread::sleep(std::time::Duration::from_millis(30));
+            }
+        }
+    }
+    Err(tauri::Error::WindowNotFound)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -168,6 +188,7 @@ pub fn run() {
             }
 
             let trimmer_sync = Arc::clone(&runtime.trimmer_sync);
+            let watcher_shutdown = Arc::clone(&runtime.exiting);
             app.manage(runtime);
 
             let _ = domain::color::apply_color_transform(&initial.color, initial.settings.show_on_recordings);
@@ -192,15 +213,24 @@ pub fn run() {
             app::workers::spawn_memory_trimmer(trimmer_sync);
 
             #[cfg(target_os = "windows")]
-            {
-                domain::tweaks::gaming::clean_legacy_rust_ifeo();
-                domain::tweaks::system::clean_legacy_csrss_override();
-            }
+            // Startup is strictly read-only; no automatic IFEO or BCD mutation
 
             #[cfg(target_os = "windows")]
             domain::color::black_holo::start_black_holo_hotkey_listener(Some(app.handle().clone()));
             domain::hotkeys::start_global_hotkey_listener(app.handle().clone());
             domain::hotkeys::sync_hotkeys(&initial.keybinds);
+
+            platform::fullscreen_watcher::spawn_fullscreen_watcher(app.handle().clone(), watcher_shutdown);
+
+            let auto_download = initial.settings.auto_update;
+            std::thread::Builder::new()
+                .name("synchro-auto-updater".to_string())
+                .stack_size(64 * 1024)
+                .spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_secs(3));
+                    domain::updater::client::start_background_update_flow(auto_download);
+                })
+                .ok();
 
             Ok(())
         })
@@ -218,6 +248,10 @@ pub fn run() {
                     }
 
                     if let Ok(snapshot) = state.snapshot() {
+                        if snapshot.settings.zero_daemon_mode {
+                            state.signal_shutdown();
+                            std::process::exit(0);
+                        }
                         if snapshot.settings.close_to_tray {
                             api.prevent_close();
                             suspend_window_webview(window);
@@ -225,6 +259,7 @@ pub fn run() {
                             trim_process_memory();
                         } else {
                             state.signal_shutdown();
+                            std::process::exit(0);
                         }
                     }
                 }
@@ -360,9 +395,60 @@ mod tests {
         assert!(is_newer_version("v2.2.4-fix", "2.2.2"));
         assert!(is_newer_version("v3.0.0", "2.2.2"));
         assert!(is_newer_version("2.3.0", "2.2.2"));
+        assert!(is_newer_version("2.3.4", "2.3.4-rc1"));
+        assert!(is_newer_version("2.3.5-beta", "2.3.4"));
         assert!(!is_newer_version("v2.2.2", "2.2.2"));
         assert!(!is_newer_version("v2.2.1", "2.2.2"));
         assert!(!is_newer_version("v1.9.9", "2.2.2"));
+        assert!(!is_newer_version("2.3.4-beta", "2.3.4"));
+        assert!(!is_newer_version("invalid-string", "2.3.4"));
+    }
+
+    #[test]
+    fn test_sha256_manifest_parser() {
+        use domain::updater::client::parse_sha256_manifest;
+
+        let valid_manifest = "\
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  synchro.exe\r\n\
+a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90 *installer.exe\n";
+
+        let hash = parse_sha256_manifest(valid_manifest, "synchro.exe").unwrap();
+        assert_eq!(hash, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+
+        let hash_inst = parse_sha256_manifest(valid_manifest, "installer.exe").unwrap();
+        assert_eq!(hash_inst, "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90");
+
+        assert!(parse_sha256_manifest(valid_manifest, "missing.exe").is_err());
+
+        let invalid_hash = "1234abcd  synchro.exe";
+        assert!(parse_sha256_manifest(invalid_hash, "synchro.exe").is_err());
+
+        let conflict = "\
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  synchro.exe\n\
+a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90  synchro.exe\n";
+        assert!(parse_sha256_manifest(conflict, "synchro.exe").is_err());
+    }
+
+    #[test]
+    fn test_helper_args_parsing() {
+        use domain::updater::helper::HelperArgs;
+
+        let args = vec![
+            "synchro.exe".to_string(),
+            "--updater-helper".to_string(),
+            "--target".to_string(),
+            "C:\\Program Files\\Synchro\\synchro.exe".to_string(),
+            "--payload".to_string(),
+            "C:\\Temp\\payload.exe".to_string(),
+            "--wait-pid".to_string(),
+            "12345".to_string(),
+        ];
+
+        let parsed = HelperArgs::parse(&args).unwrap();
+        assert_eq!(parsed.target, std::path::PathBuf::from("C:\\Program Files\\Synchro\\synchro.exe"));
+        assert_eq!(parsed.payload, std::path::PathBuf::from("C:\\Temp\\payload.exe"));
+        assert_eq!(parsed.wait_pid, 12345);
+        assert_eq!(parsed.backup, std::path::PathBuf::from("C:\\Program Files\\Synchro\\synchro.exe.old"));
     }
 
     #[test]

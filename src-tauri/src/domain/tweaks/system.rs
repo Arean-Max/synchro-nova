@@ -86,8 +86,10 @@ pub fn is_input_response_fast_applied() -> bool {
 }
 
 pub fn clean_legacy_csrss_override() {
-    let _ = super::runner::delete_hklm_tree(
+    // Only delete suspicious debugger injection values, never the entire subkey
+    let _ = super::runner::delete_hklm_value(
         "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe",
+        "Debugger",
     );
 }
 

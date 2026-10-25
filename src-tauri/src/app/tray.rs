@@ -28,7 +28,7 @@ pub fn install_tray(app: &AppHandle) -> tauri::Result<()> {
             "exit" => {
                 let state = app.state::<RuntimeState>();
                 state.signal_shutdown();
-                app.exit(0);
+                std::process::exit(0);
             }
             _ => {}
         })
@@ -55,6 +55,9 @@ pub fn install_tray(app: &AppHandle) -> tauri::Result<()> {
 }
 
 pub fn show_main_window(app: &AppHandle) {
+    #[cfg(target_os = "windows")]
+    crate::platform::ffi::disable_process_eco_qos();
+
     if let Some(window) = app.get_webview_window("main") {
         crate::resume_window_webview(&window.as_ref().window());
         let _ = window.unminimize();

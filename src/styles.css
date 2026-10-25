@@ -6976,3 +6976,11 @@ body.no-animations *::after {
 
 
 
+
+/* Pause animations when window is hidden to save 100% GPU compositor cycles */
+body.paused-animations *,
+body.paused-animations *::before,
+body.paused-animations *::after {
+  animation-play-state: paused !important;
+  transition: none !important;
+}

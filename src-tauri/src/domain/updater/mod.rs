@@ -1,5 +1,7 @@
 pub mod client;
+pub mod helper;
 pub mod installer;
+pub mod logging;
 
 use serde::{Deserialize, Serialize};
 use std::sync::{Mutex, OnceLock};
@@ -11,6 +13,8 @@ pub struct UpdateProgress {
     pub downloaded_bytes: u64,
     pub total_bytes: u64,
     pub percent: u8,
+    pub latest_version: Option<String>,
+    pub current_version: String,
     pub error: Option<String>,
 }
 
@@ -21,6 +25,8 @@ impl Default for UpdateProgress {
             downloaded_bytes: 0,
             total_bytes: 0,
             percent: 0,
+            latest_version: None,
+            current_version: env!("CARGO_PKG_VERSION").to_string(),
             error: None,
         }
     }
@@ -42,5 +48,12 @@ pub fn get_progress() -> UpdateProgress {
 pub fn set_progress(progress: UpdateProgress) {
     if let Ok(mut guard) = get_state().lock() {
         *guard = progress;
+    }
+}
+
+pub fn set_status(status: &str, error: Option<String>) {
+    if let Ok(mut guard) = get_state().lock() {
+        guard.status = status.to_string();
+        guard.error = error;
     }
 }

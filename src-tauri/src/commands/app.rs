@@ -85,6 +85,10 @@ pub fn close_window(window: Window) {
     let app = window.app_handle().clone();
     let state = app.state::<crate::RuntimeState>();
     if let Ok(snapshot) = state.snapshot() {
+        if snapshot.settings.zero_daemon_mode {
+            state.signal_shutdown();
+            std::process::exit(0);
+        }
         if snapshot.settings.close_to_tray {
             crate::suspend_window_webview(&window);
             let _ = window.hide();
@@ -93,13 +97,14 @@ pub fn close_window(window: Window) {
         }
     }
     state.signal_shutdown();
-    app.exit(0);
+    std::process::exit(0);
 }
 
 #[tauri::command]
 pub fn exit_app(app: AppHandle, state: State<'_, RuntimeState>) {
+    let _ = app;
     state.signal_shutdown();
-    app.exit(0);
+    std::process::exit(0);
 }
 
 #[tauri::command]

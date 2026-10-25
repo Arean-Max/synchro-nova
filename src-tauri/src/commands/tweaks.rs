@@ -40,11 +40,11 @@ pub fn apply_tweaks(
 ) -> Result<Vec<TweakApplyResult>, String> {
     if !ids.is_empty() {
         let timestamp = unix_now();
-        let _ = create_backup_file(
+        create_backup_file(
             &state.backups_dir,
             format!("Safety backup {}", short_date(timestamp)),
             state.snapshot()?,
-        );
+        ).map_err(|e| format!("Cannot proceed with tweaks: failed to create mandatory pre-state backup: {}", e))?;
         prune_safety_backups(&state.backups_dir);
     }
     let results = apply_selected_tweaks(ids);
