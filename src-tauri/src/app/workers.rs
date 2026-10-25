@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use std::time::Duration;
 
 use super::state::TrimmerSync;
 
@@ -16,30 +15,6 @@ pub fn spawn_memory_trimmer(trimmer_sync: Arc<TrimmerSync>) {
                 Ok(l) => l,
                 Err(e) => e.into_inner(),
             };
-            if *lock {
-                return;
-            }
-
-            let (l2, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_millis(2500)) {
-                Ok(res) => res,
-                Err(e) => e.into_inner(),
-            };
-            lock = l2;
-            if *lock {
-                return;
-            }
-            trim_process_memory();
-
-            let (l3, _) = match trimmer_sync.condvar.wait_timeout(lock, Duration::from_millis(3000)) {
-                Ok(res) => res,
-                Err(e) => e.into_inner(),
-            };
-            lock = l3;
-            if *lock {
-                return;
-            }
-            trim_process_memory();
-
             while !*lock {
                 let next_lock = match trimmer_sync.condvar.wait(lock) {
                     Ok(res) => res,

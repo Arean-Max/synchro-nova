@@ -206,8 +206,6 @@ fn main() {
             }
         }
 
-        synchro_lib::infra::fast_cache::try_early_warmup();
-
         let mut restarted_from_pid: Option<u32> = None;
         for i in 0..args.len() {
             if args[i] == "--restarted-from-pid" && i + 1 < args.len() {
@@ -231,6 +229,9 @@ fn main() {
             std::process::exit(0);
         }
 
+        // Apply fast cache only AFTER successfully acquiring single-instance ownership
+        synchro_lib::infra::fast_cache::try_early_warmup();
+
         let is_admin = synchro_lib::ffi::is_user_admin();
         if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
             let folder_name = if is_admin { "EBWebView_Admin" } else { "EBWebView" };
@@ -241,24 +242,6 @@ fn main() {
             std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", webview_cache);
         }
         std::env::set_var("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0xFF121214");
-        std::env::set_var(
-            "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
-            "--renderer-process-limit=1 \
-             --disable-breakpad \
-             --disable-crash-reporter \
-             --disable-background-networking \
-             --disable-component-update \
-             --disable-sync \
-             --disable-features=Translate,OptimizationHints,MediaRouter,CalculateNativeWinOcclusion,AudioServiceOutOfProcess,InterestFeedContentSuggestions,CertificateTransparencyComponentUpdater,AutofillServerCommunication,ChromeLabs,PrivacySandboxSettings4,BackForwardCache,GlobalMediaControls \
-             --enable-features=TrimOnMemoryPressure \
-             --disk-cache-size=10485760 \
-             --media-cache-size=10485760 \
-             --disable-speech-api \
-             --disable-pinch \
-             --disable-domain-reliability \
-             --no-first-run \
-             --no-default-browser-check",
-        );
 
         prerequisites_check::ensure_runtime_prerequisites();
     }

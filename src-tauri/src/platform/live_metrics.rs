@@ -22,25 +22,38 @@ pub struct CpuSample {
 
 pub(crate) fn collect_live_metrics(previous: &mut Option<CpuSample>) -> LiveMetrics {
     let memory = read_memory_info();
-    let (gpu_usage, dedicated_vram) = read_gpu_live_metrics();
+    let gpu_metrics = read_gpu_live_metrics();
     let total_vram = read_display_vram_total();
     let cpu_usage = read_cpu_usage(previous);
+
+    let (gpu_usage_str, vram_used_str, vram_pct_str) = match gpu_metrics {
+        Some((gpu, dedicated_vram)) => {
+            let pct = if total_vram > 0 {
+                ((dedicated_vram as f64 / total_vram as f64) * 100.0).round() as u64
+            } else {
+                0
+            };
+            (gpu.to_string(), format!("{:.1}", bytes_to_gb(dedicated_vram)), pct.to_string())
+        }
+        None => ("Unavailable".to_string(), "Unavailable".to_string(), "Unavailable".to_string()),
+    };
+
     LiveMetrics {
         cpu_usage_percent: cpu_usage.to_string(),
-        gpu_usage_percent: gpu_usage.to_string(),
+        gpu_usage_percent: gpu_usage_str,
         ram_available_gb: format!("{:.1}", bytes_to_gb(memory.available_bytes)),
         ram_used_gb: format!(
             "{:.1}",
             bytes_to_gb(memory.total_bytes.saturating_sub(memory.available_bytes))
         ),
         ram_used_percent: memory.used_percent().to_string(),
-        vram_total_gb: format!("{:.1}", bytes_to_gb(total_vram)),
-        vram_used_gb: format!("{:.1}", bytes_to_gb(dedicated_vram)),
-        vram_used_percent: if total_vram > 0 {
-            ((dedicated_vram as f64 / total_vram as f64) * 100.0).round() as u64
+        vram_total_gb: if total_vram > 0 {
+            format!("{:.1}", bytes_to_gb(total_vram))
         } else {
-            0
-        }.to_string(),
+            "Unavailable".to_string()
+        },
+        vram_used_gb: vram_used_str,
+        vram_used_percent: vram_pct_str,
     }
 }
 
@@ -132,8 +145,8 @@ fn read_memory_info() -> MemoryInfo {
 }
 
 #[cfg(not(target_os = "windows"))]
-fn read_gpu_live_metrics() -> (u64, u64) {
-    (0, 0)
+fn read_gpu_live_metrics() -> Option<(u64, u64)> {
+    None
 }
 
 #[cfg(not(target_os = "windows"))]
@@ -160,7 +173,7 @@ impl Drop for PdhSession {
 }
 
 #[cfg(target_os = "windows")]
-fn read_gpu_live_metrics() -> (u64, u64) {
+fn read_gpu_live_metrics() -> Option<(u64, u64)> {
     use std::sync::Mutex;
     static SESSION: Mutex<Option<PdhSession>> = Mutex::new(None);
 
@@ -174,7 +187,8 @@ fn read_gpu_live_metrics() -> (u64, u64) {
     if guard.is_none() {
         let mut query: isize = 0;
         if unsafe { PdhOpenQueryW(std::ptr::null(), 0, &mut query) } == ERROR_SUCCESS && query != 0 {
-            let engine_path = wide_null("\\GPU Engine(*)\\Utilization Percentage");
+            // Target specifically the 3D graphics rendering engine, excluding video decoders, copy engines and VR
+            let engine_path = wide_null("\\GPU Engine(*engtype_3D*)\\Utilization Percentage");
             let mut engine_counter: isize = 0;
             let _ = unsafe { PdhAddEnglishCounterW(query, engine_path.as_ptr(), 0, &mut engine_counter) };
 
@@ -188,7 +202,7 @@ fn read_gpu_live_metrics() -> (u64, u64) {
                 engine_counter,
                 vram_counter,
             });
-            return (0, 0);
+            return None;
         }
     }
 
@@ -197,11 +211,11 @@ fn read_gpu_live_metrics() -> (u64, u64) {
         if status == ERROR_SUCCESS {
             let gpu = read_pdh_counter_sum(session.engine_counter).round().clamp(0.0, 100.0) as u64;
             let vram = read_pdh_counter_sum(session.vram_counter).round().max(0.0) as u64;
-            return (gpu, vram);
+            return Some((gpu, vram));
         }
     }
 
-    (0, 0)
+    None
 }
 
 #[cfg(target_os = "windows")]

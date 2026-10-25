@@ -141,6 +141,8 @@ fn execute_action(action: &str, app: &AppHandle) {
                 let is_minimized = window.is_minimized().unwrap_or(false);
                 if !is_visible || is_minimized {
                     crate::platform::set_user_summoned(true);
+                    #[cfg(target_os = "windows")]
+                    crate::platform::ffi::disable_process_eco_qos();
                     crate::resume_window_webview(&window.as_ref().window());
                     let _ = window.unminimize();
                     let _ = window.show();

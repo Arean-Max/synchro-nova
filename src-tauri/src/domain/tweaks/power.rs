@@ -174,11 +174,11 @@ pub fn apply_cpu_adaptive_scheduling(id: &str) -> TweakApplyResult {
     if is_hybrid {
         let r1 = run_command("powercfg", &["/setacvalueindex", "SCHEME_CURRENT", "SUB_PROCESSOR", "HETEROPOLICY", "2"]);
         let r2 = run_command("powercfg", &["/setacvalueindex", "SCHEME_CURRENT", "SUB_PROCESSOR", "HETEROSHORTPOLICY", "2"]);
-        let _ = run_command("powercfg", &["/setactive", "SCHEME_CURRENT"]);
-        if r1.is_ok() || r2.is_ok() {
-            applied(id, &format!("Intel Hybrid detected ({cores} threads): game threads pinned to high-performance P-cores"))
+        let r3 = run_command("powercfg", &["/setactive", "SCHEME_CURRENT"]);
+        if r1.is_ok() && r2.is_ok() && r3.is_ok() {
+            applied(id, &format!("Intel Hybrid detected ({cores} threads): configured Windows HeteroPolicy to prioritize high-performance P-cores"))
         } else {
-            failed(id, "Failed to configure Intel HeteroPolicy; run Synchro as administrator")
+            failed(id, "Failed to apply Intel HeteroPolicy via powercfg; run Synchro as administrator")
         }
     } else {
         let r1 = run_command("powercfg", &["/setacvalueindex", "SCHEME_CURRENT", "SUB_PROCESSOR", "CPMINCORES", "100"]);

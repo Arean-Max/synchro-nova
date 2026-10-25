@@ -25,7 +25,7 @@
         "decorations": false,
         "shadow": false,
         "devtools": false,
-        "additionalBrowserArgs": "--disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --no-pings --disable-client-side-phishing-detection --safebrowsing-disable-auto-update --disable-default-apps --disable-extensions --disable-breakpad --no-crash-upload --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disable-wake-on-wifi --renderer-process-limit=1 --enable-features=TrimOnMemoryPressure,IntensiveWakeUpThrottling,ThrottleDisplayNoneAndVisibilityHiddenCrossOriginIframes --disable-features=AudioServiceOutOfProcess,Translate,OptimizationHints,MediaRouter,DialMediaRouteProvider,InterestFeedContentSuggestions,SpeechSynthesis,BackForwardCache,AutofillServerCommunication --disk-cache-size=10485760 --media-cache-size=10485760"
+        "additionalBrowserArgs": "--disable-extensions --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disk-cache-size=10485760 --media-cache-size=10485760"
       }
     ],
     "security": {
@@ -35,8 +35,8 @@
         "enable": true,
         "scope": {
           "allow": [
-            "$APPDATA/**",
-            "$LOCALAPPDATA/**",
+            "$APPDATA/SynchroNova/**",
+            "$LOCALAPPDATA/SynchroNova/**",
             "$RESOURCE/**"
           ]
         }
@@ -52,7 +52,9 @@
       "icons/icon.png",
       "icons/icon.ico"
     ],
-    "targets": ["nsis"],
+    "targets": [
+      "nsis"
+    ],
     "resources": {
       "crates/webview2-com-sys/x64/WebView2Loader.dll": "WebView2Loader.dll"
     },

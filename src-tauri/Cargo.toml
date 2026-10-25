@@ -39,7 +39,7 @@ debug = false
 strip = false
 
 [profile.release]
-codegen-units = 16
+codegen-units = 1
 debug = false
 incremental = false
 lto = false

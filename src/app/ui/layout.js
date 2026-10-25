@@ -142,7 +142,7 @@ export function renderPageBody(viewState, t) {
 
 export function renderMain(viewState, t) {
   const page = pageDefs[activePage];
-  return `<main class="main-panel"><header class="page-header" data-window-drag data-tauri-drag-region><h1 data-window-drag data-tauri-drag-region>${t(page.title)}</h1><p data-window-drag data-tauri-drag-region>${t(page.subtitle)}</p></header><div class="page-body page-${activePage}">${renderPageBody(viewState, t)}</div></main>`;
+  return `<main class="main-panel"><header class="page-header" data-window-drag data-tauri-drag-region><h1 data-window-drag data-tauri-drag-region>${escapeHtml(t(page.title))}</h1><p data-window-drag data-tauri-drag-region>${escapeHtml(t(page.subtitle))}</p></header><div class="page-body page-${activePage}">${renderPageBody(viewState, t)}</div></main>`;
 }
 
 export function renderShell(viewState, t) {

@@ -337,6 +337,7 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
 
         let header_size = std::mem::size_of::<BITMAPINFOHEADER>();
         let total_size = header_size + pixels.len();
+        let mut clipboard_success = false;
 
         let h_global = GlobalAlloc(GMEM_MOVEABLE, total_size);
         if !h_global.is_null() {
@@ -345,8 +346,6 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
                 std::ptr::copy_nonoverlapping(&header as *const _ as *const u8, p_mem, header_size);
                 std::ptr::copy_nonoverlapping(pixels.as_ptr(), p_mem.add(header_size), pixels.len());
                 GlobalUnlock(h_global);
-
-                let mut clipboard_success = false;
                 if OpenClipboard(std::ptr::null_mut()) != 0 {
                     EmptyClipboard();
                     let set_res = SetClipboardData(CF_DIB, h_global);
@@ -370,11 +369,12 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
             if let Err(e) = fs::create_dir_all(&screenshots_dir) {
                 eprintln!("[Screenshot] Failed to create screenshot directory: {}", e);
             } else {
-                let timestamp = std::time::SystemTime::now()
+                let now = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_secs())
-                    .unwrap_or(0);
-                let target_file = screenshots_dir.join(format!("Synchro_{}.bmp", timestamp));
+                    .unwrap_or_default();
+                let timestamp_secs = now.as_secs();
+                let timestamp_millis = now.subsec_millis();
+                let target_file = screenshots_dir.join(format!("Synchro_{}_{:03}.bmp", timestamp_secs, timestamp_millis));
 
                 if let Ok(file) = File::create(&target_file) {
                     let mut writer = BufWriter::with_capacity(64 * 1024, file);
@@ -410,9 +410,21 @@ pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshot
 
         drop(pixels);
 
+        if !clipboard_success && saved_path_str.is_none() {
+            return Err("Failed to copy screenshot to clipboard and failed to save to disk".to_string());
+        }
+
+        let message = if clipboard_success && saved_path_str.is_some() {
+            "Juicy screenshot copied to clipboard and saved to Pictures\\Screenshots!".to_string()
+        } else if clipboard_success {
+            "Juicy screenshot copied to clipboard (Ctrl+V)!".to_string()
+        } else {
+            "Juicy screenshot saved to Pictures\\Screenshots".to_string()
+        };
+
         Ok(JuicyScreenshotResult {
             success: true,
-            message: "Juicy screenshot copied to clipboard (Ctrl+V)!".to_string(),
+            message,
             file_path: saved_path_str,
         })
     }
@@ -423,8 +435,19 @@ pub fn capture_juicy_screenshot(_color: &ColorSettings) -> Result<JuicyScreensho
     Err("Screenshots only supported on Windows".to_string())
 }
 
+static SCREENSHOT_INTERCEPTION_ENABLED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn set_screenshot_interception(enabled: bool) {
+    SCREENSHOT_INTERCEPTION_ENABLED.store(enabled, std::sync::atomic::Ordering::SeqCst);
+}
+
 #[cfg(target_os = "windows")]
 pub fn start_global_screenshot_listener() {
+    // Only register global PrintScreen hook if explicitly enabled to preserve Windows Snipping Tool and ShareX
+    if !SCREENSHOT_INTERCEPTION_ENABLED.load(std::sync::atomic::Ordering::SeqCst) {
+        return;
+    }
+
     static LISTENER_STARTED: std::sync::OnceLock<()> = std::sync::OnceLock::new();
     LISTENER_STARTED.get_or_init(|| {
         std::thread::Builder::new()
@@ -443,9 +466,11 @@ pub fn start_global_screenshot_listener() {
                     let mut msg = unsafe { std::mem::zeroed::<MSG>() };
                     while unsafe { GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) } > 0 {
                         if msg.message == WM_HOTKEY {
-                            if let Some(color) = crate::domain::color::get_active_color() {
-                                if color.enabled {
-                                    let _ = capture_juicy_screenshot(&color);
+                            if SCREENSHOT_INTERCEPTION_ENABLED.load(std::sync::atomic::Ordering::SeqCst) {
+                                if let Some(color) = crate::domain::color::get_active_color() {
+                                    if color.enabled {
+                                        let _ = capture_juicy_screenshot(&color);
+                                    }
                                 }
                             }
                         }

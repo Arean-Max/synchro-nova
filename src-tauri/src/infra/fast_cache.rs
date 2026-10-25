@@ -11,6 +11,8 @@ use crate::domain::games::InstalledGame;
 
 pub const FAST_BOOT_MAGIC: &[u8; 4] = b"SNFB";
 pub const FAST_BOOT_VERSION: u32 = 1;
+pub const MAX_FAST_CACHE_BYTES: u64 = 10 * 1024 * 1024; // 10 MB limit
+pub const MAX_SNAPSHOT_AGE_SECS: u64 = 30 * 24 * 3600;  // 30 days maximum cache retention
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FastBootSnapshot {
@@ -48,6 +50,14 @@ pub fn try_early_warmup() -> bool {
         return false;
     }
 
+    if let Ok(meta) = fs::metadata(&path) {
+        if meta.len() < 16 || meta.len() > MAX_FAST_CACHE_BYTES {
+            return false;
+        }
+    } else {
+        return false;
+    }
+
     let Ok(bytes) = fs::read(&path) else {
         return false;
     };
@@ -61,6 +71,14 @@ pub fn try_early_warmup() -> bool {
     };
 
     if snapshot.version != FAST_BOOT_VERSION {
+        return false;
+    }
+
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    if snapshot.timestamp > now + 3600 || now.saturating_sub(snapshot.timestamp) > MAX_SNAPSHOT_AGE_SECS {
         return false;
     }
 
@@ -91,6 +109,10 @@ pub fn get_cached_snapshot() -> Option<FastBootSnapshot> {
 
     let path = get_fast_boot_path()?;
     if !path.is_file() {
+        return None;
+    }
+    let meta = fs::metadata(&path).ok()?;
+    if meta.len() < 16 || meta.len() > MAX_FAST_CACHE_BYTES {
         return None;
     }
     let bytes = fs::read(&path).ok()?;

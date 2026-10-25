@@ -28,14 +28,10 @@ jobs:
           cache: 'npm'
 
       - name: Install npm dependencies
-        run: npm ci || npm install
+        run: npm ci
 
-      - name: Verify JavaScript syntax
-        run: |
-          node --check src/app/main.js
-          node --check src/app/core/html.js
-          node --check src/app/core/i18n.js
-          node --check scripts/app-server.mjs
+      - name: Verify JavaScript syntax across all modules
+        run: node scripts/verify-syntax.mjs
 
       - name: Cargo test
         run: cargo test --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc --verbose

@@ -89,6 +89,14 @@ pub struct SecurityGuardStatus {
     pub recent_incidents: Vec<SecurityIncident>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum BcdCheckState {
+    Safe,
+    Unsafe,
+    Unknown,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AntiCheatAuditReport {
@@ -343,47 +351,50 @@ pub fn is_safe_child_pid(_pid: u32) -> bool {
 }
 
 #[cfg(target_os = "windows")]
-fn check_bcd_integrity() -> (bool, bool, bool) {
+fn check_bcd_integrity() -> (BcdCheckState, BcdCheckState, BcdCheckState) {
     use std::os::windows::process::CommandExt;
-
-    let mut testsigning_clean = true;
-    let mut kernel_debug_clean = true;
-    let mut integrity_checks_clean = true;
 
     let system_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
     let bcdedit_path = std::path::PathBuf::from(system_root).join("System32").join("bcdedit.exe");
 
-    if bcdedit_path.is_file() {
-        let mut cmd = std::process::Command::new(bcdedit_path);
-        cmd.args(["/enum", "{current}"]);
-        cmd.creation_flags(0x0800_0000);
+    if !bcdedit_path.is_file() {
+        return (BcdCheckState::Unknown, BcdCheckState::Unknown, BcdCheckState::Unknown);
+    }
 
-        if let Ok(output) = cmd.output() {
-            if output.status.success() {
-                let text = String::from_utf8_lossy(&output.stdout).to_lowercase();
-                for line in text.lines() {
-                    let trimmed = line.trim();
-                    if trimmed.starts_with("testsigning")
-                        && (trimmed.contains("yes") || trimmed.contains("on") || trimmed.contains("1") || trimmed.contains("да"))
-                    {
-                        testsigning_clean = false;
-                    }
-                    if trimmed.starts_with("debug")
-                        && (trimmed.contains("yes") || trimmed.contains("on") || trimmed.contains("1") || trimmed.contains("да"))
-                    {
-                        kernel_debug_clean = false;
-                    }
-                    if trimmed.starts_with("nointegritychecks")
-                        && (trimmed.contains("yes") || trimmed.contains("on") || trimmed.contains("1") || trimmed.contains("да"))
-                    {
-                        integrity_checks_clean = false;
-                    }
-                }
-            }
+    let mut cmd = std::process::Command::new(bcdedit_path);
+    cmd.args(["/enum", "{current}"]);
+    cmd.creation_flags(0x0800_0000);
+
+    let output = match cmd.output() {
+        Ok(out) if out.status.success() => out,
+        _ => return (BcdCheckState::Unknown, BcdCheckState::Unknown, BcdCheckState::Unknown),
+    };
+
+    let text = String::from_utf8_lossy(&output.stdout).to_lowercase();
+    let mut testsigning = BcdCheckState::Safe;
+    let mut kernel_debug = BcdCheckState::Safe;
+    let mut integrity = BcdCheckState::Safe;
+
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("testsigning")
+            && (trimmed.contains("yes") || trimmed.contains("on") || trimmed.contains("1") || trimmed.contains("да"))
+        {
+            testsigning = BcdCheckState::Unsafe;
+        }
+        if trimmed.starts_with("debug")
+            && (trimmed.contains("yes") || trimmed.contains("on") || trimmed.contains("1") || trimmed.contains("да"))
+        {
+            kernel_debug = BcdCheckState::Unsafe;
+        }
+        if trimmed.starts_with("nointegritychecks")
+            && (trimmed.contains("yes") || trimmed.contains("on") || trimmed.contains("1") || trimmed.contains("да"))
+        {
+            integrity = BcdCheckState::Unsafe;
         }
     }
 
-    (testsigning_clean, kernel_debug_clean, integrity_checks_clean)
+    (testsigning, kernel_debug, integrity)
 }
 
 #[cfg(target_os = "windows")]
@@ -441,22 +452,35 @@ pub fn audit_anticheat_integrity() -> AntiCheatAuditReport {
             }
         }
 
-        let (testsigning_clean, kernel_debug_clean, integrity_checks_clean) = check_bcd_integrity();
+        let (testsigning_state, kernel_debug_state, integrity_state) = check_bcd_integrity();
+        let testsigning_clean = testsigning_state == BcdCheckState::Safe;
+        let kernel_debug_clean = kernel_debug_state == BcdCheckState::Safe;
+        let integrity_checks_clean = integrity_state == BcdCheckState::Safe;
+
         let (ifeo_clean, ifeo_flagged) = check_ifeo_integrity();
         let (vulnerable_drivers_clean, vulnerable_flagged) = check_vulnerable_drivers();
         let active_game_detected = is_protected_game_running();
 
         let mut detected_issues = Vec::new();
 
-        if !testsigning_clean {
-            detected_issues.push("Windows Testsigning mode is active (triggers EAC / BattlEye launch ban)".to_string());
+        match testsigning_state {
+            BcdCheckState::Unsafe => detected_issues.push("Windows Testsigning mode is active in BCD (triggers EAC / BattlEye launch ban)".to_string()),
+            BcdCheckState::Unknown => detected_issues.push("Unable to verify Windows Testsigning status (run as Administrator to inspect BCD)".to_string()),
+            BcdCheckState::Safe => {}
         }
-        if !kernel_debug_clean {
-            detected_issues.push("Kernel debugging is active in BCD (triggers EAC kick error 30005)".to_string());
+
+        match kernel_debug_state {
+            BcdCheckState::Unsafe => detected_issues.push("Kernel debugging is active in BCD (triggers EAC kick error 30005)".to_string()),
+            BcdCheckState::Unknown => detected_issues.push("Unable to verify Kernel Debugging BCD status (run as Administrator to inspect BCD)".to_string()),
+            BcdCheckState::Safe => {}
         }
-        if !integrity_checks_clean {
-            detected_issues.push("Driver signature enforcement is disabled (triggers EAC Untrusted System File)".to_string());
+
+        match integrity_state {
+            BcdCheckState::Unsafe => detected_issues.push("Driver signature enforcement is disabled in BCD (triggers EAC Untrusted System File)".to_string()),
+            BcdCheckState::Unknown => detected_issues.push("Unable to verify Driver Signature Enforcement status (run as Administrator to inspect BCD)".to_string()),
+            BcdCheckState::Safe => {}
         }
+
         if !ifeo_clean {
             detected_issues.push(format!(
                 "Lingering Image File Execution Options found for games: {} (triggers EAC debugger violation)",
@@ -465,7 +489,7 @@ pub fn audit_anticheat_integrity() -> AntiCheatAuditReport {
         }
         if !vulnerable_drivers_clean {
             detected_issues.push(format!(
-                "Vulnerable third-party driver(s) detected in drivers folder: {} (blacklisted by EAC/BattlEye)",
+                "Legacy driver file(s) found in drivers directory: {} (review if installed by third-party utilities)",
                 vulnerable_flagged.join(", ")
             ));
         }
@@ -473,8 +497,7 @@ pub fn audit_anticheat_integrity() -> AntiCheatAuditReport {
         let is_eac_compatible = testsigning_clean
             && kernel_debug_clean
             && integrity_checks_clean
-            && ifeo_clean
-            && vulnerable_drivers_clean;
+            && ifeo_clean;
 
         let report = AntiCheatAuditReport {
             is_eac_compatible,
@@ -531,8 +554,10 @@ pub fn fix_anticheat_integrity() -> AntiCheatFixResult {
             }
         }
 
-        let (testsigning_clean, kernel_debug_clean, integrity_checks_clean) = check_bcd_integrity();
-        let bcd_needs_fix = !testsigning_clean || !kernel_debug_clean || !integrity_checks_clean;
+        let (testsigning_state, kernel_debug_state, integrity_state) = check_bcd_integrity();
+        let bcd_needs_fix = testsigning_state == BcdCheckState::Unsafe
+            || kernel_debug_state == BcdCheckState::Unsafe
+            || integrity_state == BcdCheckState::Unsafe;
 
         if bcd_needs_fix {
             if crate::admin::is_running_elevated() {

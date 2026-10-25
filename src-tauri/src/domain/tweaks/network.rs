@@ -222,23 +222,30 @@ pub fn is_network_udp_buffers_applied() -> bool {
 
 pub fn apply_rss_adaptive_cores(id: &str) -> TweakApplyResult {
     let cores = super::runner::cpu_cores_count();
-    let _ = run_command("netsh", &["interface", "tcp", "set", "global", "rss=enabled"]);
-    let msg = if cores >= 8 {
-        let _ = run_command(
+    let r1 = run_command("netsh", &["interface", "tcp", "set", "global", "rss=enabled"]);
+    if r1.is_err() {
+        return failed(id, "Failed to enable global TCP Receive-Side Scaling via netsh");
+    }
+
+    if cores >= 8 {
+        let r2 = run_command(
             "powershell.exe",
             &[
                 "-NoProfile",
                 "-ExecutionPolicy",
                 "Bypass",
                 "-Command",
-                "Get-NetAdapter -Physical | ForEach-Object { Set-NetAdapterRss -Name $_.Name -BaseProcessorNumber 2 -ErrorAction SilentlyContinue }",
+                "Get-NetAdapter -Physical | ForEach-Object { Set-NetAdapterRss -Name $_.Name -BaseProcessorNumber 2 -ErrorAction Stop }",
             ],
         );
-        format!("Receive-Side Scaling enabled with BaseProcessor=2 (network interrupts offloaded from Core 0 across {cores} CPU cores)")
+        if r2.is_ok() {
+            applied(id, &format!("Receive-Side Scaling enabled with BaseProcessor=2 (interrupts steered from Core 0 across {cores} CPU cores)"))
+        } else {
+            applied(id, "Receive-Side Scaling enabled globally (adapter-specific BaseProcessor affinity not supported by active NIC driver)")
+        }
     } else {
-        "Receive-Side Scaling enabled and distributed across CPU cores".to_string()
-    };
-    applied(id, &msg)
+        applied(id, "Receive-Side Scaling enabled globally across CPU cores")
+    }
 }
 
 pub fn is_rss_adaptive_cores_applied() -> bool {
