@@ -1,6 +1,7 @@
 export function getVendorLogo(vendor, className = "") {
   const v = (vendor || "").toLowerCase();
-  const extraClass = className ? ` ${className}` : "";
+  const safeClass = typeof className === "string" ? className.replace(/[^a-zA-Z0-9_\-\s]/g, "").trim() : "";
+  const extraClass = safeClass ? ` ${safeClass}` : "";
 
   switch (v) {
     case "nvidia":

@@ -1,5 +1,18 @@
 export const localizedExtensions = {
   "en": {
+    "settings": "Settings",
+    "unknownError": "Unknown error",
+    "ready": "Ready",
+    "checkingUpdates": "Checking for updates...",
+    "latestVersionInstalled": "Latest version installed",
+    "updateError": "Failed to check for updates",
+    "updateAvailableUnspecified": "Update available (version undetermined)",
+    "rollbackFailed": "Rollback failed",
+    "appliedWithErrors": "Applied with errors",
+    "applyFailed": "Failed to apply tweaks",
+    "noResultsReceived": "No results received",
+    "searchDrivers": "Search drivers & devices...",
+
     "day": "Day",
     "night": "Night",
     "holo": "Holo",
@@ -89,6 +102,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Disables UI motion and transitions for maximum performance on low-spec PCs."
   },
   "ru": {
+    "settings": "Настройки",
+    "unknownError": "Неизвестная ошибка",
+    "ready": "Готово",
+    "checkingUpdates": "Проверка обновлений...",
+    "latestVersionInstalled": "Установлена последняя версия",
+    "updateError": "Не удалось проверить обновления",
+    "updateAvailableUnspecified": "Доступно обновление (версия не определена)",
+    "rollbackFailed": "Не удалось откатить твики",
+    "appliedWithErrors": "Настройки применены с ошибками",
+    "applyFailed": "Не удалось применить настройки",
+    "noResultsReceived": "Результаты не получены",
+    "searchDrivers": "Поиск драйверов и устройств...",
+
     "day": "День",
     "night": "Ночь",
     "holo": "Холо",
@@ -178,6 +204,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Отключает анимации интерфейса для максимальной производительности."
   },
   "zh": {
+    "settings": "设置",
+    "unknownError": "未知错误",
+    "ready": "就绪",
+    "checkingUpdates": "检查更新中...",
+    "latestVersionInstalled": "已是最新版本",
+    "updateError": "检查更新失败",
+    "updateAvailableUnspecified": "发现新版本 (未指定版本)",
+    "rollbackFailed": "回滚失败",
+    "appliedWithErrors": "应用完成但有错误",
+    "applyFailed": "应用设置失败",
+    "noResultsReceived": "未收到结果",
+    "searchDrivers": "搜索驱动程序与设备...",
+
     "day": "白天",
     "night": "夜间",
     "holo": "全息",
@@ -264,6 +303,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "关闭界面动画与过渡特效，降低低配硬件负载。"
   },
   "zht": {
+    "settings": "設定",
+    "unknownError": "未知錯誤",
+    "ready": "就緒",
+    "checkingUpdates": "正在檢查更新...",
+    "latestVersionInstalled": "已是最新版本",
+    "updateError": "檢查更新失敗",
+    "updateAvailableUnspecified": "發現新版本 (未指定版本)",
+    "rollbackFailed": "還原失敗",
+    "appliedWithErrors": "套用完成但有錯誤",
+    "applyFailed": "套用設定失敗",
+    "noResultsReceived": "未收到結果",
+    "searchDrivers": "搜尋驅動程式與裝置...",
+
     "day": "白天",
     "night": "夜間",
     "holo": "全息",
@@ -350,6 +402,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "關閉介面動畫與過渡特效，降低低配硬體負載。"
   },
   "de": {
+    "settings": "Einstellungen",
+    "unknownError": "Unbekannter Fehler",
+    "ready": "Bereit",
+    "checkingUpdates": "Suche nach Updates...",
+    "latestVersionInstalled": "Neueste Version installiert",
+    "updateError": "Update-Prüfung fehlgeschlagen",
+    "updateAvailableUnspecified": "Update verfügbar (Version unbestimmt)",
+    "rollbackFailed": "Wiederherstellung fehlgeschlagen",
+    "appliedWithErrors": "Mit Fehlern angewendet",
+    "applyFailed": "Fehler beim Anwenden der Optimierungen",
+    "noResultsReceived": "Keine Ergebnisse empfangen",
+    "searchDrivers": "Treiber und Geräte suchen...",
+
     "day": "Tag",
     "night": "Nacht",
     "holo": "Holo",
@@ -436,6 +501,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Deaktiviert Benutzeroberflächen-Animationen für maximale Leistung."
   },
   "es": {
+    "settings": "Ajustes",
+    "unknownError": "Error desconocido",
+    "ready": "Listo",
+    "checkingUpdates": "Buscando actualizaciones...",
+    "latestVersionInstalled": "Última versión instalada",
+    "updateError": "Error al buscar actualizaciones",
+    "updateAvailableUnspecified": "Actualización disponible (versión no especificada)",
+    "rollbackFailed": "Error al revertir",
+    "appliedWithErrors": "Aplicado con errores",
+    "applyFailed": "Error al aplicar ajustes",
+    "noResultsReceived": "No se recibieron resultados",
+    "searchDrivers": "Buscar controladores y dispositivos...",
+
     "day": "Día",
     "night": "Noche",
     "holo": "Holo",
@@ -522,6 +600,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Desactiva las animaciones para reducir al mínimo el uso de recursos."
   },
   "fr": {
+    "settings": "Paramètres",
+    "unknownError": "Erreur inconnue",
+    "ready": "Prêt",
+    "checkingUpdates": "Vérification des mises à jour...",
+    "latestVersionInstalled": "Dernière version installée",
+    "updateError": "Échec de la recherche de mises à jour",
+    "updateAvailableUnspecified": "Mise à jour disponible (version indéterminée)",
+    "rollbackFailed": "Échec de la restauration",
+    "appliedWithErrors": "Appliqué avec des erreurs",
+    "applyFailed": "Échec de l'application des réglages",
+    "noResultsReceived": "Aucun résultat reçu",
+    "searchDrivers": "Rechercher des pilotes et périphériques...",
+
     "day": "Jour",
     "night": "Nuit",
     "holo": "Holo",
@@ -608,6 +699,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Désactive les animations pour maximiser la réactivité."
   },
   "ja": {
+    "settings": "設定",
+    "unknownError": "不明なエラー",
+    "ready": "準備完了",
+    "checkingUpdates": "アップデートを確認中...",
+    "latestVersionInstalled": "最新バージョンがインストールされています",
+    "updateError": "アップデート確認に失敗しました",
+    "updateAvailableUnspecified": "アップデート利用可能 (バージョン未指定)",
+    "rollbackFailed": "ロールバックに失敗しました",
+    "appliedWithErrors": "一部エラーありで適用",
+    "applyFailed": "設定の適用に失敗しました",
+    "noResultsReceived": "結果を受信できませんでした",
+    "searchDrivers": "ドライバーとデバイスを検索...",
+
     "day": "昼",
     "night": "夜",
     "holo": "ホロ",
@@ -694,6 +798,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "UI アニメーションをオフにし、低スペック環境での応答性を最大化します。"
   },
   "ko": {
+    "settings": "설정",
+    "unknownError": "알 수 없는 오류",
+    "ready": "준비 완료",
+    "checkingUpdates": "업데이트 확인 중...",
+    "latestVersionInstalled": "최신 버전이 설치되어 있습니다",
+    "updateError": "업데이트 확인 실패",
+    "updateAvailableUnspecified": "업데이트 가능 (버전 미정)",
+    "rollbackFailed": "롤백 실패",
+    "appliedWithErrors": "오류와 함께 적용됨",
+    "applyFailed": "설정 적용 실패",
+    "noResultsReceived": "결과를 받지 못했습니다",
+    "searchDrivers": "드라이버 및 장치 검색...",
+
     "day": "주간",
     "night": "야간",
     "holo": "홀로",
@@ -780,6 +897,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "UI 애니메이션을 꺼서 저사양 PC의 프레임 저하를 방지합니다."
   },
   "uk": {
+    "settings": "Налаштування",
+    "unknownError": "Невідома помилка",
+    "ready": "Готово",
+    "checkingUpdates": "Перевірка оновлень...",
+    "latestVersionInstalled": "Встановлено найновішу версію",
+    "updateError": "Не вдалося перевірити оновлення",
+    "updateAvailableUnspecified": "Доступне оновлення (версія не визначена)",
+    "rollbackFailed": "Не вдалося відкотити налаштування",
+    "appliedWithErrors": "Застосовано з помилками",
+    "applyFailed": "Не вдалося застосувати налаштування",
+    "noResultsReceived": "Результати не отримано",
+    "searchDrivers": "Пошук драйверів і пристроїв...",
+
     "day": "День",
     "night": "Ніч",
     "holo": "Холо",
@@ -866,6 +996,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Вимикає анімації інтерфейсу для максимальної швидкодії на слабких ПК."
   },
   "pl": {
+    "settings": "Ustawienia",
+    "unknownError": "Nieznany błąd",
+    "ready": "Gotowe",
+    "checkingUpdates": "Sprawdzanie aktualizacji...",
+    "latestVersionInstalled": "Zainstalowano najnowszą wersję",
+    "updateError": "Błąd sprawdzania aktualizacji",
+    "updateAvailableUnspecified": "Dostępna aktualizacja (wersja nieokreślona)",
+    "rollbackFailed": "Przywracanie nie powiodło się",
+    "appliedWithErrors": "Zastosowano z błędami",
+    "applyFailed": "Nie udało się zastosować ustawień",
+    "noResultsReceived": "Brak wyników",
+    "searchDrivers": "Szukaj sterowników i urządzeń...",
+
     "day": "Dzień",
     "night": "Noc",
     "holo": "Holo",
@@ -952,6 +1095,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Wyłącza animacje interfejsu dla maksymalnej wydajności."
   },
   "br": {
+    "settings": "Configurações",
+    "unknownError": "Erro desconhecido",
+    "ready": "Pronto",
+    "checkingUpdates": "Verificando atualizações...",
+    "latestVersionInstalled": "Versão mais recente instalada",
+    "updateError": "Falha ao verificar atualizações",
+    "updateAvailableUnspecified": "Atualização disponível (versão não especificada)",
+    "rollbackFailed": "Falha ao reverter",
+    "appliedWithErrors": "Aplicado com erros",
+    "applyFailed": "Falha ao aplicar configurações",
+    "noResultsReceived": "Nenhum resultado recebido",
+    "searchDrivers": "Buscar drivers e dispositivos...",
+
     "day": "Dia",
     "night": "Noite",
     "holo": "Holo",
@@ -1038,6 +1194,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Desativa animações da interface para máximo desempenho em PCs fracos."
   },
   "tr": {
+    "settings": "Ayarlar",
+    "unknownError": "Bilinmeyen hata",
+    "ready": "Hazır",
+    "checkingUpdates": "Güncellemeler kontrol ediliyor...",
+    "latestVersionInstalled": "En son sürüm yüklü",
+    "updateError": "Güncelleme kontrolü başarısız",
+    "updateAvailableUnspecified": "Güncelleme mevcut (sürüm belirsiz)",
+    "rollbackFailed": "Geri alma başarısız",
+    "appliedWithErrors": "Hatalarla uygulandı",
+    "applyFailed": "Ayarları uygulama başarısız",
+    "noResultsReceived": "Sonuç alınamadı",
+    "searchDrivers": "Sürücü ve aygıt ara...",
+
     "day": "Gündüz",
     "night": "Gece",
     "holo": "Holo",
@@ -1124,6 +1293,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Düşük donanımlarda en yüksek akıcılık için arayüz animasyonlarını kapatır."
   },
   "it": {
+    "settings": "Impostazioni",
+    "unknownError": "Errore sconosciuto",
+    "ready": "Pronto",
+    "checkingUpdates": "Verifica aggiornamenti...",
+    "latestVersionInstalled": "Ultima versione installata",
+    "updateError": "Verifica aggiornamenti fallita",
+    "updateAvailableUnspecified": "Aggiornamento disponibile (versione non specificata)",
+    "rollbackFailed": "Ripristino fallito",
+    "appliedWithErrors": "Applicato con errori",
+    "applyFailed": "Impossibile applicare le impostazioni",
+    "noResultsReceived": "Nessun risultato ricevuto",
+    "searchDrivers": "Cerca driver e dispositivi...",
+
     "day": "Giorno",
     "night": "Notte",
     "holo": "Holo",
@@ -1210,6 +1392,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Disattiva le animazioni per massimizzare le prestazioni su PC lenti."
   },
   "da": {
+    "settings": "Indstillinger",
+    "unknownError": "Ukendt fejl",
+    "ready": "Klar",
+    "checkingUpdates": "Søger efter opdateringer...",
+    "latestVersionInstalled": "Nyeste version er installeret",
+    "updateError": "Kunne ikke søge efter opdateringer",
+    "updateAvailableUnspecified": "Opdatering tilgængelig (ubestemt version)",
+    "rollbackFailed": "Gendannelse mislykkedes",
+    "appliedWithErrors": "Anvendt med fejl",
+    "applyFailed": "Kunne ikke anvende indstillinger",
+    "noResultsReceived": "Ingen resultater modtaget",
+    "searchDrivers": "Søg efter drivere og enheder...",
+
     "day": "Dag",
     "night": "Nat",
     "holo": "Holo",
@@ -1296,6 +1491,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Deaktiverer animationer for maksimal ydeevne på svage pc'er."
   },
   "no": {
+    "settings": "Innstillinger",
+    "unknownError": "Ukjent feil",
+    "ready": "Klar",
+    "checkingUpdates": "Søker etter oppdateringer...",
+    "latestVersionInstalled": "Nyeste versjon er installert",
+    "updateError": "Kunne ikke søke etter oppdateringer",
+    "updateAvailableUnspecified": "Oppdatering tilgjengelig (ubestemt versjon)",
+    "rollbackFailed": "Tilbakestilling mislyktes",
+    "appliedWithErrors": "Brukt med feil",
+    "applyFailed": "Kunne ikke bruke innstillinger",
+    "noResultsReceived": "Ingen resultater mottatt",
+    "searchDrivers": "Søk etter drivere og enheter...",
+
     "day": "Dag",
     "night": "Natt",
     "holo": "Holo",
@@ -1382,6 +1590,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Deaktiverer UI-animasjoner for maksimal ytelse på svake PC-er."
   },
   "bs": {
+    "settings": "Postavke",
+    "unknownError": "Nepoznata greška",
+    "ready": "Spremno",
+    "checkingUpdates": "Provjera ažuriranja...",
+    "latestVersionInstalled": "Instalirana je najnovija verzija",
+    "updateError": "Provjera ažuriranja nije uspjela",
+    "updateAvailableUnspecified": "Dostupno ažuriranje (verzija neodređena)",
+    "rollbackFailed": "Vraćanje nije uspjelo",
+    "appliedWithErrors": "Primijenjeno s greškama",
+    "applyFailed": "Primjena postavki nije uspjela",
+    "noResultsReceived": "Nema primljenih rezultata",
+    "searchDrivers": "Traži drajvere i uređaje...",
+
     "day": "Dan",
     "night": "Noć",
     "holo": "Holo",
@@ -1468,6 +1689,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Isključuje animacije sučelja za maksimalne performanse."
   },
   "ar": {
+    "settings": "الإعدادات",
+    "unknownError": "خطأ غير معروف",
+    "ready": "جاهز",
+    "checkingUpdates": "جارٍ التحقق من وجود تحديثات...",
+    "latestVersionInstalled": "أحدث إصدار مثبت بالفعل",
+    "updateError": "فشل التحقق من وجود تحديثات",
+    "updateAvailableUnspecified": "يتوفر تحديث (إصدار غير محدد)",
+    "rollbackFailed": "فشل التراجع",
+    "appliedWithErrors": "تم التطبيق مع وجود أخطاء",
+    "applyFailed": "فشل تطبيق الإعدادات",
+    "noResultsReceived": "لم يتم استلام أي نتائج",
+    "searchDrivers": "البحث عن برامج التشغيل والأجهزة...",
+
     "day": "نهار",
     "night": "ليل",
     "holo": "هولو",
@@ -1554,6 +1788,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "تعطيل الرسوم المتحركة لتحقيق أقصى استجابة على الأجهزة الضعيفة."
   },
   "th": {
+    "settings": "การตั้งค่า",
+    "unknownError": "ข้อผิดพลาดที่ไม่รู้จัก",
+    "ready": "พร้อม",
+    "checkingUpdates": "กำลังตรวจสอบการอัปเดต...",
+    "latestVersionInstalled": "ติดตั้งเวอร์ชันล่าสุดแล้ว",
+    "updateError": "ตรวจสอบการอัปเดตล้มเหลว",
+    "updateAvailableUnspecified": "มีการอัปเดต (ไม่ได้ระบุเวอร์ชัน)",
+    "rollbackFailed": "ย้อนกลับล้มเหลว",
+    "appliedWithErrors": "นำไปใช้โดยมีข้อผิดพลาด",
+    "applyFailed": "นำการตั้งค่าไปใช้ไม่สำเร็จ",
+    "noResultsReceived": "ไม่ได้รับผลลัพธ์",
+    "searchDrivers": "ค้นหาไดรเวอร์และอุปกรณ์...",
+
     "day": "กลางวัน",
     "night": "กลางคืน",
     "holo": "โฮโล",
@@ -1640,6 +1887,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "ปิดแอนิเมชันในหน้าจอเพื่อความลื่นไหลสูงสุดบนคอมสเปกต่ำ"
   },
   "bn": {
+    "settings": "সেটিংস",
+    "unknownError": "অজানা ত্রুটি",
+    "ready": "প্রস্তুত",
+    "checkingUpdates": "আপডেট পরীক্ষা করা হচ্ছে...",
+    "latestVersionInstalled": "সর্বশেষ সংস্করণ ইনস্টল করা হয়েছে",
+    "updateError": "আপডেট পরীক্ষা ব্যর্থ হয়েছে",
+    "updateAvailableUnspecified": "আপডেট উপলভ্য (সংস্করণ অনির্ধারিত)",
+    "rollbackFailed": "রোলব্যাক ব্যর্থ হয়েছে",
+    "appliedWithErrors": "ত্রুটি সহ প্রয়োগ করা হয়েছে",
+    "applyFailed": "সেটিংস প্রয়োগ ব্যর্থ হয়েছে",
+    "noResultsReceived": "কোনো ফলাফল পাওয়া যায়নি",
+    "searchDrivers": "ড্রাইভার ও ডিভাইস খুঁজুন...",
+
     "day": "দিন",
     "night": "রাত",
     "holo": "হোলো",
@@ -1726,6 +1986,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "দুর্বল পিসিতে সর্বাধিক পারফরম্যান্সের জন্য অ্যানিমেশন বন্ধ করে।"
   },
   "gr": {
+    "settings": "Ρυθμίσεις",
+    "unknownError": "Άγνωστο σφάλμα",
+    "ready": "Έτοιμο",
+    "checkingUpdates": "Έλεγχος για ενημερώσεις...",
+    "latestVersionInstalled": "Είναι εγκατεστημένη η πιο πρόσφατη έκδοση",
+    "updateError": "Αποτυχία ελέγχου ενημερώσεων",
+    "updateAvailableUnspecified": "Διαθέσιμη ενημέρωση (μη καθορισμένη έκδοση)",
+    "rollbackFailed": "Αποτυχία επαναφοράς",
+    "appliedWithErrors": "Εφαρμόστηκε με σφάλματα",
+    "applyFailed": "Αποτυχία εφαρμογής ρυθμίσεων",
+    "noResultsReceived": "Δεν ελήφθησαν αποτελέσματα",
+    "searchDrivers": "Αναζήτηση προγραμμάτων οδήγησης και συσκευών...",
+
     "day": "Ημέρα",
     "night": "Νύχτα",
     "holo": "Holo",
@@ -1812,6 +2085,19 @@ export const localizedExtensions = {
     "help_disableAnimations": "Απενεργοποιεί τα εφέ κίνησης για μέγιστη απόδοση σε αδύναμα PC."
   },
   "vi": {
+    "settings": "Cài đặt",
+    "unknownError": "Lỗi không xác định",
+    "ready": "Sẵn sàng",
+    "checkingUpdates": "Đang kiểm tra cập nhật...",
+    "latestVersionInstalled": "Đã cài đặt phiên bản mới nhất",
+    "updateError": "Kiểm tra cập nhật thất bại",
+    "updateAvailableUnspecified": "Có bản cập nhật mới (chưa xác định phiên bản)",
+    "rollbackFailed": "Khôi phục thất bại",
+    "appliedWithErrors": "Đã áp dụng nhưng có lỗi",
+    "applyFailed": "Không thể áp dụng cài đặt",
+    "noResultsReceived": "Không nhận được kết quả",
+    "searchDrivers": "Tìm kiếm trình điều khiển và thiết bị...",
+
     "day": "Ban ngày",
     "night": "Ban đêm",
     "holo": "Holo",

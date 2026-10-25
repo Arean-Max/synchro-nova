@@ -156,13 +156,13 @@ function renderGameCard(game, offset, active) {
   const logoSrc = gameLogoSrc(game);
   const hasImage = Boolean(imageSrc);
   const image = hasImage
-    ? `<img class="game-card-image" src="${escapeAttr(imageSrc)}" alt="" onerror="this.style.display='none'; this.closest('.game-card')?.setAttribute('data-has-image', 'false');">`
+    ? `<img class="game-card-image" src="${escapeAttr(imageSrc)}" alt="">`
     : "";
   const source = game.source ? `<span class="game-card-source">${escapeHtml(game.source)}</span>` : "";
   const logo = gameLogoText(game.name);
-  const logoImage = logoSrc ? `<img class="game-card-logo-image" src="${escapeAttr(logoSrc)}" alt="" onerror="this.style.display='none';">` : "";
+  const logoImage = logoSrc ? `<img class="game-card-logo-image" src="${escapeAttr(logoSrc)}" alt="">` : "";
   const watermark = logoSrc
-    ? `<img class="game-card-watermark image" src="${escapeAttr(logoSrc)}" alt="" aria-hidden="true" onerror="this.style.display='none';">`
+    ? `<img class="game-card-watermark image" src="${escapeAttr(logoSrc)}" alt="" aria-hidden="true">`
     : `<span class="game-card-watermark" aria-hidden="true">${logo}</span>`;
   return [
     `<button class="game-card" type="button" data-game-id="${escapeAttr(game.id)}" data-offset="${offset}" data-has-image="${hasImage ? "true" : "false"}" data-logo-loaded="${logoSrc ? "true" : "false"}" aria-current="${active ? "true" : "false"}" style="--game-accent:${gameAccent(game)}">`,
@@ -376,10 +376,10 @@ export function renderTemplateConfigModal(appState, viewState, t) {
   return `
     <div class="smart-tips-backdrop">
       <div class="backdrop-dismiss-area" data-action="close-template-config"></div>
-      <div class="template-config-dialog">
+      <div class="template-config-dialog" role="dialog" aria-modal="true" aria-labelledby="template-config-title">
         <div class="template-config-header">
           <div class="template-config-title">
-            <h3>${escapeHtml(t("configureTemplate"))}</h3>
+            <h3 id="template-config-title">${escapeHtml(t("configureTemplate"))}</h3>
             <p>${escapeHtml(t("configureTemplateDesc"))}</p>
           </div>
           <button class="dialog-close-btn" type="button" data-action="close-template-config" title="${escapeAttr(t("close"))}">${icon("x")}</button>

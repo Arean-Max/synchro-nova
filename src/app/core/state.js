@@ -64,7 +64,7 @@ export const viewState = {
   latestVersion: "",
   downloadUrl: "",
   assetSize: 0,
-  appVersion: "1.0.0",
+  appVersion: "2.3.4",
   lastUpdateCheck: null,
   updateCheckMessage: "",
   showAllDrivers: false,
@@ -117,6 +117,8 @@ export const pageDefs = {
   binds: { title: "bindsTitle", subtitle: "bindsSubtitle", nav: "bindsTitle", icon: "keyboard" },
   characteristics: { title: "characteristicsTitle", subtitle: "characteristicsSubtitle", nav: "characteristicsTitle", icon: "cpu" },
   backups: { title: "backupsTitle", subtitle: "backupsSubtitle", nav: "backupsTitle", icon: "archive" },
+  configs: { title: "configsTitle", subtitle: "configsSubtitle", nav: "configsTitle", icon: "folder" },
+  gameColor: { title: "gameProfilesTitle", subtitle: "gameProfilesSubtitle", nav: "gameProfilesTitle", icon: "layers" },
   settings: { title: "settingsTitle", subtitle: "settingsSubtitle", nav: "settingsTitle", icon: "settings" }
 };
 
@@ -186,16 +188,29 @@ export function mergeState(state) {
   const incomingAdmin = state?.isAdmin ?? state?.is_admin;
   const resolvedAdmin = incomingAdmin !== undefined ? Boolean(incomingAdmin) : currentAdmin;
 
+  const existingOverrides = appState?.settings?.templateOverrides || {};
+  const incomingOverrides = state?.settings?.templateOverrides || {};
+
   appState = {
     color: { ...defaultState.color, ...(state?.color || {}) },
-    settings: { ...defaultState.settings, ...(state?.settings || {}) },
+    settings: {
+      ...defaultState.settings,
+      ...(state?.settings || {}),
+      templateOverrides: {
+        ...(defaultState.settings.templateOverrides || {}),
+        ...existingOverrides,
+        ...incomingOverrides
+      }
+    },
     keybinds: Array.isArray(state?.keybinds) ? state.keybinds : (Array.isArray(appState?.keybinds) ? appState.keybinds : []),
     isAdmin: currentAdmin || resolvedAdmin
   };
   if (appState.isAdmin && viewState.activeImpactBanner?.isAdminPrompt) {
     viewState.activeImpactBanner = null;
   }
-  document.documentElement.lang = lang();
+  const currentLang = lang();
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
   applyInterfaceAccent(appState.settings.accentColor);
   return appState;
 }

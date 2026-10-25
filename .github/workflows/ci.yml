@@ -30,8 +30,8 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
-      - name: Verify JavaScript syntax across all modules
-        run: node scripts/verify-syntax.mjs
+      - name: Run frontend unit tests and syntax verification
+        run: npm test
 
       - name: Cargo test
         run: cargo test --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc --verbose

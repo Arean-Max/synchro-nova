@@ -64,6 +64,32 @@ impl ColorSettings {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
+pub struct ColorTemplateOverride {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    pub saturation: f64,
+    pub hue: f64,
+    pub contrast: f64,
+    pub gamma: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub enabled: Option<bool>,
+}
+
+impl Default for ColorTemplateOverride {
+    fn default() -> Self {
+        Self {
+            name: None,
+            saturation: 100.0,
+            hue: 0.0,
+            contrast: 100.0,
+            gamma: 100.0,
+            enabled: Some(true),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
 pub struct AppSettings {
     pub apply_instantly: bool,
     pub save_color_correction: bool,
@@ -79,6 +105,8 @@ pub struct AppSettings {
     pub auto_update: bool,
     pub disable_splash: bool,
     pub disable_animations: bool,
+    #[serde(default)]
+    pub template_overrides: std::collections::HashMap<String, ColorTemplateOverride>,
 }
 
 #[cfg(windows)]
@@ -117,6 +145,7 @@ impl Default for AppSettings {
             auto_update: true,
             disable_splash: false,
             disable_animations: false,
+            template_overrides: std::collections::HashMap::new(),
         }
     }
 }
@@ -130,8 +159,24 @@ impl AppSettings {
         if !VALID_LANGS.contains(&self.language.as_str()) {
             self.language = "en".to_string();
         }
-        if self.accent_color.trim().is_empty() {
+        let trimmed_accent = self.accent_color.trim();
+        let is_valid_hex = trimmed_accent.starts_with('#')
+            && (trimmed_accent.len() == 4 || trimmed_accent.len() == 7 || trimmed_accent.len() == 9)
+            && trimmed_accent[1..].chars().all(|c| c.is_ascii_hexdigit());
+        if !is_valid_hex {
             self.accent_color = "#ffffff".to_string();
+        } else {
+            self.accent_color = trimmed_accent.to_lowercase();
+        }
+
+        for (_, template) in self.template_overrides.iter_mut() {
+            template.saturation = template.saturation.clamp(0.0, 200.0);
+            template.hue = template.hue.clamp(-180.0, 180.0);
+            template.contrast = template.contrast.clamp(0.0, 200.0);
+            template.gamma = template.gamma.clamp(0.0, 200.0);
+            if let Some(ref mut name) = template.name {
+                *name = name.chars().filter(|c| !c.is_control()).take(64).collect();
+            }
         }
         self
     }
@@ -574,4 +619,49 @@ pub fn short_date(seconds: u64) -> String {
     time::OffsetDateTime::from_unix_timestamp(seconds as i64)
         .map(|dt| format!("{:02}.{:02}.{:04}", dt.date().day(), u8::from(dt.date().month()), dt.date().year()))
         .unwrap_or_else(|_| "01.01.1970".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_app_settings_template_overrides_roundtrip() {
+        let mut settings = AppSettings::default();
+        settings.accent_color = "#34d399".to_string();
+        settings.template_overrides.insert(
+            "rust_cold_tactical".to_string(),
+            ColorTemplateOverride {
+                name: Some("Custom Tactical".to_string()),
+                saturation: 110.0,
+                hue: -5.0,
+                contrast: 105.0,
+                gamma: 102.0,
+                enabled: Some(true),
+            },
+        );
+
+        let serialized = serde_json::to_string(&settings).expect("serialization failed");
+        assert!(serialized.contains("templateOverrides"));
+        assert!(serialized.contains("Custom Tactical"));
+
+        let deserialized: AppSettings = serde_json::from_str(&serialized).expect("deserialization failed");
+        assert_eq!(deserialized.accent_color, "#34d399");
+        let override_item = deserialized.template_overrides.get("rust_cold_tactical").unwrap();
+        assert_eq!(override_item.name.as_deref(), Some("Custom Tactical"));
+        assert_eq!(override_item.saturation, 110.0);
+    }
+
+    #[test]
+    fn test_accent_color_sanitization() {
+        let mut s1 = AppSettings::default();
+        s1.accent_color = "<script>alert(1)</script>".to_string();
+        let sanitized = s1.sanitized();
+        assert_eq!(sanitized.accent_color, "#ffffff");
+
+        let mut s2 = AppSettings::default();
+        s2.accent_color = "#FF00AA".to_string();
+        let sanitized2 = s2.sanitized();
+        assert_eq!(sanitized2.accent_color, "#ff00aa");
+    }
 }

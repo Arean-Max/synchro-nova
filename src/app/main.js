@@ -635,6 +635,7 @@ async function switchLanguage(nextLang) {
 
   appState.settings.language = nextLang;
   document.documentElement.lang = nextLang;
+  document.documentElement.dir = nextLang === "ar" ? "rtl" : "ltr";
 
   const minBtn = document.querySelector('.window-btn[data-action="window-minimize"]');
   if (minBtn) minBtn.title = t("minimize");
@@ -690,7 +691,9 @@ async function switchLanguage(nextLang) {
   }
 
   syncAllSliders(appState);
-  syncAllTemplateSliders(appState);
+  if (viewState.editingTemplate && viewState.editingTemplateColor) {
+    syncAllTemplateSliders(viewState.editingTemplateColor);
+  }
   renderBackupModalDom();
   renderApplyModalDom();
   if (viewState.activeImpactBanner) {
@@ -731,13 +734,25 @@ function updateSidebarUpdateWidgetDom() {
 
 let updatePollTimer = 0;
 
+function stopGlobalUpdatePoller() {
+  if (updatePollTimer) {
+    clearInterval(updatePollTimer);
+    updatePollTimer = 0;
+  }
+}
+
 function syncUpdateStatus(progress) {
   if (!progress) return;
   const oldStatus = viewState.updateStatus;
   const newStatus = progress.status;
 
-  if (progress.latest_version) {
-    viewState.latestVersion = progress.latest_version;
+  const latest = progress.latestVersion || progress.latest_version;
+  if (latest) {
+    viewState.latestVersion = latest;
+  }
+  const current = progress.currentVersion || progress.current_version;
+  if (current) {
+    viewState.appVersion = current;
   }
 
   if (newStatus === "downloading" || newStatus === "verifying") {
@@ -755,6 +770,7 @@ function syncUpdateStatus(progress) {
   } else if (newStatus === "ready") {
     viewState.updateStatus = "ready";
     viewState.updatePercent = 100;
+    stopGlobalUpdatePoller();
     if (oldStatus !== "ready") {
       updateSidebarUpdateWidgetDom();
     }
@@ -765,10 +781,12 @@ function syncUpdateStatus(progress) {
     }
   } else if (newStatus === "error") {
     viewState.updateStatus = "error";
+    stopGlobalUpdatePoller();
     if (oldStatus !== "error") {
       updateSidebarUpdateWidgetDom();
     }
   } else if (newStatus === "idle") {
+    stopGlobalUpdatePoller();
     if (oldStatus && oldStatus !== "hidden" && oldStatus !== "available" && oldStatus !== "ready") {
       viewState.updateStatus = "hidden";
       updateSidebarUpdateWidgetDom();
@@ -779,8 +797,8 @@ function syncUpdateStatus(progress) {
 function startGlobalUpdatePoller() {
   if (updatePollTimer) return;
   updatePollTimer = window.setInterval(async () => {
-    // Only poll IPC during active download or installation to eliminate idle wakeups
     if (viewState.updateStatus !== "downloading" && viewState.updateStatus !== "installing") {
+      stopGlobalUpdatePoller();
       return;
     }
     try {
@@ -798,17 +816,21 @@ async function checkForUpdates(manual = false) {
 
   try {
     const res = await invokeCommand("check_for_updates");
+    if (!res) {
+      throw new Error("No response from update service");
+    }
+
     viewState.lastUpdateCheck = new Date().toLocaleTimeString();
-    if (res?.currentVersion) {
+    if (res.currentVersion) {
       viewState.appVersion = res.currentVersion;
     }
 
-    if (res && res.updateAvailable) {
+    if (res.updateAvailable) {
       viewState.updateStatus = "available";
-      viewState.latestVersion = res.latestVersion;
-      viewState.downloadUrl = res.downloadUrl;
-      viewState.assetSize = res.assetSize;
-      viewState.shaManifestUrl = res.shaManifestUrl;
+      viewState.latestVersion = res.latestVersion || "";
+      viewState.downloadUrl = res.downloadUrl || "";
+      viewState.assetSize = res.assetSize || 0;
+      viewState.shaManifestUrl = res.shaManifestUrl || "";
       viewState.updateCheckMessage = "";
       updateSidebarUpdateWidgetDom();
 
@@ -816,6 +838,12 @@ async function checkForUpdates(manual = false) {
         startUpdateDownload();
       }
     } else {
+      if (viewState.updateStatus === "available") {
+        viewState.updateStatus = "hidden";
+        viewState.latestVersion = "";
+        viewState.downloadUrl = "";
+        updateSidebarUpdateWidgetDom();
+      }
       if (manual) {
         viewState.updateCheckMessage = t("latestVersionInstalled");
       }
@@ -837,6 +865,7 @@ async function startUpdateDownload() {
   viewState.updateStatus = "downloading";
   viewState.updatePercent = 0;
   updateSidebarUpdateWidgetDom();
+  startGlobalUpdatePoller();
 
   try {
     await invokeCommand("download_update", {
@@ -848,6 +877,7 @@ async function startUpdateDownload() {
   } catch (err) {
     console.error("Start download failed:", err);
     viewState.updateStatus = "error";
+    stopGlobalUpdatePoller();
     updateSidebarUpdateWidgetDom();
   }
 }
@@ -856,10 +886,12 @@ async function applyUpdateInstall() {
   try {
     viewState.updateStatus = "installing";
     updateSidebarUpdateWidgetDom();
+    startGlobalUpdatePoller();
     await invokeCommand("install_update");
   } catch (err) {
     console.error("Apply update failed:", err);
     viewState.updateStatus = "error";
+    stopGlobalUpdatePoller();
     updateSidebarUpdateWidgetDom();
   }
 }
@@ -998,12 +1030,17 @@ async function loadColorGames() {
 }
 
 async function loadTweakStatuses() {
-  const statuses = await invokeCommand("get_tweak_statuses");
-  viewState.installedTweaks.clear();
-  if (!Array.isArray(statuses)) return;
-  statuses.forEach((item) => {
-    if (item?.installed && item.id) viewState.installedTweaks.add(item.id);
-  });
+  try {
+    const statuses = await invokeCommand("get_tweak_statuses");
+    if (!Array.isArray(statuses)) return;
+    const nextInstalled = new Set();
+    statuses.forEach((item) => {
+      if (item?.installed && item.id) nextInstalled.add(item.id);
+    });
+    viewState.installedTweaks = nextInstalled;
+  } catch (err) {
+    console.warn("Failed to load tweak statuses:", err);
+  }
 }
 
 async function triggerScanDrivers() {
@@ -1012,7 +1049,7 @@ async function triggerScanDrivers() {
   updateMain();
   try {
     const list = await invokeCommand("scan_drivers");
-    if (Array.isArray(list) && list.length) {
+    if (Array.isArray(list)) {
       viewState.drivers = list;
     }
   } catch (err) {
@@ -1210,11 +1247,19 @@ async function handleAction(action) {
     case "fix-anticheat": {
       try {
         const res = await invokeCommand("fix_anticheat_environment");
-        showToastBanner(
-          t("eacFixedTitle"),
-          res?.message || t("eacFixedMsg"),
-          "safe"
-        );
+        if (res && res.success) {
+          showToastBanner(
+            t("eacFixedTitle"),
+            res.message || t("eacFixedMsg"),
+            "safe"
+          );
+        } else {
+          showToastBanner(
+            t("eacShieldTitle"),
+            res?.message || t("unknownError"),
+            "danger"
+          );
+        }
       } catch (err) {
         console.error("fix_anticheat_environment failed:", err);
         showErrorToast(t("eacShieldTitle"), err);
@@ -1369,6 +1414,10 @@ async function handleAction(action) {
         const restored = await invokeCommand("rollback_last_tweaks");
         clearInterval(progressInterval);
 
+        if (!restored) {
+          throw new Error("No backup available to restore");
+        }
+
         await new Promise((resolve) => {
           const finishInterval = setInterval(() => {
             currentProgress += Math.max(3, (100 - currentProgress) * 0.4);
@@ -1383,10 +1432,8 @@ async function handleAction(action) {
           }, 20);
         });
 
-        if (restored) {
-          mergeState(restored);
-          await Promise.all([loadTweakStatuses(), loadLists()]);
-        }
+        mergeState(restored);
+        await Promise.all([loadTweakStatuses(), loadLists()]);
 
         viewState.applyModal = null;
         renderApplyModalDom();
@@ -1397,6 +1444,11 @@ async function handleAction(action) {
         viewState.applyModal = null;
         renderApplyModalDom();
         updateMain();
+        showToastBanner(
+          t("rollbackFailed") || "Rollback failed",
+          err?.message || (typeof err === "string" ? err : t("unknownError")),
+          "danger"
+        );
       } finally {
         viewState.applyingTweaks = false;
       }
@@ -1450,12 +1502,18 @@ async function handleAction(action) {
         }
         clearInterval(progressInterval);
 
+        const hasApplied = results.some((r) => r.status === "applied" || r.status === "reverted" || r.status === "restored");
+        const hasFailed = results.some((r) => r.status === "failed");
+        const statusText = hasFailed
+          ? (hasApplied ? (t("appliedWithErrors") || "Applied with errors") : (t("applyFailed") || "Failed"))
+          : t("ready");
+
         await new Promise((resolve) => {
           const finishInterval = setInterval(() => {
             currentProgress += Math.max(2, (100 - currentProgress) * 0.35);
             if (currentProgress >= 99.5) {
               currentProgress = 100;
-              updateApplyProgress(100, t("ready"));
+              updateApplyProgress(100, statusText);
               clearInterval(finishInterval);
               setTimeout(resolve, 360);
             } else {
@@ -1690,6 +1748,13 @@ function handleInput(event) {
 async function handleClick(event) {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
+
+  const clearSearch = target.closest("[data-action='clear-driver-search']");
+  if (clearSearch) {
+    viewState.driverSearch = "";
+    updateDriversPageContent();
+    return;
+  }
 
   const valBadge = target.closest("[data-slider-value]");
   if (valBadge && !valBadge.querySelector("input")) {
@@ -2598,10 +2663,18 @@ async function handleKeydown(event) {
     dismissNotificationBanner();
     return;
   }
-  if ((event.key === "Enter" || event.key === " ") && document.activeElement?.classList?.contains("check-row")) {
-    event.preventDefault();
-    document.activeElement.click();
-    return;
+  const activeEl = document.activeElement;
+  if ((event.key === "Enter" || event.key === " ") && activeEl) {
+    if (
+      activeEl.classList.contains("check-row") ||
+      activeEl.classList.contains("tweak-tile") ||
+      activeEl.classList.contains("color-filter-tile") ||
+      activeEl.classList.contains("template-tile")
+    ) {
+      event.preventDefault();
+      activeEl.click();
+      return;
+    }
   }
   if (activePage !== "gameColor") return;
   const target = event.target;
@@ -2738,11 +2811,10 @@ async function boot() {
   }
   render();
 
-  Promise.all([holoPromise, loadLists(), loadColorGames()]).then(() => {
+  Promise.all([holoPromise, loadLists()]).then(() => {
     updateMainKeepingScroll();
   });
 
-  startGlobalUpdatePoller();
   checkForUpdates(false);
   window.setInterval(() => checkForUpdates(false), 4 * 60 * 60 * 1000);
   loadTweakStatuses();

@@ -17,7 +17,7 @@ export function renderApplyModal(modalState, t) {
 
     return [
       '<div class="apply-modal-backdrop" id="apply-modal-backdrop">',
-      '  <div class="apply-modal-loading">',
+      '  <div class="apply-modal-loading" role="dialog" aria-modal="true" aria-live="polite">',
       '    <div class="apply-spinner-wrapper">',
       '      <div class="apply-spinner-ring"></div>',
       '      <div class="apply-spinner-glow"></div>',
@@ -39,7 +39,10 @@ export function renderApplyModal(modalState, t) {
   const tweaksMap = new Map(allTweaks().map((tw) => [tw.id, tw]));
 
   const appliedCount = results.filter((r) => r.status === "applied").length;
+  const restoredCount = results.filter((r) => r.status === "reverted" || r.status === "restored").length;
+  const failedCount = results.filter((r) => r.status === "failed").length;
   const adminCount = results.filter((r) => r.status === "requiresAdmin").length;
+  const skippedCount = results.filter((r) => r.status === "skipped").length;
 
   const rows = results.map((item) => {
     const tweak = tweaksMap.get(item.id);
@@ -106,15 +109,25 @@ export function renderApplyModal(modalState, t) {
     ].join("");
   }).join("");
 
-  const headerTitle = adminCount > 0
-    ? (isRu ? "Применение завершено" : "Execution Finished")
-    : (isRu ? "Настройки успешно применены" : "Settings Successfully Applied");
+  let headerTitle;
+  if (!results.length) {
+    headerTitle = t("noResultsReceived") || (isRu ? "Результаты не получены" : "No results received");
+  } else if (failedCount > 0 && appliedCount === 0 && restoredCount === 0) {
+    headerTitle = t("applyFailed") || (isRu ? "Не удалось применить настройки" : "Failed to apply tweaks");
+  } else if (failedCount > 0) {
+    headerTitle = t("appliedWithErrors") || (isRu ? "Настройки применены с ошибками" : "Applied with errors");
+  } else if (adminCount > 0) {
+    headerTitle = isRu ? "Применение завершено" : "Execution Finished";
+  } else {
+    headerTitle = isRu ? "Настройки успешно применены" : "Settings Successfully Applied";
+  }
 
   const statBadges = [
-    `<span class="apply-stat-pill applied">${appliedCount} ${isRu ? "применено" : "applied"}</span>`,
-    adminCount > 0
-      ? `<span class="apply-stat-pill admin">${icon("shield")} ${adminCount} ${isRu ? "требуют прав админа" : "requires admin"}</span>`
-      : ""
+    appliedCount > 0 ? `<span class="apply-stat-pill applied">${appliedCount} ${isRu ? "применено" : "applied"}</span>` : "",
+    restoredCount > 0 ? `<span class="apply-stat-pill reverted">${restoredCount} ${isRu ? "откачено" : "restored"}</span>` : "",
+    failedCount > 0 ? `<span class="apply-stat-pill failed">${failedCount} ${isRu ? "ошибок" : "failed"}</span>` : "",
+    adminCount > 0 ? `<span class="apply-stat-pill admin">${icon("shield")} ${adminCount} ${isRu ? "требуют прав админа" : "requires admin"}</span>` : "",
+    skippedCount > 0 ? `<span class="apply-stat-pill skipped">${skippedCount} ${isRu ? "пропущено" : "skipped"}</span>` : ""
   ].filter(Boolean).join("");
 
   const adminNotice = adminCount > 0 ? [
@@ -129,10 +142,10 @@ export function renderApplyModal(modalState, t) {
 
   return [
     '<div class="apply-modal-backdrop" id="apply-modal-backdrop">',
-    '  <div class="apply-modal-complete">',
+    '  <div class="apply-modal-complete" role="dialog" aria-modal="true" aria-labelledby="apply-modal-title">',
     '    <div class="apply-complete-head">',
     '      <div class="apply-complete-titles">',
-    `        <h2>${escapeHtml(headerTitle)}</h2>`,
+    `        <h2 id="apply-modal-title">${escapeHtml(headerTitle)}</h2>`,
     `        <div class="apply-stat-pills">${statBadges}</div>`,
     '      </div>',
     '    </div>',

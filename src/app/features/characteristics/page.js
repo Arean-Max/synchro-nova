@@ -65,11 +65,38 @@ export function renderCharacteristicsPage(viewState, t) {
     ? (t("scanningDrivers") || (isRu ? "Сканирование..." : "Scanning system..."))
     : (t("scanDrivers") || (isRu ? "Сканировать ПК" : "Scan PC for Drivers"));
 
-  const drivers = rawDrivers.filter((d) => d && d.name && d.name !== "Unknown");
+  const searchQuery = (viewState.driverSearch || "").trim().toLowerCase();
+  const drivers = rawDrivers
+    .filter((d) => d && d.name && d.name !== "Unknown")
+    .filter((d) => {
+      if (!searchQuery) return true;
+      const name = (d.name || "").toLowerCase();
+      const vendor = (d.vendor || "").toLowerCase();
+      const provider = (d.provider || "").toLowerCase();
+      return name.includes(searchQuery) || vendor.includes(searchQuery) || provider.includes(searchQuery);
+    });
+
+  const searchBar = `
+    <div class="driver-search-toolbar">
+      <div class="search-input-wrapper">
+        <span class="search-input-icon">${icon("search")}</span>
+        <input
+          class="text-input driver-search-input"
+          type="text"
+          data-action="input-driver-search"
+          placeholder="${escapeAttr(t("searchDrivers") || (isRu ? "Поиск драйверов и устройств..." : "Search drivers & devices..."))}"
+          value="${escapeAttr(viewState.driverSearch || "")}"
+          aria-label="${escapeAttr(t("searchDrivers") || "Search drivers")}"
+        />
+        ${viewState.driverSearch ? `<button class="search-clear-btn" type="button" data-action="clear-driver-search" aria-label="Clear">${icon("x")}</button>` : ""}
+      </div>
+    </div>
+  `;
 
   if (isScanning && !drivers.length) {
     return `
       <div class="drivers-page">
+        ${searchBar}
         <div class="scroll-panel">
           <div class="empty-state"><div class="empty-state-spinner">${icon("rotate", "spin")}</div><span>${escapeHtml(t("scanningDrivers") || (isRu ? "Сканирование ПК..." : "Scanning system..."))}</span></div>
         </div>
@@ -121,6 +148,7 @@ export function renderCharacteristicsPage(viewState, t) {
 
   return `
     <div class="drivers-page">
+      ${searchBar}
       <div class="scroll-panel">${scrollContent}</div>
       <div class="actions tweaks-actions drivers-actions">
         ${button(scanLabel, "rotate", "primary", "scan-drivers")}
@@ -154,41 +182,19 @@ function renderDriverTile(driver, t, isRu) {
       const geforce = `${lastDigit}${p3.slice(0, 2)}.${p3.slice(2)}`;
       versionText = `v${geforce}`;
     }
-  } else if (vendor === "amd" && rawVer && rawVer.includes(".")) {
-    const parts = rawVer.split(".");
-    if (parts.length === 4 && parts[2].length >= 4) {
-      const p2 = parts[2];
-      const yy = p2.slice(0, 2);
-      const mm = parseInt(p2.slice(2, 4), 10);
-      const rr = p2.length > 4 ? p2.slice(4) : "1";
-      versionText = `v${yy}.${mm}.${rr}`;
-    }
   }
 
-  let displayLatest = latestVer ? latestVer.replace(/^v/, "").trim() : "";
-  if (vendor === "nvidia" && displayLatest && displayLatest.includes(".")) {
-    const parts = displayLatest.split(".");
+  let cleanLatest = latestVer ? latestVer.replace(/^v/, "").trim() : "";
+  if (vendor === "nvidia" && cleanLatest && cleanLatest.includes(".")) {
+    const parts = cleanLatest.split(".");
     if (parts.length === 4 && parts[3].length >= 4) {
       const p2 = parts[2];
       const p3 = parts[3];
       const lastDigit = p2.slice(-1);
-      displayLatest = `${lastDigit}${p3.slice(0, 2)}.${p3.slice(2)}`;
+      cleanLatest = `${lastDigit}${p3.slice(0, 2)}.${p3.slice(2)}`;
     }
-  } else if (vendor === "amd" && displayLatest && displayLatest.includes(".")) {
-    const parts = displayLatest.split(".");
-    if (parts.length === 4 && parts[2].length >= 4) {
-      const p2 = parts[2];
-      const yy = p2.slice(0, 2);
-      const mm = parseInt(p2.slice(2, 4), 10);
-      const rr = p2.length > 4 ? p2.slice(4) : "1";
-      displayLatest = `${yy}.${mm}.${rr}`;
-    }
-  }
-  if (!displayLatest) {
-    displayLatest = rawVer || "-";
   }
 
-  const cleanLatest = displayLatest.replace(/^v/, "");
   let statusLabel;
   if (isOutdated) {
     statusLabel = cleanLatest && cleanLatest !== "-"
@@ -205,7 +211,7 @@ function renderDriverTile(driver, t, isRu) {
   const dateText = driver.date || "-";
   const providerText = driver.provider || "-";
   const newVerSpec = isOutdated
-    ? `<div class="driver-spec-item update-hint"><span class="spec-label">${escapeHtml(t("driverAvailableVersion") || (isRu ? "Доступна:" : "Available:"))}</span> <span class="spec-val highlight-new">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : "-"}</span></div>`
+    ? `<div class="driver-spec-item update-hint"><span class="spec-label">${escapeHtml(t("driverAvailableVersion") || (isRu ? "Доступна:" : "Available:"))}</span> <span class="spec-val highlight-new">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : escapeHtml(t("updateAvailableUnspecified") || (isRu ? "Обновление доступно" : "Update available"))}</span></div>`
     : `<div class="driver-spec-item uptodate-hint"><span class="spec-label">${escapeHtml(t("driverLatestVersion") || (isRu ? "Актуальная:" : "Latest:"))}</span> <span class="spec-val highlight-uptodate">${cleanLatest && cleanLatest !== "-" ? `v${escapeHtml(cleanLatest)}` : (versionText !== "-" ? escapeHtml(versionText) : "-")}</span></div>`;
 
   return `

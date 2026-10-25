@@ -70,7 +70,7 @@ export function renderSettingsPage(appState, viewState, t) {
     <div class="accent-color-row">
       ${swatches}
       <label class="accent-picker-wrapper ${!isPresetActive ? "active" : ""}" title="${escapeAttr(t("interfaceAccent"))}">
-        <input type="color" class="accent-color-input" data-action="pick-accent-color" value="${currentAccent}">
+        <input type="color" class="accent-color-input" data-action="pick-accent-color" value="${escapeAttr(currentAccent)}">
         <span class="accent-custom-icon"></span>
       </label>
     </div>
