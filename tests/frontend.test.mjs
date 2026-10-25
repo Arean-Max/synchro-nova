@@ -352,6 +352,7 @@ test("Layout Navigation: renderNavList generates smooth-scroll sub-buttons under
   setActivePage("tweaks");
   const tweaksNavHtml = renderNavList(t, { sidebarCollapsed: false });
   assert.ok(tweaksNavHtml.includes('class="nav-sub-list"'), "Sub-navigation list must be rendered");
+  assert.ok(tweaksNavHtml.includes('class="nav-chevron"'), "Expandable items must have chevron indicator");
   assert.ok(tweaksNavHtml.includes('data-action="scroll-to-section"'), "Sub-buttons must have scroll action");
   assert.ok(tweaksNavHtml.includes('data-section="tweak-section-gaming_latency"'), "Must scroll to gaming_latency");
   assert.ok(tweaksNavHtml.includes('data-section="tweak-section-scheduler"'), "Must scroll to scheduler");

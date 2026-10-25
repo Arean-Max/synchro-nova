@@ -601,6 +601,27 @@ function updateMain() {
     syncAllSliders(appState, viewState);
   }
   updateNavState();
+  const scrollPanelEl = document.querySelector(".scroll-panel");
+  if (scrollPanelEl) {
+    scrollPanelEl.onscroll = () => {
+      const sections = scrollPanelEl.querySelectorAll(".tweak-group, .driver-group, .settings-group");
+      if (!sections.length) return;
+      const panelTop = scrollPanelEl.getBoundingClientRect().top;
+      let currentId = null;
+      sections.forEach((sec) => {
+        const rect = sec.getBoundingClientRect();
+        if (rect.top - panelTop <= 80) {
+          currentId = sec.id;
+        }
+      });
+      if (currentId && currentId !== viewState.activeSubSection) {
+        viewState.activeSubSection = currentId;
+        document.querySelectorAll(".nav-sub-item").forEach((btn) => {
+          btn.classList.toggle("active", btn.getAttribute("data-section") === currentId);
+        });
+      }
+    };
+  }
   renderBackupModalDom();
   renderApplyModalDom();
   if (activePage === "tweaks" && !appState.isAdmin) {
@@ -1921,11 +1942,12 @@ async function handleClick(event) {
   if (scrollSectionBtn) {
     const sectionId = scrollSectionBtn.getAttribute("data-section");
     if (sectionId) {
+      viewState.activeSubSection = sectionId;
       const targetEl = document.getElementById(sectionId);
       if (targetEl) {
         targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
         document.querySelectorAll(".nav-sub-item").forEach((btn) => {
-          btn.classList.toggle("active", btn === scrollSectionBtn);
+          btn.classList.toggle("active", btn.getAttribute("data-section") === sectionId);
         });
       }
     }
@@ -1937,12 +1959,17 @@ async function handleClick(event) {
     const nextPage = navItem.getAttribute("data-page");
     if (!nextPage || !pageDefs[nextPage]) return;
     if (nextPage === activePage) {
+      viewState.activeSubSection = null;
       const scrollPanel = document.querySelector(".scroll-panel") || document.querySelector(".page-body");
       if (scrollPanel) {
         scrollPanel.scrollTo({ top: 0, behavior: "smooth" });
       }
+      document.querySelectorAll(".nav-sub-item").forEach((btn, index) => {
+        btn.classList.toggle("active", index === 0);
+      });
       return;
     }
+    viewState.activeSubSection = null;
     viewState.languageDropdownOpen = false;
     viewState.openDropdownBindId = null;
     if (nextPage !== "tweaks" && viewState.activeImpactBanner) {
@@ -2768,6 +2795,27 @@ function render() {
   app.innerHTML = renderShell(viewState, t);
   syncAllSliders(appState, viewState);
   updateNavState();
+  const scrollPanelEl = document.querySelector(".scroll-panel");
+  if (scrollPanelEl) {
+    scrollPanelEl.onscroll = () => {
+      const sections = scrollPanelEl.querySelectorAll(".tweak-group, .driver-group, .settings-group");
+      if (!sections.length) return;
+      const panelTop = scrollPanelEl.getBoundingClientRect().top;
+      let currentId = null;
+      sections.forEach((sec) => {
+        const rect = sec.getBoundingClientRect();
+        if (rect.top - panelTop <= 80) {
+          currentId = sec.id;
+        }
+      });
+      if (currentId && currentId !== viewState.activeSubSection) {
+        viewState.activeSubSection = currentId;
+        document.querySelectorAll(".nav-sub-item").forEach((btn) => {
+          btn.classList.toggle("active", btn.getAttribute("data-section") === currentId);
+        });
+      }
+    };
+  }
   renderBackupModalDom();
   renderApplyModalDom();
   if (activePage === "tweaks" && !appState.isAdmin) {

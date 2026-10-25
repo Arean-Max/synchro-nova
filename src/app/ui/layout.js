@@ -107,7 +107,9 @@ export function renderNavList(t, viewState) {
       const page = pageDefs[key];
       const active = key === activePage ? "active" : "";
       const label = t(page.nav);
-      const topBtn = `<button class="nav-item ${active}" type="button" data-page="${key}" title="${escapeHtml(label)}">${icon(page.icon)}<span>${escapeHtml(label)}</span></button>`;
+      const hasSubNav = key === "tweaks" || key === "characteristics" || key === "settings";
+      const chevron = hasSubNav ? `<span class="nav-chevron">${icon("chevronDown")}</span>` : "";
+      const topBtn = `<button class="nav-item ${active}" type="button" data-page="${key}" title="${escapeHtml(label)}">${icon(page.icon)}<span>${escapeHtml(label)}</span>${chevron}</button>`;
 
       if (isCollapsed || key !== activePage) {
         return topBtn;
@@ -116,26 +118,29 @@ export function renderNavList(t, viewState) {
       let subItems = "";
       if (key === "tweaks") {
         subItems = tweakCatalog
-          .map((group) => {
+          .map((group, index) => {
             const title = tweakGroupTitle(group, t);
             const sectionId = `tweak-section-${group.id}`;
-            return `<button class="nav-sub-item" type="button" data-action="scroll-to-section" data-section="${escapeAttr(sectionId)}" title="${escapeAttr(title)}"><span class="sub-dot"></span><span>${escapeHtml(title)}</span></button>`;
+            const isSubActive = viewState?.activeSubSection ? viewState.activeSubSection === sectionId : index === 0;
+            return `<button class="nav-sub-item ${isSubActive ? "active" : ""}" type="button" data-action="scroll-to-section" data-section="${escapeAttr(sectionId)}" title="${escapeAttr(title)}"><span>${escapeHtml(title)}</span></button>`;
           })
           .join("");
       } else if (key === "characteristics") {
         subItems = DRIVER_CATEGORIES
-          .map((cat) => {
+          .map((cat, index) => {
             const title = t("driverGroup_" + cat.id) || (isRu ? cat.titleRu : cat.titleEn);
             const sectionId = `driver-section-${cat.id}`;
-            return `<button class="nav-sub-item" type="button" data-action="scroll-to-section" data-section="${escapeAttr(sectionId)}" title="${escapeAttr(title)}"><span class="sub-dot"></span><span>${escapeHtml(title)}</span></button>`;
+            const isSubActive = viewState?.activeSubSection ? viewState.activeSubSection === sectionId : index === 0;
+            return `<button class="nav-sub-item ${isSubActive ? "active" : ""}" type="button" data-action="scroll-to-section" data-section="${escapeAttr(sectionId)}" title="${escapeAttr(title)}"><span>${escapeHtml(title)}</span></button>`;
           })
           .join("");
       } else if (key === "settings") {
         subItems = SETTINGS_SECTIONS
-          .map((sec) => {
+          .map((sec, index) => {
             const title = t(sec.titleKey) || (isRu ? sec.titleRu : sec.titleEn);
             const sectionId = `settings-section-${sec.id}`;
-            return `<button class="nav-sub-item" type="button" data-action="scroll-to-section" data-section="${escapeAttr(sectionId)}" title="${escapeAttr(title)}"><span class="sub-dot"></span><span>${escapeHtml(title)}</span></button>`;
+            const isSubActive = viewState?.activeSubSection ? viewState.activeSubSection === sectionId : index === 0;
+            return `<button class="nav-sub-item ${isSubActive ? "active" : ""}" type="button" data-action="scroll-to-section" data-section="${escapeAttr(sectionId)}" title="${escapeAttr(title)}"><span>${escapeHtml(title)}</span></button>`;
           })
           .join("");
       }
