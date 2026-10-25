@@ -1,7 +1,15 @@
-import { card, checkbox } from "../../ui/components.js";
+import { checkbox } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
 import { escapeAttr, escapeHtml } from "../../core/html.js";
 import { supportedLanguages } from "../../core/i18n.js";
+import { lang } from "../../core/state.js";
+
+export const SETTINGS_SECTIONS = [
+  { id: "appearance", titleKey: "settingsAppearance", titleEn: "Appearance", titleRu: "Внешний вид", icon: "monitor" },
+  { id: "system", titleKey: "settingsSystem", titleEn: "System Behavior", titleRu: "Системные параметры", icon: "settings" },
+  { id: "security", titleKey: "eacShieldTitle", titleEn: "Anti-Cheat Compatibility (EAC)", titleRu: "Безопасность EAC", icon: "shield" },
+  { id: "community", titleKey: "community", titleEn: "Community & Links", titleRu: "Сообщество и ссылки", icon: "network" }
+];
 
 const ACCENT_PRESETS = [
   { color: "#ffffff", name: "White" },
@@ -27,6 +35,7 @@ const SETTING_TOGGLE_KEYS = [
 ];
 
 export function renderSettingsPage(appState, viewState, t) {
+  const isRu = lang() === "ru";
   const currentLangCode = appState?.settings?.language || "en";
   const currentLang = supportedLanguages.find((l) => l.code === currentLangCode) || supportedLanguages[0];
   const isDropdownOpen = Boolean(viewState?.languageDropdownOpen);
@@ -47,7 +56,7 @@ export function renderSettingsPage(appState, viewState, t) {
   }).join("");
 
   const languageDropdown = `
-    <div class="form-label">${escapeHtml(t("language"))}</div>
+    <div class="form-label">${escapeHtml(t("language") || (isRu ? "Язык интерфейса" : "Interface Language"))}</div>
     <div class="language-custom-dropdown ${isDropdownOpen ? "open" : ""}">
       <button class="language-dropdown-trigger" type="button" data-action="toggle-language-dropdown">
         <span class="language-dropdown-label">
@@ -66,41 +75,24 @@ export function renderSettingsPage(appState, viewState, t) {
   }).join("");
 
   const accentControl = `
-    <div class="form-label" style="margin-top:14px;">${escapeHtml(t("interfaceAccent"))}</div>
+    <div class="form-label" style="margin-top:14px;">${escapeHtml(t("interfaceAccent") || (isRu ? "Акцентный цвет" : "Interface Accent"))}</div>
     <div class="accent-color-row">
       ${swatches}
-      <label class="accent-picker-wrapper ${!isPresetActive ? "active" : ""}" title="${escapeAttr(t("interfaceAccent"))}">
+      <label class="accent-picker-wrapper ${!isPresetActive ? "active" : ""}" title="${escapeAttr(t("interfaceAccent") || "Interface Accent")}">
         <input type="color" class="accent-color-input" data-action="pick-accent-color" value="${escapeAttr(currentAccent)}">
         <span class="accent-custom-icon"></span>
       </label>
     </div>
   `;
 
-  const communityLinks = `
-    <div class="form-label">${escapeHtml(t("community"))}</div>
-    <div class="settings-community-list">
-      <button class="settings-tall-card-btn compact" type="button" data-action="open-external-url" data-url="https://github.com/Arean-Max/synchro-nova">
-        <div class="tall-card-icon-wrap">${icon("github")}</div>
-        <div class="tall-card-content">
-          <span class="tall-card-title">${escapeHtml(t("sourceCodeCaps"))}</span>
-          <span class="tall-card-sub">github.com/Arean-Max</span>
-        </div>
-      </button>
-      <button class="settings-tall-card-btn compact" type="button" data-action="open-external-url" data-url="https://github.com/sotoykor-source/synchro-nova">
-        <div class="tall-card-icon-wrap">${icon("github")}</div>
-        <div class="tall-card-content">
-          <span class="tall-card-title">${escapeHtml(t("upstreamRepoCaps"))}</span>
-          <span class="tall-card-sub">github.com/sotoykor-source</span>
-        </div>
-      </button>
-      <button class="settings-tall-card-btn compact" type="button" data-action="open-external-url" data-url="https://t.me/synchronova">
-        <div class="tall-card-icon-wrap">${icon("telegram")}</div>
-        <div class="tall-card-content">
-          <span class="tall-card-title">${escapeHtml(t("weOnTelegramCaps"))}</span>
-          <span class="tall-card-sub">t.me/synchronova</span>
-        </div>
-      </button>
-    </div>
+  const appearanceCard = `
+    <section class="card settings-group" id="settings-section-appearance">
+      <h2 class="group-title">${icon("monitor")}<span>${escapeHtml(t("settingsAppearance") || (isRu ? "Внешний вид" : "Appearance"))}</span></h2>
+      <div class="settings-group-body">
+        ${languageDropdown}
+        ${accentControl}
+      </div>
+    </section>
   `;
 
   const appToggles = SETTING_TOGGLE_KEYS.map(({ key, labelKey }) => {
@@ -108,54 +100,61 @@ export function renderSettingsPage(appState, viewState, t) {
     return checkbox(t(labelKey), checked, key);
   }).join("");
 
-  const securitySection = `
-    <div class="form-label">${escapeHtml(t("eacShieldTitle"))}</div>
-    <div class="settings-actions-row">
-      <button class="btn btn-outline" type="button" data-action="audit-anticheat">
-        ${icon("shield")}
-        <span>${escapeHtml(t("auditAntiCheat"))}</span>
-      </button>
-      <button class="btn btn-outline" type="button" data-action="fix-anticheat">
-        ${icon("shieldCheck")}
-        <span>${escapeHtml(t("fixAntiCheat"))}</span>
-      </button>
-    </div>
+  const systemCard = `
+    <section class="card settings-group" id="settings-section-system">
+      <h2 class="group-title">${icon("settings")}<span>${escapeHtml(t("settingsSystem") || (isRu ? "Системные параметры" : "System Behavior"))}</span></h2>
+      <div class="settings-toggles-section">
+        ${appToggles}
+      </div>
+    </section>
   `;
 
-  const unifiedCardBody = `
-    <div class="settings-top-row">
-      <div class="settings-top-left">
-        ${languageDropdown}
-        ${accentControl}
+  const securityCard = `
+    <section class="card settings-group" id="settings-section-security">
+      <h2 class="group-title">${icon("shield")}<span>${escapeHtml(t("eacShieldTitle") || (isRu ? "Безопасность EAC" : "Anti-Cheat Compatibility (EAC)"))}</span></h2>
+      <div class="settings-actions-row">
+        <button class="btn btn-outline" type="button" data-action="audit-anticheat">
+          ${icon("shield")}
+          <span>${escapeHtml(t("auditAntiCheat") || (isRu ? "Проверить совместимость с EAC" : "Audit EAC Integrity"))}</span>
+        </button>
+        <button class="btn btn-outline" type="button" data-action="fix-anticheat">
+          ${icon("shieldCheck")}
+          <span>${escapeHtml(t("fixAntiCheat") || (isRu ? "Исправить целостность для EAC" : "Restore Anti-Cheat Compliance"))}</span>
+        </button>
       </div>
-      <div class="settings-top-right">
-        ${communityLinks}
+    </section>
+  `;
+
+  const communityCard = `
+    <section class="card settings-group" id="settings-section-community">
+      <h2 class="group-title">${icon("network")}<span>${escapeHtml(t("community") || (isRu ? "Сообщество и ссылки" : "Community & Links"))}</span></h2>
+      <div class="settings-community-list">
+        <button class="settings-tall-card-btn compact" type="button" data-action="open-external-url" data-url="https://github.com/Arean-Max/synchro-nova">
+          <div class="tall-card-icon-wrap">${icon("github")}</div>
+          <div class="tall-card-content">
+            <span class="tall-card-title">${escapeHtml(t("sourceCodeCaps") || (isRu ? "ИСХОДНЫЙ КОД" : "SOURCE CODE"))}</span>
+            <span class="tall-card-sub">github.com/Arean-Max</span>
+          </div>
+        </button>
+        <button class="settings-tall-card-btn compact" type="button" data-action="open-external-url" data-url="https://t.me/synchronova">
+          <div class="tall-card-icon-wrap">${icon("telegram")}</div>
+          <div class="tall-card-content">
+            <span class="tall-card-title">${escapeHtml(t("weOnTelegramCaps") || (isRu ? "МЫ В TELEGRAM" : "TELEGRAM CHANNEL"))}</span>
+            <span class="tall-card-sub">t.me/synchronova</span>
+          </div>
+        </button>
       </div>
-    </div>
-    <div class="settings-section-divider"></div>
-    <div class="settings-toggles-section">
-      ${appToggles}
-    </div>
-    <div class="settings-section-divider"></div>
-    ${securitySection}
-    <div class="settings-section-divider"></div>
-    <div class="form-label">${escapeHtml(t("updates"))}</div>
-    <div class="settings-actions-row settings-update-row">
-      <button class="btn btn-outline" type="button" data-action="check-updates-manually">
-        ${icon("refresh")}
-        <span>${escapeHtml(t("checkForUpdates"))}</span>
-      </button>
-      <div class="settings-update-meta" style="display:inline-flex;align-items:center;gap:12px;font-size:12px;color:rgba(255,255,255,0.7);">
-        <span>${escapeHtml(t("currentVersion"))}: <strong>v${escapeHtml(viewState?.appVersion || "1.0.0")}</strong></span>
-        ${viewState?.lastUpdateCheck ? `<span>${escapeHtml(t("lastChecked"))}: ${escapeHtml(viewState.lastUpdateCheck)}</span>` : ""}
-        ${viewState?.updateCheckMessage ? `<span style="color:var(--accent,#38bdf8);">${escapeHtml(viewState.updateCheckMessage)}</span>` : ""}
-      </div>
-    </div>
+    </section>
   `;
 
   return `
-    <div class="settings-page settings-unified-page">
-      ${card(t("application"), unifiedCardBody, "settings-unified-card")}
+    <div class="settings-page">
+      <div class="scroll-panel">
+        ${appearanceCard}
+        ${systemCard}
+        ${securityCard}
+        ${communityCard}
+      </div>
     </div>
   `;
 }

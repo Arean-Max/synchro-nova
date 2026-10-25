@@ -33,7 +33,7 @@ function tweakGroup(group, viewState, t) {
   if (!tweaks.length) return "";
   const tiles = tweaks.map((tweak) => tweakTile(tweak, viewState, t)).join("");
   const title = tweakGroupTitle(group, t);
-  return `<section class="card tweak-group"><h2 class="group-title">${icon(group.icon)}<span>${escapeHtml(title)}</span></h2><div class="tweak-grid">${tiles}</div></section>`;
+  return `<section class="card tweak-group" id="tweak-section-${escapeAttr(group.id)}"><h2 class="group-title">${icon(group.icon)}<span>${escapeHtml(title)}</span></h2><div class="tweak-grid">${tiles}</div></section>`;
 }
 
 function tweakResults(viewState, t) {

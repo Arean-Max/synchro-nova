@@ -265,3 +265,111 @@ test("CSP Compliance: game cards do not contain inline onerror handlers", async 
   const html = renderColorPage(mockState, mockView, t);
   assert.ok(!html.includes("onerror="), "Must not contain inline onerror attributes violating CSP");
 });
+
+test("Settings: does not render sotoykor-source original repository button", async () => {
+  const { renderSettingsPage } = await import("../src/app/features/settings/page.js");
+  const t = (k) => k;
+  const mockState = {
+    settings: {
+      language: "ru",
+      accentColor: "#ffffff"
+    }
+  };
+  const html = renderSettingsPage(mockState, {}, t);
+  assert.ok(!html.includes("sotoykor-source"), "Upstream sotoykor-source repository button must be removed");
+  assert.ok(!html.includes("upstreamRepoCaps"), "Upstream repository title label must be removed");
+  assert.ok(html.includes("Arean-Max/synchro-nova"), "Fork repository link must be present");
+  assert.ok(html.includes("t.me/synchronova"), "Telegram community link must be present");
+});
+
+test("Settings: does not render manual check for updates button or row", async () => {
+  const { renderSettingsPage } = await import("../src/app/features/settings/page.js");
+  const t = (k) => k;
+  const mockState = {
+    settings: {
+      language: "ru",
+      accentColor: "#ffffff"
+    }
+  };
+  const html = renderSettingsPage(mockState, {}, t);
+  assert.ok(!html.includes("check-updates-manually"), "Manual check for updates button must be removed");
+  assert.ok(!html.includes("checkForUpdates"), "Check for updates label must be removed from settings");
+});
+
+test("Settings: divided into 4 modular section blocks with scrollable panel", async () => {
+  const { renderSettingsPage, SETTINGS_SECTIONS } = await import("../src/app/features/settings/page.js");
+  const t = (k) => k;
+  const mockState = {
+    settings: {
+      language: "en",
+      accentColor: "#ffffff"
+    }
+  };
+  const html = renderSettingsPage(mockState, {}, t);
+  assert.ok(html.includes('id="settings-section-appearance"'), "Must contain appearance section anchor");
+  assert.ok(html.includes('id="settings-section-system"'), "Must contain system section anchor");
+  assert.ok(html.includes('id="settings-section-security"'), "Must contain security section anchor");
+  assert.ok(html.includes('id="settings-section-community"'), "Must contain community section anchor");
+  assert.equal(SETTINGS_SECTIONS.length, 4);
+});
+
+test("Characteristics: driver group sections have anchor IDs and unconstrained search bar is removed", async () => {
+  const { renderCharacteristicsPage } = await import("../src/app/features/characteristics/page.js");
+  const t = (k) => k;
+  const html = renderCharacteristicsPage({
+    drivers: [
+      { name: "NVIDIA GeForce RTX 4090", vendor: "nvidia", className: "display", version: "551.23", isOutdated: false },
+      { name: "Realtek Audio", vendor: "realtek", className: "media", version: "6.0.1", isOutdated: false }
+    ]
+  }, t);
+  assert.ok(html.includes('id="driver-section-display"'), "Display category section anchor must be present");
+  assert.ok(html.includes('id="driver-section-media"'), "Media category section anchor must be present");
+  assert.ok(!html.includes("driver-search-toolbar"), "Search toolbar with unconstrained SVG icon must be removed");
+});
+
+test("Tweaks: group sections have anchor IDs", async () => {
+  const { renderTweaksPage } = await import("../src/app/features/tweaks/page.js");
+  const t = (k) => k;
+  const html = renderTweaksPage({
+    installedTweaks: new Set(),
+    pendingRevertTweaks: new Set(),
+    selectedTweaks: new Set()
+  }, t);
+  assert.ok(html.includes('id="tweak-section-gaming_latency"'), "Gaming latency anchor must be present");
+  assert.ok(html.includes('id="tweak-section-scheduler"'), "Scheduler anchor must be present");
+  assert.ok(html.includes('id="tweak-section-input"'), "Input anchor must be present");
+  assert.ok(html.includes('id="tweak-section-storage"'), "Storage anchor must be present");
+  assert.ok(html.includes('id="tweak-section-network"'), "Network anchor must be present");
+  assert.ok(html.includes('id="tweak-section-background"'), "Background anchor must be present");
+});
+
+test("Layout Navigation: renderNavList generates smooth-scroll sub-buttons under active page", async () => {
+  const { renderNavList } = await import("../src/app/ui/layout.js");
+  const { setActivePage } = await import("../src/app/core/state.js");
+  const t = (k) => k;
+
+  // Tweaks active
+  setActivePage("tweaks");
+  const tweaksNavHtml = renderNavList(t, { sidebarCollapsed: false });
+  assert.ok(tweaksNavHtml.includes('class="nav-sub-list"'), "Sub-navigation list must be rendered");
+  assert.ok(tweaksNavHtml.includes('data-action="scroll-to-section"'), "Sub-buttons must have scroll action");
+  assert.ok(tweaksNavHtml.includes('data-section="tweak-section-gaming_latency"'), "Must scroll to gaming_latency");
+  assert.ok(tweaksNavHtml.includes('data-section="tweak-section-scheduler"'), "Must scroll to scheduler");
+
+  // Characteristics active
+  setActivePage("characteristics");
+  const driversNavHtml = renderNavList(t, { sidebarCollapsed: false });
+  assert.ok(driversNavHtml.includes('data-section="driver-section-display"'), "Must scroll to driver-section-display");
+  assert.ok(driversNavHtml.includes('data-section="driver-section-media"'), "Must scroll to driver-section-media");
+
+  // Settings active
+  setActivePage("settings");
+  const settingsNavHtml = renderNavList(t, { sidebarCollapsed: false });
+  assert.ok(settingsNavHtml.includes('data-section="settings-section-appearance"'), "Must scroll to settings-section-appearance");
+  assert.ok(settingsNavHtml.includes('data-section="settings-section-system"'), "Must scroll to settings-section-system");
+  assert.ok(settingsNavHtml.includes('data-section="settings-section-security"'), "Must scroll to settings-section-security");
+  assert.ok(settingsNavHtml.includes('data-section="settings-section-community"'), "Must scroll to settings-section-community");
+
+  // Reset active page to color
+  setActivePage("color");
+});

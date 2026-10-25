@@ -43,7 +43,7 @@ import { router } from "./core/router.js";
 import { renderApplyModal } from "./features/tweaks/applyModal.js";
 import { icon } from "./ui/icons.js";
 import { button } from "./ui/components.js";
-import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget } from "./ui/layout.js";
+import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget, renderNavList } from "./ui/layout.js";
 import { escapeHtml } from "./core/html.js";
 import { runIntroSplash } from "./ui/splash.js";
 
@@ -565,9 +565,10 @@ function syncNavIndicator() {
 }
 
 function updateNavState() {
-  document.querySelectorAll(".nav-item").forEach((item) => {
-    item.classList.toggle("active", item.getAttribute("data-page") === activePage);
-  });
+  const navList = document.querySelector(".nav-list");
+  if (navList) {
+    navList.innerHTML = renderNavList(t, viewState);
+  }
   syncNavIndicator();
 }
 
@@ -704,6 +705,7 @@ async function switchLanguage(nextLang) {
       renderNotificationBannerDom();
     }
   }
+  updateNavState();
   syncNavIndicator();
 
   if (workspace) {
@@ -1199,6 +1201,7 @@ async function handleAction(action) {
           toggleBtn.setAttribute("title", title);
           toggleBtn.setAttribute("aria-label", title);
         }
+        updateNavState();
         window.requestAnimationFrame(syncNavIndicator);
       } else {
         render();
@@ -1914,10 +1917,32 @@ async function handleClick(event) {
     return;
   }
 
+  const scrollSectionBtn = target.closest('[data-action="scroll-to-section"]');
+  if (scrollSectionBtn) {
+    const sectionId = scrollSectionBtn.getAttribute("data-section");
+    if (sectionId) {
+      const targetEl = document.getElementById(sectionId);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.querySelectorAll(".nav-sub-item").forEach((btn) => {
+          btn.classList.toggle("active", btn === scrollSectionBtn);
+        });
+      }
+    }
+    return;
+  }
+
   const navItem = target.closest("[data-page]");
   if (navItem) {
     const nextPage = navItem.getAttribute("data-page");
-    if (!nextPage || !pageDefs[nextPage] || nextPage === activePage) return;
+    if (!nextPage || !pageDefs[nextPage]) return;
+    if (nextPage === activePage) {
+      const scrollPanel = document.querySelector(".scroll-panel") || document.querySelector(".page-body");
+      if (scrollPanel) {
+        scrollPanel.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      return;
+    }
     viewState.languageDropdownOpen = false;
     viewState.openDropdownBindId = null;
     if (nextPage !== "tweaks" && viewState.activeImpactBanner) {

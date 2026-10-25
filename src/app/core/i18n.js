@@ -198,6 +198,10 @@ const dictionaries = {
     latestVersionInstalled: "Latest version installed",
     installing: "Installing...",
     community: "Community & Links",
+    settingsAppearance: "Appearance",
+    settingsSystem: "System Behavior",
+    settingsSecurity: "Anti-Cheat Compatibility (EAC)",
+    settingsCommunity: "Community & Links",
     weOnGithub: "Source Code on GitHub",
     weOnTelegram: "Synchro on Telegram",
     weOnGithubCaps: "SOURCE CODE",
@@ -528,6 +532,10 @@ const dictionaries = {
     latestVersionInstalled: "Установлена последняя версия",
     installing: "Установка...",
     community: "Комьюнити и ссылки",
+    settingsAppearance: "Внешний вид",
+    settingsSystem: "Системные параметры",
+    settingsSecurity: "Безопасность EAC",
+    settingsCommunity: "Сообщество и ссылки",
     weOnGithub: "Мы на GitHub",
     weOnTelegram: "Мы в Telegram",
     weOnGithubCaps: "ИСХОДНЫЙ КОД",
@@ -996,6 +1004,10 @@ const dictionaries = {
     disableSplash: "Startbildschirm deaktivieren",
     disableAnimations: "Alle Animationen deaktivieren",
     community: "Community & Links",
+    settingsAppearance: "Appearance",
+    settingsSystem: "System Behavior",
+    settingsSecurity: "Anti-Cheat Compatibility (EAC)",
+    settingsCommunity: "Community & Links",
     sourceCodeCaps: "QUELLCODE",
     weOnTelegramCaps: "TELEGRAM-KANAL",
     exit: "Beenden",
@@ -2543,7 +2555,11 @@ const ruOverrides = {
   blackHolo: "Черный Холо",
   previewDay: "Дневной режим",
   previewNight: "Ночной режим",
-  previewHolo: "Режим Черный Холо"
+  previewHolo: "Режим Черный Холо",
+  settingsAppearance: "Внешний вид",
+  settingsSystem: "Системные параметры",
+  settingsSecurity: "Безопасность EAC",
+  settingsCommunity: "Сообщество и ссылки"
 };
 
 export function translate(language, key) {

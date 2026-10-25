@@ -4,7 +4,7 @@ import { button } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
 import { getVendorLogo } from "./vendorLogos.js";
 
-const DRIVER_CATEGORIES = [
+export const DRIVER_CATEGORIES = [
   {
     id: "display",
     titleEn: "Graphics & Display",
@@ -65,38 +65,11 @@ export function renderCharacteristicsPage(viewState, t) {
     ? (t("scanningDrivers") || (isRu ? "Сканирование..." : "Scanning system..."))
     : (t("scanDrivers") || (isRu ? "Сканировать ПК" : "Scan PC for Drivers"));
 
-  const searchQuery = (viewState.driverSearch || "").trim().toLowerCase();
-  const drivers = rawDrivers
-    .filter((d) => d && d.name && d.name !== "Unknown")
-    .filter((d) => {
-      if (!searchQuery) return true;
-      const name = (d.name || "").toLowerCase();
-      const vendor = (d.vendor || "").toLowerCase();
-      const provider = (d.provider || "").toLowerCase();
-      return name.includes(searchQuery) || vendor.includes(searchQuery) || provider.includes(searchQuery);
-    });
-
-  const searchBar = `
-    <div class="driver-search-toolbar">
-      <div class="search-input-wrapper">
-        <span class="search-input-icon">${icon("search")}</span>
-        <input
-          class="text-input driver-search-input"
-          type="text"
-          data-action="input-driver-search"
-          placeholder="${escapeAttr(t("searchDrivers") || (isRu ? "Поиск драйверов и устройств..." : "Search drivers & devices..."))}"
-          value="${escapeAttr(viewState.driverSearch || "")}"
-          aria-label="${escapeAttr(t("searchDrivers") || "Search drivers")}"
-        />
-        ${viewState.driverSearch ? `<button class="search-clear-btn" type="button" data-action="clear-driver-search" aria-label="Clear">${icon("x")}</button>` : ""}
-      </div>
-    </div>
-  `;
+  const drivers = rawDrivers.filter((d) => d && d.name && d.name !== "Unknown");
 
   if (isScanning && !drivers.length) {
     return `
       <div class="drivers-page">
-        ${searchBar}
         <div class="scroll-panel">
           <div class="empty-state"><div class="empty-state-spinner">${icon("rotate", "spin")}</div><span>${escapeHtml(t("scanningDrivers") || (isRu ? "Сканирование ПК..." : "Scanning system..."))}</span></div>
         </div>
@@ -116,7 +89,7 @@ export function renderCharacteristicsPage(viewState, t) {
     const tiles = items.map((driver) => renderDriverTile(driver, t, isRu)).join("");
 
     return `
-      <section class="card driver-group">
+      <section class="card driver-group" id="driver-section-${escapeAttr(cat.id)}">
         <h2 class="group-title">${icon(cat.icon)}<span>${escapeHtml(title)}</span></h2>
         <div class="driver-grid">${tiles}</div>
       </section>
@@ -135,7 +108,7 @@ export function renderCharacteristicsPage(viewState, t) {
     const title = t("driverGroup_other") || (isRu ? "Прочие устройства" : "Other Hardware");
     const tiles = remaining.map((driver) => renderDriverTile(driver, t, isRu)).join("");
     groupCards.push(`
-      <section class="card driver-group">
+      <section class="card driver-group" id="driver-section-other">
         <h2 class="group-title">${icon("layers")}<span>${escapeHtml(title)}</span></h2>
         <div class="driver-grid">${tiles}</div>
       </section>
@@ -148,7 +121,6 @@ export function renderCharacteristicsPage(viewState, t) {
 
   return `
     <div class="drivers-page">
-      ${searchBar}
       <div class="scroll-panel">${scrollContent}</div>
       <div class="actions tweaks-actions drivers-actions">
         ${button(scanLabel, "rotate", "primary", "scan-drivers")}

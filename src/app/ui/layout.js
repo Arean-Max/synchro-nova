@@ -1,10 +1,11 @@
-import { activePage, appState, pageDefs, pageOrder } from "../core/state.js";
-import { escapeHtml } from "../core/html.js";
-import { renderCharacteristicsPage } from "../features/characteristics/page.js";
+import { activePage, appState, lang, pageDefs, pageOrder } from "../core/state.js";
+import { escapeAttr, escapeHtml } from "../core/html.js";
+import { renderCharacteristicsPage, DRIVER_CATEGORIES } from "../features/characteristics/page.js";
 import { renderColorPage, renderGameColorPage } from "../features/color/page.js";
-import { renderSettingsPage } from "../features/settings/page.js";
+import { renderSettingsPage, SETTINGS_SECTIONS } from "../features/settings/page.js";
 import { renderBackupsPage, renderConfigsPage } from "../features/storage/page.js";
 import { renderTweaksPage } from "../features/tweaks/page.js";
+import { tweakCatalog, tweakGroupTitle } from "../features/tweaks/catalog.js";
 import { renderBindsPage } from "../features/binds/page.js";
 import { logo, icon } from "./icons.js";
 
@@ -97,17 +98,61 @@ export function renderSidebarUpdateWidget(t, viewState) {
   return '<div id="sidebar-update-wrapper" class="sidebar-update-wrapper hidden"></div>';
 }
 
-function renderSidebar(t, viewState) {
+export function renderNavList(t, viewState) {
+  const isRu = lang() === "ru";
   const isCollapsed = Boolean(viewState?.sidebarCollapsed);
-  const toggleTitle = isCollapsed ? t("expandSidebar") : t("collapseSidebar");
-  const nav = pageOrder
+
+  return pageOrder
     .map((key) => {
       const page = pageDefs[key];
       const active = key === activePage ? "active" : "";
       const label = t(page.nav);
-      return `<button class="nav-item ${active}" type="button" data-page="${key}" title="${escapeHtml(label)}">${icon(page.icon)}<span>${escapeHtml(label)}</span></button>`;
+      const topBtn = `<button class="nav-item ${active}" type="button" data-page="${key}" title="${escapeHtml(label)}">${icon(page.icon)}<span>${escapeHtml(label)}</span></button>`;
+
+      if (isCollapsed || key !== activePage) {
+        return topBtn;
+      }
+
+      let subItems = "";
+      if (key === "tweaks") {
+        subItems = tweakCatalog
+          .map((group) => {
+            const title = tweakGroupTitle(group, t);
+            const sectionId = `tweak-section-${group.id}`;
+            return `<button class="nav-sub-item" type="button" data-action="scroll-to-section" data-section="${escapeAttr(sectionId)}" title="${escapeAttr(title)}"><span class="sub-dot"></span><span>${escapeHtml(title)}</span></button>`;
+          })
+          .join("");
+      } else if (key === "characteristics") {
+        subItems = DRIVER_CATEGORIES
+          .map((cat) => {
+            const title = t("driverGroup_" + cat.id) || (isRu ? cat.titleRu : cat.titleEn);
+            const sectionId = `driver-section-${cat.id}`;
+            return `<button class="nav-sub-item" type="button" data-action="scroll-to-section" data-section="${escapeAttr(sectionId)}" title="${escapeAttr(title)}"><span class="sub-dot"></span><span>${escapeHtml(title)}</span></button>`;
+          })
+          .join("");
+      } else if (key === "settings") {
+        subItems = SETTINGS_SECTIONS
+          .map((sec) => {
+            const title = t(sec.titleKey) || (isRu ? sec.titleRu : sec.titleEn);
+            const sectionId = `settings-section-${sec.id}`;
+            return `<button class="nav-sub-item" type="button" data-action="scroll-to-section" data-section="${escapeAttr(sectionId)}" title="${escapeAttr(title)}"><span class="sub-dot"></span><span>${escapeHtml(title)}</span></button>`;
+          })
+          .join("");
+      }
+
+      if (!subItems) {
+        return topBtn;
+      }
+
+      return `${topBtn}<div class="nav-sub-list">${subItems}</div>`;
     })
     .join("");
+}
+
+function renderSidebar(t, viewState) {
+  const isCollapsed = Boolean(viewState?.sidebarCollapsed);
+  const toggleTitle = isCollapsed ? t("expandSidebar") : t("collapseSidebar");
+  const nav = renderNavList(t, viewState);
 
   return `
     <aside class="sidebar">
