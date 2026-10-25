@@ -102,11 +102,6 @@ pub fn open_external_url(url: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn open_official_driver_url(url: String) -> Result<(), String> {
-    open_external_url(url)
-}
-
-#[tauri::command]
 pub fn open_windows_driver_updates() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
@@ -140,4 +135,3 @@ pub fn audit_anticheat_environment() -> crate::platform::security_guard::AntiChe
 pub fn fix_anticheat_environment() -> crate::platform::security_guard::AntiCheatFixResult {
     crate::platform::security_guard::fix_anticheat_integrity()
 }
-

@@ -272,7 +272,6 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::get_app_state,
             commands::apply_color_settings,
-            commands::apply_color_filter,
             commands::update_app_settings,
             commands::sync_keybinds,
             commands::get_keybinds,
@@ -312,7 +311,6 @@ pub fn run() {
             commands::fix_anticheat_environment,
             commands::take_juicy_screenshot,
             commands::scan_drivers,
-            commands::open_official_driver_url,
             commands::open_windows_driver_updates,
             commands::open_external_url,
             commands::get_pending_navigation,

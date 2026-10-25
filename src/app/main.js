@@ -1031,22 +1031,11 @@ async function saveSettings() {
 }
 
 async function loadLists() {
-  const [backups, configs] = await Promise.all([
-    invokeCommand("list_backups"),
-    invokeCommand("list_configs")
-  ]);
-
+  const backups = await invokeCommand("list_backups");
   if (Array.isArray(backups)) {
     viewState.backups = backups;
     if (viewState.selectedBackup && !backups.some((item) => item.id === viewState.selectedBackup)) {
       viewState.selectedBackup = "";
-    }
-  }
-
-  if (Array.isArray(configs)) {
-    viewState.configs = configs;
-    if (!configs.some((item) => item.id === viewState.selectedConfig)) {
-      viewState.selectedConfig = configs[0]?.id || "";
     }
   }
 }
@@ -1245,33 +1234,6 @@ async function handleAction(action) {
     case "launch-color-game": {
       const game = selectedColorGame(viewState);
       if (game?.id && game.launchable) return invokeCommand("launch_installed_game", { id: game.id });
-      return null;
-    }
-
-    case "audit-anticheat": {
-      try {
-        const report = await invokeCommand("audit_anticheat_environment");
-        if (report?.isEacCompatible) {
-          const gameMsg = report.activeGameDetected ? ` (${t("activeGame")}: ${report.activeGameDetected})` : "";
-          showToastBanner(
-            t("eacVerifiedTitle"),
-            `${t("eacVerifiedMsg")}${gameMsg}`,
-            "safe"
-          );
-        } else {
-          const issues = Array.isArray(report?.detectedIssues) && report.detectedIssues.length
-            ? `: ${report.detectedIssues.join("; ")}`
-            : "";
-          showToastBanner(
-            t("eacWarningTitle"),
-            `${t("eacWarningMsg")}${issues}`,
-            "danger"
-          );
-        }
-      } catch (err) {
-        console.error("audit_anticheat_environment failed:", err);
-        showErrorToast(t("eacShieldTitle"), err);
-      }
       return null;
     }
 
@@ -1669,52 +1631,6 @@ async function handleAction(action) {
 
     case "open-backups-folder":
       return invokeCommand("open_storage_folder", { kind: "backups" });
-
-    case "save-config": {
-      const configs = await invokeCommand("save_config", { name: viewState.configName });
-      if (Array.isArray(configs)) {
-        viewState.configs = configs;
-        viewState.selectedConfig = configs[0]?.id || "";
-        viewState.configName = "";
-        updateMain();
-      }
-      return null;
-    }
-
-    case "load-config":
-      if (viewState.selectedConfig) {
-        const loaded = await invokeCommand("load_config", { id: viewState.selectedConfig });
-        if (loaded) {
-          mergeState(loaded);
-          render();
-          scheduleApplyColor();
-        }
-      }
-      return null;
-
-    case "apply-config":
-      if (viewState.selectedConfig) {
-        const next = await invokeCommand("apply_config", { id: viewState.selectedConfig });
-        if (next) {
-          mergeState(next);
-          render();
-        }
-      }
-      return null;
-
-    case "delete-config":
-      if (viewState.selectedConfig) {
-        const configs = await invokeCommand("delete_config", { id: viewState.selectedConfig });
-        if (Array.isArray(configs)) {
-          viewState.configs = configs;
-          viewState.selectedConfig = configs[0]?.id || "";
-          updateMain();
-        }
-      }
-      return null;
-
-    case "open-configs-folder":
-      return invokeCommand("open_storage_folder", { kind: "configs" });
 
     default:
       return null;
@@ -2905,10 +2821,21 @@ async function boot() {
       viewState.sidebarCollapsed = savedCollapsed === "true";
     }
   } catch {}
+  let initialPage = "color";
   try {
-    localStorage.removeItem("synchro_pending_nav");
+    const pendingStorage = localStorage.getItem("synchro_pending_nav");
+    if (pendingStorage) {
+      initialPage = pendingStorage;
+      localStorage.removeItem("synchro_pending_nav");
+    }
   } catch {}
-  setActivePage("color");
+  try {
+    const pendingNav = await invokeCommand("get_pending_navigation");
+    if (pendingNav && typeof pendingNav === "string") {
+      initialPage = pendingNav;
+    }
+  } catch {}
+  setActivePage(initialPage);
 
   const state = await statePromise;
   if (state) mergeState(state);
