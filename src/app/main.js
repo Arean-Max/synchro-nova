@@ -46,7 +46,7 @@ import { button } from "./ui/components.js";
 import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget, renderNavList } from "./ui/layout.js";
 import { escapeHtml } from "./core/html.js";
 import { runIntroSplash } from "./ui/splash.js";
-import { applyTheme } from "./ui/themes.js";
+import { applyTheme, resolveSeasonalTheme } from "./ui/themes.js";
 
 
 router.register("color", colorFeature);
@@ -2067,6 +2067,9 @@ async function handleClick(event) {
       document.body.classList.toggle("no-animations", Boolean(appState.settings.disableAnimations));
       applyTheme(appState.settings?.theme || "default", { disableAnimations: appState.settings.disableAnimations });
     }
+    if (key === "macTrafficLights") {
+      render();
+    }
     if (key === "eacAutoProtect" && nextVal) {
       try {
         await invokeCommand("fix_anticheat_environment");
@@ -2890,12 +2893,9 @@ async function checkSecurityIncidents() {
 }
 
 async function boot() {
-  let savedTheme = "default";
-  try {
-    savedTheme = localStorage.getItem("synchro_theme") || "default";
-  } catch (_) {}
-  applyTheme(savedTheme, { disableAnimations: false });
-  if (appState.settings) appState.settings.theme = savedTheme;
+  const activeSeasonalTheme = resolveSeasonalTheme();
+  applyTheme(activeSeasonalTheme, { disableAnimations: false });
+  if (appState.settings) appState.settings.theme = activeSeasonalTheme;
 
   const statePromise = invokeCommand("get_app_state");
   const holoPromise = loadBlackHoloStatus();

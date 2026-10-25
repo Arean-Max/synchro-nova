@@ -494,3 +494,73 @@ test("Icons: seasonal theme icons render valid SVGs", async () => {
   assert.ok(flowerSvg.includes("<svg") && flowerSvg.includes("<circle"), "Flower icon must be SVG");
   assert.ok(sparklesSvg.includes("<svg") && sparklesSvg.includes("<path"), "Sparkles icon must be SVG");
 });
+
+test("Themes: getCurrentSeason accurately maps calendar months to seasons", async () => {
+  const { getCurrentSeason } = await import("../src/app/ui/themes.js");
+  assert.strictEqual(getCurrentSeason(new Date("2026-01-15")), "winter", "January must be winter");
+  assert.strictEqual(getCurrentSeason(new Date("2026-02-20")), "winter", "February must be winter");
+  assert.strictEqual(getCurrentSeason(new Date("2026-12-25")), "winter", "December must be winter");
+
+  assert.strictEqual(getCurrentSeason(new Date("2026-04-10")), "spring", "April must be spring");
+  assert.strictEqual(getCurrentSeason(new Date("2026-05-01")), "spring", "May must be spring");
+
+  assert.strictEqual(getCurrentSeason(new Date("2026-09-15")), "autumn", "September must be autumn");
+  assert.strictEqual(getCurrentSeason(new Date("2026-10-25")), "autumn", "October must be autumn");
+  assert.strictEqual(getCurrentSeason(new Date("2026-11-10")), "autumn", "November must be autumn");
+});
+
+test("Themes: resolveSeasonalTheme preserves user manual theme until season changes", async () => {
+  const { resolveSeasonalTheme } = await import("../src/app/ui/themes.js");
+
+  // User in autumn chooses default
+  globalThis.localStorage = {
+    _data: new Map([
+      ["synchro_last_auto_season", "autumn"],
+      ["synchro_theme", "default"]
+    ]),
+    getItem(k) { return this._data.get(k) || null; },
+    setItem(k, v) { this._data.set(k, String(v)); }
+  };
+
+  const themeSameSeason = resolveSeasonalTheme();
+  assert.strictEqual(themeSameSeason, "default", "Manual theme default must be preserved during current season");
+
+  // Season changes from summer/autumn to winter
+  globalThis.localStorage.setItem("synchro_last_auto_season", "summer");
+  const themeNewSeason = resolveSeasonalTheme();
+  // Today is October -> autumn, so it will update to autumn!
+  assert.strictEqual(themeNewSeason, "autumn", "New season must automatically apply seasonal theme");
+});
+
+test("Sidebar: renders divider and disabled Scripts (Beta) button", async () => {
+  const { renderShell } = await import("../src/app/ui/layout.js");
+  const t = (k) => k;
+  const html = renderShell({ sidebarCollapsed: false }, t);
+  assert.ok(html.includes("sidebar-divider"), "Must render sidebar divider");
+  assert.ok(html.includes("nav-item-disabled"), "Must render disabled Scripts button");
+  assert.ok(html.includes("Scripts"), "Must include Scripts label");
+  assert.ok(html.includes("nav-beta-badge") && html.includes("Beta"), "Must include Beta badge");
+});
+
+test("Titlebar: macTrafficLights toggle switches window controls to macOS traffic lights", async () => {
+  const { renderShell } = await import("../src/app/ui/layout.js");
+  const { appState } = await import("../src/app/core/state.js");
+  const t = (k) => k;
+
+  // Disabled: standard window buttons
+  appState.settings.macTrafficLights = false;
+  const defaultTitlebar = renderShell({ sidebarCollapsed: false }, t);
+  assert.ok(defaultTitlebar.includes("window-btn"), "Must render standard window buttons");
+  assert.ok(!defaultTitlebar.includes("mac-traffic-lights"), "Must not render mac traffic lights when disabled");
+
+  // Enabled: macOS traffic lights
+  appState.settings.macTrafficLights = true;
+  const macTitlebar = renderShell({ sidebarCollapsed: false }, t);
+  assert.ok(macTitlebar.includes("mac-traffic-lights"), "Must render macOS traffic lights when enabled");
+  assert.ok(macTitlebar.includes("mac-light close"), "Must render close dot");
+  assert.ok(macTitlebar.includes("mac-light minimize"), "Must render minimize dot");
+  assert.ok(macTitlebar.includes("mac-light maximize"), "Must render maximize dot");
+
+  // Reset
+  appState.settings.macTrafficLights = false;
+});

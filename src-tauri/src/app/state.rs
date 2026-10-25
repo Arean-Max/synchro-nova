@@ -106,6 +106,8 @@ pub struct AppSettings {
     pub disable_splash: bool,
     pub disable_animations: bool,
     pub eac_auto_protect: bool,
+    #[serde(default)]
+    pub mac_traffic_lights: bool,
     #[serde(default = "default_theme")]
     pub theme: String,
     #[serde(default)]
@@ -153,6 +155,7 @@ impl Default for AppSettings {
             disable_splash: false,
             disable_animations: false,
             eac_auto_protect: true,
+            mac_traffic_lights: false,
             theme: default_theme(),
             template_overrides: std::collections::HashMap::new(),
         }

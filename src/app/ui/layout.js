@@ -10,16 +10,36 @@ import { renderBindsPage } from "../features/binds/page.js";
 import { logo, icon } from "./icons.js";
 
 function renderTitlebar(t) {
-  return `
-    <div class="titlebar" data-window-drag data-tauri-drag-region>
-      <div class="titlebar-left" data-window-drag data-tauri-drag-region>
-        <span class="titlebar-logo" data-window-drag data-tauri-drag-region>${logo()}</span>
-        <span class="titlebar-title" data-window-drag data-tauri-drag-region>Synchro Nova</span>
+  const isMacLights = Boolean(appState?.settings?.macTrafficLights);
+
+  const controls = isMacLights
+    ? `
+      <div class="window-controls mac-traffic-lights">
+        <button class="mac-light close" type="button" data-action="window-close" title="${escapeHtml(t("close"))}" aria-label="${escapeHtml(t("close"))}">
+          <span class="mac-light-symbol">×</span>
+        </button>
+        <button class="mac-light minimize" type="button" data-action="window-minimize" title="${escapeHtml(t("minimize"))}" aria-label="${escapeHtml(t("minimize"))}">
+          <span class="mac-light-symbol">−</span>
+        </button>
+        <button class="mac-light maximize" type="button" data-action="window-maximize" title="${escapeHtml(t("maximize"))}" aria-label="${escapeHtml(t("maximize"))}">
+          <span class="mac-light-symbol">+</span>
+        </button>
       </div>
+    `
+    : `
       <div class="window-controls">
         <button class="window-btn" type="button" data-action="window-minimize" title="${escapeHtml(t("minimize"))}">${icon("minus")}</button>
         <button class="window-btn close" type="button" data-action="window-close" title="${escapeHtml(t("close"))}">${icon("x")}</button>
       </div>
+    `;
+
+  return `
+    <div class="titlebar ${isMacLights ? "has-mac-lights" : ""}" data-window-drag data-tauri-drag-region>
+      <div class="titlebar-left" data-window-drag data-tauri-drag-region>
+        <span class="titlebar-logo" data-window-drag data-tauri-drag-region>${logo()}</span>
+        <span class="titlebar-title" data-window-drag data-tauri-drag-region>Synchro Nova</span>
+      </div>
+      ${controls}
     </div>
   `;
 }
@@ -162,6 +182,13 @@ function renderSidebar(t, viewState) {
         <button class="sidebar-toggle-btn" type="button" data-action="toggle-sidebar" title="${escapeHtml(toggleTitle)}" aria-label="${escapeHtml(toggleTitle)}">${icon("sidebar")}</button>
       </div>
       <nav class="nav-list">${nav}</nav>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-secondary-nav">
+        <button class="nav-item nav-item-disabled" type="button" disabled aria-disabled="true" title="Scripts (Beta) — Coming Soon">
+          ${icon("terminal")}
+          <span>Scripts <span class="nav-beta-badge">Beta</span></span>
+        </button>
+      </div>
       <div class="sidebar-spacer"></div>
       ${renderSidebarUpdateWidget(t, viewState)}
       <button class="exit-button" type="button" data-action="exit-app" title="${escapeHtml(t("exit"))}">${icon("logOut")}<span>${escapeHtml(t("exit"))}</span></button>

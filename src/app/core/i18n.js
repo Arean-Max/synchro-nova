@@ -214,6 +214,8 @@ const dictionaries = {
     settingsCommunity: "Community & Links",
     eacAutoProtect: "Automatic Easy Anti-Cheat Compatibility",
     help_eacAutoProtect: "Automatically audits and restores system parameters for EAC compliance on startup.",
+    macTrafficLights: "Window Controls: macOS Traffic Lights",
+    help_macTrafficLights: "Replaces standard minimize and close buttons with colored macOS circular traffic lights.",
     weOnGithub: "Source Code on GitHub",
     weOnTelegram: "Synchro on Telegram",
     weOnGithubCaps: "SOURCE CODE",
@@ -559,7 +561,10 @@ const dictionaries = {
     settingsSecurity: "Безопасность EAC",
     settingsCommunity: "Сообщество и ссылки",
     eacAutoProtect: "Автоматическая совместимость с Easy Anti-Cheat",
+  macTrafficLights: "Кнопки окна: macOS светофор",
     help_eacAutoProtect: "Автоматически проверяет и восстанавливает параметры системы для безопасности EAC.",
+    macTrafficLights: "Кнопки окна: macOS светофор",
+    help_macTrafficLights: "Заменяет стандартные кнопки окна на цветной macOS светофор (закрыть, свернуть, развернуть).",
     weOnGithub: "Мы на GitHub",
     weOnTelegram: "Мы в Telegram",
     weOnGithubCaps: "ИСХОДНЫЙ КОД",
@@ -1034,6 +1039,8 @@ const dictionaries = {
     settingsCommunity: "Community & Links",
     eacAutoProtect: "Automatic Easy Anti-Cheat Compatibility",
     help_eacAutoProtect: "Automatically audits and restores system parameters for EAC compliance on startup.",
+    macTrafficLights: "Window Controls: macOS Traffic Lights",
+    help_macTrafficLights: "Replaces standard minimize and close buttons with colored macOS circular traffic lights.",
     sourceCodeCaps: "QUELLCODE",
     weOnTelegramCaps: "TELEGRAM-KANAL",
     exit: "Beenden",
@@ -2591,7 +2598,8 @@ const ruOverrides = {
   settingsSystem: "Системные параметры",
   settingsSecurity: "Безопасность EAC",
   settingsCommunity: "Сообщество и ссылки",
-  eacAutoProtect: "Автоматическая совместимость с Easy Anti-Cheat"
+  eacAutoProtect: "Автоматическая совместимость с Easy Anti-Cheat",
+  macTrafficLights: "Кнопки окна: macOS светофор"
 };
 
 export function translate(language, key) {

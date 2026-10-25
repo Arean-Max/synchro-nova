@@ -28,6 +28,7 @@ export const defaultState = {
     disableSplash: false,
     disableAnimations: false,
     eacAutoProtect: true,
+    macTrafficLights: false,
     templateOverrides: {}
   },
   keybinds: [],

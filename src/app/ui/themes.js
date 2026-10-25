@@ -106,7 +106,7 @@ class ParticleSystem {
 
   spawnParticles() {
     this.particles = [];
-    const count = this.currentTheme === "winter" ? 28 : 22;
+    const count = this.currentTheme === "winter" ? 32 : (this.currentTheme === "autumn" ? 26 : 24);
 
     for (let i = 0; i < count; i++) {
       const p = {
@@ -118,22 +118,32 @@ class ParticleSystem {
       };
 
       if (this.currentTheme === "winter") {
-        p.size = 1.2 + Math.random() * 1.8;
-        p.speedY = 0.4 + Math.random() * 0.8;
+        p.isSparkle = i < 8;
+        p.size = p.isSparkle ? 1.0 + Math.random() * 1.2 : 1.2 + Math.random() * 1.8;
+        p.speedY = p.isSparkle ? 0.2 + Math.random() * 0.3 : 0.4 + Math.random() * 0.8;
         p.speedX = 0.2;
         p.alpha = 0.25 + Math.random() * 0.55;
       } else if (this.currentTheme === "autumn") {
-        p.size = 3.5 + Math.random() * 3.5;
-        p.speedY = 0.5 + Math.random() * 0.9;
-        p.speedX = 0.4 + Math.random() * 0.6;
-        p.alpha = 0.3 + Math.random() * 0.5;
-        p.color = Math.random() > 0.4 ? "#f59e0b" : (Math.random() > 0.5 ? "#ea580c" : "#b45309");
+        p.isEmber = i < 6;
+        if (p.isEmber) {
+          p.size = 1.4 + Math.random() * 1.6;
+          p.speedY = -(0.3 + Math.random() * 0.5);
+          p.speedX = (Math.random() - 0.5) * 0.6;
+          p.alpha = 0.4 + Math.random() * 0.5;
+          p.color = Math.random() > 0.5 ? "#fbbf24" : "#f59e0b";
+        } else {
+          p.size = 3.5 + Math.random() * 3.5;
+          p.speedY = 0.5 + Math.random() * 0.9;
+          p.speedX = 0.4 + Math.random() * 0.6;
+          p.alpha = 0.3 + Math.random() * 0.5;
+          p.color = Math.random() > 0.4 ? "#f59e0b" : (Math.random() > 0.5 ? "#ea580c" : "#b45309");
+        }
       } else if (this.currentTheme === "spring") {
         p.size = 3.2 + Math.random() * 3.2;
         p.speedX = 0.7 + Math.random() * 1.1;
         p.speedY = 0.3 + Math.random() * 0.6;
         p.alpha = 0.35 + Math.random() * 0.5;
-        p.color = Math.random() > 0.3 ? "#f472b6" : "#fbcfe8";
+        p.color = Math.random() > 0.3 ? "#f472b6" : (Math.random() > 0.5 ? "#fbcfe8" : "#f9a8d4");
       }
 
       this.particles.push(p);
@@ -191,32 +201,54 @@ class ParticleSystem {
         if (p.x > this.width + 4) p.x = -4;
         if (p.x < -4) p.x = this.width + 4;
 
-        this.ctx.fillStyle = `rgba(224, 242, 254, ${p.alpha})`;
-        this.ctx.beginPath();
-        this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        this.ctx.fill();
+        if (p.isSparkle) {
+          const sparkleAlpha = p.alpha * (0.5 + 0.5 * Math.sin(p.phase * 2));
+          this.ctx.fillStyle = `rgba(186, 230, 253, ${sparkleAlpha})`;
+          this.ctx.beginPath();
+          this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          this.ctx.fill();
+        } else {
+          this.ctx.fillStyle = `rgba(224, 242, 254, ${p.alpha})`;
+          this.ctx.beginPath();
+          this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
       } else if (theme === "autumn") {
         p.y += p.speedY;
-        p.x += Math.sin(p.phase) * p.speedX;
+        p.x += Math.sin(p.phase) * (p.isEmber ? 0.3 : p.speedX);
         p.phase += 0.025;
-        p.rot += p.vRot;
 
-        if (p.y > this.height + 10) {
-          p.y = -10;
-          p.x = Math.random() * this.width;
+        if (p.isEmber) {
+          if (p.y < -10) {
+            p.y = this.height + 10;
+            p.x = Math.random() * this.width;
+          }
+          const emberAlpha = p.alpha * (0.6 + 0.4 * Math.sin(p.phase * 3));
+          this.ctx.fillStyle = p.color;
+          this.ctx.globalAlpha = emberAlpha;
+          this.ctx.beginPath();
+          this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.globalAlpha = 1.0;
+        } else {
+          p.rot += p.vRot;
+          if (p.y > this.height + 10) {
+            p.y = -10;
+            p.x = Math.random() * this.width;
+          }
+          if (p.x > this.width + 10) p.x = -10;
+          if (p.x < -10) p.x = this.width + 10;
+
+          this.ctx.save();
+          this.ctx.translate(p.x, p.y);
+          this.ctx.rotate(p.rot);
+          this.ctx.fillStyle = p.color;
+          this.ctx.globalAlpha = p.alpha;
+          this.ctx.beginPath();
+          this.ctx.ellipse(0, 0, p.size, p.size * 0.55, 0, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.restore();
         }
-        if (p.x > this.width + 10) p.x = -10;
-        if (p.x < -10) p.x = this.width + 10;
-
-        this.ctx.save();
-        this.ctx.translate(p.x, p.y);
-        this.ctx.rotate(p.rot);
-        this.ctx.fillStyle = p.color;
-        this.ctx.globalAlpha = p.alpha;
-        this.ctx.beginPath();
-        this.ctx.ellipse(0, 0, p.size, p.size * 0.55, 0, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.restore();
       } else if (theme === "spring") {
         p.x += p.speedX;
         p.y += Math.sin(p.phase) * 0.5 + p.speedY;
@@ -267,4 +299,40 @@ export function applyTheme(themeId, options = {}) {
 
   themeFx.setTheme(selectedTheme, options.disableAnimations);
   return selectedTheme;
+}
+
+export function getCurrentSeason(date = new Date()) {
+  const month = date.getMonth(); // 0 to 11
+  // Dec, Jan, Feb -> winter
+  if (month === 11 || month === 0 || month === 1) return "winter";
+  // Sep, Oct, Nov -> autumn
+  if (month >= 8 && month <= 10) return "autumn";
+  // Mar, Apr, May -> spring (and summer months use spring bloom)
+  return "spring";
+}
+
+export function resolveSeasonalTheme() {
+  const currentSeason = getCurrentSeason();
+  let lastAutoSeason = null;
+  let savedTheme = null;
+  try {
+    if (typeof localStorage !== "undefined") {
+      lastAutoSeason = localStorage.getItem("synchro_last_auto_season");
+      savedTheme = localStorage.getItem("synchro_theme");
+    }
+  } catch (_) {}
+
+  // If entering a new season (or initial boot without recorded season)
+  if (!lastAutoSeason || lastAutoSeason !== currentSeason) {
+    try {
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("synchro_last_auto_season", currentSeason);
+        localStorage.setItem("synchro_theme", currentSeason);
+      }
+    } catch (_) {}
+    return currentSeason;
+  }
+
+  // Same season: respect user's manual choice
+  return savedTheme || currentSeason;
 }

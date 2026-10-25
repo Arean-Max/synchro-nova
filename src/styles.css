@@ -7599,3 +7599,254 @@ body.paused-animations *::after {
   color: var(--text-primary);
   letter-spacing: 0.01em;
 }
+
+/* ==========================================================================
+   Sidebar Divider & Scripts (Beta) Button
+   ========================================================================== */
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 10px 4px 12px;
+  width: calc(100% - 8px);
+  opacity: 0.8;
+}
+
+.sidebar-secondary-nav {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.nav-item-disabled {
+  opacity: 0.55;
+  cursor: default !important;
+  pointer-events: auto;
+}
+
+.nav-item-disabled:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+  transform: none !important;
+  border-color: transparent !important;
+}
+
+.nav-beta-badge {
+  display: inline-block;
+  font-size: 8.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--text-secondary);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
+   macOS Window Traffic Lights Controls
+   ========================================================================== */
+
+.window-controls.mac-traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  height: 100%;
+}
+
+.mac-light {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  background: transparent;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  position: relative;
+}
+
+.mac-light.close {
+  background-color: #ff5f56;
+  border-color: #e0443e;
+}
+
+.mac-light.minimize {
+  background-color: #ffbd2e;
+  border-color: #dea123;
+}
+
+.mac-light.maximize {
+  background-color: #27c93f;
+  border-color: #1aab29;
+}
+
+.mac-light:hover {
+  filter: brightness(1.08);
+}
+
+.mac-light:active {
+  transform: scale(0.9);
+}
+
+.mac-light-symbol {
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.65);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  user-select: none;
+  pointer-events: none;
+}
+
+.mac-traffic-lights:hover .mac-light-symbol {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Themed Notifications & Toasts
+   ========================================================================== */
+
+[data-theme="winter"] .ios-banner {
+  background: rgba(12, 19, 31, 0.94);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 24px -2px rgba(56, 189, 248, 0.28), inset 0 1px 0 rgba(224, 242, 254, 0.45);
+}
+
+[data-theme="winter"] .ios-banner:hover {
+  background: rgba(16, 26, 42, 0.98);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.8), 0 0 28px -2px rgba(56, 189, 248, 0.38), inset 0 1px 0 rgba(224, 242, 254, 0.6);
+}
+
+[data-theme="winter"] .ios-banner-icon.safe {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);
+}
+
+[data-theme="autumn"] .ios-banner {
+  background: rgba(21, 15, 12, 0.94);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 24px -2px rgba(245, 158, 11, 0.28), inset 0 1px 0 rgba(251, 191, 36, 0.45);
+}
+
+[data-theme="autumn"] .ios-banner:hover {
+  background: rgba(28, 20, 16, 0.98);
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.8), 0 0 28px -2px rgba(245, 158, 11, 0.38), inset 0 1px 0 rgba(251, 191, 36, 0.6);
+}
+
+[data-theme="autumn"] .ios-banner-icon.safe {
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.25);
+}
+
+[data-theme="spring"] .ios-banner {
+  background: rgba(20, 15, 26, 0.94);
+  border: 1px solid rgba(244, 114, 182, 0.35);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 24px -2px rgba(244, 114, 182, 0.28), inset 0 1px 0 rgba(249, 168, 212, 0.45);
+}
+
+[data-theme="spring"] .ios-banner:hover {
+  background: rgba(28, 21, 36, 0.98);
+  border-color: rgba(244, 114, 182, 0.5);
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.8), 0 0 28px -2px rgba(244, 114, 182, 0.38), inset 0 1px 0 rgba(249, 168, 212, 0.6);
+}
+
+[data-theme="spring"] .ios-banner-icon.safe {
+  color: #f472b6;
+  background: rgba(244, 114, 182, 0.12);
+  border-color: rgba(244, 114, 182, 0.6);
+  box-shadow: 0 0 14px rgba(244, 114, 182, 0.25);
+}
+
+[data-theme="winter"] .clipboard-pill-toast {
+  background: rgba(12, 19, 31, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 16px -2px rgba(56, 189, 248, 0.3);
+  color: #e0f2fe;
+}
+
+[data-theme="autumn"] .clipboard-pill-toast {
+  background: rgba(21, 15, 12, 0.92);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 16px -2px rgba(245, 158, 11, 0.3);
+  color: #fef3c7;
+}
+
+[data-theme="spring"] .clipboard-pill-toast {
+  background: rgba(20, 15, 26, 0.92);
+  border: 1px solid rgba(244, 114, 182, 0.35);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 16px -2px rgba(244, 114, 182, 0.3);
+  color: #fce7f3;
+}
+
+/* ==========================================================================
+   Atmospheric Shaders & Textures for Themes
+   ========================================================================== */
+
+/* Winter Frost Vignette Shader */
+[data-theme="winter"] .app-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.09), transparent 38%),
+              radial-gradient(circle at 0% 100%, rgba(56, 189, 248, 0.06), transparent 32%),
+              radial-gradient(circle at 50% 50%, transparent 60%, rgba(9, 14, 23, 0.35) 100%);
+  z-index: 1;
+}
+
+/* Autumn Warm Hearth Vignette Shader */
+[data-theme="autumn"] .app-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.08), transparent 50%),
+              radial-gradient(circle at 100% 100%, rgba(234, 88, 12, 0.07), transparent 38%),
+              radial-gradient(circle at 50% 50%, transparent 60%, rgba(16, 11, 9, 0.35) 100%);
+  z-index: 1;
+}
+
+/* Spring Twilight Sakura Vignette Shader */
+[data-theme="spring"] .app-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 85% 15%, rgba(244, 114, 182, 0.08), transparent 42%),
+              radial-gradient(circle at 15% 85%, rgba(192, 132, 252, 0.07), transparent 38%),
+              radial-gradient(circle at 50% 50%, transparent 60%, rgba(15, 10, 20, 0.35) 100%);
+  z-index: 1;
+}
+
+/* Crystalline / Hearth / Velvet Card Refinements */
+[data-theme="winter"] .card,
+[data-theme="winter"] .settings-unified-card {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(224, 242, 254, 0.12);
+}
+
+[data-theme="autumn"] .card,
+[data-theme="autumn"] .settings-unified-card {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(251, 191, 36, 0.12);
+}
+
+[data-theme="spring"] .card,
+[data-theme="spring"] .settings-unified-card {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(249, 168, 212, 0.12);
+}

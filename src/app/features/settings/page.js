@@ -17,6 +17,7 @@ const ACCENT_PRESETS = [
 ];
 
 const SETTING_TOGGLE_KEYS = [
+  { key: "macTrafficLights", labelKey: "macTrafficLights" },
   { key: "eacAutoProtect", labelKey: "eacAutoProtect" },
   { key: "autostartWindows", labelKey: "startWithWindows" },
   { key: "closeToTray", labelKey: "closeToTray" },
