@@ -568,3 +568,34 @@ test("Titlebar: macTrafficLights toggle switches window controls to macOS traffi
   // Reset
   appState.settings.macTrafficLights = false;
 });
+
+test("Language List & Ordering: strictly contains the 22 user-specified languages in exact order", async () => {
+  const { supportedLanguages } = await import("../src/app/core/i18n.js");
+  const expectedCodes = [
+    "en", "zh", "zht", "ko", "de", "es", "fr", "it", "da", "ja", "pl", "ru",
+    "bs", "ar", "no", "br", "th", "tr", "uk", "bn", "gr", "vi"
+  ];
+  assert.strictEqual(supportedLanguages.length, 22, "Must contain exactly 22 supported languages");
+  const actualCodes = supportedLanguages.map((l) => l.code);
+  assert.deepStrictEqual(actualCodes, expectedCodes, "Languages must strictly match user-specified sequence");
+});
+
+test("Universal Translation Coverage: all 22 languages translate full UI, tweaks, and themes", async () => {
+  const { supportedLanguages, translate } = await import("../src/app/core/i18n.js");
+  const testKeys = [
+    "themeTitle", "theme_default", "theme_winter", "theme_autumn", "theme_spring",
+    "exit", "scriptsNav", "scriptsBeta", "scriptsBetaTitle", "skipSplash",
+    "template", "backupPrefix", "totalDrivers", "scanDrivers", "safeTweak",
+    "notification_success", "notification_warning", "notification_error",
+    "tweak_win32_priority_rust_title", "tweak_clean_temp_junk_title",
+    "tweak_gpu_adaptive_power_title", "tweak_network_udp_buffers_title"
+  ];
+
+  for (const { code } of supportedLanguages) {
+    for (const key of testKeys) {
+      const val = translate(code, key);
+      assert.ok(val && val.trim().length > 0, `Language [${code}] returned empty string for [${key}]`);
+      assert.notStrictEqual(val, key, `Language [${code}] returned literal key name for [${key}]`);
+    }
+  }
+});

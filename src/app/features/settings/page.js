@@ -107,7 +107,7 @@ export function renderSettingsPage(appState, viewState, t) {
 
   const themeCards = THEMES.map((theme) => {
     const isSelected = currentTheme === theme.id;
-    const name = isRu ? theme.nameRu : theme.nameEn;
+    const name = t("theme_" + theme.id) || (isRu ? theme.nameRu : theme.nameEn);
     const gradient = `linear-gradient(135deg, ${theme.previewColors[0]} 0%, ${theme.previewColors[1]} 55%, ${theme.previewColors[2]} 100%)`;
 
     return `

@@ -1,3 +1,5 @@
+import { translate } from "../core/i18n.js";
+
 export function runIntroSplash(options = {}) {
   const { onFinish, skipAnimation = false } = options;
 
@@ -9,8 +11,9 @@ export function runIntroSplash(options = {}) {
   const existing = document.getElementById("intro-splash-screen");
   if (existing) existing.remove();
 
-  const isRu = document.documentElement.lang === "ru" || localStorage.getItem("synchro_language") === "ru";
-  const skipText = isRu ? "Нажмите Esc или кликните для пропуска" : "Press Esc or click to skip";
+  const currentLang = document.documentElement.lang || localStorage.getItem("synchro_language") || "en";
+  const isRu = currentLang === "ru";
+  const skipText = translate(currentLang, "skipSplash") || (isRu ? "Нажмите Esc или кликните для пропуска" : "Press Esc or click to skip");
 
   const lettersSynchro = ["S", "y", "n", "c", "h", "r", "o"];
   const lettersNova = ["N", "o", "v", "a"];

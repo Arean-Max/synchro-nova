@@ -20,7 +20,7 @@ export function renderBindsPage(appState, viewState, t) {
       if (!["balanced", "vibrant", "soft", "night"].includes(name.toLowerCase())) {
         templateOptions.push({
           value: `template:${name}`,
-          label: `${isRu ? "Шаблон" : "Template"} «${name}»`
+          label: `${t("template") || (isRu ? "Шаблон" : "Template")} «${name}»`
         });
       }
     }

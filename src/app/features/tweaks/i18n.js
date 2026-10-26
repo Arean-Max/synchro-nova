@@ -259,3 +259,9 @@ export const tweakTranslations = {
     tweak_wer_off_desc: "Отключает службу отчётов WerFault: исключает микрофризы и зависания игр при сбоях фоновых программ."
   }
 };
+
+import { allTweaksTranslations } from "./i18n_all_languages.js";
+
+for (const [langCode, dict] of Object.entries(allTweaksTranslations)) {
+  tweakTranslations[langCode] = Object.assign(tweakTranslations[langCode] || {}, dict);
+}

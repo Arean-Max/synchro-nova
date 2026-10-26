@@ -58,7 +58,7 @@ function tweakResults(viewState, t) {
       }
       const isFailed = item.status === "failed";
       const errorBtn = isFailed
-        ? `<button class="tweak-help-btn tweak-error-btn" type="button" data-action="show-tweak-error" data-tweak-id="${escapeAttr(item.id)}" data-error-msg="${escapeAttr(item.message || (isRu ? "Ошибка применения твика" : "Failed to apply tweak"))}" title="${isRu ? "Почему не поставился этот твик?" : "Why did this tweak fail?"}">${icon("alert")}</button>`
+        ? `<button class="tweak-help-btn tweak-error-btn" type="button" data-action="show-tweak-error" data-tweak-id="${escapeAttr(item.id)}" data-error-msg="${escapeAttr(item.message || (isRu ? "Ошибка применения твика" : "Failed to apply tweak"))}" title="${escapeAttr(t("whyTweakFailed") || (isRu ? "Почему не поставился этот твик?" : "Why did this tweak fail?"))}">${icon("alert")}</button>`
         : "";
       return `<div class="tweak-result-row ${escapeAttr(item.status || "skipped")}"><span>${escapeHtml(item.id || "-")}</span>${errorBtn}<strong>${escapeHtml(t(statusKey))}</strong><em>${escapeHtml(msg)}</em></div>`;
     })

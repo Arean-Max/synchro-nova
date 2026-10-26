@@ -181,9 +181,9 @@ function renderSidebar(t, viewState) {
       <nav class="nav-list">${nav}</nav>
       <div class="sidebar-divider"></div>
       <div class="sidebar-secondary-nav">
-        <button class="nav-item nav-item-disabled" type="button" disabled aria-disabled="true" title="Scripts (Beta) — Coming Soon">
+        <button class="nav-item nav-item-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(t("scriptsBetaTitle") && t("scriptsBetaTitle") !== "scriptsBetaTitle" ? t("scriptsBetaTitle") : "Scripts (Beta) — Coming Soon")}">
           ${icon("terminal")}
-          <span>Scripts <span class="nav-beta-badge">Beta</span></span>
+          <span>${escapeHtml(t("scriptsNav") && t("scriptsNav") !== "scriptsNav" ? t("scriptsNav") : "Scripts")} <span class="nav-beta-badge">${escapeHtml(t("scriptsBeta") && t("scriptsBeta") !== "scriptsBeta" ? t("scriptsBeta") : "Beta")}</span></span>
         </button>
       </div>
       <div class="sidebar-spacer"></div>

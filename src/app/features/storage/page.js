@@ -47,9 +47,7 @@ function formatColorSummary(color) {
 export function renderBackupNameModal(viewState, t) {
   const isRu = lang() === "ru";
   const now = new Date();
-  const defaultPlaceholder = isRu
-    ? `Бэкап ${now.toLocaleDateString("ru-RU")} ${now.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`
-    : `Backup ${now.toLocaleDateString("en-US")} ${now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}`;
+  const defaultPlaceholder = `${t("backupPrefix") || (isRu ? "Бэкап" : "Backup")} ${now.toLocaleDateString(isRu ? "ru-RU" : undefined)} ${now.toLocaleTimeString(isRu ? "ru-RU" : undefined, { hour: "2-digit", minute: "2-digit" })}`;
 
   return `
     <div class="backup-modal-backdrop" data-action="dismiss-backup-modal">

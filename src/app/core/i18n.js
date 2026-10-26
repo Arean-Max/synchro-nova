@@ -1,7 +1,6 @@
 
 export const supportedLanguages = [
   { code: "en", name: "English", nativeName: "English" },
-  { code: "ru", name: "Russian", nativeName: "Русский" },
   { code: "zh", name: "Chinese (Simplified)", nativeName: "简体中文" },
   { code: "zht", name: "Chinese (Traditional)", nativeName: "繁體中文" },
   { code: "ko", name: "Korean", nativeName: "한국어" },
@@ -12,6 +11,7 @@ export const supportedLanguages = [
   { code: "da", name: "Danish", nativeName: "Dansk" },
   { code: "ja", name: "Japanese", nativeName: "日本語" },
   { code: "pl", name: "Polish", nativeName: "Polski" },
+  { code: "ru", name: "Russian", nativeName: "Русский" },
   { code: "bs", name: "Bosnian", nativeName: "Bosanski" },
   { code: "ar", name: "Arabic", nativeName: "العربية" },
   { code: "no", name: "Norwegian", nativeName: "Norsk" },
@@ -26,6 +26,7 @@ export const supportedLanguages = [
 
 import { tweakTranslations } from "../features/tweaks/i18n.js";
 import { localizedExtensions } from "./i18n_extensions.js";
+import { allLanguagesTranslations } from "./i18n_all_languages.js";
 
 const dictionaries = {
   en: {
@@ -43,6 +44,21 @@ const dictionaries = {
     main: "MAIN",
     community: "COMMUNITY PROFILE",
     beta: "BETA",
+    template: "Template",
+    scriptsNav: "Scripts",
+    scriptsBeta: "Beta",
+    scriptsBetaTitle: "Scripts (Beta) — Coming Soon",
+    skipSplash: "Press Esc or click to skip",
+    notification_success: "SUCCESS",
+    notification_warning: "WARNING",
+    backupPrefix: "Backup",
+    screenshotCopiedToast: "Screenshot copied to clipboard (Ctrl+V)",
+    whyTweakFailed: "Why did this tweak fail?",
+    riskTweakDesc: "Aggressive tweak: may cause excessive heat, crashes, or instability. Creating a backup is recommended.",
+    experimentalTweakDesc: "Experimental setting: currently in testing; behavior depends on your system hardware configuration.",
+    systemTweakDesc: "Requires administrator privileges and modifies system-level Windows parameters.",
+    safeTweakDesc: "This tweak has no confirmed conflicts with games or apps.",
+    clickToCopy: "Click to copy to clipboard",
     exit: "Exit",
     colorTitle: "General",
     colorSubtitle: "Display calibration: real-time adjustment of contrast, gamma, and color balance",
@@ -391,6 +407,21 @@ const dictionaries = {
     main: "ГЛАВНОЕ",
     community: "COMMUNITY PROFILE",
     beta: "BETA",
+    template: "Шаблон",
+    scriptsNav: "Скрипты",
+    scriptsBeta: "Бета",
+    scriptsBetaTitle: "Скрипты (Бета) — Скоро",
+    skipSplash: "Нажмите Esc или кликните для пропуска",
+    notification_success: "УСПЕХ",
+    notification_warning: "ВНИМАНИЕ",
+    backupPrefix: "Бэкап",
+    screenshotCopiedToast: "Снимок экрана скопирован в буфер обмена (Ctrl+V)",
+    whyTweakFailed: "Почему не поставился этот твик?",
+    riskTweakDesc: "Агрессивный твик: может приводить к повышенному нагреву, сбоям или нестабильности. Перед применением создайте бэкап.",
+    experimentalTweakDesc: "Экспериментальная настройка: находится в стадии тестирования, её поведение зависит от конфигурации системы.",
+    systemTweakDesc: "Требует прав администратора и изменяет системные параметры Windows.",
+    safeTweakDesc: "У этого твика нет подтверждённых конфликтов с играми и приложениями.",
+    clickToCopy: "Нажмите, чтобы скопировать в буфер обмена",
     exit: "Выход",
     colorTitle: "Основные",
     colorSubtitle: "Калибровка параметров изображения, контрастности и цветопередачи в реальном времени",
@@ -2573,6 +2604,12 @@ const dictionaries = {
 };
 
 for (const [langCode, dict] of Object.entries(localizedExtensions)) {
+  if (dictionaries[langCode]) {
+    Object.assign(dictionaries[langCode], dict);
+  }
+}
+
+for (const [langCode, dict] of Object.entries(allLanguagesTranslations)) {
   if (dictionaries[langCode]) {
     Object.assign(dictionaries[langCode], dict);
   }

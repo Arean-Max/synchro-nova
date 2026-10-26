@@ -2796,11 +2796,15 @@ async function checkSecurityIncidents() {
       if (latest.timestamp > lastReported) {
         localStorage.setItem("synchro_last_sec_incident", String(latest.timestamp));
         const isRu = lang() === "ru";
+        const shieldBlockedMsg = t("securityShieldBlocked");
+        const blockedText = shieldBlockedMsg && shieldBlockedMsg.includes("{target}")
+          ? shieldBlockedMsg.replace("{target}", latest.target)
+          : (isRu
+              ? `Заблокировано небезопасное обращение к ${latest.target}. Ваш игровой аккаунт находится в полной безопасности.`
+              : `Blocked unsafe access to ${latest.target}. Your gaming account is completely safe.`);
         showToastBanner(
-          isRu ? "Защита аккаунта Synchro Nova" : "Synchro Nova Security Shield",
-          isRu
-            ? `Заблокировано небезопасное обращение к ${latest.target}. Ваш игровой аккаунт находится в полной безопасности.`
-            : `Blocked unsafe access to ${latest.target}. Your gaming account is completely safe.`,
+          t("securityShieldTitle") || (isRu ? "Защита аккаунта Synchro Nova" : "Synchro Nova Security Shield"),
+          blockedText,
           "safe"
         );
       }
@@ -2964,7 +2968,7 @@ if (window.__TAURI__?.event?.listen) {
 window.addEventListener("error", (event) => {
   const msg = event.error?.message || event.message;
   if (msg) {
-    showErrorToast(lang() === "ru" ? "Системная ошибка" : "System Error", msg);
+    showErrorToast(t("systemError") || (lang() === "ru" ? "Системная ошибка" : "System Error"), msg);
   }
 });
 
@@ -2972,7 +2976,7 @@ window.addEventListener("unhandledrejection", (event) => {
   const reason = event.reason;
   const msg = reason?.message || (typeof reason === "string" ? reason : "");
   if (msg && !msg.includes("canceled") && !msg.includes("aborted")) {
-    showErrorToast(lang() === "ru" ? "Ошибка выполнения" : "Execution Error", msg);
+    showErrorToast(t("executionError") || (lang() === "ru" ? "Ошибка выполнения" : "Execution Error"), msg);
   }
 });
 
