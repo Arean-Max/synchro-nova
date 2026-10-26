@@ -389,6 +389,14 @@ const dictionaries = {
     screenshotSuccess: "Juicy screenshot copied to clipboard!",
     collapseSidebar: "Collapse sidebar",
     expandSidebar: "Expand sidebar",
+    systemError: "System Error",
+    executionError: "Execution Error",
+    securityShieldTitle: "Synchro Nova Security Shield",
+    securityShieldBlocked: "Blocked unsafe access to {target}. Your gaming account is completely safe.",
+    cleanedTempFilesMsg: "Cleaned {count} temporary files ({mb} MB junk and DirectX shader cache)",
+    screenshotCopied: "Screenshot copied to clipboard (Ctrl+V)",
+    waiting: "Waiting",
+    profile: "Profile",
     ...tweakTranslations.en
   },
 
@@ -750,6 +758,14 @@ const dictionaries = {
     screenshotSuccess: "Снимок экрана успешно скопирован в буфер обмена.",
     collapseSidebar: "Свернуть панель",
     expandSidebar: "Развернуть панель",
+    systemError: "Системная ошибка",
+    executionError: "Ошибка выполнения",
+    securityShieldTitle: "Защита аккаунта Synchro Nova",
+    securityShieldBlocked: "Заблокировано небезопасное обращение к {target}. Ваш игровой аккаунт находится в полной безопасности.",
+    cleanedTempFilesMsg: "Очищено {count} временных файлов ({mb} МБ мусора и кэша шейдеров DirectX)",
+    screenshotCopied: "Снимок экрана скопирован в буфер обмена (Ctrl+V)",
+    waiting: "Ожидание",
+    profile: "Профиль",
     ...tweakTranslations.ru
   },
 

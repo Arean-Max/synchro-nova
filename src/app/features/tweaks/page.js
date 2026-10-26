@@ -46,19 +46,17 @@ function tweakResults(viewState, t) {
       const statusKey = `status${String(item.status || "").replace(/^./, (ch) => ch.toUpperCase())}`;
       let msg = item.message || "";
       if (item.id === "clean-temp-junk" && msg) {
-        const match = msg.match(/Cleaned\s+(\d+)\s+temporary files\s+\(([\d.]+)\s*MB/i);
-        if (match && isRu) {
-          msg = `Очищено ${match[1]} временных файлов (${match[2]} МБ мусора и кэша шейдеров DirectX)`;
-        } else if (!match && !isRu && msg.includes("Очищено")) {
-          const ruMatch = msg.match(/Очищено\s+(\d+)\s+временных файлов\s+\(([\d.]+)\s*МБ/i);
-          if (ruMatch) {
-            msg = `Cleaned ${ruMatch[1]} temporary files (${ruMatch[2]} MB junk and DirectX shader cache)`;
+        const match = msg.match(/(?:Cleaned|Очищено)\s+(\d+)\s+(?:temporary files|временных файлов)\s+\(([\d.]+)\s*(?:MB|МБ)/i);
+        if (match) {
+          const tpl = t("cleanedTempFilesMsg");
+          if (tpl && tpl.includes("{count}")) {
+            msg = tpl.replace("{count}", match[1]).replace("{mb}", match[2]);
           }
         }
       }
       const isFailed = item.status === "failed";
       const errorBtn = isFailed
-        ? `<button class="tweak-help-btn tweak-error-btn" type="button" data-action="show-tweak-error" data-tweak-id="${escapeAttr(item.id)}" data-error-msg="${escapeAttr(item.message || (isRu ? "Ошибка применения твика" : "Failed to apply tweak"))}" title="${escapeAttr(t("whyTweakFailed") || (isRu ? "Почему не поставился этот твик?" : "Why did this tweak fail?"))}">${icon("alert")}</button>`
+        ? `<button class="tweak-help-btn tweak-error-btn" type="button" data-action="show-tweak-error" data-tweak-id="${escapeAttr(item.id)}" data-error-msg="${escapeAttr(item.message || t("tweakErrorMsg"))}" title="${escapeAttr(t("whyTweakFailed"))}">${icon("alert")}</button>`
         : "";
       return `<div class="tweak-result-row ${escapeAttr(item.status || "skipped")}"><span>${escapeHtml(item.id || "-")}</span>${errorBtn}<strong>${escapeHtml(t(statusKey))}</strong><em>${escapeHtml(msg)}</em></div>`;
     })
@@ -75,15 +73,25 @@ function tweakResults(viewState, t) {
 }
 
 export function getTweakImpactDetails(tweak, t, isRu) {
+  const currentLang = lang();
   const category = tweakCategory(tweak);
   const impactInfo = tweakAppImpacts[tweak.id];
   if (impactInfo) {
-    const appName = isRu
-      ? (impactInfo.appNameRu || impactInfo.appName)
-      : (impactInfo.appNameEn || impactInfo.appName);
+    if (currentLang === "ru") {
+      return {
+        appName: impactInfo.appNameRu || impactInfo.appName,
+        impactText: impactInfo.impactRu
+      };
+    }
+    if (currentLang === "en") {
+      return {
+        appName: impactInfo.appNameEn || impactInfo.appName,
+        impactText: impactInfo.impactEn
+      };
+    }
     return {
-      appName,
-      impactText: isRu ? impactInfo.impactRu : impactInfo.impactEn
+      appName: tweakTitle(tweak, t),
+      impactText: tweakDescription(tweak, t)
     };
   }
 

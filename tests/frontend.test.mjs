@@ -599,3 +599,54 @@ test("Universal Translation Coverage: all 22 languages translate full UI, tweaks
     }
   }
 });
+
+test("Notification Coverage: all 22 languages translate all notification and toast keys, tweak impact banners, and incident popups", async () => {
+  const { supportedLanguages, translate } = await import("../src/app/core/i18n.js");
+  const { getTweakImpactDetails } = await import("../src/app/features/tweaks/page.js");
+  const { allTweaks } = await import("../src/app/features/tweaks/catalog.js");
+
+  const notificationKeys = [
+    "notification_error", "notification_info", "notification_success", "notification_warning",
+    "unknownError", "systemError", "executionError",
+    "securityShieldTitle", "securityShieldBlocked",
+    "eacFixedTitle", "eacFixedMsg", "eacShieldTitle",
+    "rollbackSuccess", "rollbackFailed", "noSelection",
+    "blackHolo", "blackHoloEnabled", "blackHoloDisabled",
+    "screenshot", "screenshotCopiedToast", "screenshotCopied",
+    "action_trim_memory", "ramPurgedToast",
+    "colorTitle", "templateAppliedToast", "colorsUpdatedToast",
+    "tweakErrorTitle", "tweakErrorMsg", "statusFailed",
+    "warning", "safetyBackup", "riskWarningMsg",
+    "safetySnapshot", "backupNotificationTitle", "backupNotificationMsg",
+    "adminRequired", "adminNotificationTitle", "adminNotificationMsg",
+    "safeTweak", "safeTweakDesc", "riskTweak", "riskTweakDesc",
+    "experimentalTweak", "experimentalTweakDesc", "systemTweak", "systemTweakDesc",
+    "noKnownConflict", "whatBreaks", "whyTweakFailed", "appliedTweaks", "close",
+    "cleanedTempFilesMsg", "copiedToClipboard",
+    "statusSuccess", "statusSkipped", "statusReverted"
+  ];
+
+  for (const { code } of supportedLanguages) {
+    for (const key of notificationKeys) {
+      const val = translate(code, key);
+      assert.ok(val && val.trim().length > 0, `Language [${code}] returned empty string for notification key [${key}]`);
+      assert.notStrictEqual(val, key, `Language [${code}] returned literal key name for notification key [${key}]`);
+    }
+  }
+
+  const tweaks = allTweaks();
+  for (const { code } of supportedLanguages) {
+    const t = (k) => translate(code, k);
+    for (const tweak of tweaks.slice(0, 5)) {
+      const details = getTweakImpactDetails(tweak, t, code === "ru");
+      assert.ok(details.appName && details.appName.length > 0, `Empty tweak impact appName for [${code}] ${tweak.id}`);
+      assert.ok(details.impactText && details.impactText.length > 0, `Empty tweak impactText for [${code}] ${tweak.id}`);
+      if (code === "ru") {
+        assert.ok(!details.impactText.startsWith("Windows prioritizes"), `Russian impactText should not be English for ${tweak.id}`);
+      }
+      if (code === "zh") {
+        assert.ok(!details.impactText.startsWith("Windows prioritizes"), `Chinese impactText should not be English for ${tweak.id}`);
+      }
+    }
+  }
+});

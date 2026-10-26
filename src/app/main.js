@@ -2797,8 +2797,10 @@ async function checkSecurityIncidents() {
         localStorage.setItem("synchro_last_sec_incident", String(latest.timestamp));
         const isRu = lang() === "ru";
         const shieldBlockedMsg = t("securityShieldBlocked");
-        const blockedText = shieldBlockedMsg && shieldBlockedMsg.includes("{target}")
-          ? shieldBlockedMsg.replace("{target}", latest.target)
+        const blockedText = shieldBlockedMsg
+          ? (shieldBlockedMsg.includes("{target}")
+              ? shieldBlockedMsg.replace("{target}", latest.target || "")
+              : (latest.target ? `${shieldBlockedMsg} (${latest.target})` : shieldBlockedMsg))
           : (isRu
               ? `Заблокировано небезопасное обращение к ${latest.target}. Ваш игровой аккаунт находится в полной безопасности.`
               : `Blocked unsafe access to ${latest.target}. Your gaming account is completely safe.`);
