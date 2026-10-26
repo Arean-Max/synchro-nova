@@ -28,7 +28,7 @@ import { tweakTranslations } from "../features/tweaks/i18n.js";
 import { localizedExtensions } from "./i18n_extensions.js";
 import { allLanguagesTranslations } from "./i18n_all_languages.js";
 
-const dictionaries = {
+export const dictionaries = {
   en: {
     themeTitle: "Interface Theme",
     themeSubtitle: "Seasonal themes with atmospheric visual effects",
@@ -40,6 +40,10 @@ const dictionaries = {
     theme_autumn_desc: "Warm amber glow with golden falling leaves",
     theme_spring: "Spring",
     theme_spring_desc: "Blooming sakura with drifting petals",
+    theme_summer: "Summer",
+    theme_summer_desc: "Solar azure breeze with glowing fireflies",
+    theme_liquid_glass: "Liquid Glass",
+    theme_liquid_glass_desc: "Premium frosted iOS liquid glassmorphism",
     appSubtitle: "all in one.",
     main: "MAIN",
     community: "COMMUNITY PROFILE",
@@ -412,6 +416,10 @@ const dictionaries = {
     theme_autumn_desc: "Тёплый янтарь и золотой листопад",
     theme_spring: "Весенняя",
     theme_spring_desc: "Цветущая сакура и весенний бриз",
+    theme_summer: "Летняя",
+    theme_summer_desc: "Солнечный лазурный бриз и светлячки",
+    theme_liquid_glass: "Жидкое стекло",
+    theme_liquid_glass_desc: "Премиальный матовый глассморфизм в стиле iOS",
     appSubtitle: "all in one.",
     main: "ГЛАВНОЕ",
     community: "COMMUNITY PROFILE",

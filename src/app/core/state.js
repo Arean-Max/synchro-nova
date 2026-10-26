@@ -67,7 +67,7 @@ export const viewState = {
   latestVersion: "",
   downloadUrl: "",
   assetSize: 0,
-  appVersion: "2.3.4",
+  appVersion: "2.5.0",
   lastUpdateCheck: null,
   updateCheckMessage: "",
   showAllDrivers: false,
@@ -199,7 +199,7 @@ export function mergeState(state) {
   try {
     storedTheme = typeof localStorage !== "undefined" ? localStorage.getItem("synchro_theme") : null;
   } catch (_) {}
-  const resolvedTheme = state?.settings?.theme || existingTheme || storedTheme || "default";
+  const resolvedTheme = storedTheme || state?.settings?.theme || existingTheme || "default";
 
   appState = {
     color: { ...defaultState.color, ...(state?.color || {}) },

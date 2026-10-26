@@ -1,4 +1,3 @@
-// Complete native translations for 20 languages for Tweaks
 export const allTweaksTranslations = {
   "zh": {
     "tweakGroup_gaming_latency": "游戏与低延迟",

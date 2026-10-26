@@ -328,7 +328,6 @@ pub fn spawn_download_worker(
         .name("synchro-updater-dl".to_string())
         .stack_size(128 * 1024)
         .spawn(move || {
-            // STEP 1: Download SHA256SUMS.txt FIRST (fail-fast without wasting bandwidth)
             let sha_url = match sha_manifest_url {
                 Some(u) => u,
                 None => {
@@ -384,7 +383,6 @@ pub fn spawn_download_worker(
                 }
             };
 
-            // STEP 2: Download binary payload into .part file
             let mut bin_cmd = get_curl_cmd();
             bin_cmd.args([
                 "-L",
@@ -462,14 +460,12 @@ pub fn spawn_download_worker(
                             break;
                         }
 
-                        // Rename .part -> final
                         if let Err(e) = fs::rename(&part_file, &target_file) {
                             log("DOWNLOAD_ERR", &format!("Failed to rename part file: {}", e));
                             super::set_status("error", Some("Failed to finalize download file".to_string()));
                             break;
                         }
 
-                        // STEP 3: Cryptographic & Integrity Verification
                         super::set_progress(super::UpdateProgress {
                             status: "verifying".to_string(),
                             downloaded_bytes: expected_size,
@@ -559,7 +555,6 @@ pub fn verify_update_package(file_path: &Path, expected_sha256: &str) -> Result<
         return Err(format!("File size exceeds safety limit ({} bytes)", meta.len()));
     }
 
-    // Check MZ header
     let mut header = [0u8; 2];
     {
         use std::io::Read;
@@ -570,7 +565,6 @@ pub fn verify_update_package(file_path: &Path, expected_sha256: &str) -> Result<
         return Err("Update file is not a valid Windows PE binary (missing MZ header)".to_string());
     }
 
-    // SHA-256 Check
     let actual_sha = crate::infra::hash::sha256_file(file_path)
         .map_err(|e| format!("Failed to compute SHA-256: {}", e))?
         .to_lowercase();
@@ -582,7 +576,6 @@ pub fn verify_update_package(file_path: &Path, expected_sha256: &str) -> Result<
         ));
     }
 
-    // Authenticode Check
     #[cfg(target_os = "windows")]
     {
         if let Ok(current_exe) = std::env::current_exe() {

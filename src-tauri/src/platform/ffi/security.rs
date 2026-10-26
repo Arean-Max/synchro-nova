@@ -97,6 +97,67 @@ pub fn register_webview_pid(pid: u32) {
     let _ = pid;
 }
 
+
+#[cfg(target_os = "windows")]
+pub fn kill_webview_process() {
+    let root_wv = REGISTERED_WEBVIEW_PID.swap(0, std::sync::atomic::Ordering::SeqCst);
+    let my_pid = unsafe { winapi::GetCurrentProcessId() };
+
+    unsafe {
+        let snapshot = winapi::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if !snapshot.is_null() && snapshot as isize != -1 {
+            let mut entry = ProcessEntry32W::default();
+            let mut all_entries = Vec::with_capacity(128);
+
+            if winapi::Process32FirstW(snapshot, &mut entry) != 0 {
+                loop {
+                    all_entries.push((
+                        entry.th32_process_id,
+                        entry.th32_parent_process_id,
+                    ));
+                    if winapi::Process32NextW(snapshot, &mut entry) == 0 {
+                        break;
+                    }
+                }
+            }
+            winapi::CloseHandle(snapshot);
+
+            let mut targets = Vec::new();
+            if root_wv != 0 && root_wv != my_pid {
+                targets.push(root_wv);
+            }
+
+            for (pid, parent_pid) in &all_entries {
+                if *parent_pid == my_pid && *pid != my_pid {
+                    targets.push(*pid);
+                }
+            }
+
+            let mut added = true;
+            while added {
+                added = false;
+                for (pid, parent_pid) in &all_entries {
+                    if targets.contains(parent_pid) && !targets.contains(pid) && *pid != my_pid {
+                        targets.push(*pid);
+                        added = true;
+                    }
+                }
+            }
+
+            for pid in targets {
+                let h = winapi::OpenProcess(0x0001, 0, pid);
+                if !h.is_null() {
+                    let _ = winapi::TerminateProcess(h, 0);
+                    let _ = winapi::CloseHandle(h);
+                }
+            }
+        }
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn kill_webview_process() {}
+
 #[cfg(target_os = "windows")]
 pub fn trim_working_set() {
     use std::sync::Mutex;
@@ -350,7 +411,6 @@ pub fn apply_process_hardening() {
         let _ = winapi::SetDefaultDllDirectories(
             LOAD_LIBRARY_SEARCH_DEFAULT_DIRS | LOAD_LIBRARY_SEARCH_APPLICATION_DIR,
         );
-        // Retain standard process priority class for responsive user interface
         let heap = winapi::GetProcessHeap();
         if !heap.is_null() {
             let _ = winapi::HeapSetInformation(

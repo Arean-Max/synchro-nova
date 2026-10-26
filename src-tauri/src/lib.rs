@@ -11,9 +11,8 @@ pub mod driver_info;
 pub mod infra;
 pub mod platform;
 pub mod settings;
-pub mod system_info;
 
-pub use app::state::{AppSettings, ColorSettings, DriverInfo, PersistedState, RuntimeState, SystemCharacteristics};
+pub use app::state::{AppSettings, ColorSettings, DriverInfo, PersistedState, RuntimeState};
 pub use app::workers::trim_process_memory;
 pub use domain::color;
 pub use domain::games;
@@ -133,6 +132,22 @@ pub fn configure_main_window(window: &tauri::WebviewWindow) {
     let _ = window.center();
 }
 
+pub fn destroy_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        #[cfg(target_os = "windows")]
+        let _ = window.with_webview(|webview| {
+            let controller = webview.controller();
+            unsafe {
+                let _ = controller.Close();
+            }
+        });
+        let _ = window.destroy();
+        #[cfg(target_os = "windows")]
+        platform::ffi::kill_webview_process();
+        trim_process_memory();
+    }
+}
+
 pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::WebviewWindow> {
     for attempt in 0..10 {
         if let Some(existing) = app.get_webview_window("main") {
@@ -151,6 +166,7 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
             .decorations(false)
             .shadow(false)
             .center()
+            .additional_browser_args("--enable-low-end-device-mode --renderer-process-limit=1 --disable-features=Translate,OptimizationHints,MediaRouter,BackForwardCache --js-flags=--max-old-space-size=32 --disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --disable-extensions --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disk-cache-size=10485760 --media-cache-size=10485760")
             .build()
         {
             Ok(window) => {
@@ -201,23 +217,15 @@ pub fn run() {
             }
             app::tray::install_tray(app.handle())?;
 
-            if let Some(window) = app.get_webview_window("main") {
-                configure_main_window(&window);
-                if initial.settings.start_minimized {
-                    suspend_window_webview(&window.as_ref().window());
-                    let _ = window.hide();
-                    trim_process_memory();
-                } else {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
+            if !initial.settings.start_minimized {
+                let _ = create_main_window(app.handle());
+            } else {
+                trim_process_memory();
             }
 
             app::workers::spawn_memory_trimmer(trimmer_sync);
 
             #[cfg(target_os = "windows")]
-            // Startup is strictly read-only; no automatic IFEO or BCD mutation
-
             #[cfg(target_os = "windows")]
             domain::color::black_holo::start_black_holo_hotkey_listener(Some(app.handle().clone()));
             domain::hotkeys::start_global_hotkey_listener(app.handle().clone());
@@ -257,9 +265,7 @@ pub fn run() {
                         }
                         if snapshot.settings.close_to_tray {
                             api.prevent_close();
-                            suspend_window_webview(window);
-                            let _ = window.hide();
-                            trim_process_memory();
+                            destroy_main_window(window.app_handle());
                         } else {
                             state.signal_shutdown();
                             std::process::exit(0);
@@ -275,8 +281,6 @@ pub fn run() {
             commands::update_app_settings,
             commands::sync_keybinds,
             commands::get_keybinds,
-            commands::get_system_characteristics,
-            commands::get_system_live_metrics,
             commands::open_driver_search,
             commands::list_installed_games,
             commands::launch_installed_game,

@@ -58,6 +58,8 @@ pub fn show_main_window(app: &AppHandle) {
     #[cfg(target_os = "windows")]
     crate::platform::ffi::disable_process_eco_qos();
 
+    crate::platform::fullscreen_watcher::set_user_summoned(true);
+
     if let Some(window) = app.get_webview_window("main") {
         crate::resume_window_webview(&window.as_ref().window());
         let _ = window.unminimize();

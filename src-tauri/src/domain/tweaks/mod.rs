@@ -1,3 +1,4 @@
+pub mod app_conflicts;
 pub mod engine;
 pub mod gaming;
 pub mod network;
@@ -9,6 +10,7 @@ pub mod storage;
 pub mod system;
 pub mod types;
 
+pub use app_conflicts::{detect_installed_tweak_apps, DetectedAppConflictInfo};
 pub use engine::{
     apply_selected_tweaks, collect_tweak_statuses, create_system_restore_point, is_tweak_applied,
     known_tweak_ids,

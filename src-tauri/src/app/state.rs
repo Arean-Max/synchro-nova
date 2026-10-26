@@ -7,13 +7,12 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc, Condvar, Mutex,
     },
-    time::{Instant, SystemTime, UNIX_EPOCH},
+    time::{SystemTime, UNIX_EPOCH},
 };
 use tauri::{AppHandle, Manager};
 
 use crate::admin::is_running_elevated;
 use crate::color;
-use crate::platform::live_metrics::CpuSample;
 
 pub const MAX_JSON_FILE_BYTES: u64 = 256 * 1024;
 pub const MAX_JSON_STRING_BYTES: usize = MAX_JSON_FILE_BYTES as usize;
@@ -181,7 +180,7 @@ impl AppSettings {
             self.accent_color = trimmed_accent.to_lowercase();
         }
 
-        const VALID_THEMES: &[&str] = &["default", "winter", "autumn", "spring"];
+        const VALID_THEMES: &[&str] = &["default", "winter", "autumn", "spring", "summer"];
         if !VALID_THEMES.contains(&self.theme.as_str()) {
             self.theme = "default".to_string();
         }
@@ -270,40 +269,6 @@ pub struct DriverInfo {
     pub latest_version: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SystemCharacteristics {
-    pub cpu: String,
-    pub cpu_usage_percent: String,
-    pub gpu: String,
-    pub gpu_usage_percent: String,
-    pub gpus: Vec<String>,
-    pub ram: String,
-    pub ram_available: String,
-    pub ram_available_gb: String,
-    pub ram_used_gb: String,
-    pub ram_used_percent: String,
-    pub os: String,
-    pub architecture: String,
-    pub display: String,
-    pub refresh_rate: String,
-    pub color_depth: String,
-    pub driver: String,
-    pub cpu_cores: String,
-    pub gpu_count: String,
-    pub ram_total_gb: String,
-    pub vram_total_gb: String,
-    pub vram_used_gb: String,
-    pub vram_used_percent: String,
-    pub refresh_rate_hz: String,
-    pub drivers: Vec<DriverInfo>,
-}
-
-#[derive(Default)]
-pub struct SystemCache {
-    pub value: Option<SystemCharacteristics>,
-    pub updated_at: Option<Instant>,
-}
 
 pub struct TrimmerSync {
     pub exited: Mutex<bool>,
@@ -316,8 +281,6 @@ pub struct RuntimeState {
     pub backups_dir: PathBuf,
     pub configs_dir: PathBuf,
     pub data: Mutex<PersistedState>,
-    pub system_cache: Mutex<SystemCache>,
-    pub cpu_sample: Mutex<Option<CpuSample>>,
     pub exiting: Arc<AtomicBool>,
     pub trimmer_sync: Arc<TrimmerSync>,
 }
@@ -350,8 +313,6 @@ impl RuntimeState {
             backups_dir,
             configs_dir,
             data: Mutex::new(data),
-            system_cache: Mutex::new(SystemCache::default()),
-            cpu_sample: Mutex::new(None),
             exiting: Arc::new(AtomicBool::new(false)),
             trimmer_sync: Arc::new(TrimmerSync {
                 exited: Mutex::new(false),
@@ -412,7 +373,8 @@ where
 {
     validate_json_file(path)?;
     let raw = fs::read_to_string(path).map_err(|error| format!("Failed to read file: {error}"))?;
-    serde_json::from_str(&raw).map_err(|error| format!("Failed to parse JSON: {error}"))
+    let clean = raw.strip_prefix('\u{feff}').unwrap_or(&raw);
+    serde_json::from_str(clean).map_err(|error| format!("Failed to parse JSON: {error}"))
 }
 
 pub fn write_json_file<T>(path: &Path, value: &T) -> Result<(), String>

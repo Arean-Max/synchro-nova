@@ -2855,7 +2855,7 @@ dependencies = [
 
 [[package]]
 name = "synchro"
-version = "2.3.4"
+version = "2.5.0"
 dependencies = [
  "bincode",
  "getrandom 0.3.4",

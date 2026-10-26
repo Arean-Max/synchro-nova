@@ -15,8 +15,7 @@ pub fn apply_selected_tweaks(ids: Vec<String>) -> Vec<TweakApplyResult> {
 }
 
 pub fn collect_tweak_statuses() -> Vec<TweakStatus> {
-    // Status collection is strictly read-only; zero system mutation
-    known_tweak_ids()
+        known_tweak_ids()
         .iter()
         .map(|id| TweakStatus {
             id: (*id).to_string(),

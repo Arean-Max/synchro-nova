@@ -7328,8 +7328,8 @@ body.paused-animations *::after {
   inset: 0;
   width: 100vw;
   height: 100vh;
-  pointer-events: none;
-  z-index: 1;
+  pointer-events: none !important;
+  z-index: 50;
 }
 
 /* Base Theme Palettes */
@@ -7378,6 +7378,21 @@ body.paused-animations *::after {
   --ui-accent-glow: rgba(244, 114, 182, 0.45);
 }
 
+[data-theme="summer"] {
+  --bg-sidebar: #071318;
+  --bg-main: #0b1a20;
+  --bg-card: #10242d;
+  --bg-card-strong: #17323f;
+  --bg-field: #132b36;
+  --border-subtle: rgba(6, 182, 212, 0.16);
+  --border-strong: rgba(6, 182, 212, 0.32);
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --ui-accent: #06b6d4;
+  --ui-accent-fg: #06b6d4;
+  --ui-accent-glow: rgba(6, 182, 212, 0.45);
+}
+
 /* Ambient Backdrops */
 [data-theme="winter"] .app-shell {
   background: radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.08), transparent 52%),
@@ -7395,6 +7410,30 @@ body.paused-animations *::after {
   background: radial-gradient(circle at 85% 15%, rgba(244, 114, 182, 0.09), transparent 52%),
               radial-gradient(circle at 15% 85%, rgba(192, 132, 252, 0.06), transparent 45%),
               var(--bg-main);
+}
+
+[data-theme="summer"] .app-shell {
+  background: radial-gradient(circle at 85% 15%, rgba(6, 182, 212, 0.09), transparent 52%),
+              radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.06), transparent 45%),
+              var(--bg-main);
+}
+
+/* High-vibe subtle card texture overlays */
+[data-theme="winter"] .card,
+[data-theme="winter"] .theme-card {
+  background-image: radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.07) 0%, transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+[data-theme="autumn"] .card,
+[data-theme="autumn"] .theme-card {
+  background-image: radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.07) 0%, transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+[data-theme="spring"] .card,
+[data-theme="spring"] .theme-card {
+  background-image: radial-gradient(circle at 100% 0%, rgba(244, 114, 182, 0.07) 0%, transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+[data-theme="summer"] .card,
+[data-theme="summer"] .theme-card {
+  background-image: radial-gradient(circle at 100% 0%, rgba(6, 182, 212, 0.07) 0%, transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
 }
 
 /* Scrollbars */
@@ -7417,6 +7456,13 @@ body.paused-animations *::after {
 }
 [data-theme="spring"] ::-webkit-scrollbar-thumb:hover {
   background: rgba(244, 114, 182, 0.45);
+}
+
+[data-theme="summer"] ::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.25);
+}
+[data-theme="summer"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.45);
 }
 
 /* Themed Button Details & Snow / Ember / Sakura Caps */
@@ -7442,13 +7488,18 @@ body.paused-animations *::after {
 }
 
 [data-theme="winter"] .exit-button {
-  border-color: rgba(56, 189, 248, 0.2);
+  background: rgba(56, 189, 248, 0.05);
+  border-color: rgba(56, 189, 248, 0.22);
+  color: #bae6fd;
+}
+[data-theme="winter"] .exit-button .icon {
+  color: #38bdf8;
 }
 
 [data-theme="winter"] .exit-button:hover {
   border-color: #38bdf8;
-  color: #e0f2fe;
-  box-shadow: 0 0 14px -2px rgba(56, 189, 248, 0.45), inset 0 1px 0 0 rgba(224, 242, 254, 0.6);
+  color: #f0f9ff;
+  box-shadow: 0 0 16px -2px rgba(56, 189, 248, 0.5), inset 0 1px 0 0 rgba(224, 242, 254, 0.7);
 }
 
 /* Autumn Warm Ember Details */
@@ -7474,13 +7525,18 @@ body.paused-animations *::after {
 }
 
 [data-theme="autumn"] .exit-button {
-  border-color: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.22);
+  color: #fde68a;
+}
+[data-theme="autumn"] .exit-button .icon {
+  color: #f59e0b;
 }
 
 [data-theme="autumn"] .exit-button:hover {
   border-color: #f59e0b;
-  color: #fef3c7;
-  box-shadow: 0 0 14px -2px rgba(245, 158, 11, 0.45), inset 0 1px 0 0 rgba(251, 191, 36, 0.5);
+  color: #fffbeb;
+  box-shadow: 0 0 16px -2px rgba(245, 158, 11, 0.5), inset 0 1px 0 0 rgba(251, 191, 36, 0.6);
 }
 
 /* Spring Sakura Night Details */
@@ -7506,13 +7562,55 @@ body.paused-animations *::after {
 }
 
 [data-theme="spring"] .exit-button {
-  border-color: rgba(244, 114, 182, 0.2);
+  background: rgba(244, 114, 182, 0.05);
+  border-color: rgba(244, 114, 182, 0.22);
+  color: #fbcfe8;
+}
+[data-theme="spring"] .exit-button .icon {
+  color: #f472b6;
 }
 
 [data-theme="spring"] .exit-button:hover {
   border-color: #f472b6;
-  color: #fce7f3;
-  box-shadow: 0 0 14px -2px rgba(244, 114, 182, 0.45), inset 0 1px 0 0 rgba(249, 168, 212, 0.5);
+  color: #fdf2f8;
+  box-shadow: 0 0 16px -2px rgba(244, 114, 182, 0.5), inset 0 1px 0 0 rgba(249, 168, 212, 0.6);
+}
+
+/* Summer Azure Solar Details */
+[data-theme="summer"] .nav-item.active,
+[data-theme="summer"] .theme-card.active,
+[data-theme="summer"] .btn-primary {
+  position: relative;
+  box-shadow: 0 0 18px -2px rgba(6, 182, 212, 0.38), inset 0 1px 0 0 rgba(103, 232, 249, 0.6);
+}
+
+[data-theme="summer"] .nav-item.active::before,
+[data-theme="summer"] .exit-button:hover::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.9) 20%, #22d3ee 50%, rgba(56, 189, 248, 0.9) 80%, transparent);
+  border-radius: 999px;
+  filter: drop-shadow(0 0 3px rgba(6, 182, 212, 0.8));
+  pointer-events: none;
+}
+
+[data-theme="summer"] .exit-button {
+  background: rgba(6, 182, 212, 0.05);
+  border-color: rgba(6, 182, 212, 0.22);
+  color: #a5f3fc;
+}
+[data-theme="summer"] .exit-button .icon {
+  color: #06b6d4;
+}
+
+[data-theme="summer"] .exit-button:hover {
+  border-color: #06b6d4;
+  color: #ecfeff;
+  box-shadow: 0 0 16px -2px rgba(6, 182, 212, 0.5), inset 0 1px 0 0 rgba(103, 232, 249, 0.6);
 }
 
 /* Intro Splash Screen Theming */
@@ -7549,6 +7647,18 @@ body.paused-animations *::after {
   text-shadow: 0 0 22px rgba(244, 114, 182, 0.65);
 }
 
+[data-theme="summer"] .intro-splash-screen {
+  background: radial-gradient(circle at 50% 45%, rgba(6, 182, 212, 0.15), transparent 65%), #071318;
+}
+[data-theme="summer"] .intro-splash-logo-img {
+  filter: drop-shadow(0 0 24px rgba(6, 182, 212, 0.55));
+}
+[data-theme="summer"] .splash-word-nova {
+  color: #06b6d4;
+  text-shadow: 0 0 22px rgba(6, 182, 212, 0.65);
+}
+
+/* Liquid Glass iOS Specular Details */
 /* Theme picker in settings */
 .settings-theme-section {
   display: flex;
@@ -7559,7 +7669,7 @@ body.paused-animations *::after {
 
 .theme-cards-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 12px;
   width: 100%;
 }
@@ -7768,6 +7878,15 @@ body.paused-animations *::after {
   box-shadow: 0 22px 52px rgba(0, 0, 0, 0.8), 0 0 28px -2px rgba(56, 189, 248, 0.38), inset 0 1px 0 rgba(224, 242, 254, 0.6);
 }
 
+[data-theme="winter"] .ios-banner-title {
+  color: #f0f9ff;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+[data-theme="winter"] .ios-banner-desc {
+  color: #bae6fd;
+}
+
 [data-theme="winter"] .ios-banner-icon.safe {
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.12);
@@ -7785,6 +7904,15 @@ body.paused-animations *::after {
   background: rgba(28, 20, 16, 0.98);
   border-color: rgba(245, 158, 11, 0.5);
   box-shadow: 0 22px 52px rgba(0, 0, 0, 0.8), 0 0 28px -2px rgba(245, 158, 11, 0.38), inset 0 1px 0 rgba(251, 191, 36, 0.6);
+}
+
+[data-theme="autumn"] .ios-banner-title {
+  color: #fffbeb;
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+
+[data-theme="autumn"] .ios-banner-desc {
+  color: #fde68a;
 }
 
 [data-theme="autumn"] .ios-banner-icon.safe {
@@ -7806,11 +7934,56 @@ body.paused-animations *::after {
   box-shadow: 0 22px 52px rgba(0, 0, 0, 0.8), 0 0 28px -2px rgba(244, 114, 182, 0.38), inset 0 1px 0 rgba(249, 168, 212, 0.6);
 }
 
+[data-theme="spring"] .ios-banner-title {
+  color: #fdf2f8;
+  text-shadow: 0 0 12px rgba(244, 114, 182, 0.4);
+}
+
+[data-theme="spring"] .ios-banner-desc {
+  color: #fbcfe8;
+}
+
 [data-theme="spring"] .ios-banner-icon.safe {
   color: #f472b6;
   background: rgba(244, 114, 182, 0.12);
   border-color: rgba(244, 114, 182, 0.6);
   box-shadow: 0 0 14px rgba(244, 114, 182, 0.25);
+}
+
+[data-theme="summer"] .ios-banner {
+  background: rgba(10, 24, 32, 0.95);
+  border: 1px solid rgba(6, 182, 212, 0.42);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 24px -2px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(103, 232, 249, 0.5);
+}
+
+[data-theme="summer"] .ios-banner:hover {
+  background: rgba(14, 32, 44, 0.98);
+  border-color: rgba(6, 182, 212, 0.65);
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.8), 0 0 30px -2px rgba(6, 182, 212, 0.48), inset 0 1px 0 rgba(103, 232, 249, 0.65);
+}
+
+[data-theme="summer"] .ios-banner-title {
+  color: #ecfeff;
+  text-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+}
+
+[data-theme="summer"] .ios-banner-desc {
+  color: #a5f3fc;
+}
+
+[data-theme="summer"] .ios-banner-icon.safe {
+  color: #06b6d4;
+  background: rgba(6, 182, 212, 0.14);
+  border-color: rgba(6, 182, 212, 0.7);
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.35);
+}
+
+[data-theme="summer"] .ios-banner-icon.admin,
+[data-theme="summer"] .ios-banner-icon.experimental {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(56, 189, 248, 0.7);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
 }
 
 [data-theme="winter"] .clipboard-pill-toast {
@@ -7832,6 +8005,13 @@ body.paused-animations *::after {
   border: 1px solid rgba(244, 114, 182, 0.35);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 16px -2px rgba(244, 114, 182, 0.3);
   color: #fce7f3;
+}
+
+[data-theme="summer"] .clipboard-pill-toast {
+  background: rgba(10, 24, 32, 0.94);
+  border: 1px solid rgba(6, 182, 212, 0.42);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px -2px rgba(6, 182, 212, 0.35);
+  color: #cffafe;
 }
 
 /* ==========================================================================
@@ -7874,6 +8054,18 @@ body.paused-animations *::after {
   z-index: 1;
 }
 
+/* Summer Azure Lagoon Vignette Shader */
+[data-theme="summer"] .app-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 90% 10%, rgba(6, 182, 212, 0.12), transparent 45%),
+              radial-gradient(circle at 10% 90%, rgba(34, 211, 238, 0.08), transparent 40%),
+              radial-gradient(circle at 50% 50%, transparent 60%, rgba(7, 19, 24, 0.35) 100%);
+  z-index: 1;
+}
+
 /* Crystalline / Hearth / Velvet Card Refinements */
 [data-theme="winter"] .card,
 [data-theme="winter"] .settings-unified-card {
@@ -7888,4 +8080,106 @@ body.paused-animations *::after {
 [data-theme="spring"] .card,
 [data-theme="spring"] .settings-unified-card {
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(249, 168, 212, 0.12);
+}
+
+[data-theme="summer"] .card,
+[data-theme="summer"] .settings-unified-card {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(103, 232, 249, 0.14);
+}
+
+
+/* Liquid Glass iOS Vignette Shader */
+/* ==========================================================================
+   Design Engineering Polish & Error Boundary
+   ========================================================================== */
+h1, h2, h3, .page-header h1, .modal-title, .card-title {
+  text-wrap: balance;
+}
+
+.page-header p, .card-desc, .modal-desc, .help-desc, p {
+  text-wrap: pretty;
+}
+
+.stat-value, .driver-version, .badge, .mono, .tabular-nums,
+.metric-value, .hotkey-key, .backup-time, .slider-num,
+.fine-tuning-val, .tweak-num, .vendor-driver-ver {
+  font-variant-numeric: tabular-nums;
+}
+
+.nav-item:active,
+.nav-sub-item:active,
+.theme-card:active,
+.exit-button:active,
+.card-action:active,
+.backup-item:active {
+  transform: scale(0.96);
+}
+
+.theme-card {
+  border-radius: 14px;
+}
+
+.theme-card-preview {
+  border-radius: 6px;
+}
+
+.component-error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.error-boundary-card {
+  max-width: 480px;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: var(--radius-card);
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.error-boundary-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.error-boundary-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.16);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.error-boundary-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.error-boundary-message {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.error-boundary-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
 }

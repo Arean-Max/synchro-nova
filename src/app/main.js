@@ -47,6 +47,26 @@ import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget, ren
 import { escapeHtml } from "./core/html.js";
 import { runIntroSplash } from "./ui/splash.js";
 import { applyTheme, resolveSeasonalTheme } from "./ui/themes.js";
+import { registerLifecycleHooks, withErrorBoundary } from "./core/lifecycle.js";
+import { copyTextToClipboard } from "./core/clipboard.js";
+import { formatKeyLabel, getWin32Vk } from "./features/binds/keyUtils.js";
+import {
+  clearImpactBannerTimer,
+  dismissNotificationBanner,
+  showPillToast,
+  startImpactBannerTimer,
+  showToastBanner as rawShowToastBanner,
+  showErrorToast as rawShowErrorToast,
+  showSettingHelpBanner as rawShowSettingHelpBanner,
+  showTweakImpactBanner as rawShowTweakImpactBanner,
+  showTweakErrorBanner as rawShowTweakErrorBanner,
+  showRiskWarningBanner as rawShowRiskWarningBanner,
+  showBackupNotificationBanner as rawShowBackupNotificationBanner,
+  showAdminNotificationBanner as rawShowAdminNotificationBanner,
+  highlightAdminBanner as rawHighlightAdminBanner,
+  renderNotificationBannerDom as rawRenderNotificationBannerDom
+} from "./ui/notifications.js";
+
 
 
 router.register("color", colorFeature);
@@ -61,102 +81,38 @@ router.register("settings", settingsFeature);
 let applyTimer = 0;
 let carouselStepAt = 0;
 let trimTimer = 0;
-let impactBannerTimer = 0;
-
-function clearImpactBannerTimer() {
-  if (impactBannerTimer) {
-    window.clearTimeout(impactBannerTimer);
-    impactBannerTimer = 0;
-  }
+function showToastBanner(title, impactText, category = "safe") {
+  return rawShowToastBanner(title, impactText, category, t);
 }
-
-function startImpactBannerTimer(delay = 3000) {
-  if (viewState.activeImpactBanner?.isAdminPrompt) return;
-  clearImpactBannerTimer();
-  impactBannerTimer = window.setTimeout(() => {
-    dismissNotificationBanner();
-  }, delay);
+function showErrorToast(title, err) {
+  return rawShowErrorToast(title, err, t);
 }
-
-function attachBannerHoverListeners() {
-  const bannerEl = document.querySelector(".ios-banner");
-  if (!bannerEl) return;
-  bannerEl.onmouseenter = () => {
-    clearImpactBannerTimer();
-  };
-  bannerEl.onmouseleave = () => {
-    if (viewState.activeImpactBanner?.isAdminPrompt) return;
-    clearImpactBannerTimer();
-    impactBannerTimer = window.setTimeout(() => {
-      dismissNotificationBanner();
-    }, 600);
-  };
+function showSettingHelpBanner(key) {
+  return rawShowSettingHelpBanner(key, t);
 }
-
-function dismissNotificationBanner(immediate = false) {
-  clearImpactBannerTimer();
-  const banners = document.querySelectorAll(".ios-banner");
-  if (!banners.length || immediate) {
-    viewState.activeImpactBanner = null;
-    renderNotificationBannerDom();
-    return;
-  }
-  banners.forEach((banner) => {
-    if (!banner.classList.contains("dismissing")) {
-      banner.classList.add("dismissing");
-    }
-  });
-  impactBannerTimer = window.setTimeout(() => {
-    viewState.activeImpactBanner = null;
-    impactBannerTimer = 0;
-    renderNotificationBannerDom();
-  }, 270);
+function showTweakImpactBanner(tweakId) {
+  return rawShowTweakImpactBanner(tweakId, t);
 }
-
+function showTweakErrorBanner(tweakId, errorMsg) {
+  return rawShowTweakErrorBanner(tweakId, errorMsg, t);
+}
+function showRiskWarningBanner(tweak) {
+  return rawShowRiskWarningBanner(tweak, t);
+}
+function showBackupNotificationBanner() {
+  return rawShowBackupNotificationBanner(t);
+}
+function showAdminNotificationBanner() {
+  return rawShowAdminNotificationBanner(t);
+}
+function highlightAdminBanner() {
+  return rawHighlightAdminBanner(t);
+}
 function renderNotificationBannerDom() {
-  const containers = document.querySelectorAll(".ios-banner-container");
-  if (appState.isAdmin && viewState.activeImpactBanner?.isAdminPrompt) {
-    viewState.activeImpactBanner = null;
-  }
-  const html = renderIosNotification(viewState, t);
-  if (!html) {
-    containers.forEach((c) => c.remove());
-    return;
-  }
-  if (!containers.length) {
-    const parent = document.getElementById("app") || document.body;
-    const temp = document.createElement("div");
-    temp.innerHTML = html;
-    if (temp.firstElementChild) {
-      parent.appendChild(temp.firstElementChild);
-    }
-  } else {
-    const existingBanner = containers[0].querySelector(".ios-banner");
-    const isSameAdmin =
-      existingBanner?.getAttribute("data-action") === "restart-as-admin" &&
-      viewState.activeImpactBanner?.isAdminPrompt;
-
-    if (isSameAdmin) {
-      const appEl = existingBanner.querySelector(".ios-banner-app");
-      const titleEl = existingBanner.querySelector(".ios-banner-title");
-      const msgEl = existingBanner.querySelector(".ios-banner-message");
-      if (appEl && viewState.activeImpactBanner?.appName) {
-        appEl.textContent = viewState.activeImpactBanner.appName;
-      }
-      if (titleEl && viewState.activeImpactBanner?.title) {
-        titleEl.textContent = viewState.activeImpactBanner.title;
-      }
-      if (msgEl && viewState.activeImpactBanner?.impactText) {
-        msgEl.textContent = viewState.activeImpactBanner.impactText;
-      }
-    } else {
-      containers[0].outerHTML = html;
-    }
-    for (let i = 1; i < containers.length; i++) {
-      containers[i].remove();
-    }
-  }
-  attachBannerHoverListeners();
+  return rawRenderNotificationBannerDom(t);
+}
+if (typeof window !== "undefined") {
+  window.__synchroShowErrorToast = showErrorToast;
 }
 
 function renderBackupModalDom() {
@@ -223,208 +179,6 @@ function updateApplyProgress(progress, statusText) {
   if (subEl instanceof HTMLElement && statusText) subEl.textContent = statusText;
 }
 
-function copyTextToClipboard(text) {
-  if (!text) return;
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(text).catch(() => {
-      fallbackCopyText(text);
-    });
-  } else {
-    fallbackCopyText(text);
-  }
-}
-
-function fallbackCopyText(text) {
-  try {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.left = "-9999px";
-    ta.style.top = "-9999px";
-    ta.setAttribute("readonly", "");
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    document.execCommand("copy");
-    ta.remove();
-  } catch (e) {
-    console.error("Fallback clipboard copy failed:", e);
-  }
-}
-
-let pillToastTimer = null;
-function showPillToast(message) {
-  if (pillToastTimer) {
-    clearTimeout(pillToastTimer);
-    pillToastTimer = null;
-  }
-  let pill = document.querySelector(".clipboard-pill-toast");
-  if (!pill) {
-    pill = document.createElement("div");
-    pill.className = "clipboard-pill-toast";
-    document.body.appendChild(pill);
-  }
-  pill.innerHTML = `
-    <span class="clipboard-pill-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-    <span class="clipboard-pill-text">${escapeHtml(message)}</span>
-  `;
-  pill.classList.remove("hiding");
-  void pill.offsetWidth;
-  pill.classList.add("visible");
-
-  pillToastTimer = setTimeout(() => {
-    pill.classList.add("hiding");
-    setTimeout(() => {
-      pill.classList.remove("visible", "hiding");
-      pill.remove();
-    }, 280);
-  }, 2200);
-}
-
-function showErrorToast(title, err) {
-  const isRu = lang() === "ru";
-  const msg = (err && typeof err === "object" && err.message)
-    ? err.message
-    : (typeof err === "string" ? err : (err ? JSON.stringify(err) : (t("unknownError") || "Unknown error")));
-  showToastBanner(title || t("notification_error") || (isRu ? "Ошибка" : "Error"), msg, "danger");
-}
-
-function showToastBanner(title, impactText, category = "safe") {
-  clearImpactBannerTimer();
-  const isRu = lang() === "ru";
-  const defaultAppName = category === "danger"
-    ? (t("notification_error") || (isRu ? "ОШИБКА" : "ERROR"))
-    : (t("notification_info") || (isRu ? "УВЕДОМЛЕНИЕ" : "NOTIFICATION"));
-  viewState.activeImpactBanner = {
-    title,
-    category,
-    appName: defaultAppName,
-    impactText: String(impactText || "")
-  };
-  renderNotificationBannerDom();
-  startImpactBannerTimer(category === "danger" ? 6000 : 3000);
-}
-
-function showSettingHelpBanner(key) {
-  const titles = {
-    macTrafficLights: t("macTrafficLights"),
-    eacAutoProtect: t("eacAutoProtect"),
-    autostartWindows: t("startWithWindows"),
-    closeToTray: t("closeToTray"),
-    zeroDaemonMode: t("zeroDaemonMode"),
-    startMinimized: t("startMinimized"),
-    autoBackupOnStart: t("autoBackupOnStart"),
-    showOnRecordings: t("showOnRecordings"),
-    autoUpdate: t("autoUpdate"),
-    disableSplash: t("disableSplash"),
-    disableAnimations: t("disableAnimations")
-  };
-  const title = titles[key] || t(key) || key;
-  const helpText = t(`help_${key}`);
-  showToastBanner(title, helpText, "safe");
-}
-
-function showTweakImpactBanner(tweakId) {
-  clearImpactBannerTimer();
-  const tweaks = allTweaks();
-  const tweak = tweaks.find((t) => t.id === tweakId);
-  if (!tweak) return;
-
-  const isRu = lang() === "ru";
-  const details = getTweakImpactDetails(tweak, t, isRu);
-  const title = tweakTitle(tweak, t);
-  const category = tweakCategory(tweak);
-
-  viewState.activeImpactBanner = {
-    tweakId: tweak.id,
-    title,
-    category,
-    appName: details.appName,
-    impactText: details.impactText
-  };
-  renderNotificationBannerDom();
-  startImpactBannerTimer(3000);
-}
-
-function showTweakErrorBanner(tweakId, errorMsg) {
-  clearImpactBannerTimer();
-  const tweaks = allTweaks();
-  const tweak = tweaks.find((t) => t.id === tweakId);
-  const isRu = lang() === "ru";
-  const title = tweak ? tweakTitle(tweak, t) : (tweakId || t("tweakErrorTitle") || (isRu ? "Ошибка твика" : "Tweak Error"));
-  const impactText = errorMsg || t("tweakErrorMsg") || (isRu ? "Не удалось применить данный твик в системе." : "Failed to apply this tweak to the system.");
-
-  viewState.activeImpactBanner = {
-    tweakId,
-    title: `${t("statusFailed") || (isRu ? "Сбой" : "Failed")}: ${title}`,
-    category: "danger",
-    appName: t("notification_error") || (isRu ? "СБОЙ ТВИКА" : "TWEAK ERROR"),
-    impactText
-  };
-  renderNotificationBannerDom();
-  startImpactBannerTimer(8000);
-}
-
-function showRiskWarningBanner(tweak) {
-  clearImpactBannerTimer();
-  const isRu = lang() === "ru";
-  const title = tweakTitle(tweak, t);
-  viewState.activeImpactBanner = {
-    tweakId: tweak.id,
-    title: `${t("warning") || (isRu ? "Внимание" : "Warning")}: ${title}`,
-    category: "risk",
-    appName: t("safetyBackup") || (isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY BACKUP"),
-    impactText: t("riskWarningMsg") || (isRu
-      ? "Перед применением системных настроек рекомендуется создать резервную копию параметров Windows."
-      : "Take a quick safety snapshot before applying system-level tweaks.")
-  };
-  renderNotificationBannerDom();
-  startImpactBannerTimer(3000);
-}
-
-function showBackupNotificationBanner() {
-  clearImpactBannerTimer();
-  const isRu = lang() === "ru";
-  viewState.activeImpactBanner = {
-    isBackupPrompt: true,
-    category: "safe",
-    appName: t("safetySnapshot") || (isRu ? "СНИМОК СИСТЕМЫ" : "SAFETY SNAPSHOT"),
-    title: t("backupNotificationTitle") || (isRu ? "Снимок Системы" : "Safety Snapshot"),
-    impactText: t("backupNotificationMsg") || (isRu ? "Нажмите здесь, чтобы задать имя резервной копии" : "Click here to set custom snapshot name")
-  };
-  renderNotificationBannerDom();
-  startImpactBannerTimer(3000);
-}
-
-function showAdminNotificationBanner() {
-  if (appState.isAdmin) {
-    viewState.activeImpactBanner = null;
-    document.querySelectorAll(".ios-banner-container").forEach((c) => c.remove());
-    return;
-  }
-  clearImpactBannerTimer();
-  const isRu = lang() === "ru";
-  viewState.activeImpactBanner = {
-    isAdminPrompt: true,
-    category: "admin",
-    appName: t("adminRequired") || (isRu ? "НУЖЕН АДМИН" : "ADMIN REQUIRED"),
-    title: t("adminNotificationTitle") || (isRu ? "Требуются права администратора" : "Administrator Rights Required"),
-    impactText: t("adminNotificationMsg") || (isRu ? "Нажмите для перезапуска Synchro с правами администратора" : "Click here to restart Synchro with admin rights")
-  };
-  renderNotificationBannerDom();
-}
-
-function highlightAdminBanner() {
-  const container = document.querySelector(".ios-banner-container");
-  if (container) {
-    container.classList.remove("pulse-hint");
-    void container.offsetWidth;
-    container.classList.add("pulse-hint");
-  } else {
-    showAdminNotificationBanner();
-  }
-}
-
 function scheduleTrimMemory(delay = 400) {
   window.clearTimeout(trimTimer);
   trimTimer = window.setTimeout(() => {
@@ -432,115 +186,7 @@ function scheduleTrimMemory(delay = 400) {
   }, delay);
 }
 
-function getWin32Vk(event) {
-  if (typeof event.keyCode === "number" && event.keyCode > 0 && event.keyCode !== 229) {
-    return event.keyCode;
-  }
-  const code = event.code || "";
-  if (/^Key[A-Z]$/.test(code)) return code.charCodeAt(3);
-  if (/^Digit[0-9]$/.test(code)) return code.charCodeAt(5);
-  if (/^F([1-9]|1[0-9]|2[0-4])$/.test(code)) return 111 + parseInt(code.slice(1), 10);
-  if (/^Numpad[0-9]$/.test(code)) return 96 + parseInt(code.slice(6), 10);
-  const vkMap = {
-    Space: 32,
-    Enter: 13,
-    NumpadEnter: 13,
-    Tab: 9,
-    Escape: 27,
-    Backspace: 8,
-    Insert: 45,
-    Delete: 46,
-    Home: 36,
-    End: 35,
-    PageUp: 33,
-    PageDown: 34,
-    ArrowUp: 38,
-    ArrowDown: 40,
-    ArrowLeft: 37,
-    ArrowRight: 39,
-    NumpadMultiply: 106,
-    NumpadAdd: 107,
-    NumpadSubtract: 109,
-    NumpadDecimal: 110,
-    NumpadDivide: 111,
-    Minus: 189,
-    Equal: 187,
-    BracketLeft: 219,
-    BracketRight: 221,
-    Backslash: 220,
-    Semicolon: 186,
-    Quote: 222,
-    Backquote: 192,
-    Comma: 188,
-    Period: 190,
-    Slash: 191
-  };
-  return vkMap[code] || 0;
-}
 
-function formatKeyLabel(event) {
-  const parts = [];
-  if (event.ctrlKey) parts.push("Ctrl");
-  if (event.altKey) parts.push("Alt");
-  if (event.shiftKey) parts.push("Shift");
-  if (event.metaKey) parts.push("Win");
-
-  let base = "";
-  const code = event.code || "";
-  if (code.startsWith("Key")) {
-    base = code.slice(3).toUpperCase();
-  } else if (code.startsWith("Digit")) {
-    base = code.slice(5);
-  } else if (code.startsWith("Numpad") && /^Numpad\d$/.test(code)) {
-    base = `Num ${code.slice(6)}`;
-  } else if (code === "NumpadEnter") {
-    base = "Num Enter";
-  } else if (code === "NumpadAdd") {
-    base = "Num +";
-  } else if (code === "NumpadSubtract") {
-    base = "Num -";
-  } else if (code === "NumpadMultiply") {
-    base = "Num *";
-  } else if (code === "NumpadDivide") {
-    base = "Num /";
-  } else if (code === "NumpadDecimal") {
-    base = "Num .";
-  } else if (/^F\d+$/.test(code)) {
-    base = code;
-  } else {
-    const specialMap = {
-      Space: "Space",
-      Enter: "Enter",
-      Tab: "Tab",
-      Backspace: "Backspace",
-      Delete: "Delete",
-      Insert: "Insert",
-      Home: "Home",
-      End: "End",
-      PageUp: "PageUp",
-      PageDown: "PageDown",
-      ArrowUp: "Up",
-      ArrowDown: "Down",
-      ArrowLeft: "Left",
-      ArrowRight: "Right",
-      Minus: "-",
-      Equal: "=",
-      BracketLeft: "[",
-      BracketRight: "]",
-      Backslash: "\\",
-      Semicolon: ";",
-      Quote: "'",
-      Backquote: "`",
-      Comma: ",",
-      Period: ".",
-      Slash: "/"
-    };
-    base = specialMap[code] || event.key?.toUpperCase() || code;
-  }
-
-  parts.push(base);
-  return parts.join(" + ");
-}
 
 function syncKeybinds() {
   try {
@@ -2574,7 +2220,8 @@ async function handleClick(event) {
 
   const backup = target.closest("[data-backup-id]");
   if (backup) {
-    viewState.selectedBackup = backup.getAttribute("data-backup-id");
+    const clickedId = backup.getAttribute("data-backup-id");
+    viewState.selectedBackup = viewState.selectedBackup === clickedId ? null : clickedId;
     updateMain();
     return;
   }
@@ -2818,6 +2465,7 @@ async function checkSecurityIncidents() {
 }
 
 async function boot() {
+  registerLifecycleHooks();
   const activeSeasonalTheme = resolveSeasonalTheme();
   applyTheme(activeSeasonalTheme, { disableAnimations: false });
   if (appState.settings) appState.settings.theme = activeSeasonalTheme;
@@ -2881,13 +2529,13 @@ async function boot() {
   checkSecurityIncidents();
 }
 
-document.addEventListener("input", handleInput);
-document.addEventListener("click", handleClick);
+document.addEventListener("input", withErrorBoundary(handleInput, "Input"));
+document.addEventListener("click", withErrorBoundary(handleClick, "Click"));
 document.addEventListener("contextmenu", (e) => e.preventDefault(), { capture: true });
 document.addEventListener("pointerdown", handlePointerDown);
 document.addEventListener("error", handleImageError, true);
 document.addEventListener("wheel", handleWheel, { passive: false });
-document.addEventListener("keydown", handleKeydown);
+document.addEventListener("keydown", withErrorBoundary(handleKeydown, "Keydown"));
 window.addEventListener("resize", syncNavIndicator);
 window.addEventListener("visibilitychange", () => {
   if (document.hidden) {
