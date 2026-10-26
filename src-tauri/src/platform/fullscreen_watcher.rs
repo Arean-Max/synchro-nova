@@ -55,7 +55,7 @@ pub fn is_foreground_fullscreen() -> bool {
             return false;
         }
 
-        // Filter out Windows shell / desktop surfaces
+        // Exclude Windows shell surfaces (Taskbar, Desktop, Start Menu) from fullscreen game detection.
         let mut class_name_buf = [0u16; 256];
         let len = winapi::GetClassNameW(hwnd, class_name_buf.as_mut_ptr(), 256);
         if len > 0 {
@@ -85,7 +85,6 @@ pub fn is_foreground_fullscreen() -> bool {
             return false;
         }
 
-        // Fullscreen: window bounds fully cover the monitor rect
         win_rect.left <= mi.rc_monitor.left
             && win_rect.top <= mi.rc_monitor.top
             && win_rect.right >= mi.rc_monitor.right
@@ -107,7 +106,8 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
             let mut consecutive_desktop_ticks = 0u32;
 
             while !shutdown.load(Ordering::Relaxed) {
-                std::thread::sleep(Duration::from_millis(250));
+                let sleep_ms = if consecutive_fullscreen_ticks >= 4 { 1000 } else { 250 };
+                std::thread::sleep(Duration::from_millis(sleep_ms));
 
                 let is_fs = is_foreground_fullscreen();
 
@@ -120,11 +120,8 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
                 }
 
                 let current = get_fullscreen_state();
-
-                // Debounce threshold: 2 ticks = 500ms stable state
                 if is_fs && consecutive_fullscreen_ticks >= 2 {
                     if USER_SUMMONED_MENU.load(Ordering::SeqCst) {
-                        // User explicitly opened menu/overlay over game, do not hide
                         continue;
                     }
 
@@ -133,15 +130,9 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
                             *lock = FullscreenState::Transition;
                         }
 
-                        // Auto-hide main UI window to prevent frame time jitter in game
-                        if let Some(window) = app_handle.get_webview_window("main") {
-                            if let Ok(visible) = window.is_visible() {
-                                if visible {
-                                    crate::suspend_window_webview(&window.as_ref().window());
-                                    let _ = window.hide();
-                                    AUTO_HIDDEN_BY_GAME.store(true, Ordering::SeqCst);
-                                }
-                            }
+                        if app_handle.get_webview_window("main").is_some() {
+                            crate::destroy_main_window(&app_handle);
+                            AUTO_HIDDEN_BY_GAME.store(true, Ordering::SeqCst);
                         }
 
                         if let Ok(mut lock) = CURRENT_STATE.lock() {
@@ -149,7 +140,6 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
                         }
                     }
                 } else if !is_fs && consecutive_desktop_ticks >= 2 {
-                    // Back on desktop
                     USER_SUMMONED_MENU.store(false, Ordering::SeqCst);
 
                     if current == FullscreenState::MenuHidden || current == FullscreenState::FullscreenForeground {
@@ -157,12 +147,8 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
                             *lock = FullscreenState::NormalDesktop;
                         }
 
-                        // If it was auto-hidden by game launch, restore window when user returns to desktop
                         if AUTO_HIDDEN_BY_GAME.swap(false, Ordering::SeqCst) {
-                            if let Some(window) = app_handle.get_webview_window("main") {
-                                crate::resume_window_webview(&window.as_ref().window());
-                                let _ = window.show();
-                            }
+                            crate::app::tray::show_main_window(&app_handle);
                         }
                     } else if current == FullscreenState::DisplayStateUnknown {
                         if let Ok(mut lock) = CURRENT_STATE.lock() {

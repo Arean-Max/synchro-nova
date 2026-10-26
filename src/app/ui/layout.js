@@ -1,3 +1,4 @@
+import { safeRender } from "../core/errorBoundary.js";
 import { activePage, appState, lang, pageDefs, pageOrder } from "../core/state.js";
 import { escapeAttr, escapeHtml } from "../core/html.js";
 import { renderCharacteristicsPage, DRIVER_CATEGORIES } from "../features/characteristics/page.js";
@@ -193,16 +194,25 @@ function renderSidebar(t, viewState) {
   `;
 }
 
+const safeColor = safeRender(renderColorPage, "Color Calibration");
+const safeGameColor = safeRender(renderGameColorPage, "Per-Game Color");
+const safeTweaks = safeRender(renderTweaksPage, "System Tweaks");
+const safeBinds = safeRender(renderBindsPage, "Keybinds");
+const safeCharacteristics = safeRender(renderCharacteristicsPage, "Hardware Drivers");
+const safeBackups = safeRender(renderBackupsPage, "System Backups");
+const safeConfigs = safeRender(renderConfigsPage, "Profiles");
+const safeSettings = safeRender(renderSettingsPage, "Preferences");
+
 export function renderPageBody(viewState, t) {
-  if (activePage === "color") return renderColorPage(appState, viewState, t);
-  if (activePage === "gameColor") return renderGameColorPage(appState, viewState, t);
-  if (activePage === "tweaks") return renderTweaksPage(viewState, t);
-  if (activePage === "binds") return renderBindsPage(appState, viewState, t);
-  if (activePage === "characteristics") return renderCharacteristicsPage(viewState, t);
-  if (activePage === "backups") return renderBackupsPage(viewState, t);
-  if (activePage === "configs") return renderConfigsPage(viewState, t);
-  if (activePage === "settings") return renderSettingsPage(appState, viewState, t);
-  return renderColorPage(appState, viewState, t);
+  if (activePage === "color") return safeColor(appState, viewState, t);
+  if (activePage === "gameColor") return safeGameColor(appState, viewState, t);
+  if (activePage === "tweaks") return safeTweaks(viewState, t);
+  if (activePage === "binds") return safeBinds(appState, viewState, t);
+  if (activePage === "characteristics") return safeCharacteristics(viewState, t);
+  if (activePage === "backups") return safeBackups(viewState, t);
+  if (activePage === "configs") return safeConfigs(viewState, t);
+  if (activePage === "settings") return safeSettings(appState, viewState, t);
+  return safeColor(appState, viewState, t);
 }
 
 export function renderMain(viewState, t) {

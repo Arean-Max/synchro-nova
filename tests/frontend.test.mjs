@@ -54,9 +54,9 @@ test("IPC Bridge: throws and propagates error on command failure", async () => {
   );
 });
 
-test("State: default version is 2.3.4", async () => {
+test("State: default version is 2.5.0", async () => {
   const { viewState } = await import("../src/app/core/state.js");
-  assert.equal(viewState.appVersion, "2.3.4");
+  assert.equal(viewState.appVersion, "2.5.0");
 });
 
 test("State: pageDefs contains configs and gameColor routes", async () => {
@@ -393,6 +393,9 @@ test("Backups Page: configs block is removed from backups page", async () => {
   assert.ok(html.includes("backup-card"), "Backup card must be present");
   assert.ok(!html.includes("configs-card"), "Configs card must be removed from backups page");
   assert.ok(!html.includes("savedConfigs"), "Saved configs title must be removed from backups page");
+  assert.ok(!html.includes("restore-backup"), "Restore button must not be present when no backup is selected");
+  const selectedHtml = renderBackupsPage({ backups: [{ id: 'b1', name: 'Test' }], selectedBackup: 'b1' }, t);
+  assert.ok(selectedHtml.includes("restore-backup"), "Restore button must be present when backup is selected");
 });
 
 test("Characteristics Page: Outdated driver omits current version row and shows available update", async () => {
@@ -418,9 +421,9 @@ test("Characteristics Page: Outdated driver omits current version row and shows 
 
 test("Themes: definitions contain 4 seasonal themes with valid properties", async () => {
   const { THEMES } = await import("../src/app/ui/themes.js");
-  assert.strictEqual(THEMES.length, 4, "Must define 4 seasonal themes");
+  assert.strictEqual(THEMES.length, 5, "Must define 5 themes");
   const ids = THEMES.map((t) => t.id);
-  assert.deepStrictEqual(ids, ["default", "winter", "autumn", "spring"]);
+  assert.deepStrictEqual(ids, ["default", "winter", "autumn", "spring", "summer"]);
   for (const theme of THEMES) {
     assert.ok(theme.nameRu, `Theme ${theme.id} must have Russian name`);
     assert.ok(theme.nameEn, `Theme ${theme.id} must have English name`);
@@ -477,6 +480,10 @@ test("Themes: applyTheme validates and sets data-theme attribute on documentElem
 
   assert.strictEqual(applyTheme("autumn"), "autumn");
   assert.strictEqual(document.documentElement.getAttribute("data-theme"), "autumn");
+  assert.strictEqual(applyTheme("summer"), "summer");
+  assert.strictEqual(document.documentElement.getAttribute("data-theme"), "summer");
+  assert.strictEqual(applyTheme("summer"), "summer");
+  assert.strictEqual(document.documentElement.getAttribute("data-theme"), "summer");
 
   assert.strictEqual(applyTheme("invalid_theme_name"), "default");
   assert.strictEqual(document.documentElement.getAttribute("data-theme"), "default");
@@ -487,12 +494,16 @@ test("Icons: seasonal theme icons render valid SVGs", async () => {
   const snowflakeSvg = icon("snowflake");
   const leafSvg = icon("leaf");
   const flowerSvg = icon("flower");
+  const sunSvg = icon("sun");
+  const dropletSvg = icon("droplet");
   const sparklesSvg = icon("sparkles");
 
   assert.ok(snowflakeSvg.includes("<svg") && snowflakeSvg.includes("x1="), "Snowflake icon must be SVG");
   assert.ok(leafSvg.includes("<svg") && leafSvg.includes("<path"), "Leaf icon must be SVG");
   assert.ok(flowerSvg.includes("<svg") && flowerSvg.includes("<circle"), "Flower icon must be SVG");
   assert.ok(sparklesSvg.includes("<svg") && sparklesSvg.includes("<path"), "Sparkles icon must be SVG");
+  assert.ok(sunSvg.includes("<svg") && sunSvg.includes("<circle"), "Sun icon must be SVG");
+  assert.ok(dropletSvg.includes("<svg") && dropletSvg.includes("<path"), "Droplet icon must be SVG");
 });
 
 test("Themes: getCurrentSeason accurately maps calendar months to seasons", async () => {
@@ -503,6 +514,7 @@ test("Themes: getCurrentSeason accurately maps calendar months to seasons", asyn
 
   assert.strictEqual(getCurrentSeason(new Date("2026-04-10")), "spring", "April must be spring");
   assert.strictEqual(getCurrentSeason(new Date("2026-05-01")), "spring", "May must be spring");
+  assert.strictEqual(getCurrentSeason(new Date("2026-07-15")), "summer", "July must be summer");
 
   assert.strictEqual(getCurrentSeason(new Date("2026-09-15")), "autumn", "September must be autumn");
   assert.strictEqual(getCurrentSeason(new Date("2026-10-25")), "autumn", "October must be autumn");

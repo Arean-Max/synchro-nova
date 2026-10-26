@@ -90,9 +90,7 @@ pub fn close_window(window: Window) {
             std::process::exit(0);
         }
         if snapshot.settings.close_to_tray {
-            crate::suspend_window_webview(&window);
-            let _ = window.hide();
-            crate::app::workers::trim_process_memory();
+            crate::destroy_main_window(&app);
             return;
         }
     }

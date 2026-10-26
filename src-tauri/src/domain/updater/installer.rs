@@ -23,10 +23,7 @@ pub fn apply_install() -> Result<(), String> {
     let _ = fs::create_dir_all(&staging_dir);
     let helper_exe = staging_dir.join("updater_helper.exe");
 
-    // Copy payload (or running exe) to helper path in temp dir
-    // Using the update_file ensures the helper has the latest helper logic
     if let Err(e) = fs::copy(&update_file, &helper_exe) {
-        // Fallback to copying current executable if payload copy fails
         if let Err(e2) = fs::copy(&current_exe, &helper_exe) {
             let msg = format!("Failed to prepare updater helper binary: {} / {}", e, e2);
             log("INSTALL_ERR", &msg);
@@ -99,7 +96,6 @@ pub fn apply_install() -> Result<(), String> {
             .map_err(|e| format!("Failed to spawn updater helper: {}", e))?;
     }
 
-    // Gracefully exit current application to release locks
     log("INSTALL", "Exiting current process to allow update helper to perform swap");
     std::thread::sleep(std::time::Duration::from_millis(150));
     std::process::exit(0);

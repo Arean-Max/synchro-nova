@@ -1,6 +1,5 @@
 pub mod ffi;
 pub mod fullscreen_watcher;
-pub mod live_metrics;
 pub mod security_guard;
 
 pub use fullscreen_watcher::{get_fullscreen_state, set_user_summoned, FullscreenState};

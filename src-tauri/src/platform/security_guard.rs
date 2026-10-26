@@ -617,7 +617,6 @@ pub fn get_security_guard_status() -> SecurityGuardStatus {
     let active_game = is_protected_game_running();
     let audit = audit_anticheat_integrity();
 
-    // Genuine security indicators reflecting actual process and registry audit state
     let anticheat_safe_mode = audit.is_eac_compatible;
     let ifeo_tamper_blocker_active = audit.ifeo_clean;
     let memory_shield_active = audit.kernel_debug_clean && audit.testsigning_clean;

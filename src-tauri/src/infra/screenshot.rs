@@ -443,7 +443,7 @@ pub fn set_screenshot_interception(enabled: bool) {
 
 #[cfg(target_os = "windows")]
 pub fn start_global_screenshot_listener() {
-    // Only register global PrintScreen hook if explicitly enabled to preserve Windows Snipping Tool and ShareX
+    // Global PrintScreen hook is conditional to avoid hijacking Windows Snipping Tool or ShareX hotkeys.
     if !SCREENSHOT_INTERCEPTION_ENABLED.load(std::sync::atomic::Ordering::SeqCst) {
         return;
     }

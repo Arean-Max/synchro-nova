@@ -82,7 +82,6 @@ pub fn try_early_warmup() -> bool {
         return false;
     }
 
-    // Instantly apply hardware display gamma & color transform directly in < 5ms
     if snapshot.color.enabled {
         let _ = crate::domain::color::apply_color_transform(
             &snapshot.color,

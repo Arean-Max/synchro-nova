@@ -86,7 +86,7 @@ pub fn is_input_response_fast_applied() -> bool {
 }
 
 pub fn clean_legacy_csrss_override() {
-    // Only delete suspicious debugger injection values, never the entire subkey
+    // IFEO: delete only the injected Debugger value to preserve legitimate Windows compatibility flags.
     let _ = super::runner::delete_hklm_value(
         "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\csrss.exe",
         "Debugger",

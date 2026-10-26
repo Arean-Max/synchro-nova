@@ -8,10 +8,11 @@ use crate::app::state::{checked_child_json_path, short_date, unix_now, Persisted
 use crate::app::workers::trim_process_memory;
 use crate::commands::storage::{create_backup_file, read_backup_entries, restore_backup};
 use crate::domain::tweaks::{
-    apply_selected_tweaks, collect_tweak_statuses, TweakApplyResult, TweakStatus,
+    apply_selected_tweaks, collect_tweak_statuses, detect_installed_tweak_apps,
+    DetectedAppConflictInfo, TweakApplyResult, TweakStatus,
 };
 use crate::platform::ffi::restart_explorer as ffi_restart_explorer;
-use crate::system_info;
+
 
 fn prune_safety_backups(dir: &Path) {
     if let Ok(entries) = read_backup_entries(dir) {
@@ -98,8 +99,8 @@ pub fn rollback_last_tweaks(
 }
 
 #[tauri::command]
-pub fn detect_installed_apps() -> Vec<system_info::DetectedAppConflictInfo> {
-    system_info::detect_installed_tweak_apps()
+pub fn detect_installed_apps() -> Vec<DetectedAppConflictInfo> {
+    detect_installed_tweak_apps()
 }
 
 #[tauri::command]

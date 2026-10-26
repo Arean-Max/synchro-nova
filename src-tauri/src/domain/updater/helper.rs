@@ -121,7 +121,6 @@ pub fn verify_payload_integrity(payload: &Path, expected_sha: Option<&str>) -> R
         ));
     }
 
-    // Check PE 'MZ' magic bytes
     use std::io::Read;
     let mut f = fs::File::open(payload).map_err(|e| format!("Cannot open payload: {}", e))?;
     let mut header = [0u8; 2];
@@ -130,7 +129,6 @@ pub fn verify_payload_integrity(payload: &Path, expected_sha: Option<&str>) -> R
         return Err("Payload is not a valid Windows PE binary (missing MZ header)".to_string());
     }
 
-    // Cryptographic SHA-256 verification inside the elevated process
     if let Some(expected) = expected_sha {
         let actual_hash = crate::infra::hash::sha256_file(payload)
             .map_err(|e| format!("Failed to compute payload SHA-256: {}", e))?
@@ -177,7 +175,6 @@ pub fn run_updater_helper(args: &[String]) {
         ),
     );
 
-    // Strict validation before taking any elevated action
     if let Err(e) = validate_target_path(&parsed.target) {
         log("HELPER_ERR", &format!("Target validation rejected: {}", e));
         std::process::exit(1);
@@ -190,12 +187,11 @@ pub fn run_updater_helper(args: &[String]) {
 
     #[cfg(target_os = "windows")]
     {
-        // 1. Synchronize: Wait for old process to exit
+        // Windows file locking requires waiting for the parent PID handle to close before swapping the executable.
         if parsed.wait_pid > 0 {
             log("HELPER", &format!("Waiting for parent process PID {} to exit...", parsed.wait_pid));
             crate::platform::ffi::wait_for_process_exit(parsed.wait_pid, 30_000);
 
-            // Double check process handle
             use crate::platform::ffi::{winapi, SYNCHRONIZE};
             let handle = unsafe { winapi::OpenProcess(SYNCHRONIZE, 0, parsed.wait_pid) };
             if !handle.is_null() {
@@ -208,10 +204,8 @@ pub fn run_updater_helper(args: &[String]) {
             }
         }
 
-        // Small grace period for Windows handle deallocations
         std::thread::sleep(Duration::from_millis(250));
 
-        // 2. Move target -> backup
         if parsed.backup.is_file() {
             let _ = fs::remove_file(&parsed.backup);
         }
@@ -219,7 +213,6 @@ pub fn run_updater_helper(args: &[String]) {
         let mut backup_ok = false;
         for attempt in 1..=10 {
             if !parsed.target.is_file() {
-                // Portable run or target deleted
                 backup_ok = true;
                 break;
             }
@@ -236,7 +229,6 @@ pub fn run_updater_helper(args: &[String]) {
             std::process::exit(1);
         }
 
-        // 3. Move payload -> target
         let mut install_ok = false;
         for attempt in 1..=5 {
             if fs::rename(&parsed.payload, &parsed.target).is_ok() {
@@ -261,7 +253,6 @@ pub fn run_updater_helper(args: &[String]) {
 
         log("HELPER", "Binary replacement succeeded; launching updated application");
 
-        // 4. Spawn new binary with post-update flags
         let mut cmd = Command::new(&parsed.target);
         cmd.arg("--post-update-check");
         cmd.arg("--restarted-from-pid");
@@ -276,7 +267,6 @@ pub fn run_updater_helper(args: &[String]) {
             }
         };
 
-        // 5. Watchdog: ensure new binary doesn't crash on boot (5 second verification)
         let watchdog_start = Instant::now();
         let watchdog_timeout = Duration::from_secs(5);
         let mut crashed = false;
@@ -285,7 +275,6 @@ pub fn run_updater_helper(args: &[String]) {
             std::thread::sleep(Duration::from_millis(200));
             match child.try_wait() {
                 Ok(Some(status)) => {
-                    // Child exited prematurely within 5 seconds!
                     log(
                         "HELPER_ERR",
                         &format!("New version crashed during startup with exit status: {:?}; initiating rollback", status.code()),
@@ -294,8 +283,7 @@ pub fn run_updater_helper(args: &[String]) {
                     break;
                 }
                 Ok(None) => {
-                    // Process is still running smoothly
-                }
+                    }
                 Err(e) => {
                     log("HELPER_WARN", &format!("Could not inspect child process: {}", e));
                 }
@@ -307,7 +295,6 @@ pub fn run_updater_helper(args: &[String]) {
             std::process::exit(2);
         }
 
-        // 6. Success confirmation & cleanup
         log("SUCCESS", "Updated application is running stably; cleaning up backup and staging files");
         if parsed.backup.is_file() {
             let _ = fs::remove_file(&parsed.backup);
@@ -371,7 +358,6 @@ mod tests {
         assert!(validate_target_path(Path::new(r"C:\Users\test\AppData\Local\Programs\synchro\synchro.exe")).is_ok());
         assert!(validate_target_path(Path::new(r"C:\Program Files\Synchro Nova\synchro.exe")).is_ok());
 
-        // Rejection tests
         assert!(validate_target_path(Path::new(r"C:\Windows\System32\cmd.exe")).is_err());
         assert!(validate_target_path(Path::new(r"C:\Windows\System32\synchro.exe")).is_err());
         assert!(validate_target_path(Path::new(r"C:\Apps\other_app.exe")).is_err());

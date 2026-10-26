@@ -229,7 +229,6 @@ fn main() {
             std::process::exit(0);
         }
 
-        // Apply fast cache only AFTER successfully acquiring single-instance ownership
         synchro_lib::infra::fast_cache::try_early_warmup();
 
         let is_admin = synchro_lib::ffi::is_user_admin();
