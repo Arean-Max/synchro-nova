@@ -51,8 +51,24 @@ export function renderBackupNameModal(viewState, t) {
 
   return `
     <div class="backup-modal-backdrop" data-action="dismiss-backup-modal">
-      <div class="backup-minimal-dialog" role="dialog" aria-modal="true" aria-label="${escapeAttr(t("backupNotificationTitle") || "Backup")}">
-        <input id="custom-backup-name-input" class="backup-minimal-input" type="text" data-field="backupName" value="${escapeAttr(viewState.backupName || "")}" placeholder="${escapeAttr(defaultPlaceholder)}" maxlength="50" spellcheck="false" autocomplete="off" autofocus>
+      <div class="template-config-dialog backup-name-dialog" role="dialog" aria-modal="true" aria-labelledby="backup-dialog-title">
+        <div class="template-config-header">
+          <div class="template-config-title">
+            <h3 id="backup-dialog-title">${escapeHtml(t("backupNotificationTitle") || (isRu ? "Снимок системы" : "Safety Snapshot"))}</h3>
+            <p>${escapeHtml(t("backupsSubtitle") || (isRu ? "Создание точки восстановления перед настройкой системы" : "Create a system settings snapshot before tweaking"))}</p>
+          </div>
+          <button class="dialog-close-btn" type="button" data-action="dismiss-backup-modal" title="${escapeAttr(t("close"))}">${icon("x")}</button>
+        </div>
+        <div class="template-config-body">
+          <div class="template-name-group">
+            <label class="template-name-label" for="custom-backup-name-input">${escapeHtml(t("backupName") || (isRu ? "Имя снимка" : "Snapshot Name"))}</label>
+            <input id="custom-backup-name-input" class="template-name-input" type="text" data-field="backupName" value="${escapeAttr(viewState.backupName || "")}" placeholder="${escapeAttr(defaultPlaceholder)}" maxlength="50" spellcheck="false" autocomplete="off" autofocus>
+          </div>
+        </div>
+        <div class="template-config-footer">
+          <button class="btn btn-outline template-reset-btn" type="button" data-action="dismiss-backup-modal"><span>${escapeHtml(t("cancel"))}</span></button>
+          <button class="btn btn-primary template-done-btn" type="button" data-action="confirm-create-backup"><span>${escapeHtml(t("createBackup"))}</span></button>
+        </div>
       </div>
     </div>
   `;

@@ -227,6 +227,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "此优化安全无害，与主流游戏和应用程序无任何已知冲突。",
     "clickToCopy": "点击复制到剪贴板",
     "cleanedTempFilesMsg": "已清理 {count} 个临时文件（{mb} MB 垃圾与 DirectX 着色器缓存）",
+    "backupSuccess": "系统安全快照已成功创建",
   },
   "zht": {
     "themeTitle": "介面主題",
@@ -456,6 +457,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "此最佳化安全可靠，與主流遊戲與應用程式無任何已知衝突。",
     "clickToCopy": "點擊複製到剪貼簿",
     "cleanedTempFilesMsg": "已清理 {count} 個暫存檔案（{mb} MB 垃圾與 DirectX 著色器快取）",
+    "backupSuccess": "系統安全快照已成功建立",
   },
   "ja": {
     "themeTitle": "UIテーマ",
@@ -685,6 +687,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "この最適化には、ゲームやアプリとの既知の競合はありません。",
     "clickToCopy": "クリックしてクリップボードにコピー",
     "cleanedTempFilesMsg": "一時ファイル {count} 件を削除しました（{mb} MB の不要ファイルと DirectX シェーダーキャッシュ）",
+    "backupSuccess": "システムスナップショットが正常に作成されました",
   },
   "ko": {
     "themeTitle": "인터페이스 테마",
@@ -914,6 +917,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "이 트윅은 게임 및 응용 프로그램과의 확인된 충돌이 없습니다.",
     "clickToCopy": "클릭하여 클립보드에 복사",
     "cleanedTempFilesMsg": "임시 파일 {count}개 정리 완료 ({mb} MB 정크 및 DirectX 셰이더 캐시)",
+    "backupSuccess": "시스템 스냅샷이 성공적으로 생성되었습니다",
   },
   "de": {
     "themeTitle": "Design-Thema",
@@ -1143,6 +1147,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Dieser Tweak weist keine bestätigten Konflikte mit Spielen oder Apps auf.",
     "clickToCopy": "Klicken zum Kopieren in die Zwischenablage",
     "cleanedTempFilesMsg": "{count} temporäre Dateien bereinigt ({mb} MB Datenmüll und DirectX-Shader-Cache)",
+    "backupSuccess": "Systemschnappschuss erfolgreich erstellt",
   },
   "es": {
     "themeTitle": "Tema de la interfaz",
@@ -1372,6 +1377,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Este ajuste no tiene conflictos confirmados con juegos o aplicaciones.",
     "clickToCopy": "Haz clic para copiar al portapapeles",
     "cleanedTempFilesMsg": "Se limpiaron {count} archivos temporales ({mb} MB de basura y caché de sombreadores DirectX)",
+    "backupSuccess": "Instantánea del sistema creada con éxito",
   },
   "fr": {
     "themeTitle": "Thème de l'interface",
@@ -1601,6 +1607,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Ce tweak ne présente aucun conflit confirmé avec les jeux ou applications.",
     "clickToCopy": "Cliquez pour copier dans le presse-papiers",
     "cleanedTempFilesMsg": "{count} fichiers temporaires nettoyés ({mb} Mo de fichiers inutiles et cache de nuanceurs DirectX)",
+    "backupSuccess": "Instantané système créé avec succès",
   },
   "it": {
     "themeTitle": "Tema dell'interfaccia",
@@ -1830,6 +1837,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Questa modifica non presenta conflitti noti con giochi o applicazioni.",
     "clickToCopy": "Clicca per copiare negli appunti",
     "cleanedTempFilesMsg": "Puliti {count} file temporanei ({mb} MB di file inutili e cache shader DirectX)",
+    "backupSuccess": "Istantanea del sistema creata con successo",
   },
   "pl": {
     "themeTitle": "Motyw interfejsu",
@@ -2059,6 +2067,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Ten tweak nie powoduje żadnych konfliktów z grami ani aplikacjami.",
     "clickToCopy": "Kliknij, aby skopiować do schowka",
     "cleanedTempFilesMsg": "Wyczyszczono {count} plików tymczasowych ({mb} MB śmieci i pamięci podręcznej cieniowania DirectX)",
+    "backupSuccess": "Migawka systemu została pomyślnie utworzona",
   },
   "uk": {
     "themeTitle": "Тема оформлення",
@@ -2288,6 +2297,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Цей твік не має підтверджених конфліктів із іграми чи додатками.",
     "clickToCopy": "Натисніть, щоб скопіювати в буфер обміну",
     "cleanedTempFilesMsg": "Очищено {count} тимчасових файлів ({mb} МБ сміття та кешу шейдерів DirectX)",
+    "backupSuccess": "Знімок системи успішно створено",
   },
   "bs": {
     "themeTitle": "Tema interfejsa",
@@ -2517,6 +2527,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Ova optimizacija nema potvrđenih konflikata sa igrama ili aplikacijama.",
     "clickToCopy": "Kliknite za kopiranje u međuspremnik",
     "cleanedTempFilesMsg": "Očišćeno {count} privremenih datoteka ({mb} MB smeća i DirectX shader keša)",
+    "backupSuccess": "Sigurnosna kopija sistema je uspješno kreirana",
   },
   "da": {
     "themeTitle": "Tema for grænseflade",
@@ -2746,6 +2757,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Denne justering har ingen bekræftede konflikter med spil eller apps.",
     "clickToCopy": "Klik for at kopiere til udklipsholder",
     "cleanedTempFilesMsg": "Ryddede {count} midlertidige filer ({mb} MB affald og DirectX-skyggecache)",
+    "backupSuccess": "Systemsikkerhedskopi oprettet med succes",
   },
   "no": {
     "themeTitle": "Grensesnitt-tema",
@@ -2975,6 +2987,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Denne justeringen har ingen bekreftede konflikter med spill eller apper.",
     "clickToCopy": "Klikk for å kopiere til utklippstavlen",
     "cleanedTempFilesMsg": "Ryddet {count} midlertidige filer ({mb} MB søppel og DirectX skyggebuffer)",
+    "backupSuccess": "Systemsikkerhetskopi opprettet",
   },
   "br": {
     "themeTitle": "Tema da Interface",
@@ -3204,6 +3217,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Este tweak não possui conflitos confirmados com jogos ou aplicativos.",
     "clickToCopy": "Clique para copiar para a área de transferência",
     "cleanedTempFilesMsg": "Limpos {count} arquivos temporários ({mb} MB de lixo e cache de sombreadores DirectX)",
+    "backupSuccess": "Instantâneo do sistema criado com sucesso",
   },
   "tr": {
     "themeTitle": "Arayüz Teması",
@@ -3433,6 +3447,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Bu ayarın oyunlar veya uygulamalarla bilinen hiçbir çakışması yoktur.",
     "clickToCopy": "Panoya kopyalamak için tıklayın",
     "cleanedTempFilesMsg": "{count} geçici dosya temizlendi ({mb} MB gereksiz veri ve DirectX gölgelendirici önbelleği)",
+    "backupSuccess": "Sistem anlık görüntüsü başarıyla oluşturuldu",
   },
   "vi": {
     "themeTitle": "Giao diện chủ đề",
@@ -3662,6 +3677,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Tinh chỉnh này không có xung đột nào với trò chơi hoặc ứng dụng.",
     "clickToCopy": "Nhấp để sao chép vào khay nhớ tạm",
     "cleanedTempFilesMsg": "Đã dọn dẹp {count} tệp tạm thời ({mb} MB rác và bộ đệm đổ bóng DirectX)",
+    "backupSuccess": "Đã tạo ảnh chụp nhanh hệ thống thành công",
   },
   "th": {
     "themeTitle": "ธีมของอินเทอร์เฟซ",
@@ -3891,6 +3907,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "การปรับแต่งนี้ไม่มีข้อขัดแย้งที่ยืนยันกับเกมหรือแอปพลิเคชัน",
     "clickToCopy": "คลิกเพื่อคัดลอกไปยังคลิปบอร์ด",
     "cleanedTempFilesMsg": "ล้างไฟล์ชั่วคราวแล้ว {count} ไฟล์ (ขยะ {mb} MB และแคชแรเงา DirectX)",
+    "backupSuccess": "สร้างสแนปช็อตระบบสำเร็จแล้ว",
   },
   "ar": {
     "themeTitle": "سمة الواجهة",
@@ -4120,6 +4137,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "لا يحتوي هذا التعديل على أي تعارضات مؤكدة مع الألعاب أو التطبيقات.",
     "clickToCopy": "انقر للنسخ إلى الحافظة",
     "cleanedTempFilesMsg": "تم تنظيف {count} من الملفات المؤقتة ({mb} ميغابايت من الملفات غير الضرورية وذاكرة التخزين المؤقت لـ DirectX)",
+    "backupSuccess": "تم إنشاء لقطة النظام بنجاح",
   },
   "bn": {
     "themeTitle": "ইন্টারফেস থিম",
@@ -4349,6 +4367,7 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "এই টুইকের গেম বা অ্যাপ্লিকেশনের সাথে কোনো দ্বন্দ্ব নেই।",
     "clickToCopy": "ক্লিপবোর্ডে কপি করতে ক্লিক করুন",
     "cleanedTempFilesMsg": "{count} টি অস্থায়ী ফাইল পরিষ্কার করা হয়েছে ({mb} MB আবর্জনা এবং DirectX শেডার ক্যাশে)",
+    "backupSuccess": "সিস্টেম স্ন্যাপশট সফলভাবে তৈরি করা হয়েছে",
   },
   "gr": {
     "themeTitle": "Θέμα διεπαφής",
@@ -4578,5 +4597,6 @@ export const allLanguagesTranslations = {
     "safeTweakDesc": "Αυτή η ρύθμιση δεν έχει επιβεβαιωμένες διενέξεις με παιχνίδια ή εφαρμογές.",
     "clickToCopy": "Κάντε κλικ για αντιγραφή στο πρόχειρο",
     "cleanedTempFilesMsg": "Εκκαθαρίστηκαν {count} προσωρινά αρχεία ({mb} MB περιττών δεδομένων και προσωρινής μνήμης σκίασης DirectX)",
+    "backupSuccess": "Το στιγμιότυπο συστήματος δημιουργήθηκε επιτυχώς",
   },
 };

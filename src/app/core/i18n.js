@@ -397,6 +397,7 @@ const dictionaries = {
     screenshotCopied: "Screenshot copied to clipboard (Ctrl+V)",
     waiting: "Waiting",
     profile: "Profile",
+    backupSuccess: "System snapshot created successfully",
     ...tweakTranslations.en
   },
 
@@ -766,6 +767,7 @@ const dictionaries = {
     screenshotCopied: "Снимок экрана скопирован в буфер обмена (Ctrl+V)",
     waiting: "Ожидание",
     profile: "Профиль",
+    backupSuccess: "Снимок системы успешно создан",
     ...tweakTranslations.ru
   },
 

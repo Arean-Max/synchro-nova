@@ -669,3 +669,20 @@ test("Settings and Help Banners: all 22 languages translate macTrafficLights, ea
     }
   }
 });
+
+
+test("Backup Modal: renders full structured dialog card with header, input label, and action buttons", async () => {
+  const { renderBackupNameModal } = await import("../src/app/features/storage/page.js");
+  const { translate } = await import("../src/app/core/i18n.js");
+
+  const t = (k) => translate("ru", k);
+  const html = renderBackupNameModal({ backupName: "TestBackup" }, t);
+
+  assert.ok(html.includes("template-config-dialog"), "Must contain template-config-dialog card class");
+  assert.ok(html.includes("backup-name-dialog"), "Must contain backup-name-dialog class");
+  assert.ok(html.includes("template-config-header"), "Must render dialog header");
+  assert.ok(html.includes("dialog-close-btn"), "Must render close (x) button");
+  assert.ok(html.includes("template-name-input"), "Must render styled name input");
+  assert.ok(html.includes('data-action="dismiss-backup-modal"'), "Must have cancel / dismiss action");
+  assert.ok(html.includes('data-action="confirm-create-backup"'), "Must have confirm-create-backup action");
+});

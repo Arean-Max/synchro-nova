@@ -3541,6 +3541,25 @@ p, .description {
   user-select: none;
 }
 
+.backup-name-dialog {
+  max-width: 440px;
+}
+
+[data-theme="winter"] .backup-name-dialog {
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 20px -4px rgba(56, 189, 248, 0.25);
+}
+
+[data-theme="autumn"] .backup-name-dialog {
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 20px -4px rgba(245, 158, 11, 0.22);
+}
+
+[data-theme="spring"] .backup-name-dialog {
+  border-color: rgba(244, 114, 182, 0.3);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 20px -4px rgba(244, 114, 182, 0.22);
+}
+
 .backup-minimal-dialog {
   position: relative;
   width: 100%;

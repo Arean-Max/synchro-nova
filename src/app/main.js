@@ -1588,7 +1588,7 @@ async function handleAction(action) {
 
     case "confirm-create-backup": {
       const input = document.getElementById("custom-backup-name-input");
-      const name = input?.value?.trim() || viewState.backupName?.trim() || "";
+      const name = input?.value?.trim() || viewState.backupName?.trim() || input?.getAttribute("placeholder") || "";
       viewState.showBackupNameModal = false;
       viewState.backupName = "";
       clearImpactBannerTimer();
@@ -1600,6 +1600,7 @@ async function handleAction(action) {
         viewState.backups = backups;
         viewState.selectedBackup = backups[0]?.id || "";
         updateMain();
+        showToastBanner(t("backupNotificationTitle"), t("backupSuccess") || (lang() === "ru" ? "Снимок системы успешно создан" : "System snapshot created successfully"), "safe");
       }
       return null;
     }
