@@ -282,7 +282,7 @@ p, .description {
 
 .workspace {
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
+  grid-template-columns: 264px minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -324,7 +324,7 @@ p, .description {
   flex-direction: column;
   min-width: 0;
   height: 100%;
-  padding: 24px 14px 16px;
+  padding: 20px 12px 16px;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-subtle);
   transition: padding 260ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -339,25 +339,28 @@ p, .description {
 
 .nav-indicator {
   position: absolute;
-  left: 0;
+  left: 5px;
   top: 0;
-  width: 4px;
+  width: 3px;
   height: var(--nav-indicator-height, 24px);
   border-radius: 999px;
   background: var(--ui-accent, #ffffff);
-  box-shadow: 0 0 10px var(--ui-accent-glow, rgba(255, 255, 255, 0.4));
+  box-shadow: 0 0 8px var(--ui-accent-glow, rgba(255, 255, 255, 0.45));
   transform: translate3d(0, var(--nav-indicator-y, 0), 0);
   transition:
     transform 170ms cubic-bezier(0.16, 1, 0.3, 1),
     height 170ms cubic-bezier(0.16, 1, 0.3, 1),
     opacity 120ms ease;
   will-change: transform, height;
+  pointer-events: none;
 }
 
 .brand {
-  display: block;
-  min-height: 72px;
-  margin: 0 4px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  margin: 0 4px 12px;
   transition: margin 260ms ease, min-height 260ms ease;
 }
 
@@ -381,9 +384,9 @@ p, .description {
 
 .brand-lockup {
   width: 100%;
-  max-width: 190px;
+  max-width: 172px;
   height: auto;
-  aspect-ratio: 205 / 126;
+  aspect-ratio: 874 / 450;
   margin: 0 auto;
 }
 
@@ -429,8 +432,8 @@ p, .description {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 6px 14px;
-  min-height: 28px;
+  margin: 0 4px 10px;
+  min-height: 24px;
 }
 
 .nav-section-head .nav-label {
@@ -587,6 +590,15 @@ p, .description {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.nav-list::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {
@@ -616,10 +628,11 @@ p, .description {
   align-items: center;
   gap: 12px;
   width: 100%;
-  min-height: 52px;
-  height: 52px;
-  margin-top: auto;
-  padding: 0 18px;
+  min-height: 44px;
+  height: 44px;
+  margin-top: 8px;
+  flex-shrink: 0;
+  padding: 0 16px;
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
@@ -627,7 +640,7 @@ p, .description {
   text-align: left;
   cursor: pointer;
   box-sizing: border-box;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 500;
   transition: color 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
@@ -692,21 +705,28 @@ p, .description {
   min-height: 32px;
   height: 32px;
   flex-shrink: 0;
-  padding: 0 14px 0 46px;
+  padding: 0 10px 0 28px;
   background: transparent;
   border: 1px solid transparent;
   border-radius: 8px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   text-align: left;
-  cursor: default;
+  cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   box-sizing: border-box;
   transition: color 120ms ease, background 120ms ease;
+}
+
+.nav-sub-item span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .nav-sub-item:hover {

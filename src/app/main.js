@@ -307,6 +307,7 @@ function showToastBanner(title, impactText, category = "safe") {
 
 function showSettingHelpBanner(key) {
   const titles = {
+    macTrafficLights: t("macTrafficLights"),
     eacAutoProtect: t("eacAutoProtect"),
     autostartWindows: t("startWithWindows"),
     closeToTray: t("closeToTray"),
@@ -700,6 +701,7 @@ async function switchLanguage(nextLang) {
     if (span) span.textContent = t("exit");
   }
   updateSidebarUpdateWidgetDom();
+  updateNavState();
 
   const page = pageDefs[activePage];
   const title = document.querySelector(".page-header h1");

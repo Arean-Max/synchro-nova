@@ -650,3 +650,22 @@ test("Notification Coverage: all 22 languages translate all notification and toa
     }
   }
 });
+
+
+test("Settings and Help Banners: all 22 languages translate macTrafficLights, eacAutoProtect, and theme card names", async () => {
+  const { supportedLanguages, translate } = await import("../src/app/core/i18n.js");
+  const { THEMES } = await import("../src/app/ui/themes.js");
+
+  for (const { code } of supportedLanguages) {
+    const t = (k) => translate(code, k);
+    assert.ok(t("macTrafficLights") && t("macTrafficLights") !== "macTrafficLights", `[${code}] missing macTrafficLights`);
+    assert.ok(t("help_macTrafficLights") && t("help_macTrafficLights") !== "help_macTrafficLights", `[${code}] missing help_macTrafficLights`);
+    assert.ok(t("eacAutoProtect") && t("eacAutoProtect") !== "eacAutoProtect", `[${code}] missing eacAutoProtect`);
+    assert.ok(t("help_eacAutoProtect") && t("help_eacAutoProtect") !== "help_eacAutoProtect", `[${code}] missing help_eacAutoProtect`);
+
+    for (const theme of THEMES) {
+      const themeName = t("theme_" + theme.id);
+      assert.ok(themeName && themeName !== "theme_" + theme.id, `[${code}] missing theme_${theme.id}`);
+    }
+  }
+});
