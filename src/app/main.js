@@ -2503,7 +2503,9 @@ async function boot() {
   const shouldDisableAnim = Boolean(appState.settings?.disableAnimations);
   document.body.classList.toggle("no-animations", shouldDisableAnim);
 
+  const splashAllowed = await invokeCommand("consume_intro_splash").catch(() => false);
   const shouldSkipSplash = Boolean(
+    !splashAllowed ||
     appState.settings?.disableSplash ||
     appState.settings?.disableAnimations ||
     appState.settings?.startMinimized

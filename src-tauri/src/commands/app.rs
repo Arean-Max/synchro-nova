@@ -81,21 +81,21 @@ pub fn start_window_drag(window: Window) {
 }
 
 #[tauri::command]
+pub fn consume_intro_splash(state: State<'_, RuntimeState>) -> bool {
+    !state.splash_consumed.swap(true, std::sync::atomic::Ordering::SeqCst)
+}
+
+#[tauri::command]
 pub fn close_window(window: Window) {
     let app = window.app_handle().clone();
     let state = app.state::<crate::RuntimeState>();
     if let Ok(snapshot) = state.snapshot() {
-        if snapshot.settings.zero_daemon_mode {
+        if !snapshot.settings.close_to_tray {
             state.signal_shutdown();
             std::process::exit(0);
         }
-        if snapshot.settings.close_to_tray {
-            crate::destroy_main_window(&app);
-            return;
-        }
     }
-    state.signal_shutdown();
-    std::process::exit(0);
+    crate::destroy_main_window(&app);
 }
 
 #[tauri::command]

@@ -133,6 +133,7 @@ pub fn configure_main_window(window: &tauri::WebviewWindow) {
 }
 
 pub fn destroy_main_window(app: &tauri::AppHandle) {
+    platform::fullscreen_watcher::set_user_summoned(false);
     if let Some(window) = app.get_webview_window("main") {
         #[cfg(target_os = "windows")]
         let _ = window.with_webview(|webview| {
@@ -195,6 +196,9 @@ pub fn run() {
 
             let runtime = RuntimeState::load(app.handle())?;
             let initial = runtime.snapshot()?;
+            if initial.settings.start_minimized || initial.settings.disable_splash {
+                runtime.splash_consumed.store(true, std::sync::atomic::Ordering::SeqCst);
+            }
             if initial.settings.auto_backup_on_start {
                 let _ = commands::storage::create_backup_file(
                     &runtime.backups_dir,
@@ -220,6 +224,7 @@ pub fn run() {
             if !initial.settings.start_minimized {
                 let _ = create_main_window(app.handle());
             } else {
+                
                 trim_process_memory();
             }
 
@@ -259,10 +264,6 @@ pub fn run() {
                     }
 
                     if let Ok(snapshot) = state.snapshot() {
-                        if snapshot.settings.zero_daemon_mode {
-                            state.signal_shutdown();
-                            std::process::exit(0);
-                        }
                         if snapshot.settings.close_to_tray {
                             api.prevent_close();
                             destroy_main_window(window.app_handle());
@@ -301,6 +302,7 @@ pub fn run() {
             commands::toggle_window_maximize,
             commands::start_window_drag,
             commands::close_window,
+            commands::consume_intro_splash,
             commands::exit_app,
             commands::restart_as_admin,
             commands::trim_memory,

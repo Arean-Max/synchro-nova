@@ -282,6 +282,7 @@ pub struct RuntimeState {
     pub configs_dir: PathBuf,
     pub data: Mutex<PersistedState>,
     pub exiting: Arc<AtomicBool>,
+    pub splash_consumed: AtomicBool,
     pub trimmer_sync: Arc<TrimmerSync>,
 }
 
@@ -314,6 +315,7 @@ impl RuntimeState {
             configs_dir,
             data: Mutex::new(data),
             exiting: Arc::new(AtomicBool::new(false)),
+            splash_consumed: AtomicBool::new(false),
             trimmer_sync: Arc::new(TrimmerSync {
                 exited: Mutex::new(false),
                 condvar: Condvar::new(),
