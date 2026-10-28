@@ -42,7 +42,8 @@ try {
 } catch {}
 @{ nv = $nv; amd = $amd; wu = $wu } | ConvertTo-Json -Compress
 "#;
-    let mut cmd = std::process::Command::new("powershell.exe");
+    let ps_path = crate::domain::tweaks::runner::resolve_system_program("powershell");
+    let mut cmd = std::process::Command::new(&ps_path);
     cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script]);
     use std::os::windows::process::CommandExt;
     cmd.creation_flags(0x08000000);

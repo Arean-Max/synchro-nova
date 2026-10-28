@@ -36,7 +36,8 @@ pub fn create_system_restore_point(description: &str) -> bool {
             safe_desc
         );
 
-        let mut child = Command::new("powershell.exe");
+        let ps_path = crate::domain::tweaks::runner::resolve_system_program("powershell");
+        let mut child = Command::new(&ps_path);
         child.args([
             "-NoProfile",
             "-NonInteractive",

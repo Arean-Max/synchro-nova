@@ -5,8 +5,8 @@ use tauri::{AppHandle, State};
 use crate::app::state::{
     checked_child_json_path, clean_display_name, display_name_from_stem, file_timestamp,
     read_json_file, safe_file_stem, unique_available_stem, unique_id, unix_now,
-    write_new_json_file, BackupEntry, BackupFile, ConfigEntry, ConfigFile, PersistedState,
-    RuntimeState, MAX_STORAGE_ENTRIES, MAX_STORAGE_SCAN_ENTRIES,
+    validate_json_file, write_new_json_file, BackupEntry, BackupFile, ConfigEntry, ConfigFile,
+    PersistedState, RuntimeState, MAX_STORAGE_ENTRIES, MAX_STORAGE_SCAN_ENTRIES,
 };
 use crate::domain::color::apply_color_transform;
 use crate::domain::tweaks::{
@@ -55,6 +55,9 @@ pub fn read_backup_entries(dir: &Path) -> Result<Vec<BackupEntry>, String> {
         if path.extension().and_then(|ext| ext.to_str()) != Some("json") {
             continue;
         }
+        if validate_json_file(&path).is_err() {
+            continue;
+        }
         if let Ok(file) = read_json_file::<BackupFile>(&path) {
             let id = path
                 .file_stem()
@@ -85,6 +88,9 @@ pub fn read_config_entries(dir: &Path) -> Result<Vec<ConfigEntry>, String> {
         let entry = entry.map_err(|error| format!("Failed to read config entry: {error}"))?;
         let path = entry.path();
         if path.extension().and_then(|ext| ext.to_str()) != Some("json") {
+            continue;
+        }
+        if validate_json_file(&path).is_err() {
             continue;
         }
         if let Ok(file) = read_json_file::<ConfigFile>(&path) {

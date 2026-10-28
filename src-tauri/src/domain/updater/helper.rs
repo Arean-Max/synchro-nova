@@ -108,7 +108,22 @@ pub fn validate_target_path(target: &Path) -> Result<(), String> {
     Ok(())
 }
 
-pub fn verify_payload_integrity(payload: &Path, expected_sha: Option<&str>) -> Result<(), String> {
+pub fn validate_payload_path(payload: &Path) -> Result<(), String> {
+    let update_dir = super::client::get_update_dir();
+    let canonical_dir = update_dir
+        .canonicalize()
+        .unwrap_or_else(|_| update_dir.clone());
+    let canonical_payload = payload
+        .canonicalize()
+        .unwrap_or_else(|_| payload.to_path_buf());
+
+    if !canonical_payload.starts_with(&canonical_dir) {
+        return Err("Payload must reside within the authenticated Synchro update directory".to_string());
+    }
+    Ok(())
+}
+
+pub fn verify_payload_integrity(payload: &Path, expected_sha: &str) -> Result<(), String> {
     if !payload.is_file() {
         return Err(format!("Payload file does not exist at '{}'", payload.display()));
     }
@@ -129,24 +144,27 @@ pub fn verify_payload_integrity(payload: &Path, expected_sha: Option<&str>) -> R
         return Err("Payload is not a valid Windows PE binary (missing MZ header)".to_string());
     }
 
-    if let Some(expected) = expected_sha {
-        let actual_hash = crate::infra::hash::sha256_file(payload)
-            .map_err(|e| format!("Failed to compute payload SHA-256: {}", e))?
-            .to_lowercase();
-        if actual_hash != expected.to_lowercase() {
-            return Err(format!(
-                "Payload SHA-256 mismatch inside helper: expected {}, got {}",
-                expected, actual_hash
-            ));
-        }
-        log("HELPER", &format!("Payload SHA-256 verified inside helper: {}", actual_hash));
+    let expected = expected_sha.trim().to_lowercase();
+    if expected.len() != 64 || !expected.chars().all(|c| c.is_ascii_hexdigit()) {
+        return Err("Malformed expected SHA-256 parameter".to_string());
     }
+
+    let actual_hash = crate::infra::hash::sha256_file(payload)
+        .map_err(|e| format!("Failed to compute payload SHA-256: {}", e))?
+        .to_lowercase();
+    if actual_hash != expected {
+        return Err(format!(
+            "Payload SHA-256 mismatch inside helper: expected {}, got {}",
+            expected, actual_hash
+        ));
+    }
+    log("HELPER", &format!("Payload SHA-256 verified inside helper: {}", actual_hash));
 
     #[cfg(target_os = "windows")]
     {
         let payload_signed = crate::platform::ffi::verify_embedded_signature(payload);
         if !payload_signed {
-            log("HELPER_WARN", "Payload is not digitally signed; proceeding with hash verification");
+            log("HELPER_WARN", "Payload is not digitally signed; proceeding with verified SHA-256 hash");
         }
     }
 
@@ -180,7 +198,20 @@ pub fn run_updater_helper(args: &[String]) {
         std::process::exit(1);
     }
 
-    if let Err(e) = verify_payload_integrity(&parsed.payload, parsed.expected_sha256.as_deref()) {
+    if let Err(e) = validate_payload_path(&parsed.payload) {
+        log("HELPER_ERR", &format!("Payload location rejected: {}", e));
+        std::process::exit(1);
+    }
+
+    let expected_sha = match parsed.expected_sha256.as_deref() {
+        Some(sha) if !sha.is_empty() => sha,
+        _ => {
+            log("HELPER_ERR", "Missing required --expected-sha256 hash parameter");
+            std::process::exit(1);
+        }
+    };
+
+    if let Err(e) = verify_payload_integrity(&parsed.payload, expected_sha) {
         log("HELPER_ERR", &format!("Payload integrity verification rejected: {}", e));
         std::process::exit(1);
     }
