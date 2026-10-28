@@ -131,7 +131,7 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
                         }
 
                         if app_handle.get_webview_window("main").is_some() {
-                            crate::destroy_main_window(&app_handle);
+                            crate::hide_main_window(&app_handle);
                             AUTO_HIDDEN_BY_GAME.store(true, Ordering::SeqCst);
                         }
 

@@ -95,7 +95,7 @@ pub fn close_window(window: Window) {
             std::process::exit(0);
         }
     }
-    crate::destroy_main_window(&app);
+    crate::hide_main_window(&app);
 }
 
 #[tauri::command]

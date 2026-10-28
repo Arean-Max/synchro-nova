@@ -65,7 +65,20 @@ pub fn show_main_window(app: &AppHandle) {
         let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
-    } else {
-        let _ = crate::create_main_window(app);
+        #[cfg(target_os = "windows")]
+        if let Ok(hwnd) = window.hwnd() {
+            unsafe {
+                crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
+            }
+        }
+    } else if let Ok(window) = crate::create_main_window(app) {
+        let _ = window.show();
+        let _ = window.set_focus();
+        #[cfg(target_os = "windows")]
+        if let Ok(hwnd) = window.hwnd() {
+            unsafe {
+                crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
+            }
+        }
     }
 }
