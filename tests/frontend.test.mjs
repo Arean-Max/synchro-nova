@@ -381,6 +381,73 @@ test("Layout Navigation: renderNavList generates smooth-scroll sub-buttons under
   setActivePage("color");
 });
 
+test("Scroll Spy: resolveActiveSubSection accurately resolves boundaries including terminal section", async () => {
+  const { resolveActiveSubSection } = await import("../src/app/ui/layout.js");
+
+  const mockSections = [
+    { id: "sec-1", getBoundingClientRect: () => ({ top: 0 }) },
+    { id: "sec-2", getBoundingClientRect: () => ({ top: 400 }) },
+    { id: "sec-3", getBoundingClientRect: () => ({ top: 800 }) },
+    { id: "sec-4", getBoundingClientRect: () => ({ top: 1200 }) }
+  ];
+
+  // At top of container
+  const topPanel = {
+    scrollHeight: 2000,
+    clientHeight: 600,
+    scrollTop: 0,
+    getBoundingClientRect: () => ({ top: 0 })
+  };
+  assert.strictEqual(resolveActiveSubSection(topPanel, mockSections), "sec-1");
+
+  // Middle section
+  const midPanel = {
+    scrollHeight: 2000,
+    clientHeight: 600,
+    scrollTop: 750,
+    getBoundingClientRect: () => ({ top: 0 })
+  };
+  const midSections = [
+    { id: "sec-1", getBoundingClientRect: () => ({ top: -750 }) },
+    { id: "sec-2", getBoundingClientRect: () => ({ top: -350 }) },
+    { id: "sec-3", getBoundingClientRect: () => ({ top: 50 }) },
+    { id: "sec-4", getBoundingClientRect: () => ({ top: 450 }) }
+  ];
+  assert.strictEqual(resolveActiveSubSection(midPanel, midSections), "sec-3");
+
+  // Scrolled to bottom: terminal section must be selected even if its top > 100
+  const bottomPanel = {
+    scrollHeight: 2000,
+    clientHeight: 600,
+    scrollTop: 1400,
+    getBoundingClientRect: () => ({ top: 0 })
+  };
+  const bottomSections = [
+    { id: "sec-1", getBoundingClientRect: () => ({ top: -1400 }) },
+    { id: "sec-2", getBoundingClientRect: () => ({ top: -1000 }) },
+    { id: "sec-3", getBoundingClientRect: () => ({ top: -600 }) },
+    { id: "sec-4", getBoundingClientRect: () => ({ top: 250 }) }
+  ];
+  assert.strictEqual(resolveActiveSubSection(bottomPanel, bottomSections), "sec-4");
+});
+
+test("Layout Navigation: terminal sub-item maintains active state", async () => {
+  const { renderNavList } = await import("../src/app/ui/layout.js");
+  const { setActivePage } = await import("../src/app/core/state.js");
+  const t = (k) => k;
+
+  setActivePage("tweaks");
+  const html = renderNavList(t, {
+    sidebarCollapsed: false,
+    activeSubSection: "tweak-section-background"
+  });
+
+  assert.ok(html.includes('class="nav-sub-item active" type="button" data-action="scroll-to-section" data-section="tweak-section-background"'));
+  assert.ok(html.includes('class="nav-sub-item " type="button" data-action="scroll-to-section" data-section="tweak-section-network"'));
+
+  setActivePage("color");
+});
+
 test("Backups Page: configs block is removed from backups page", async () => {
   const { renderBackupsPage } = await import("../src/app/features/storage/page.js");
   const t = (k) => k;

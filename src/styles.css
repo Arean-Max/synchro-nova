@@ -2913,6 +2913,11 @@ p, .description {
   scroll-behavior: smooth;
 }
 
+.tweaks-page .scroll-panel,
+.drivers-page .scroll-panel {
+  padding-bottom: 240px;
+}
+
 .scroll-panel::-webkit-scrollbar {
   width: 8px;
 }
