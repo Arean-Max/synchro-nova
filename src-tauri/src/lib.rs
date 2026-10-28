@@ -168,6 +168,17 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
             .shadow(false)
             .center()
             .additional_browser_args("--enable-low-end-device-mode --renderer-process-limit=1 --disable-features=Translate,OptimizationHints,MediaRouter,BackForwardCache --js-flags=--max-old-space-size=32 --disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --disable-extensions --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disk-cache-size=10485760 --media-cache-size=10485760")
+            .on_navigation(|url| {
+                let scheme = url.scheme();
+                if scheme == "tauri" || scheme == "asset" || url.host_str() == Some("localhost") || url.as_str() == "about:blank" {
+                    true
+                } else {
+                    if url.scheme() == "https" {
+                        let _ = crate::platform::ffi::open_path_or_url(url.as_str());
+                    }
+                    false
+                }
+            })
             .build()
         {
             Ok(window) => {
@@ -216,6 +227,11 @@ pub fn run() {
             domain::color::start_color_guard();
             infra::screenshot::start_global_screenshot_listener();
             let _ = settings::set_autostart(app.handle(), initial.settings.autostart_windows);
+            #[cfg(target_os = "windows")]
+            {
+                domain::tweaks::gaming::clean_legacy_rust_ifeo();
+                domain::tweaks::system::clean_legacy_csrss_override();
+            }
             if initial.settings.eac_auto_protect {
                 let _ = platform::security_guard::fix_anticheat_integrity();
             }

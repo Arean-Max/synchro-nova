@@ -25,6 +25,14 @@ pub fn resolve_system_program(program: &str) -> std::path::PathBuf {
     {
         if let Ok(system_root) = std::env::var("SystemRoot") {
             let system32 = std::path::PathBuf::from(system_root).join("System32");
+
+            if program.eq_ignore_ascii_case("powershell") || program.eq_ignore_ascii_case("powershell.exe") {
+                let ps = system32.join("WindowsPowerShell").join("v1.0").join("powershell.exe");
+                if ps.is_file() {
+                    return ps;
+                }
+            }
+
             let candidate = if program.ends_with(".exe") {
                 system32.join(program)
             } else {
