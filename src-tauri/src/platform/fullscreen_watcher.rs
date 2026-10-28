@@ -147,9 +147,7 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
                             *lock = FullscreenState::NormalDesktop;
                         }
 
-                        if AUTO_HIDDEN_BY_GAME.swap(false, Ordering::SeqCst) {
-                            crate::app::tray::show_main_window(&app_handle);
-                        }
+                        AUTO_HIDDEN_BY_GAME.store(false, Ordering::SeqCst);
                     } else if current == FullscreenState::DisplayStateUnknown {
                         if let Ok(mut lock) = CURRENT_STATE.lock() {
                             *lock = FullscreenState::NormalDesktop;
