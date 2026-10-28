@@ -43,7 +43,7 @@ import { router } from "./core/router.js";
 import { renderApplyModal } from "./features/tweaks/applyModal.js";
 import { icon } from "./ui/icons.js";
 import { button } from "./ui/components.js";
-import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget, renderNavList } from "./ui/layout.js";
+import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget, renderNavList, resolveActiveSubSection } from "./ui/layout.js";
 import { escapeHtml } from "./core/html.js";
 import { runIntroSplash } from "./ui/splash.js";
 import { applyTheme, resolveSeasonalTheme } from "./ui/themes.js";
@@ -226,6 +226,24 @@ function updateNavState() {
   syncNavIndicator();
 }
 
+function bindScrollSpy(scrollPanelEl) {
+  if (!scrollPanelEl) return;
+  scrollPanelEl.onscroll = () => {
+    if (viewState.scrollLockUntil && Date.now() < viewState.scrollLockUntil) {
+      return;
+    }
+    const sections = scrollPanelEl.querySelectorAll(".tweak-group, .driver-group, .settings-group");
+    if (!sections.length) return;
+    const currentId = resolveActiveSubSection(scrollPanelEl, sections);
+    if (currentId && currentId !== viewState.activeSubSection) {
+      viewState.activeSubSection = currentId;
+      document.querySelectorAll(".nav-sub-item").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-section") === currentId);
+      });
+    }
+  };
+}
+
 function updateMain() {
   const page = pageDefs[activePage];
   const title = document.querySelector(".page-header h1");
@@ -257,24 +275,7 @@ function updateMain() {
   updateNavState();
   const scrollPanelEl = document.querySelector(".scroll-panel");
   if (scrollPanelEl) {
-    scrollPanelEl.onscroll = () => {
-      const sections = scrollPanelEl.querySelectorAll(".tweak-group, .driver-group, .settings-group");
-      if (!sections.length) return;
-      const panelTop = scrollPanelEl.getBoundingClientRect().top;
-      let currentId = null;
-      sections.forEach((sec) => {
-        const rect = sec.getBoundingClientRect();
-        if (rect.top - panelTop <= 80) {
-          currentId = sec.id;
-        }
-      });
-      if (currentId && currentId !== viewState.activeSubSection) {
-        viewState.activeSubSection = currentId;
-        document.querySelectorAll(".nav-sub-item").forEach((btn) => {
-          btn.classList.toggle("active", btn.getAttribute("data-section") === currentId);
-        });
-      }
-    };
+    bindScrollSpy(scrollPanelEl);
   }
   renderBackupModalDom();
   renderApplyModalDom();
@@ -1520,14 +1521,16 @@ async function handleClick(event) {
       });
       const targetEl = document.getElementById(sectionId);
       if (targetEl) {
+        viewState.scrollLockUntil = Date.now() + 600;
         const scrollPanel = targetEl.closest(".scroll-panel") || document.querySelector(".scroll-panel") || document.querySelector(".page-body");
+        const behavior = appState.settings?.disableAnimations ? "auto" : "smooth";
         if (scrollPanel) {
           const prevBehavior = scrollPanel.style.scrollBehavior;
-          scrollPanel.style.scrollBehavior = "auto";
-          targetEl.scrollIntoView({ behavior: "auto", block: "start" });
+          scrollPanel.style.scrollBehavior = behavior;
+          targetEl.scrollIntoView({ behavior, block: "start" });
           scrollPanel.style.scrollBehavior = prevBehavior;
         } else {
-          targetEl.scrollIntoView({ behavior: "auto", block: "start" });
+          targetEl.scrollIntoView({ behavior, block: "start" });
         }
       }
     }
@@ -2409,24 +2412,7 @@ function render() {
   updateNavState();
   const scrollPanelEl = document.querySelector(".scroll-panel");
   if (scrollPanelEl) {
-    scrollPanelEl.onscroll = () => {
-      const sections = scrollPanelEl.querySelectorAll(".tweak-group, .driver-group, .settings-group");
-      if (!sections.length) return;
-      const panelTop = scrollPanelEl.getBoundingClientRect().top;
-      let currentId = null;
-      sections.forEach((sec) => {
-        const rect = sec.getBoundingClientRect();
-        if (rect.top - panelTop <= 80) {
-          currentId = sec.id;
-        }
-      });
-      if (currentId && currentId !== viewState.activeSubSection) {
-        viewState.activeSubSection = currentId;
-        document.querySelectorAll(".nav-sub-item").forEach((btn) => {
-          btn.classList.toggle("active", btn.getAttribute("data-section") === currentId);
-        });
-      }
-    };
+    bindScrollSpy(scrollPanelEl);
   }
   renderBackupModalDom();
   renderApplyModalDom();

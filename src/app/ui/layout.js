@@ -224,3 +224,39 @@ export function renderShell(viewState, t) {
   const collapsed = viewState?.sidebarCollapsed ? " sidebar-collapsed" : "";
   return `${renderTitlebar(t)}<div class="workspace${collapsed}">${renderSidebar(t, viewState)}${renderMain(viewState, t)}</div>`;
 }
+
+export function resolveActiveSubSection(scrollPanelEl, sections) {
+  if (!scrollPanelEl || !sections || !sections.length) return null;
+
+  const scrollHeight = Number(scrollPanelEl.scrollHeight) || 0;
+  const clientHeight = Number(scrollPanelEl.clientHeight) || 0;
+  const scrollTop = Number(scrollPanelEl.scrollTop) || 0;
+
+  const hasOverflow = scrollHeight > clientHeight + 10;
+  const isAtBottom = hasOverflow && (scrollHeight - scrollTop - clientHeight <= 48);
+
+  if (scrollTop <= 10) {
+    return sections[0].id || null;
+  }
+  if (isAtBottom) {
+    return sections[sections.length - 1].id || null;
+  }
+
+  const panelTop = typeof scrollPanelEl.getBoundingClientRect === "function"
+    ? scrollPanelEl.getBoundingClientRect().top
+    : 0;
+
+  let currentId = null;
+  for (let i = 0; i < sections.length; i++) {
+    const sec = sections[i];
+    const top = typeof sec.getBoundingClientRect === "function"
+      ? sec.getBoundingClientRect().top
+      : (sec.offsetTop ?? 0);
+    if (top - panelTop <= 100) {
+      currentId = sec.id;
+    }
+  }
+
+  return currentId || sections[0].id || null;
+}
+
