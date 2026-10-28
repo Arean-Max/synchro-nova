@@ -27,6 +27,7 @@ unsafe extern "system" {
     ) -> i32;
     pub fn CloseHandle(handle: *mut c_void) -> i32;
     pub fn SetProcessWorkingSetSize(process: *mut c_void, min: usize, max: usize) -> i32;
+    pub fn K32EmptyWorkingSet(process: *mut c_void) -> i32;
     pub fn SetProcessDEPPolicy(flags: u32) -> i32;
     pub fn SetSearchPathMode(flags: u32) -> i32;
     pub fn SetDefaultDllDirectories(flags: u32) -> i32;

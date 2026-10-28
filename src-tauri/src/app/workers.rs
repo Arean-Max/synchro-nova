@@ -15,12 +15,40 @@ pub fn spawn_memory_trimmer(trimmer_sync: Arc<TrimmerSync>) {
                 Ok(l) => l,
                 Err(e) => e.into_inner(),
             };
+            if *lock {
+                return;
+            }
+
+            let (l2, _) = match trimmer_sync.condvar.wait_timeout(lock, std::time::Duration::from_millis(2000)) {
+                Ok(res) => res,
+                Err(e) => e.into_inner(),
+            };
+            lock = l2;
+            if *lock {
+                return;
+            }
+            trim_process_memory();
+
+            let (l3, _) = match trimmer_sync.condvar.wait_timeout(lock, std::time::Duration::from_millis(3000)) {
+                Ok(res) => res,
+                Err(e) => e.into_inner(),
+            };
+            lock = l3;
+            if *lock {
+                return;
+            }
+            trim_process_memory();
+
             while !*lock {
-                let next_lock = match trimmer_sync.condvar.wait(lock) {
+                let (next_lock, _) = match trimmer_sync.condvar.wait_timeout(lock, std::time::Duration::from_secs(20)) {
                     Ok(res) => res,
                     Err(e) => e.into_inner(),
                 };
                 lock = next_lock;
+                if *lock {
+                    break;
+                }
+                trim_process_memory();
             }
         })
         .ok();

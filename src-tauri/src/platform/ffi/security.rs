@@ -160,12 +160,6 @@ pub fn kill_webview_process() {}
 
 #[cfg(target_os = "windows")]
 pub fn trim_working_set() {
-    use std::sync::Mutex;
-    use std::time::{Duration, Instant};
-
-    static CHILD_CACHE: Mutex<(Vec<u32>, Option<Instant>)> = Mutex::new((Vec::new(), None));
-    const CACHE_TTL: Duration = Duration::from_secs(10);
-
     unsafe {
         if crate::platform::security_guard::is_protected_game_running().is_some() {
             return;
@@ -180,85 +174,7 @@ pub fn trim_working_set() {
         }
         enable_process_eco_qos();
         let _ = winapi::SetProcessWorkingSetSize(winapi::GetCurrentProcess(), usize::MAX, usize::MAX);
-
-        let mut webview_pids = Vec::new();
-        let mut needs_refresh = true;
-
-        if let Ok(guard) = CHILD_CACHE.lock() {
-            if let Some(updated_at) = guard.1 {
-                if updated_at.elapsed() < CACHE_TTL && guard.0.len() >= 3 {
-                    webview_pids = guard.0.clone();
-                    needs_refresh = false;
-                }
-            }
-        }
-
-        if needs_refresh {
-            let my_pid = winapi::GetCurrentProcessId();
-            let snapshot = winapi::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-            if !snapshot.is_null() && snapshot as isize != -1 {
-                let mut entry = ProcessEntry32W::default();
-                let mut all_entries = Vec::with_capacity(128);
-
-                if winapi::Process32FirstW(snapshot, &mut entry) != 0 {
-                    loop {
-                        all_entries.push((
-                            entry.th32_process_id,
-                            entry.th32_parent_process_id,
-                            entry.sz_exe_file,
-                        ));
-                        if winapi::Process32NextW(snapshot, &mut entry) == 0 {
-                            break;
-                        }
-                    }
-                }
-                winapi::CloseHandle(snapshot);
-
-                let mut tree_pids = Vec::with_capacity(8);
-                tree_pids.push(my_pid);
-
-                let mut discovered = Vec::with_capacity(8);
-                let root_wv = REGISTERED_WEBVIEW_PID.load(std::sync::atomic::Ordering::Relaxed);
-                if root_wv != 0 && root_wv != my_pid {
-                    tree_pids.push(root_wv);
-                    discovered.push(root_wv);
-                }
-
-                let mut added = true;
-
-                while added {
-                    added = false;
-                    for (pid, parent_pid, exe_name) in &all_entries {
-                        if *pid != my_pid && !tree_pids.contains(pid) && tree_pids.contains(parent_pid) {
-                            let len = exe_name.iter().position(|&c| c == 0).unwrap_or(exe_name.len());
-                            let name = String::from_utf16_lossy(&exe_name[..len]);
-                            if name.eq_ignore_ascii_case("msedgewebview2.exe") {
-                                tree_pids.push(*pid);
-                                discovered.push(*pid);
-                                added = true;
-                            }
-                        }
-                    }
-                }
-
-                if let Ok(mut guard) = CHILD_CACHE.lock() {
-                    *guard = (discovered.clone(), Some(Instant::now()));
-                }
-                webview_pids = discovered;
-            }
-        }
-
-        const PROCESS_TRIM_ACCESS: u32 = 0x0100 | 0x0400;
-        for pid in webview_pids {
-            if !crate::platform::security_guard::is_safe_child_pid(pid) {
-                continue;
-            }
-            let handle = winapi::OpenProcess(PROCESS_TRIM_ACCESS, 0, pid);
-            if !handle.is_null() && handle as isize != -1 {
-                let _ = winapi::SetProcessWorkingSetSize(handle, usize::MAX, usize::MAX);
-                winapi::CloseHandle(handle);
-            }
-        }
+        let _ = winapi::K32EmptyWorkingSet(winapi::GetCurrentProcess());
     }
 }
 
