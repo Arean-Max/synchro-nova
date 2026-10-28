@@ -333,6 +333,19 @@ p, .description {
   will-change: width, transform;
 }
 
+
+.sidebar > * {
+  position: relative;
+  z-index: 2;
+}
+
+.sidebar::before,
+.sidebar::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  transition: opacity 300ms cubic-bezier(0.16, 1, 0.3, 1), transform 300ms ease;
+}
 .workspace.sidebar-collapsed .sidebar {
   padding: 18px 10px 14px;
 }
@@ -7332,6 +7345,125 @@ body.paused-animations *::after {
   z-index: 50;
 }
 
+
+/* ========================================================================= */
+/* Thematic Sidebar Patterns & Watermarks (Non-default Themes)              */
+/* ========================================================================= */
+
+/* Default Theme: strictly clean, no patterns */
+[data-theme="default"] .sidebar::before,
+[data-theme="default"] .sidebar::after,
+:root:not([data-theme]) .sidebar::before,
+:root:not([data-theme]) .sidebar::after {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* Winter: Hexagonal ice crystal lattice + bottom-left frost snowflake cluster */
+[data-theme="winter"] .sidebar::before {
+  inset: 0;
+  z-index: 1;
+  opacity: 0.6;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80' fill='none'%3E%3Cpath d='M40 0 L80 23.09 L80 69.28 L40 92.38 L0 69.28 L0 23.09 Z' stroke='%2338bdf8' stroke-width='0.75' stroke-opacity='0.12' fill='none'/%3E%3Cpath d='M40 10 L40 70 M10 40 L70 40 M19 19 L61 61 M19 61 L61 19' stroke='%2338bdf8' stroke-width='0.6' stroke-opacity='0.09'/%3E%3Ccircle cx='40' cy='40' r='2' fill='%237dd3fc' fill-opacity='0.25'/%3E%3Ccircle cx='0' cy='0' r='1.5' fill='%2338bdf8' fill-opacity='0.2'/%3E%3Ccircle cx='80' cy='0' r='1.5' fill='%2338bdf8' fill-opacity='0.2'/%3E%3Ccircle cx='0' cy='80' r='1.5' fill='%2338bdf8' fill-opacity='0.2'/%3E%3Ccircle cx='80' cy='80' r='1.5' fill='%2338bdf8' fill-opacity='0.2'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 80px 80px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
+}
+
+[data-theme="winter"] .sidebar::after {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 270px;
+  z-index: 1;
+  opacity: 0.72;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 280' fill='none'%3E%3Cg transform='translate(50, 230)' stroke='%2338bdf8' stroke-width='1.5' stroke-linecap='round' stroke-opacity='0.24'%3E%3Cline x1='0' y1='-85' x2='0' y2='85'/%3E%3Cline x1='-73.6' y1='-42.5' x2='73.6' y2='42.5'/%3E%3Cline x1='-73.6' y1='42.5' x2='73.6' y2='-42.5'/%3E%3Cpath d='M0 -55 L-15 -70 M0 -55 L15 -70 M0 -32 L-18 -48 M0 -32 L18 -48'/%3E%3Cpath d='M-47 -27 L-62 -42 M-47 -27 L-39 -47'/%3E%3Cpath d='M47 27 L62 42 M47 27 L39 47'/%3E%3Cpath d='M-47 27 L-62 42 M-47 27 L-39 47'/%3E%3Cpath d='M47 -27 L62 -42 M47 -27 L39 -47'/%3E%3Cpolygon points='0,-14 12,-7 12,7 0,14 -12,7 -12,-7' fill='%2338bdf8' fill-opacity='0.08' stroke='%2338bdf8' stroke-width='1'/%3E%3C/g%3E%3Cg transform='translate(170, 130)' stroke='%237dd3fc' stroke-width='1.2' stroke-linecap='round' stroke-opacity='0.16'%3E%3Cline x1='0' y1='-42' x2='0' y2='42'/%3E%3Cline x1='-36.4' y1='-21' x2='36.4' y2='21'/%3E%3Cline x1='-36.4' y1='21' x2='36.4' y2='-21'/%3E%3Cpath d='M0 -26 L-8 -34 M0 -26 L8 -34'/%3E%3Cpath d='M-26 -15 L-34 -23 M-26 -15 L-22 -26'/%3E%3Cpath d='M26 15 L34 23 M26 15 L22 26'/%3E%3Ccircle cx='0' cy='0' r='5' fill='%237dd3fc' fill-opacity='0.15'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: bottom left;
+  background-size: 240px 280px;
+}
+
+/* Autumn: Organic leaf venation + golden maple foliage cluster */
+[data-theme="autumn"] .sidebar::before {
+  inset: 0;
+  z-index: 1;
+  opacity: 0.52;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72' fill='none'%3E%3Cpath d='M36 12 C38 18 44 20 48 16 C48 24 54 28 58 26 C54 34 56 38 62 40 C56 42 52 46 52 52 C46 48 42 50 40 56 L36 64 L32 56 C30 50 26 48 20 52 C20 46 16 42 10 40 C16 38 18 34 14 26 C18 28 24 24 24 16 C28 20 34 18 36 12 Z' stroke='%23f59e0b' stroke-width='0.8' stroke-opacity='0.14' fill='%23f59e0b' fill-opacity='0.03'/%3E%3Cpath d='M36 64 L36 22 M36 48 L44 40 M36 48 L28 40 M36 36 L46 28 M36 36 L26 28' stroke='%23fbbf24' stroke-width='0.6' stroke-opacity='0.16'/%3E%3Ccircle cx='68' cy='8' r='1.5' fill='%23ea580c' fill-opacity='0.22'/%3E%3Ccircle cx='6' cy='68' r='1.5' fill='%23f59e0b' fill-opacity='0.22'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 72px 72px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
+}
+
+[data-theme="autumn"] .sidebar::after {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 270px;
+  z-index: 1;
+  opacity: 0.68;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 280' fill='none'%3E%3Cg transform='translate(55, 235) rotate(-22)' stroke='%23f59e0b' stroke-width='1.4' stroke-linejoin='round' fill='%23f59e0b' fill-opacity='0.05'%3E%3Cpath d='M0 -90 C6 -75 22 -72 32 -82 C30 -62 48 -54 58 -58 C48 -38 54 -30 68 -24 C54 -20 46 -10 46 4 C32 -4 24 0 20 14 L0 32 L-20 14 C-24 0 -32 -4 -46 4 C-46 -10 -54 -20 -68 -24 C-54 -30 -48 -38 -58 -58 C-48 -54 -30 -62 -32 -82 C-22 -72 -6 -75 0 -90 Z' stroke-opacity='0.24'/%3E%3Cpath d='M0 32 L0 -60 M0 -15 L22 -35 M0 -15 L-22 -35 M0 -35 L18 -52 M0 -35 L-18 -52' stroke='%23fbbf24' stroke-width='1.1' stroke-opacity='0.26' fill='none'/%3E%3C/g%3E%3Cg transform='translate(175, 125) rotate(35)' stroke='%23ea580c' stroke-width='1.1' stroke-linejoin='round' fill='%23ea580c' fill-opacity='0.04'%3E%3Cpath d='M0 -50 C4 -42 12 -40 18 -46 C16 -34 26 -30 32 -32 C26 -21 30 -16 38 -13 C30 -11 26 -5 26 2 L0 18 L-26 2 C-26 -5 -30 -11 -38 -13 C-30 -16 -26 -21 -32 -32 C-26 -30 -16 -34 -18 -46 C-12 -40 -4 -42 0 -50 Z' stroke-opacity='0.2'/%3E%3Cline x1='0' y1='18' x2='0' y2='-35' stroke='%23f59e0b' stroke-width='0.9' stroke-opacity='0.22' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: bottom left;
+  background-size: 240px 280px;
+}
+
+/* Spring: 5-petal sakura flowers + blooming cherry branch */
+[data-theme="spring"] .sidebar::before {
+  inset: 0;
+  z-index: 1;
+  opacity: 0.58;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64' fill='none'%3E%3Cg transform='translate(32,32)' stroke='%23f472b6' stroke-width='0.75' stroke-opacity='0.16' fill='%23f472b6' fill-opacity='0.04'%3E%3Cpath d='M0 0 C-4 -8 -10 -14 -6 -18 C-3 -21 0 -18 0 -16 C0 -18 3 -21 6 -18 C10 -14 4 -8 0 0 Z'/%3E%3Cpath d='M0 0 C-4 -8 -10 -14 -6 -18 C-3 -21 0 -18 0 -16 C0 -18 3 -21 6 -18 C10 -14 4 -8 0 0 Z' transform='rotate(72)'/%3E%3Cpath d='M0 0 C-4 -8 -10 -14 -6 -18 C-3 -21 0 -18 0 -16 C0 -18 3 -21 6 -18 C10 -14 4 -8 0 0 Z' transform='rotate(144)'/%3E%3Cpath d='M0 0 C-4 -8 -10 -14 -6 -18 C-3 -21 0 -18 0 -16 C0 -18 3 -21 6 -18 C10 -14 4 -8 0 0 Z' transform='rotate(216)'/%3E%3Cpath d='M0 0 C-4 -8 -10 -14 -6 -18 C-3 -21 0 -18 0 -16 C0 -18 3 -21 6 -18 C10 -14 4 -8 0 0 Z' transform='rotate(288)'/%3E%3Ccircle cx='0' cy='0' r='2' fill='%23fbcfe8' fill-opacity='0.3' stroke='none'/%3E%3C/g%3E%3Cpath d='M8 12 C12 8 16 10 14 16 C12 18 8 16 8 12 Z' fill='%23f472b6' fill-opacity='0.08' stroke='%23f472b6' stroke-width='0.5' stroke-opacity='0.16'/%3E%3Cpath d='M54 52 C58 48 62 50 60 56 C58 58 54 56 54 52 Z' fill='%23f472b6' fill-opacity='0.08' stroke='%23f472b6' stroke-width='0.5' stroke-opacity='0.16'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
+}
+
+[data-theme="spring"] .sidebar::after {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 270px;
+  z-index: 1;
+  opacity: 0.72;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 280' fill='none'%3E%3Cpath d='M-10 260 Q40 230 65 190 T140 120 T190 70' stroke='%23e879f9' stroke-width='2' stroke-linecap='round' stroke-opacity='0.24'/%3E%3Cpath d='M65 190 Q95 180 125 195' stroke='%23e879f9' stroke-width='1.4' stroke-linecap='round' stroke-opacity='0.18'/%3E%3Cpath d='M140 120 Q160 110 185 115' stroke='%23e879f9' stroke-width='1.2' stroke-linecap='round' stroke-opacity='0.16'/%3E%3Cg transform='translate(65, 190)' stroke='%23f472b6' stroke-width='1.2' stroke-opacity='0.26' fill='%23f472b6' fill-opacity='0.08'%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(72)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(144)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(216)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(288)'/%3E%3Ccircle cx='0' cy='0' r='3.5' fill='%23fdf2f8' fill-opacity='0.4' stroke='none'/%3E%3C/g%3E%3Cg transform='translate(140, 120) scale(0.75)' stroke='%23f472b6' stroke-width='1.2' stroke-opacity='0.22' fill='%23f472b6' fill-opacity='0.06'%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(72)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(144)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(216)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(288)'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: bottom left;
+  background-size: 240px 280px;
+}
+
+/* Summer: Ocean waves & solar diamond rays + radiant sunburst crest */
+[data-theme="summer"] .sidebar::before {
+  inset: 0;
+  z-index: 1;
+  opacity: 0.52;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60' fill='none'%3E%3Cpath d='M0 20 Q15 12 30 20 T60 20' stroke='%2306b6d4' stroke-width='0.75' stroke-opacity='0.14'/%3E%3Cpath d='M0 45 Q15 37 30 45 T60 45' stroke='%2306b6d4' stroke-width='0.75' stroke-opacity='0.14'/%3E%3Cpath d='M30 3 L32 7 L36 9 L32 11 L30 15 L28 11 L24 9 L28 7 Z' fill='%2322d3ee' fill-opacity='0.18'/%3E%3Cpath d='M10 32 L11.5 35 L14.5 36.5 L11.5 38 L10 41 L8.5 38 L5.5 36.5 L8.5 35 Z' fill='%2367e8f9' fill-opacity='0.15'/%3E%3Cpath d='M50 32 L51.5 35 L54.5 36.5 L51.5 38 L50 41 L48.5 38 L45.5 36.5 L48.5 35 Z' fill='%2367e8f9' fill-opacity='0.15'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 60px 60px;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
+}
+
+[data-theme="summer"] .sidebar::after {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 270px;
+  z-index: 1;
+  opacity: 0.68;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 280' fill='none'%3E%3Cg transform='translate(50, 240)' stroke='%2306b6d4' stroke-opacity='0.24'%3E%3Ccircle cx='0' cy='0' r='45' stroke-width='1.5' stroke-dasharray='4 6'/%3E%3Ccircle cx='0' cy='0' r='32' stroke-width='1.2' fill='%2306b6d4' fill-opacity='0.04'/%3E%3Cpath d='M0 -55 L0 -65 M38.9 -38.9 L46 -46 M55 0 L65 0 M38.9 38.9 L46 46 M0 55 L0 65 M-38.9 38.9 L-46 46 M-55 0 L-65 0 M-38.9 -38.9 L-46 -46' stroke-width='1.5' stroke-linecap='round'/%3E%3C/g%3E%3Cpath d='M-10 210 Q60 175 140 210 T260 210' stroke='%2322d3ee' stroke-width='1.4' stroke-opacity='0.2'/%3E%3Cpath d='M-10 180 Q50 150 120 180 T260 180' stroke='%2338bdf8' stroke-width='1.2' stroke-opacity='0.16'/%3E%3Cpath d='M160 100 L162.5 106 L168.5 108.5 L162.5 111 L160 117 L157.5 111 L151.5 108.5 L157.5 106 Z' fill='%2367e8f9' fill-opacity='0.26'/%3E%3Cpath d='M110 70 L111.5 74 L115.5 75.5 L111.5 77 L110 81 L108.5 77 L104.5 75.5 L108.5 74 Z' fill='%2367e8f9' fill-opacity='0.22'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: bottom left;
+  background-size: 240px 280px;
+}
+
+/* Collapsed sidebar refinement */
+.workspace.sidebar-collapsed .sidebar::after {
+  opacity: 0.35;
+  background-size: 160px 180px;
+}
 /* Base Theme Palettes */
 [data-theme="winter"] {
   --bg-sidebar: #090e17;
