@@ -107,9 +107,6 @@ pub fn kill_webview_process() {}
 #[cfg(target_os = "windows")]
 pub fn trim_working_set() {
     unsafe {
-        if crate::platform::security_guard::is_protected_game_running().is_some() {
-            return;
-        }
 
         let mut heaps = [std::ptr::null_mut(); 32];
         let count = winapi::GetProcessHeaps(32, heaps.as_mut_ptr());

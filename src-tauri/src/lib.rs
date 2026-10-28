@@ -163,9 +163,9 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
             .maximizable(false)
             .decorations(false)
             .shadow(false)
-            .visible(false)
+            .visible(true)
             .center()
-            .additional_browser_args("--enable-low-end-device-mode --renderer-process-limit=1 --disable-features=Translate,OptimizationHints,MediaRouter,BackForwardCache --js-flags=--max-old-space-size=32 --disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --disable-extensions --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disk-cache-size=10485760 --media-cache-size=10485760")
+            .additional_browser_args("--enable-low-end-device-mode --renderer-process-limit=1 --disable-features=Translate,OptimizationHints,MediaRouter,BackForwardCache,InterestFeedContentSuggestions --disable-breakpad --js-flags=--max-old-space-size=16 --disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --disable-extensions --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disable-logging --disk-cache-size=5242880 --media-cache-size=5242880")
             .on_navigation(|url| {
                 let scheme = url.scheme();
                 let host = url.host_str().unwrap_or("");
@@ -188,6 +188,8 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
         {
             Ok(window) => {
                 configure_main_window(&window);
+                let _ = window.show();
+                let _ = window.set_focus();
                 return Ok(window);
             }
             Err(e) => {
@@ -240,10 +242,10 @@ pub fn run() {
             }
             app::tray::install_tray(app.handle())?;
 
-            if !initial.settings.start_minimized {
-                let _ = create_main_window(app.handle());
-            } else {
-                
+            let window = create_main_window(app.handle())?;
+            if initial.settings.start_minimized {
+                suspend_window_webview(&window.as_ref().window());
+                let _ = window.hide();
                 trim_process_memory();
             }
 
