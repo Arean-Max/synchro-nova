@@ -132,27 +132,24 @@ pub fn configure_main_window(window: &tauri::WebviewWindow) {
     let _ = window.center();
 }
 
-pub fn destroy_main_window(app: &tauri::AppHandle) {
+pub fn hide_main_window(app: &tauri::AppHandle) {
     platform::fullscreen_watcher::set_user_summoned(false);
     if let Some(window) = app.get_webview_window("main") {
-        #[cfg(target_os = "windows")]
-        let _ = window.with_webview(|webview| {
-            let controller = webview.controller();
-            unsafe {
-                let _ = controller.Close();
-            }
-        });
-        let _ = window.destroy();
-        #[cfg(target_os = "windows")]
-        platform::ffi::kill_webview_process();
+        suspend_window_webview(&window.as_ref().window());
+        let _ = window.hide();
         trim_process_memory();
     }
+}
+
+pub fn destroy_main_window(app: &tauri::AppHandle) {
+    hide_main_window(app);
 }
 
 pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::WebviewWindow> {
     for attempt in 0..10 {
         if let Some(existing) = app.get_webview_window("main") {
             configure_main_window(&existing);
+            resume_window_webview(&existing.as_ref().window());
             let _ = existing.unminimize();
             let _ = existing.show();
             let _ = existing.set_focus();
@@ -166,14 +163,22 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
             .maximizable(false)
             .decorations(false)
             .shadow(false)
+            .visible(false)
             .center()
             .additional_browser_args("--enable-low-end-device-mode --renderer-process-limit=1 --disable-features=Translate,OptimizationHints,MediaRouter,BackForwardCache --js-flags=--max-old-space-size=32 --disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --disable-extensions --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disk-cache-size=10485760 --media-cache-size=10485760")
             .on_navigation(|url| {
                 let scheme = url.scheme();
-                if scheme == "tauri" || scheme == "asset" || url.host_str() == Some("localhost") || url.as_str() == "about:blank" {
+                let host = url.host_str().unwrap_or("");
+                let is_local_origin = scheme == "tauri"
+                    || scheme == "asset"
+                    || host == "localhost"
+                    || host.ends_with(".localhost")
+                    || url.as_str() == "about:blank";
+
+                if is_local_origin {
                     true
                 } else {
-                    if url.scheme() == "https" {
+                    if scheme == "http" || scheme == "https" {
                         let _ = crate::platform::ffi::open_path_or_url(url.as_str());
                     }
                     false
@@ -183,8 +188,6 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
         {
             Ok(window) => {
                 configure_main_window(&window);
-                let _ = window.show();
-                let _ = window.set_focus();
                 return Ok(window);
             }
             Err(e) => {
@@ -282,7 +285,7 @@ pub fn run() {
                     if let Ok(snapshot) = state.snapshot() {
                         if snapshot.settings.close_to_tray {
                             api.prevent_close();
-                            destroy_main_window(window.app_handle());
+                            hide_main_window(window.app_handle());
                         } else {
                             state.signal_shutdown();
                             std::process::exit(0);
