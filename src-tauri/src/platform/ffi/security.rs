@@ -107,17 +107,8 @@ pub fn kill_webview_process() {}
 #[cfg(target_os = "windows")]
 pub fn trim_working_set() {
     unsafe {
-
-        let mut heaps = [std::ptr::null_mut(); 32];
-        let count = winapi::GetProcessHeaps(32, heaps.as_mut_ptr());
-        for i in 0..count.min(32) as usize {
-            if !heaps[i].is_null() {
-                let _ = winapi::HeapCompact(heaps[i], 0);
-            }
-        }
         enable_process_eco_qos();
         let _ = winapi::SetProcessWorkingSetSize(winapi::GetCurrentProcess(), usize::MAX, usize::MAX);
-        let _ = winapi::K32EmptyWorkingSet(winapi::GetCurrentProcess());
     }
 }
 

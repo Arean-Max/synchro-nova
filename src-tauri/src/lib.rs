@@ -165,7 +165,7 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
             .shadow(false)
             .visible(true)
             .center()
-            .additional_browser_args("--enable-low-end-device-mode --renderer-process-limit=1 --disable-features=Translate,OptimizationHints,MediaRouter,BackForwardCache,InterestFeedContentSuggestions --disable-breakpad --js-flags=--max-old-space-size=16 --disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --disable-extensions --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disable-logging --disk-cache-size=5242880 --media-cache-size=5242880")
+            .additional_browser_args("--enable-low-end-device-mode --renderer-process-limit=1 --disable-features=Translate,OptimizationHints,MediaRouter,BackForwardCache,InterestFeedContentSuggestions --disable-breakpad --disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --disable-extensions --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disable-logging --disk-cache-size=5242880 --media-cache-size=5242880")
             .on_navigation(|url| {
                 let scheme = url.scheme();
                 let host = url.host_str().unwrap_or("");
