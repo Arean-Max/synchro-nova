@@ -106,7 +106,7 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
             let mut consecutive_desktop_ticks = 0u32;
 
             while !shutdown.load(Ordering::Relaxed) {
-                let sleep_ms = if consecutive_fullscreen_ticks >= 4 { 1000 } else { 250 };
+                let sleep_ms = if consecutive_fullscreen_ticks >= 4 { 4000 } else { 250 };
                 std::thread::sleep(Duration::from_millis(sleep_ms));
 
                 let is_fs = is_foreground_fullscreen();
