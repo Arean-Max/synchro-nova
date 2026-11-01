@@ -765,3 +765,33 @@ test("Backup Modal: renders full structured dialog card with header, input label
   assert.ok(html.includes('data-action="dismiss-backup-modal"'), "Must have cancel / dismiss action");
   assert.ok(html.includes('data-action="confirm-create-backup"'), "Must have confirm-create-backup action");
 });
+
+
+test("Color Template Modal: omits gray subtext and layout eliminates empty black bands", async () => {
+  const { renderTemplateConfigModal } = await import("../src/app/features/color/page.js");
+  const { translate } = await import("../src/app/core/i18n.js");
+  const fsMod = await import("node:fs");
+
+  const t = (k) => translate("ru", k);
+  const appState = {
+    settings: { templateOverrides: {} },
+    color: { saturation: 100, hue: 0, contrast: 100, gamma: 100 }
+  };
+  const viewState = {
+    editingTemplate: "balanced",
+    editingTemplateName: "Сбалансированный",
+    editingTemplateColor: { saturation: 160, hue: -5, contrast: 97, gamma: 118 }
+  };
+
+  const html = renderTemplateConfigModal(appState, viewState, t);
+
+  assert.ok(html.includes("template-config-dialog"), "Must render template-config-dialog");
+  assert.ok(html.includes('id="template-config-title"'), "Must render title");
+  assert.ok(!html.includes("configureTemplateDesc"), "Must NOT contain configureTemplateDesc");
+  assert.ok(!html.includes("<p>"), "Must NOT contain gray subtext paragraph in modal header");
+
+  const css = fsMod.readFileSync("src/styles.css", "utf8");
+  assert.ok(css.includes(".template-config-title p") && css.includes("display: none"), "CSS must hide template-config-title p");
+  assert.ok(css.includes(".global-color-grid") && css.includes("flex: 1 1 auto;"), "CSS must allow global-color-grid to stretch");
+  assert.ok(css.includes(".smart-tips-backdrop") && css.includes("backdrop-filter: blur(12px);"), "Backdrop must provide smooth frosted blur");
+});
