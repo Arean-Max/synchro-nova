@@ -7534,23 +7534,6 @@ body.paused-animations *::after {
 }
 
 /* =========================================================================
-   Window Titlebar Ambient Horizon Light Lines
-   ========================================================================= */
-
-[data-theme="winter"] .titlebar {
-  border-bottom: 1px solid rgba(56, 189, 248, 0.18);
-}
-[data-theme="autumn"] .titlebar {
-  border-bottom: 1px solid rgba(245, 158, 11, 0.18);
-}
-[data-theme="spring"] .titlebar {
-  border-bottom: 1px solid rgba(244, 114, 182, 0.18);
-}
-[data-theme="summer"] .titlebar {
-  border-bottom: 1px solid rgba(6, 182, 212, 0.18);
-}
-
-/* =========================================================================
    Ambient Backdrops
    ========================================================================= */
 
