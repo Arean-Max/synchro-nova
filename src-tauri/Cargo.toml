@@ -42,9 +42,9 @@ strip = false
 codegen-units = 1
 debug = false
 incremental = false
-lto = true
+lto = "thin"
 opt-level = "z"
-overflow-checks = false
+overflow-checks = true
 panic = "abort"
 strip = true
 

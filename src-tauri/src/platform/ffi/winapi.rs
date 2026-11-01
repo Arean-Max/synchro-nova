@@ -157,6 +157,23 @@ unsafe extern "system" {
     pub fn GetClassNameW(hwnd: *mut c_void, lp_class_name: *mut u16, n_max_count: i32) -> i32;
     pub fn IsWindowVisible(hwnd: *mut c_void) -> i32;
     pub fn IsIconic(hwnd: *mut c_void) -> i32;
+    pub fn SetWinEventHook(
+        event_min: u32,
+        event_max: u32,
+        hmod_win_event: *mut c_void,
+        pfn_win_event_proc: WinEventProc,
+        id_process: u32,
+        id_thread: u32,
+        dw_flags: u32,
+    ) -> *mut c_void;
+    pub fn UnhookWinEvent(h_win_event_hook: *mut c_void) -> i32;
+    pub fn SetTimer(
+        hwnd: *mut c_void,
+        id_event: usize,
+        elapse: u32,
+        timer_func: Option<unsafe extern "system" fn(*mut c_void, u32, usize, u32)>,
+    ) -> usize;
+    pub fn KillTimer(hwnd: *mut c_void, id_event: usize) -> i32;
 }
 
 #[cfg(target_os = "windows")]
