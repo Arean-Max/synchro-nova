@@ -7373,118 +7373,130 @@ body.paused-animations *::after {
   opacity: 0 !important;
 }
 
-/* Winter: Hexagonal ice crystal lattice + bottom-left frost snowflake cluster */
+/* =========================================================================
+   Sidebar Atmospheric Directional Glow (Upper ambient spotlight)
+   ========================================================================= */
+
 [data-theme="winter"] .sidebar::before {
   inset: 0;
   z-index: 1;
-  opacity: 0.6;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80' fill='none'%3E%3Cpath d='M40 0 L80 23.09 L80 69.28 L40 92.38 L0 69.28 L0 23.09 Z' stroke='%2338bdf8' stroke-width='0.75' stroke-opacity='0.12' fill='none'/%3E%3Cpath d='M40 10 L40 70 M10 40 L70 40 M19 19 L61 61 M19 61 L61 19' stroke='%2338bdf8' stroke-width='0.6' stroke-opacity='0.09'/%3E%3Ccircle cx='40' cy='40' r='2' fill='%237dd3fc' fill-opacity='0.25'/%3E%3Ccircle cx='0' cy='0' r='1.5' fill='%2338bdf8' fill-opacity='0.2'/%3E%3Ccircle cx='80' cy='0' r='1.5' fill='%2338bdf8' fill-opacity='0.2'/%3E%3Ccircle cx='0' cy='80' r='1.5' fill='%2338bdf8' fill-opacity='0.2'/%3E%3Ccircle cx='80' cy='80' r='1.5' fill='%2338bdf8' fill-opacity='0.2'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 80px 80px;
-  mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
-  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
+  opacity: 0.75;
+  background: radial-gradient(ellipse 140% 50% at 50% 0%, rgba(56, 189, 248, 0.14), transparent 75%);
+  pointer-events: none;
 }
 
+[data-theme="autumn"] .sidebar::before {
+  inset: 0;
+  z-index: 1;
+  opacity: 0.75;
+  background: radial-gradient(ellipse 140% 50% at 50% 0%, rgba(245, 158, 11, 0.14), transparent 75%);
+  pointer-events: none;
+}
+
+[data-theme="spring"] .sidebar::before {
+  inset: 0;
+  z-index: 1;
+  opacity: 0.75;
+  background: radial-gradient(ellipse 140% 50% at 50% 0%, rgba(244, 114, 182, 0.14), transparent 75%);
+  pointer-events: none;
+}
+
+[data-theme="summer"] .sidebar::before {
+  inset: 0;
+  z-index: 1;
+  opacity: 0.75;
+  background: radial-gradient(ellipse 140% 50% at 50% 0%, rgba(6, 182, 212, 0.14), transparent 75%);
+  pointer-events: none;
+}
+
+/* =========================================================================
+   Sidebar Thematic Watermarks (Elegantly masked in bottom-left corner)
+   ========================================================================= */
+
+/* Winter: Crystalline snowflake cluster with frost stars */
 [data-theme="winter"] .sidebar::after {
   left: 0;
   bottom: 0;
   width: 100%;
-  height: 270px;
+  height: 260px;
   z-index: 1;
-  opacity: 0.72;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 280' fill='none'%3E%3Cg transform='translate(50, 230)' stroke='%2338bdf8' stroke-width='1.5' stroke-linecap='round' stroke-opacity='0.24'%3E%3Cline x1='0' y1='-85' x2='0' y2='85'/%3E%3Cline x1='-73.6' y1='-42.5' x2='73.6' y2='42.5'/%3E%3Cline x1='-73.6' y1='42.5' x2='73.6' y2='-42.5'/%3E%3Cpath d='M0 -55 L-15 -70 M0 -55 L15 -70 M0 -32 L-18 -48 M0 -32 L18 -48'/%3E%3Cpath d='M-47 -27 L-62 -42 M-47 -27 L-39 -47'/%3E%3Cpath d='M47 27 L62 42 M47 27 L39 47'/%3E%3Cpath d='M-47 27 L-62 42 M-47 27 L-39 47'/%3E%3Cpath d='M47 -27 L62 -42 M47 -27 L39 -47'/%3E%3Cpolygon points='0,-14 12,-7 12,7 0,14 -12,7 -12,-7' fill='%2338bdf8' fill-opacity='0.08' stroke='%2338bdf8' stroke-width='1'/%3E%3C/g%3E%3Cg transform='translate(170, 130)' stroke='%237dd3fc' stroke-width='1.2' stroke-linecap='round' stroke-opacity='0.16'%3E%3Cline x1='0' y1='-42' x2='0' y2='42'/%3E%3Cline x1='-36.4' y1='-21' x2='36.4' y2='21'/%3E%3Cline x1='-36.4' y1='21' x2='36.4' y2='-21'/%3E%3Cpath d='M0 -26 L-8 -34 M0 -26 L8 -34'/%3E%3Cpath d='M-26 -15 L-34 -23 M-26 -15 L-22 -26'/%3E%3Cpath d='M26 15 L34 23 M26 15 L22 26'/%3E%3Ccircle cx='0' cy='0' r='5' fill='%237dd3fc' fill-opacity='0.15'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.16;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 260' fill='none'%3E%3Cg transform='translate(55, 215)' stroke='%2338bdf8' stroke-width='1.5' stroke-linecap='round' stroke-opacity='0.9'%3E%3Cline x1='0' y1='-80' x2='0' y2='80'/%3E%3Cline x1='-69.3' y1='-40' x2='69.3' y2='40'/%3E%3Cline x1='-69.3' y1='40' x2='69.3' y2='-40'/%3E%3Cpath d='M0 -50 L-14 -64 M0 -50 L14 -64 M0 -30 L-16 -46 M0 -30 L16 -46'/%3E%3Cpath d='M-43 -25 L-57 -39 M-43 -25 L-35 -43'/%3E%3Cpath d='M43 25 L57 39 M43 25 L35 43'/%3E%3Cpath d='M-43 25 L-57 39 M-43 25 L-35 43'/%3E%3Cpath d='M43 -25 L57 -39 M43 -25 L35 -43'/%3E%3Cpolygon points='0,-12 10.4,-6 10.4,6 0,12 -10.4,6 -10.4,-6' fill='%2338bdf8' fill-opacity='0.15' stroke='%2338bdf8' stroke-width='1'/%3E%3C/g%3E%3Cg transform='translate(165, 120)' stroke='%237dd3fc' stroke-width='1.2' stroke-linecap='round' stroke-opacity='0.8'%3E%3Cline x1='0' y1='-36' x2='0' y2='36'/%3E%3Cline x1='-31.2' y1='-18' x2='31.2' y2='18'/%3E%3Cline x1='-31.2' y1='18' x2='31.2' y2='-18'/%3E%3Cpath d='M0 -22 L-7 -29 M0 -22 L7 -29'/%3E%3Ccircle cx='0' cy='0' r='4' fill='%237dd3fc' fill-opacity='0.25'/%3E%3C/g%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: bottom left;
-  background-size: 240px 280px;
+  background-size: 240px 260px;
+  mask-image: radial-gradient(circle at 0% 100%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 55%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 0% 100%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 55%, transparent 80%);
+  pointer-events: none;
 }
 
-/* Autumn: Organic leaf venation + golden maple foliage cluster */
-[data-theme="autumn"] .sidebar::before {
-  inset: 0;
-  z-index: 1;
-  opacity: 0.52;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72' fill='none'%3E%3Cpath d='M36 12 C38 18 44 20 48 16 C48 24 54 28 58 26 C54 34 56 38 62 40 C56 42 52 46 52 52 C46 48 42 50 40 56 L36 64 L32 56 C30 50 26 48 20 52 C20 46 16 42 10 40 C16 38 18 34 14 26 C18 28 24 24 24 16 C28 20 34 18 36 12 Z' stroke='%23f59e0b' stroke-width='0.8' stroke-opacity='0.14' fill='%23f59e0b' fill-opacity='0.03'/%3E%3Cpath d='M36 64 L36 22 M36 48 L44 40 M36 48 L28 40 M36 36 L46 28 M36 36 L26 28' stroke='%23fbbf24' stroke-width='0.6' stroke-opacity='0.16'/%3E%3Ccircle cx='68' cy='8' r='1.5' fill='%23ea580c' fill-opacity='0.22'/%3E%3Ccircle cx='6' cy='68' r='1.5' fill='%23f59e0b' fill-opacity='0.22'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 72px 72px;
-  mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
-  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
-}
-
+/* Autumn: Golden maple & oak leaf venation cluster */
 [data-theme="autumn"] .sidebar::after {
   left: 0;
   bottom: 0;
   width: 100%;
-  height: 270px;
+  height: 260px;
   z-index: 1;
-  opacity: 0.68;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 280' fill='none'%3E%3Cg transform='translate(55, 235) rotate(-22)' stroke='%23f59e0b' stroke-width='1.4' stroke-linejoin='round' fill='%23f59e0b' fill-opacity='0.05'%3E%3Cpath d='M0 -90 C6 -75 22 -72 32 -82 C30 -62 48 -54 58 -58 C48 -38 54 -30 68 -24 C54 -20 46 -10 46 4 C32 -4 24 0 20 14 L0 32 L-20 14 C-24 0 -32 -4 -46 4 C-46 -10 -54 -20 -68 -24 C-54 -30 -48 -38 -58 -58 C-48 -54 -30 -62 -32 -82 C-22 -72 -6 -75 0 -90 Z' stroke-opacity='0.24'/%3E%3Cpath d='M0 32 L0 -60 M0 -15 L22 -35 M0 -15 L-22 -35 M0 -35 L18 -52 M0 -35 L-18 -52' stroke='%23fbbf24' stroke-width='1.1' stroke-opacity='0.26' fill='none'/%3E%3C/g%3E%3Cg transform='translate(175, 125) rotate(35)' stroke='%23ea580c' stroke-width='1.1' stroke-linejoin='round' fill='%23ea580c' fill-opacity='0.04'%3E%3Cpath d='M0 -50 C4 -42 12 -40 18 -46 C16 -34 26 -30 32 -32 C26 -21 30 -16 38 -13 C30 -11 26 -5 26 2 L0 18 L-26 2 C-26 -5 -30 -11 -38 -13 C-30 -16 -26 -21 -32 -32 C-26 -30 -16 -34 -18 -46 C-12 -40 -4 -42 0 -50 Z' stroke-opacity='0.2'/%3E%3Cline x1='0' y1='18' x2='0' y2='-35' stroke='%23f59e0b' stroke-width='0.9' stroke-opacity='0.22' fill='none'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.16;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 260' fill='none'%3E%3Cg transform='translate(55, 215) rotate(-20)' stroke='%23f59e0b' stroke-width='1.4' stroke-linejoin='round' fill='%23f59e0b' fill-opacity='0.1'%3E%3Cpath d='M0 -85 C6 -70 20 -68 30 -78 C28 -58 45 -50 55 -54 C45 -35 50 -28 64 -22 C50 -18 43 -9 43 4 C30 -4 22 0 18 14 L0 30 L-18 14 C-22 0 -30 -4 -43 4 C-43 -9 -50 -18 -64 -22 C-50 -28 -45 -35 -55 -54 C-45 -50 -28 -58 -30 -78 C-20 -68 -6 -70 0 -85 Z' stroke-opacity='0.9'/%3E%3Cpath d='M0 30 L0 -55 M0 -12 L20 -32 M0 -12 L-20 -32 M0 -32 L16 -48 M0 -32 L-16 -48' stroke='%23fbbf24' stroke-width='1.1' stroke-opacity='0.9' fill='none'/%3E%3C/g%3E%3Cg transform='translate(165, 120) rotate(32)' stroke='%23ea580c' stroke-width='1.1' stroke-linejoin='round' fill='%23ea580c' fill-opacity='0.08'%3E%3Cpath d='M0 -45 C4 -38 10 -36 16 -41 C14 -30 23 -26 28 -28 C23 -18 26 -14 34 -11 C26 -9 23 -4 23 2 L0 16 L-23 2 C-23 -4 -26 -9 -34 -11 C-26 -14 -23 -18 -28 -28 C-23 -26 -14 -30 -16 -41 C-10 -36 -4 -38 0 -45 Z' stroke-opacity='0.8'/%3E%3Cline x1='0' y1='16' x2='0' y2='-30' stroke='%23f59e0b' stroke-width='0.9' stroke-opacity='0.8' fill='none'/%3E%3C/g%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: bottom left;
-  background-size: 240px 280px;
+  background-size: 240px 260px;
+  mask-image: radial-gradient(circle at 0% 100%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 55%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 0% 100%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 55%, transparent 80%);
+  pointer-events: none;
 }
 
-/* Spring: 5-petal sakura flowers + blooming cherry branch */
-[data-theme="spring"] .sidebar::before {
-  inset: 0;
-  z-index: 1;
-  opacity: 0.58;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64' fill='none'%3E%3Cg transform='translate(32,32)' stroke='%23f472b6' stroke-width='0.75' stroke-opacity='0.16' fill='%23f472b6' fill-opacity='0.04'%3E%3Cpath d='M0 0 C-4 -8 -10 -14 -6 -18 C-3 -21 0 -18 0 -16 C0 -18 3 -21 6 -18 C10 -14 4 -8 0 0 Z'/%3E%3Cpath d='M0 0 C-4 -8 -10 -14 -6 -18 C-3 -21 0 -18 0 -16 C0 -18 3 -21 6 -18 C10 -14 4 -8 0 0 Z' transform='rotate(72)'/%3E%3Cpath d='M0 0 C-4 -8 -10 -14 -6 -18 C-3 -21 0 -18 0 -16 C0 -18 3 -21 6 -18 C10 -14 4 -8 0 0 Z' transform='rotate(144)'/%3E%3Cpath d='M0 0 C-4 -8 -10 -14 -6 -18 C-3 -21 0 -18 0 -16 C0 -18 3 -21 6 -18 C10 -14 4 -8 0 0 Z' transform='rotate(216)'/%3E%3Cpath d='M0 0 C-4 -8 -10 -14 -6 -18 C-3 -21 0 -18 0 -16 C0 -18 3 -21 6 -18 C10 -14 4 -8 0 0 Z' transform='rotate(288)'/%3E%3Ccircle cx='0' cy='0' r='2' fill='%23fbcfe8' fill-opacity='0.3' stroke='none'/%3E%3C/g%3E%3Cpath d='M8 12 C12 8 16 10 14 16 C12 18 8 16 8 12 Z' fill='%23f472b6' fill-opacity='0.08' stroke='%23f472b6' stroke-width='0.5' stroke-opacity='0.16'/%3E%3Cpath d='M54 52 C58 48 62 50 60 56 C58 58 54 56 54 52 Z' fill='%23f472b6' fill-opacity='0.08' stroke='%23f472b6' stroke-width='0.5' stroke-opacity='0.16'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 64px 64px;
-  mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
-  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
-}
-
+/* Spring: Japanese sakura blooming branch */
 [data-theme="spring"] .sidebar::after {
   left: 0;
   bottom: 0;
   width: 100%;
-  height: 270px;
+  height: 260px;
   z-index: 1;
-  opacity: 0.72;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 280' fill='none'%3E%3Cpath d='M-10 260 Q40 230 65 190 T140 120 T190 70' stroke='%23e879f9' stroke-width='2' stroke-linecap='round' stroke-opacity='0.24'/%3E%3Cpath d='M65 190 Q95 180 125 195' stroke='%23e879f9' stroke-width='1.4' stroke-linecap='round' stroke-opacity='0.18'/%3E%3Cpath d='M140 120 Q160 110 185 115' stroke='%23e879f9' stroke-width='1.2' stroke-linecap='round' stroke-opacity='0.16'/%3E%3Cg transform='translate(65, 190)' stroke='%23f472b6' stroke-width='1.2' stroke-opacity='0.26' fill='%23f472b6' fill-opacity='0.08'%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(72)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(144)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(216)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(288)'/%3E%3Ccircle cx='0' cy='0' r='3.5' fill='%23fdf2f8' fill-opacity='0.4' stroke='none'/%3E%3C/g%3E%3Cg transform='translate(140, 120) scale(0.75)' stroke='%23f472b6' stroke-width='1.2' stroke-opacity='0.22' fill='%23f472b6' fill-opacity='0.06'%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(72)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(144)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(216)'/%3E%3Cpath d='M0 0 C-6 -12 -15 -21 -9 -27 C-4.5 -31.5 0 -27 0 -24 C0 -27 4.5 -31.5 9 -27 C15 -21 6 -12 0 0 Z' transform='rotate(288)'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.16;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 260' fill='none'%3E%3Cpath d='M-10 245 Q40 215 65 175 T140 105 T190 55' stroke='%23f472b6' stroke-width='2' stroke-linecap='round' stroke-opacity='0.8'/%3E%3Cpath d='M65 175 Q95 165 125 180' stroke='%23f472b6' stroke-width='1.4' stroke-linecap='round' stroke-opacity='0.7'/%3E%3Cg transform='translate(65, 175)' stroke='%23f472b6' stroke-width='1.2' stroke-opacity='0.9' fill='%23f472b6' fill-opacity='0.12'%3E%3Cpath d='M0 0 C-5 -10 -13 -18 -8 -23 C-4 -27 0 -23 0 -20 C0 -23 4 -27 8 -23 C13 -18 5 -10 0 0 Z'/%3E%3Cpath d='M0 0 C-5 -10 -13 -18 -8 -23 C-4 -27 0 -23 0 -20 C0 -23 4 -27 8 -23 C13 -18 5 -10 0 0 Z' transform='rotate(72)'/%3E%3Cpath d='M0 0 C-5 -10 -13 -18 -8 -23 C-4 -27 0 -23 0 -20 C0 -23 4 -27 8 -23 C13 -18 5 -10 0 0 Z' transform='rotate(144)'/%3E%3Cpath d='M0 0 C-5 -10 -13 -18 -8 -23 C-4 -27 0 -23 0 -20 C0 -23 4 -27 8 -23 C13 -18 5 -10 0 0 Z' transform='rotate(216)'/%3E%3Cpath d='M0 0 C-5 -10 -13 -18 -8 -23 C-4 -27 0 -23 0 -20 C0 -23 4 -27 8 -23 C13 -18 5 -10 0 0 Z' transform='rotate(288)'/%3E%3Ccircle cx='0' cy='0' r='3' fill='%23fbcfe8' fill-opacity='0.45' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: bottom left;
-  background-size: 240px 280px;
+  background-size: 240px 260px;
+  mask-image: radial-gradient(circle at 0% 100%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 55%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 0% 100%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 55%, transparent 80%);
+  pointer-events: none;
 }
 
-/* Summer: Ocean waves & solar diamond rays + radiant sunburst crest */
-[data-theme="summer"] .sidebar::before {
-  inset: 0;
-  z-index: 1;
-  opacity: 0.52;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60' fill='none'%3E%3Cpath d='M0 20 Q15 12 30 20 T60 20' stroke='%2306b6d4' stroke-width='0.75' stroke-opacity='0.14'/%3E%3Cpath d='M0 45 Q15 37 30 45 T60 45' stroke='%2306b6d4' stroke-width='0.75' stroke-opacity='0.14'/%3E%3Cpath d='M30 3 L32 7 L36 9 L32 11 L30 15 L28 11 L24 9 L28 7 Z' fill='%2322d3ee' fill-opacity='0.18'/%3E%3Cpath d='M10 32 L11.5 35 L14.5 36.5 L11.5 38 L10 41 L8.5 38 L5.5 36.5 L8.5 35 Z' fill='%2367e8f9' fill-opacity='0.15'/%3E%3Cpath d='M50 32 L51.5 35 L54.5 36.5 L51.5 38 L50 41 L48.5 38 L45.5 36.5 L48.5 35 Z' fill='%2367e8f9' fill-opacity='0.15'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 60px 60px;
-  mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
-  -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.7) 100%);
-}
-
+/* Summer: Solar radiant diamond crest & ocean ripples */
 [data-theme="summer"] .sidebar::after {
   left: 0;
   bottom: 0;
   width: 100%;
-  height: 270px;
+  height: 260px;
   z-index: 1;
-  opacity: 0.68;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 280' fill='none'%3E%3Cg transform='translate(50, 240)' stroke='%2306b6d4' stroke-opacity='0.24'%3E%3Ccircle cx='0' cy='0' r='45' stroke-width='1.5' stroke-dasharray='4 6'/%3E%3Ccircle cx='0' cy='0' r='32' stroke-width='1.2' fill='%2306b6d4' fill-opacity='0.04'/%3E%3Cpath d='M0 -55 L0 -65 M38.9 -38.9 L46 -46 M55 0 L65 0 M38.9 38.9 L46 46 M0 55 L0 65 M-38.9 38.9 L-46 46 M-55 0 L-65 0 M-38.9 -38.9 L-46 -46' stroke-width='1.5' stroke-linecap='round'/%3E%3C/g%3E%3Cpath d='M-10 210 Q60 175 140 210 T260 210' stroke='%2322d3ee' stroke-width='1.4' stroke-opacity='0.2'/%3E%3Cpath d='M-10 180 Q50 150 120 180 T260 180' stroke='%2338bdf8' stroke-width='1.2' stroke-opacity='0.16'/%3E%3Cpath d='M160 100 L162.5 106 L168.5 108.5 L162.5 111 L160 117 L157.5 111 L151.5 108.5 L157.5 106 Z' fill='%2367e8f9' fill-opacity='0.26'/%3E%3Cpath d='M110 70 L111.5 74 L115.5 75.5 L111.5 77 L110 81 L108.5 77 L104.5 75.5 L108.5 74 Z' fill='%2367e8f9' fill-opacity='0.22'/%3E%3C/svg%3E");
+  opacity: 0.16;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 260' fill='none'%3E%3Cg transform='translate(55, 215)' stroke='%2306b6d4' stroke-opacity='0.9'%3E%3Ccircle cx='0' cy='0' r='42' stroke-width='1.5' stroke-dasharray='4 5'/%3E%3Ccircle cx='0' cy='0' r='30' stroke-width='1.2' fill='%2306b6d4' fill-opacity='0.08'/%3E%3Cpath d='M0 -50 L0 -60 M35.3 -35.3 L42 -42 M50 0 L60 0 M35.3 35.3 L42 42 M0 50 L0 60 M-35.3 35.3 L-42 42 M-50 0 L-60 0 M-35.3 -35.3 L-42 -42' stroke-width='1.4' stroke-linecap='round'/%3E%3C/g%3E%3Cpath d='M-10 190 Q50 160 120 190 T250 190' stroke='%2322d3ee' stroke-width='1.4' stroke-opacity='0.7'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: bottom left;
-  background-size: 240px 280px;
+  background-size: 240px 260px;
+  mask-image: radial-gradient(circle at 0% 100%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 55%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 0% 100%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 55%, transparent 80%);
+  pointer-events: none;
 }
 
 /* Collapsed sidebar refinement */
 .workspace.sidebar-collapsed .sidebar::after {
-  opacity: 0.35;
-  background-size: 160px 180px;
+  opacity: 0.08;
+  background-size: 150px 160px;
 }
-/* Base Theme Palettes */
+
+/* =========================================================================
+   Base Theme Palettes (Deep obsidian / charcoal with atmospheric tints)
+   ========================================================================= */
+
 [data-theme="winter"] {
-  --bg-sidebar: #090e17;
-  --bg-main: #0c131f;
-  --bg-card: #111a2b;
-  --bg-card-strong: #162238;
-  --bg-field: #131d2e;
+  --bg-sidebar: #0b0f15;
+  --bg-main: #0d1219;
+  --bg-card: #131923;
+  --bg-card-strong: #192230;
+  --bg-field: #111722;
   --border-subtle: rgba(56, 189, 248, 0.16);
   --border-strong: rgba(56, 189, 248, 0.32);
   --text-secondary: #94a3b8;
@@ -7495,11 +7507,11 @@ body.paused-animations *::after {
 }
 
 [data-theme="autumn"] {
-  --bg-sidebar: #100b09;
-  --bg-main: #150f0c;
-  --bg-card: #1f1612;
-  --bg-card-strong: #291d17;
-  --bg-field: #201713;
+  --bg-sidebar: #0e0d0c;
+  --bg-main: #131110;
+  --bg-card: #1c1815;
+  --bg-card-strong: #25201c;
+  --bg-field: #181513;
   --border-subtle: rgba(245, 158, 11, 0.16);
   --border-strong: rgba(245, 158, 11, 0.32);
   --text-secondary: #a89f91;
@@ -7510,11 +7522,11 @@ body.paused-animations *::after {
 }
 
 [data-theme="spring"] {
-  --bg-sidebar: #0f0a14;
-  --bg-main: #140f1a;
-  --bg-card: #1c1424;
-  --bg-card-strong: #261b31;
-  --bg-field: #1e1526;
+  --bg-sidebar: #0d0b10;
+  --bg-main: #120f16;
+  --bg-card: #1a1620;
+  --bg-card-strong: #231c2b;
+  --bg-field: #16121c;
   --border-subtle: rgba(244, 114, 182, 0.16);
   --border-strong: rgba(244, 114, 182, 0.32);
   --text-secondary: #a79cb0;
@@ -7525,11 +7537,11 @@ body.paused-animations *::after {
 }
 
 [data-theme="summer"] {
-  --bg-sidebar: #071318;
-  --bg-main: #0b1a20;
-  --bg-card: #10242d;
-  --bg-card-strong: #17323f;
-  --bg-field: #132b36;
+  --bg-sidebar: #080e12;
+  --bg-main: #0c1419;
+  --bg-card: #121c23;
+  --bg-card-strong: #182630;
+  --bg-field: #101920;
   --border-subtle: rgba(6, 182, 212, 0.16);
   --border-strong: rgba(6, 182, 212, 0.32);
   --text-secondary: #94a3b8;
@@ -7539,79 +7551,103 @@ body.paused-animations *::after {
   --ui-accent-glow: rgba(6, 182, 212, 0.45);
 }
 
-/* Ambient Backdrops */
+/* =========================================================================
+   Window Titlebar Ambient Horizon Light Lines
+   ========================================================================= */
+
+[data-theme="winter"] .titlebar {
+  border-bottom: 1px solid rgba(56, 189, 248, 0.18);
+}
+[data-theme="autumn"] .titlebar {
+  border-bottom: 1px solid rgba(245, 158, 11, 0.18);
+}
+[data-theme="spring"] .titlebar {
+  border-bottom: 1px solid rgba(244, 114, 182, 0.18);
+}
+[data-theme="summer"] .titlebar {
+  border-bottom: 1px solid rgba(6, 182, 212, 0.18);
+}
+
+/* =========================================================================
+   Ambient Backdrops
+   ========================================================================= */
+
 [data-theme="winter"] .app-shell {
-  background: radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.08), transparent 52%),
-              radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.05), transparent 45%),
+  background: radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.08), transparent 50%),
+              radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.04), transparent 45%),
               var(--bg-main);
 }
 
 [data-theme="autumn"] .app-shell {
-  background: radial-gradient(circle at 85% 15%, rgba(245, 158, 11, 0.09), transparent 52%),
-              radial-gradient(circle at 15% 85%, rgba(234, 88, 12, 0.06), transparent 45%),
+  background: radial-gradient(circle at 85% 15%, rgba(245, 158, 11, 0.08), transparent 50%),
+              radial-gradient(circle at 15% 85%, rgba(234, 88, 12, 0.04), transparent 45%),
               var(--bg-main);
 }
 
 [data-theme="spring"] .app-shell {
-  background: radial-gradient(circle at 85% 15%, rgba(244, 114, 182, 0.09), transparent 52%),
-              radial-gradient(circle at 15% 85%, rgba(192, 132, 252, 0.06), transparent 45%),
+  background: radial-gradient(circle at 85% 15%, rgba(244, 114, 182, 0.08), transparent 50%),
+              radial-gradient(circle at 15% 85%, rgba(192, 132, 252, 0.04), transparent 45%),
               var(--bg-main);
 }
 
 [data-theme="summer"] .app-shell {
-  background: radial-gradient(circle at 85% 15%, rgba(6, 182, 212, 0.09), transparent 52%),
-              radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.06), transparent 45%),
+  background: radial-gradient(circle at 85% 15%, rgba(6, 182, 212, 0.08), transparent 50%),
+              radial-gradient(circle at 15% 85%, rgba(14, 165, 233, 0.04), transparent 45%),
               var(--bg-main);
 }
 
-/* High-vibe subtle card texture overlays */
+/* Subtle card ambient texture highlights */
 [data-theme="winter"] .card,
 [data-theme="winter"] .theme-card {
-  background-image: radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.07) 0%, transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  background-image: radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.06) 0%, transparent 45%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
 }
 [data-theme="autumn"] .card,
 [data-theme="autumn"] .theme-card {
-  background-image: radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.07) 0%, transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  background-image: radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.06) 0%, transparent 45%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
 }
 [data-theme="spring"] .card,
 [data-theme="spring"] .theme-card {
-  background-image: radial-gradient(circle at 100% 0%, rgba(244, 114, 182, 0.07) 0%, transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  background-image: radial-gradient(circle at 100% 0%, rgba(244, 114, 182, 0.06) 0%, transparent 45%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
 }
 [data-theme="summer"] .card,
 [data-theme="summer"] .theme-card {
-  background-image: radial-gradient(circle at 100% 0%, rgba(6, 182, 212, 0.07) 0%, transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  background-image: radial-gradient(circle at 100% 0%, rgba(6, 182, 212, 0.06) 0%, transparent 45%), linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
 }
 
 /* Scrollbars */
 [data-theme="winter"] ::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.22);
 }
 [data-theme="winter"] ::-webkit-scrollbar-thumb:hover {
   background: rgba(56, 189, 248, 0.45);
 }
 
 [data-theme="autumn"] ::-webkit-scrollbar-thumb {
-  background: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.22);
 }
 [data-theme="autumn"] ::-webkit-scrollbar-thumb:hover {
   background: rgba(245, 158, 11, 0.45);
 }
 
 [data-theme="spring"] ::-webkit-scrollbar-thumb {
-  background: rgba(244, 114, 182, 0.25);
+  background: rgba(244, 114, 182, 0.22);
 }
 [data-theme="spring"] ::-webkit-scrollbar-thumb:hover {
   background: rgba(244, 114, 182, 0.45);
 }
 
 [data-theme="summer"] ::-webkit-scrollbar-thumb {
-  background: rgba(6, 182, 212, 0.25);
+  background: rgba(6, 182, 212, 0.22);
 }
 [data-theme="summer"] ::-webkit-scrollbar-thumb:hover {
   background: rgba(6, 182, 212, 0.45);
 }
 
-/* Themed Button Details & Snow / Ember / Sakura Caps */
+/* =========================================================================
+   Themed Controls & Buttons
+   ========================================================================= */
+
+/* Winter Buttons & Navigation */
 [data-theme="winter"] .nav-item.active,
 [data-theme="winter"] .theme-card.active,
 [data-theme="winter"] .btn-primary {
@@ -7641,14 +7677,13 @@ body.paused-animations *::after {
 [data-theme="winter"] .exit-button .icon {
   color: #38bdf8;
 }
-
 [data-theme="winter"] .exit-button:hover {
   border-color: #38bdf8;
   color: #f0f9ff;
   box-shadow: 0 0 16px -2px rgba(56, 189, 248, 0.5), inset 0 1px 0 0 rgba(224, 242, 254, 0.7);
 }
 
-/* Autumn Warm Ember Details */
+/* Autumn Buttons & Navigation */
 [data-theme="autumn"] .nav-item.active,
 [data-theme="autumn"] .theme-card.active,
 [data-theme="autumn"] .btn-primary {
@@ -7678,14 +7713,13 @@ body.paused-animations *::after {
 [data-theme="autumn"] .exit-button .icon {
   color: #f59e0b;
 }
-
 [data-theme="autumn"] .exit-button:hover {
   border-color: #f59e0b;
   color: #fffbeb;
   box-shadow: 0 0 16px -2px rgba(245, 158, 11, 0.5), inset 0 1px 0 0 rgba(251, 191, 36, 0.6);
 }
 
-/* Spring Sakura Night Details */
+/* Spring Buttons & Navigation */
 [data-theme="spring"] .nav-item.active,
 [data-theme="spring"] .theme-card.active,
 [data-theme="spring"] .btn-primary {
@@ -7715,14 +7749,13 @@ body.paused-animations *::after {
 [data-theme="spring"] .exit-button .icon {
   color: #f472b6;
 }
-
 [data-theme="spring"] .exit-button:hover {
   border-color: #f472b6;
   color: #fdf2f8;
   box-shadow: 0 0 16px -2px rgba(244, 114, 182, 0.5), inset 0 1px 0 0 rgba(249, 168, 212, 0.6);
 }
 
-/* Summer Azure Solar Details */
+/* Summer Buttons & Navigation */
 [data-theme="summer"] .nav-item.active,
 [data-theme="summer"] .theme-card.active,
 [data-theme="summer"] .btn-primary {
@@ -7752,16 +7785,93 @@ body.paused-animations *::after {
 [data-theme="summer"] .exit-button .icon {
   color: #06b6d4;
 }
-
 [data-theme="summer"] .exit-button:hover {
   border-color: #06b6d4;
   color: #ecfeff;
   box-shadow: 0 0 16px -2px rgba(6, 182, 212, 0.5), inset 0 1px 0 0 rgba(103, 232, 249, 0.6);
 }
 
-/* Intro Splash Screen Theming */
+/* =========================================================================
+   Themed iOS Switches (Glow and signature gradient)
+   ========================================================================= */
+
+[data-theme="winter"] .ios-switch.active {
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+}
+[data-theme="autumn"] .ios-switch.active {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.45);
+}
+[data-theme="spring"] .ios-switch.active {
+  background: linear-gradient(135deg, #db2777 0%, #f472b6 100%);
+  box-shadow: 0 0 12px rgba(244, 114, 182, 0.45);
+}
+[data-theme="summer"] .ios-switch.active {
+  background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.45);
+}
+
+/* =========================================================================
+   Themed Sliders (Glowing fills and luminous thumbs)
+   ========================================================================= */
+
+[data-theme="winter"] .slider-fill {
+  background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+}
+[data-theme="winter"] .slider-thumb {
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.6), 0 0 10px rgba(56, 189, 248, 0.55);
+}
+[data-theme="autumn"] .slider-fill {
+  background: linear-gradient(90deg, #d97706 0%, #f59e0b 100%);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.45);
+}
+[data-theme="autumn"] .slider-thumb {
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.6), 0 0 10px rgba(245, 158, 11, 0.55);
+}
+[data-theme="spring"] .slider-fill {
+  background: linear-gradient(90deg, #db2777 0%, #f472b6 100%);
+  box-shadow: 0 0 10px rgba(244, 114, 182, 0.45);
+}
+[data-theme="spring"] .slider-thumb {
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.6), 0 0 10px rgba(244, 114, 182, 0.55);
+}
+[data-theme="summer"] .slider-fill {
+  background: linear-gradient(90deg, #0891b2 0%, #06b6d4 100%);
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.45);
+}
+[data-theme="summer"] .slider-thumb {
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.6), 0 0 10px rgba(6, 182, 212, 0.55);
+}
+
+/* =========================================================================
+   Themed Checkboxes in Tweaks / Settings
+   ========================================================================= */
+
+[data-theme="winter"] .check-row.active {
+  border-color: rgba(56, 189, 248, 0.35);
+  background: rgba(56, 189, 248, 0.05);
+}
+[data-theme="autumn"] .check-row.active {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.05);
+}
+[data-theme="spring"] .check-row.active {
+  border-color: rgba(244, 114, 182, 0.35);
+  background: rgba(244, 114, 182, 0.05);
+}
+[data-theme="summer"] .check-row.active {
+  border-color: rgba(6, 182, 212, 0.35);
+  background: rgba(6, 182, 212, 0.05);
+}
+
+/* =========================================================================
+   Intro Splash Screen Theming
+   ========================================================================= */
+
 [data-theme="winter"] .intro-splash-screen {
-  background: radial-gradient(circle at 50% 45%, rgba(56, 189, 248, 0.15), transparent 65%), #090e17;
+  background: radial-gradient(circle at 50% 45%, rgba(56, 189, 248, 0.15), transparent 65%), #0b0f15;
 }
 [data-theme="winter"] .intro-splash-logo-img {
   filter: drop-shadow(0 0 24px rgba(56, 189, 248, 0.55));
@@ -7772,7 +7882,7 @@ body.paused-animations *::after {
 }
 
 [data-theme="autumn"] .intro-splash-screen {
-  background: radial-gradient(circle at 50% 45%, rgba(245, 158, 11, 0.15), transparent 65%), #100b09;
+  background: radial-gradient(circle at 50% 45%, rgba(245, 158, 11, 0.15), transparent 65%), #0e0d0c;
 }
 [data-theme="autumn"] .intro-splash-logo-img {
   filter: drop-shadow(0 0 24px rgba(245, 158, 11, 0.55));
@@ -7783,7 +7893,7 @@ body.paused-animations *::after {
 }
 
 [data-theme="spring"] .intro-splash-screen {
-  background: radial-gradient(circle at 50% 45%, rgba(244, 114, 182, 0.15), transparent 65%), #0f0a14;
+  background: radial-gradient(circle at 50% 45%, rgba(244, 114, 182, 0.15), transparent 65%), #0d0b10;
 }
 [data-theme="spring"] .intro-splash-logo-img {
   filter: drop-shadow(0 0 24px rgba(244, 114, 182, 0.55));
@@ -7794,7 +7904,7 @@ body.paused-animations *::after {
 }
 
 [data-theme="summer"] .intro-splash-screen {
-  background: radial-gradient(circle at 50% 45%, rgba(6, 182, 212, 0.15), transparent 65%), #071318;
+  background: radial-gradient(circle at 50% 45%, rgba(6, 182, 212, 0.15), transparent 65%), #080e12;
 }
 [data-theme="summer"] .intro-splash-logo-img {
   filter: drop-shadow(0 0 24px rgba(6, 182, 212, 0.55));
@@ -7804,8 +7914,6 @@ body.paused-animations *::after {
   text-shadow: 0 0 22px rgba(6, 182, 212, 0.65);
 }
 
-/* Liquid Glass iOS Specular Details */
-/* Theme picker in settings */
 .settings-theme-section {
   display: flex;
   flex-direction: column;
@@ -7824,7 +7932,7 @@ body.paused-animations *::after {
   appearance: none;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-card);
+  border-radius: 12px;
   padding: 8px;
   cursor: pointer;
   text-align: center;
@@ -7843,22 +7951,35 @@ body.paused-animations *::after {
   transform: translateY(-2px);
   border-color: var(--border-strong);
   background: var(--bg-card-strong);
+  box-shadow: 0 6px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+.theme-card:active {
+  transform: scale(0.96);
 }
 
 .theme-card.active {
   border-color: var(--ui-accent);
-  box-shadow: 0 0 16px -2px var(--ui-accent-glow);
+  box-shadow: 0 0 20px -2px var(--ui-accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .theme-card-preview {
-  height: 52px;
-  border-radius: 8px;
+  height: 54px;
+  border-radius: 6px;
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.theme-card-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .theme-card-icon {
@@ -7866,8 +7987,9 @@ body.paused-animations *::after {
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.65));
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
 }
 
 .theme-card-icon .icon,
@@ -8170,9 +8292,9 @@ body.paused-animations *::after {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.09), transparent 38%),
-              radial-gradient(circle at 0% 100%, rgba(56, 189, 248, 0.06), transparent 32%),
-              radial-gradient(circle at 50% 50%, transparent 60%, rgba(9, 14, 23, 0.35) 100%);
+  background: radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.08), transparent 38%),
+              radial-gradient(circle at 0% 100%, rgba(56, 189, 248, 0.05), transparent 32%),
+              radial-gradient(circle at 50% 50%, transparent 62%, rgba(11, 15, 21, 0.4) 100%);
   z-index: 1;
 }
 
@@ -8183,8 +8305,8 @@ body.paused-animations *::after {
   inset: 0;
   pointer-events: none;
   background: radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.08), transparent 50%),
-              radial-gradient(circle at 100% 100%, rgba(234, 88, 12, 0.07), transparent 38%),
-              radial-gradient(circle at 50% 50%, transparent 60%, rgba(16, 11, 9, 0.35) 100%);
+              radial-gradient(circle at 100% 100%, rgba(234, 88, 12, 0.06), transparent 38%),
+              radial-gradient(circle at 50% 50%, transparent 62%, rgba(14, 13, 12, 0.4) 100%);
   z-index: 1;
 }
 
@@ -8195,8 +8317,8 @@ body.paused-animations *::after {
   inset: 0;
   pointer-events: none;
   background: radial-gradient(circle at 85% 15%, rgba(244, 114, 182, 0.08), transparent 42%),
-              radial-gradient(circle at 15% 85%, rgba(192, 132, 252, 0.07), transparent 38%),
-              radial-gradient(circle at 50% 50%, transparent 60%, rgba(15, 10, 20, 0.35) 100%);
+              radial-gradient(circle at 15% 85%, rgba(192, 132, 252, 0.06), transparent 38%),
+              radial-gradient(circle at 50% 50%, transparent 62%, rgba(13, 11, 16, 0.4) 100%);
   z-index: 1;
 }
 
@@ -8206,33 +8328,44 @@ body.paused-animations *::after {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 90% 10%, rgba(6, 182, 212, 0.12), transparent 45%),
-              radial-gradient(circle at 10% 90%, rgba(34, 211, 238, 0.08), transparent 40%),
-              radial-gradient(circle at 50% 50%, transparent 60%, rgba(7, 19, 24, 0.35) 100%);
+  background: radial-gradient(circle at 90% 10%, rgba(6, 182, 212, 0.1), transparent 45%),
+              radial-gradient(circle at 10% 90%, rgba(34, 211, 238, 0.07), transparent 40%),
+              radial-gradient(circle at 50% 50%, transparent 62%, rgba(8, 14, 18, 0.4) 100%);
   z-index: 1;
 }
 
-/* Crystalline / Hearth / Velvet Card Refinements */
+/* Crystalline / Hearth / Velvet Card Refinements (Specular top edge & elevation) */
 [data-theme="winter"] .card,
 [data-theme="winter"] .settings-unified-card {
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(224, 242, 254, 0.12);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.55),
+              inset 0 1px 0 0 rgba(224, 242, 254, 0.2),
+              0 0 20px -4px rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.18);
 }
 
 [data-theme="autumn"] .card,
 [data-theme="autumn"] .settings-unified-card {
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(251, 191, 36, 0.12);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.55),
+              inset 0 1px 0 0 rgba(251, 191, 36, 0.2),
+              0 0 20px -4px rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.18);
 }
 
 [data-theme="spring"] .card,
 [data-theme="spring"] .settings-unified-card {
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(249, 168, 212, 0.12);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.55),
+              inset 0 1px 0 0 rgba(249, 168, 212, 0.2),
+              0 0 20px -4px rgba(244, 114, 182, 0.08);
+  border-color: rgba(244, 114, 182, 0.18);
 }
 
 [data-theme="summer"] .card,
 [data-theme="summer"] .settings-unified-card {
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(103, 232, 249, 0.14);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.55),
+              inset 0 1px 0 0 rgba(103, 232, 249, 0.22),
+              0 0 20px -4px rgba(6, 182, 212, 0.08);
+  border-color: rgba(6, 182, 212, 0.18);
 }
-
 
 /* Liquid Glass iOS Vignette Shader */
 /* ==========================================================================
