@@ -1310,12 +1310,13 @@ p, .description {
   gap: 14px;
   min-height: 0;
   flex: 1 1 auto;
-  align-items: start;
+  align-items: stretch;
 }
 
 .global-color-grid > .stack,
 .global-color-grid > .card {
   min-height: 0;
+  height: 100%;
 }
 
 .game-carousel {
@@ -1875,13 +1876,14 @@ p, .description {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   flex: 1 1 auto;
-  align-items: start;
+  align-items: stretch;
 }
 
 .global-color-grid > .card,
 .color-controls-card,
 .color-templates-card {
   min-height: 230px;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -2445,13 +2447,17 @@ p, .description {
 .fine-tuning-vibrance {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  justify-content: space-between;
+  flex: 1 1 auto;
+  height: 100%;
+  gap: 8px;
 }
 
 .fine-tuning-vibrance .slider-row {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  flex: 1 1 0;
   margin-top: 0 !important;
   padding: 0;
   gap: 6px;
@@ -2526,7 +2532,10 @@ p, .description {
 .fine-tuning-filters-grid {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 10px;
+  flex: 1 1 auto;
+  height: 100%;
 }
 
 .color-filter-tile {
