@@ -1310,13 +1310,12 @@ p, .description {
   gap: 14px;
   min-height: 0;
   flex: 1 1 auto;
-  align-items: stretch;
+  align-items: start;
 }
 
 .global-color-grid > .stack,
 .global-color-grid > .card {
   min-height: 0;
-  height: 100%;
 }
 
 .game-carousel {
@@ -1876,30 +1875,21 @@ p, .description {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   flex: 1 1 auto;
-  align-items: stretch;
+  align-items: start;
 }
 
 .global-color-grid > .card,
 .color-controls-card,
 .color-templates-card {
-  min-height: 280px;
-  height: 100%;
+  min-height: 230px;
   display: flex;
   flex-direction: column;
-}
-
-.color-templates-card {
-  justify-content: space-between;
-}
-
-.color-templates-card .black-holo-section {
-  margin-top: auto;
 }
 
 .color-preview-viewport {
   position: relative;
   width: 100%;
-  height: 170px;
+  height: 215px;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -2037,14 +2027,14 @@ p, .description {
 .color-templates-card .color-template-section {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  gap: 8px;
 }
 
 .color-templates-card .color-template-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .color-templates-card .color-template-item {
@@ -2455,21 +2445,16 @@ p, .description {
 .fine-tuning-vibrance {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  flex: 1 1 auto;
-  height: 100%;
-  min-height: 210px;
-  gap: 6px;
+  gap: 12px;
 }
 
 .fine-tuning-vibrance .slider-row {
-  flex: 1 1 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   margin-top: 0 !important;
-  padding: 2px 0;
-  gap: 5px;
+  padding: 0;
+  gap: 6px;
 }
 
 .filter-active-hint {
@@ -2541,10 +2526,7 @@ p, .description {
 .fine-tuning-filters-grid {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   gap: 10px;
-  flex: 1 1 auto;
-  height: 100%;
 }
 
 .color-filter-tile {
