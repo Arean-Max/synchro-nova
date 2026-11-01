@@ -200,6 +200,23 @@ pub const ERROR_CANCELLED: u32 = 1223;
 pub const SW_RESTORE: i32 = 9;
 pub const SYNCHRONIZE: u32 = 0x0010_0000;
 pub const SEE_MASK_NOCLOSEPROCESS: u32 = 0x0000_0040;
+pub const EVENT_SYSTEM_FOREGROUND: u32 = 0x0003;
+pub const WINEVENT_OUTOFCONTEXT: u32 = 0x0000;
+pub const WINEVENT_SKIPOWNPROCESS: u32 = 0x0002;
+pub const WM_TIMER: u32 = 0x0113;
+pub const WM_QUIT: u32 = 0x0012;
+
+pub type WinEventProc = Option<
+    unsafe extern "system" fn(
+        h_win_event_hook: *mut c_void,
+        event: u32,
+        hwnd: *mut c_void,
+        id_object: i32,
+        id_child: i32,
+        id_event_thread: u32,
+        dwms_event_time: u32,
+    ),
+>;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]

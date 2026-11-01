@@ -18,6 +18,9 @@ static CURRENT_STATE: Mutex<FullscreenState> = Mutex::new(FullscreenState::Displ
 static AUTO_HIDDEN_BY_GAME: AtomicBool = AtomicBool::new(false);
 static USER_SUMMONED_MENU: AtomicBool = AtomicBool::new(false);
 
+#[cfg(target_os = "windows")]
+static WATCHER_APP_HANDLE: std::sync::OnceLock<AppHandle> = std::sync::OnceLock::new();
+
 pub fn get_fullscreen_state() -> FullscreenState {
     CURRENT_STATE
         .lock()
@@ -55,7 +58,7 @@ pub fn is_foreground_fullscreen() -> bool {
             return false;
         }
 
-        // Exclude Windows shell surfaces (Taskbar, Desktop, Start Menu) from fullscreen game detection.
+        // Exclude standard Windows desktop surfaces from fullscreen game detection.
         let mut class_name_buf = [0u16; 256];
         let len = winapi::GetClassNameW(hwnd, class_name_buf.as_mut_ptr(), 256);
         if len > 0 {
@@ -97,66 +100,130 @@ pub fn is_foreground_fullscreen() -> bool {
     false
 }
 
-pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>) {
-    std::thread::Builder::new()
-        .name("synchro-fullscreen-watcher".to_string())
-        .stack_size(128 * 1024)
-        .spawn(move || {
-            let mut consecutive_fullscreen_ticks = 0u32;
-            let mut consecutive_desktop_ticks = 0u32;
+#[cfg(target_os = "windows")]
+pub fn evaluate_and_update(app_handle: &AppHandle) {
+    let is_fs = is_foreground_fullscreen();
+    let current = get_fullscreen_state();
 
-            while !shutdown.load(Ordering::Relaxed) {
-                let sleep_ms = if consecutive_fullscreen_ticks >= 4 { 4000 } else { 250 };
-                std::thread::sleep(Duration::from_millis(sleep_ms));
+    if is_fs {
+        if USER_SUMMONED_MENU.load(Ordering::SeqCst) {
+            return;
+        }
 
-                let is_fs = is_foreground_fullscreen();
-
-                if is_fs {
-                    consecutive_fullscreen_ticks = consecutive_fullscreen_ticks.saturating_add(1);
-                    consecutive_desktop_ticks = 0;
-                } else {
-                    consecutive_desktop_ticks = consecutive_desktop_ticks.saturating_add(1);
-                    consecutive_fullscreen_ticks = 0;
-                }
-
-                let current = get_fullscreen_state();
-                if is_fs && consecutive_fullscreen_ticks >= 2 {
-                    if USER_SUMMONED_MENU.load(Ordering::SeqCst) {
-                        continue;
-                    }
-
-                    if current != FullscreenState::MenuHidden && current != FullscreenState::FullscreenForeground {
-                        if let Ok(mut lock) = CURRENT_STATE.lock() {
-                            *lock = FullscreenState::Transition;
-                        }
-
-                        if app_handle.get_webview_window("main").is_some() {
-                            crate::hide_main_window(&app_handle);
-                            AUTO_HIDDEN_BY_GAME.store(true, Ordering::SeqCst);
-                        }
-
-                        if let Ok(mut lock) = CURRENT_STATE.lock() {
-                            *lock = FullscreenState::MenuHidden;
-                        }
-                    }
-                } else if !is_fs && consecutive_desktop_ticks >= 2 {
-                    USER_SUMMONED_MENU.store(false, Ordering::SeqCst);
-
-                    if current == FullscreenState::MenuHidden || current == FullscreenState::FullscreenForeground {
-                        if let Ok(mut lock) = CURRENT_STATE.lock() {
-                            *lock = FullscreenState::NormalDesktop;
-                        }
-
-                        AUTO_HIDDEN_BY_GAME.store(false, Ordering::SeqCst);
-                    } else if current == FullscreenState::DisplayStateUnknown {
-                        if let Ok(mut lock) = CURRENT_STATE.lock() {
-                            *lock = FullscreenState::NormalDesktop;
-                        }
-                    }
-                }
+        if current != FullscreenState::MenuHidden && current != FullscreenState::FullscreenForeground {
+            if let Ok(mut lock) = CURRENT_STATE.lock() {
+                *lock = FullscreenState::Transition;
             }
-        })
-        .ok();
+
+            if app_handle.get_webview_window("main").is_some() {
+                crate::hide_main_window(app_handle);
+                AUTO_HIDDEN_BY_GAME.store(true, Ordering::SeqCst);
+            }
+
+            if let Ok(mut lock) = CURRENT_STATE.lock() {
+                *lock = FullscreenState::MenuHidden;
+            }
+        }
+    } else {
+        USER_SUMMONED_MENU.store(false, Ordering::SeqCst);
+
+        if current == FullscreenState::MenuHidden || current == FullscreenState::FullscreenForeground {
+            if let Ok(mut lock) = CURRENT_STATE.lock() {
+                *lock = FullscreenState::NormalDesktop;
+            }
+
+            AUTO_HIDDEN_BY_GAME.store(false, Ordering::SeqCst);
+        } else if current == FullscreenState::DisplayStateUnknown {
+            if let Ok(mut lock) = CURRENT_STATE.lock() {
+                *lock = FullscreenState::NormalDesktop;
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+unsafe extern "system" fn winevent_proc(
+    _hook: *mut std::ffi::c_void,
+    event: u32,
+    _hwnd: *mut std::ffi::c_void,
+    _id_object: i32,
+    _id_child: i32,
+    _event_thread: u32,
+    _event_time_ms: u32,
+) {
+    if event == crate::platform::ffi::EVENT_SYSTEM_FOREGROUND {
+        if let Some(app) = WATCHER_APP_HANDLE.get() {
+            evaluate_and_update(app);
+        }
+    }
+}
+
+pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>) {
+    #[cfg(target_os = "windows")]
+    {
+        let _ = WATCHER_APP_HANDLE.set(app_handle.clone());
+
+        std::thread::Builder::new()
+            .name("synchro-fullscreen-watcher".to_string())
+            .stack_size(128 * 1024)
+            .spawn(move || {
+                use crate::platform::ffi::{
+                    winapi, MSG, EVENT_SYSTEM_FOREGROUND, WINEVENT_OUTOFCONTEXT,
+                    WINEVENT_SKIPOWNPROCESS, WM_TIMER,
+                };
+
+                evaluate_and_update(&app_handle);
+
+                unsafe {
+                    // Out-of-context hook receives OS notifications on the thread's message queue without DLL injection.
+                    let hook = winapi::SetWinEventHook(
+                        EVENT_SYSTEM_FOREGROUND,
+                        EVENT_SYSTEM_FOREGROUND,
+                        std::ptr::null_mut(),
+                        Some(winevent_proc),
+                        0,
+                        0,
+                        WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS,
+                    );
+
+                    if !hook.is_null() {
+                        let timer_id = winapi::SetTimer(std::ptr::null_mut(), 0, 3000, None);
+                        let mut msg = std::mem::zeroed::<MSG>();
+
+                        while !shutdown.load(Ordering::Relaxed) {
+                            let ret = winapi::GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0);
+                            if ret <= 0 {
+                                break;
+                            }
+
+                            if msg.message == WM_TIMER {
+                                evaluate_and_update(&app_handle);
+                            } else {
+                                winapi::TranslateMessage(&msg);
+                                winapi::DispatchMessageW(&msg);
+                            }
+                        }
+
+                        if timer_id != 0 {
+                            winapi::KillTimer(std::ptr::null_mut(), timer_id);
+                        }
+                        winapi::UnhookWinEvent(hook);
+                    } else {
+                        // Fallback polling loop if hook cannot be registered.
+                        while !shutdown.load(Ordering::Relaxed) {
+                            std::thread::sleep(Duration::from_millis(3000));
+                            evaluate_and_update(&app_handle);
+                        }
+                    }
+                }
+            })
+            .ok();
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = (app_handle, shutdown);
+    }
 }
 
 #[cfg(test)]
