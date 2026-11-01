@@ -380,7 +380,6 @@ export function renderTemplateConfigModal(appState, viewState, t) {
         <div class="template-config-header">
           <div class="template-config-title">
             <h3 id="template-config-title">${escapeHtml(t("configureTemplate"))}</h3>
-            <p>${escapeHtml(t("configureTemplateDesc"))}</p>
           </div>
           <button class="dialog-close-btn" type="button" data-action="close-template-config" title="${escapeAttr(t("close"))}">${icon("x")}</button>
         </div>

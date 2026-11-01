@@ -792,8 +792,8 @@ p, .description {
   }
   100% {
     opacity: 1;
-    transform: scale(1) translate3d(0, 0, 0);
-    filter: blur(0);
+    transform: none;
+    filter: none;
   }
 }
 
@@ -975,12 +975,12 @@ p, .description {
   position: relative;
   height: 4px;
   border-radius: 999px;
-  background: #27272a;
+  background: rgba(255, 255, 255, 0.12);
   transition: background 150ms ease;
 }
 
 .slider-row:hover .slider-track {
-  background: #323238;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .slider-fill {
@@ -1309,12 +1309,14 @@ p, .description {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   min-height: 0;
-  align-content: start;
+  flex: 1 1 auto;
+  align-items: stretch;
 }
 
 .global-color-grid > .stack,
 .global-color-grid > .card {
   min-height: 0;
+  height: 100%;
 }
 
 .game-carousel {
@@ -1872,7 +1874,8 @@ p, .description {
 .global-color-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
+  flex: 1 1 auto;
   align-items: stretch;
 }
 
@@ -1880,10 +1883,18 @@ p, .description {
 .color-controls-card,
 .color-templates-card {
   min-height: 280px;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
+.color-templates-card {
+  justify-content: space-between;
+}
+
+.color-templates-card .black-holo-section {
+  margin-top: auto;
+}
 
 .color-preview-viewport {
   position: relative;
@@ -1896,7 +1907,7 @@ p, .description {
   box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.75), 0 4px 18px rgba(0, 0, 0, 0.35);
   user-select: none;
   flex-shrink: 0;
-  margin-bottom: 2px;
+  margin-bottom: 0;
 }
 
 .color-preview-img {
@@ -2723,7 +2734,7 @@ p, .description {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px 12px;
+  padding: 16px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.02);
 }
@@ -2731,22 +2742,19 @@ p, .description {
 .template-config-title {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0;
 }
 
 .template-config-title h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: #ffffff;
 }
 
 .template-config-title p {
-  margin: 0;
-  font-size: 11px;
-  color: var(--text-muted, #a1a1aa);
-  line-height: 1.3;
+  display: none !important;
 }
 
 .template-config-body {
@@ -3615,14 +3623,15 @@ p, .description {
 .smart-tips-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: 100000;
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(1.5px);
-  -webkit-backdrop-filter: blur(1.5px);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   animation: fadeIn 180ms ease;
+  user-select: none;
 }
 
 .smart-tips-dialog {
