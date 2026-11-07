@@ -209,12 +209,7 @@ function renderDriverTile(driver, t, isRu) {
 
 export const characteristicsFeature = {
   render: renderCharacteristicsPage,
-  mount(container, context) {
-    if (context?.triggerScanDrivers) {
-      context.triggerScanDrivers();
-    }
-  },
-  unmount() {
-  }
+  mount() {},
+  unmount() {}
 };
 

@@ -2,9 +2,9 @@ import { safeRender } from "../core/errorBoundary.js";
 import { activePage, appState, lang, pageDefs, pageOrder } from "../core/state.js";
 import { escapeAttr, escapeHtml } from "../core/html.js";
 import { renderCharacteristicsPage, DRIVER_CATEGORIES } from "../features/characteristics/page.js";
-import { renderColorPage, renderGameColorPage } from "../features/color/page.js";
+import { renderColorPage } from "../features/color/page.js";
 import { renderSettingsPage } from "../features/settings/page.js";
-import { renderBackupsPage, renderConfigsPage } from "../features/storage/page.js";
+import { renderBackupsPage } from "../features/storage/page.js";
 import { renderTweaksPage } from "../features/tweaks/page.js";
 import { tweakCatalog, tweakGroupTitle } from "../features/tweaks/catalog.js";
 import { renderBindsPage } from "../features/binds/page.js";
@@ -35,7 +35,7 @@ function renderTitlebar(t) {
     <div class="titlebar ${isMacLights ? "has-mac-lights" : ""}" data-window-drag data-tauri-drag-region>
       <div class="titlebar-left" data-window-drag data-tauri-drag-region>
         <span class="titlebar-logo" data-window-drag data-tauri-drag-region>${logo()}</span>
-        <span class="titlebar-title" data-window-drag data-tauri-drag-region>Synchro Nova</span>
+        <span class="titlebar-title" data-window-drag data-tauri-drag-region>Synchro Nova<span class="titlebar-version-tag">2.5 Beta</span></span>
       </div>
       ${controls}
     </div>
@@ -182,9 +182,9 @@ function renderSidebar(t, viewState) {
       <nav class="nav-list">${nav}</nav>
       <div class="sidebar-divider"></div>
       <div class="sidebar-secondary-nav">
-        <button class="nav-item nav-item-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(t("scriptsBetaTitle") && t("scriptsBetaTitle") !== "scriptsBetaTitle" ? t("scriptsBetaTitle") : "Scripts (Beta) — Coming Soon")}">
-          ${icon("terminal")}
-          <span>${escapeHtml(t("scriptsNav") && t("scriptsNav") !== "scriptsNav" ? t("scriptsNav") : "Scripts")} <span class="nav-beta-badge">${escapeHtml(t("scriptsBeta") && t("scriptsBeta") !== "scriptsBeta" ? t("scriptsBeta") : "Beta")}</span></span>
+        <button class="nav-item nav-item-disabled" type="button" disabled aria-disabled="true" title="${escapeAttr(t("rustBetaTitle") && t("rustBetaTitle") !== "rustBetaTitle" ? t("rustBetaTitle") : "Rust (Beta) — Coming Soon")}">
+          ${icon("crosshair")}
+          <span>Rust <span class="nav-beta-badge">${escapeHtml(t("scriptsBeta") && t("scriptsBeta") !== "scriptsBeta" ? t("scriptsBeta") : "Beta")}</span></span>
         </button>
       </div>
       <div class="sidebar-spacer"></div>
@@ -195,22 +195,18 @@ function renderSidebar(t, viewState) {
 }
 
 const safeColor = safeRender(renderColorPage, "Color Calibration");
-const safeGameColor = safeRender(renderGameColorPage, "Per-Game Color");
 const safeTweaks = safeRender(renderTweaksPage, "System Tweaks");
 const safeBinds = safeRender(renderBindsPage, "Keybinds");
 const safeCharacteristics = safeRender(renderCharacteristicsPage, "Hardware Drivers");
 const safeBackups = safeRender(renderBackupsPage, "System Backups");
-const safeConfigs = safeRender(renderConfigsPage, "Profiles");
 const safeSettings = safeRender(renderSettingsPage, "Preferences");
 
 export function renderPageBody(viewState, t) {
   if (activePage === "color") return safeColor(appState, viewState, t);
-  if (activePage === "gameColor") return safeGameColor(appState, viewState, t);
   if (activePage === "tweaks") return safeTweaks(viewState, t);
   if (activePage === "binds") return safeBinds(appState, viewState, t);
   if (activePage === "characteristics") return safeCharacteristics(viewState, t);
   if (activePage === "backups") return safeBackups(viewState, t);
-  if (activePage === "configs") return safeConfigs(viewState, t);
   if (activePage === "settings") return safeSettings(appState, viewState, t);
   return safeColor(appState, viewState, t);
 }
