@@ -16,84 +16,27 @@ fn ensure_original_gamma_captured() {
     }
 }
 use crate::app::state::ColorSettings;
-use std::sync::{Arc, Condvar, Mutex, OnceLock};
+use std::sync::Mutex;
 
-struct ColorGuardState {
-    active: Option<(ColorSettings, bool)>,
-    exiting: bool,
-}
+static ACTIVE_COLOR: Mutex<Option<(ColorSettings, bool)>> = Mutex::new(None);
 
-static COLOR_GUARD_SYNC: OnceLock<Arc<(Mutex<ColorGuardState>, Condvar)>> = OnceLock::new();
-
-fn get_guard_sync() -> &'static Arc<(Mutex<ColorGuardState>, Condvar)> {
-    COLOR_GUARD_SYNC.get_or_init(|| {
-        Arc::new((
-            Mutex::new(ColorGuardState {
-                active: None,
-                exiting: false,
-            }),
-            Condvar::new(),
-        ))
-    })
-}
-
-#[cfg(target_os = "windows")]
-pub fn start_color_guard() {
-    static STARTED: OnceLock<()> = OnceLock::new();
-    STARTED.get_or_init(|| {
-        let sync = Arc::clone(get_guard_sync());
-        std::thread::Builder::new()
-            .name("synchro-color-guard".to_string())
-            .stack_size(64 * 1024)
-            .spawn(move || {
-                let (lock, cvar) = &*sync;
-                loop {
-                    let mut state = match lock.lock() {
-                        Ok(g) => g,
-                        Err(e) => e.into_inner(),
-                    };
-
-                    if state.exiting {
-                        break;
-                    }
-
-                    state = match cvar.wait(state) {
-                        Ok(g) => g,
-                        Err(e) => e.into_inner(),
-                    };
-
-                    if state.exiting {
-                        break;
-                    }
-                }
-            })
-            .ok();
-    });
-}
-
-#[cfg(not(target_os = "windows"))]
 pub fn start_color_guard() {}
 
 pub fn stop_color_guard() {
-    let sync = get_guard_sync();
-    if let Ok(mut lock) = sync.0.lock() {
-        lock.exiting = true;
-        sync.1.notify_all();
+    if let Ok(mut lock) = ACTIVE_COLOR.lock() {
+        *lock = None;
     }
 }
 
 fn set_active_color(color: Option<(ColorSettings, bool)>) {
-    let sync = get_guard_sync();
-    if let Ok(mut lock) = sync.0.lock() {
-        lock.active = color;
-        sync.1.notify_all();
+    if let Ok(mut lock) = ACTIVE_COLOR.lock() {
+        *lock = color;
     }
 }
 
 pub fn get_active_color() -> Option<ColorSettings> {
-    let sync = get_guard_sync();
-    if let Ok(lock) = sync.0.lock() {
-        lock.active.as_ref().map(|(c, _)| c.clone())
+    if let Ok(lock) = ACTIVE_COLOR.lock() {
+        lock.as_ref().map(|(c, _)| c.clone())
     } else {
         None
     }
@@ -107,6 +50,12 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
     }
 
     set_active_color(Some((color.clone(), show_on_recordings)));
+
+    if crate::platform::security_guard::is_dormant_mode_active()
+        || crate::platform::security_guard::is_protected_game_running().is_some()
+    {
+        return Ok(());
+    }
 
     let _ = apply_gamma_ramp(color.gamma);
 

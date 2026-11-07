@@ -176,6 +176,11 @@ impl Drop for DeleteObjectGuard {
 
 #[cfg(target_os = "windows")]
 pub fn capture_juicy_screenshot(color: &ColorSettings) -> Result<JuicyScreenshotResult, String> {
+    if crate::platform::security_guard::is_dormant_mode_active()
+        || crate::platform::security_guard::is_protected_game_running().is_some()
+    {
+        return Err("Screenshot capture is disabled while protected game or dormant mode is active.".to_string());
+    }
     unsafe {
         let mut x_src = 0;
         let mut y_src = 0;
@@ -443,7 +448,6 @@ pub fn set_screenshot_interception(enabled: bool) {
 
 #[cfg(target_os = "windows")]
 pub fn start_global_screenshot_listener() {
-    // Global PrintScreen hook is conditional to avoid hijacking Windows Snipping Tool or ShareX hotkeys.
     if !SCREENSHOT_INTERCEPTION_ENABLED.load(std::sync::atomic::Ordering::SeqCst) {
         return;
     }

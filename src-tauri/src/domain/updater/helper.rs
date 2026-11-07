@@ -218,7 +218,6 @@ pub fn run_updater_helper(args: &[String]) {
 
     #[cfg(target_os = "windows")]
     {
-        // Windows file locking requires waiting for the parent PID handle to close before swapping the executable.
         if parsed.wait_pid > 0 {
             log("HELPER", &format!("Waiting for parent process PID {} to exit...", parsed.wait_pid));
             crate::platform::ffi::wait_for_process_exit(parsed.wait_pid, 30_000);
@@ -228,7 +227,7 @@ pub fn run_updater_helper(args: &[String]) {
             if !handle.is_null() {
                 let status = unsafe { winapi::WaitForSingleObject(handle, 2000) };
                 unsafe { winapi::CloseHandle(handle) };
-                if status == 0x0000_0102 { // WAIT_TIMEOUT
+                if status == 0x0000_0102 {
                     log("HELPER_ERR", "Parent process still running after 32 seconds; aborting to prevent lock collision");
                     std::process::exit(1);
                 }

@@ -41,6 +41,18 @@ pub const BLOCKED_PROCESS_TARGETS: &[&str] = &[
     "dayz_x64.exe",
     "sotgame.exe",
     "eldenring.exe",
+    "eac_server.exe",
+    "faceitservice.exe",
+    "faceitclient.exe",
+    "faceit.exe",
+    "riotclientservices.exe",
+    "cod.exe",
+    "bootstrapper.exe",
+    "blackops6.exe",
+    "pubg_lite.exe",
+    "tarkov.exe",
+    "tarkovcl.exe",
+    "league of legends.exe",
 ];
 
 pub const VULNERABLE_DRIVERS_BLACKLIST: &[&str] = &[
@@ -59,12 +71,15 @@ pub const VULNERABLE_DRIVERS_BLACKLIST: &[&str] = &[
     "kprocesshacker.sys",
 ];
 
+const PROCESS_CREATE_THREAD: u32 = 0x0002;
+const PROCESS_VM_OPERATION: u32 = 0x0008;
 const PROCESS_VM_READ: u32 = 0x0010;
 const PROCESS_VM_WRITE: u32 = 0x0020;
-const PROCESS_VM_OPERATION: u32 = 0x0008;
-const PROCESS_CREATE_THREAD: u32 = 0x0002;
+const PROCESS_DUP_HANDLE: u32 = 0x0040;
+const PROCESS_SUSPEND_RESUME: u32 = 0x0800;
+const PROCESS_ALL_ACCESS: u32 = 0x001F_0FFF;
 const FORBIDDEN_ACCESS_MASK: u32 =
-    PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION | PROCESS_CREATE_THREAD;
+    PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION | PROCESS_CREATE_THREAD | PROCESS_DUP_HANDLE | PROCESS_SUSPEND_RESUME;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -87,6 +102,7 @@ pub struct SecurityGuardStatus {
     pub eac_compatible: bool,
     pub blocked_incidents_count: usize,
     pub recent_incidents: Vec<SecurityIncident>,
+    pub dormant_mode_active: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -120,6 +136,15 @@ pub struct AntiCheatFixResult {
 }
 
 static INCIDENTS_LOG: OnceLock<Mutex<Vec<SecurityIncident>>> = OnceLock::new();
+static DORMANT_MODE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn is_dormant_mode_active() -> bool {
+    DORMANT_MODE.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+pub fn set_dormant_mode(active: bool) {
+    DORMANT_MODE.store(active, std::sync::atomic::Ordering::Relaxed);
+}
 
 fn incidents_store() -> &'static Mutex<Vec<SecurityIncident>> {
     INCIDENTS_LOG.get_or_init(|| Mutex::new(Vec::new()))
@@ -142,7 +167,10 @@ pub fn verify_process_access_safety(target_name: &str, requested_access: u32) ->
         }
     }
 
-    if (requested_access & FORBIDDEN_ACCESS_MASK) != 0 {
+    if requested_access == PROCESS_ALL_ACCESS
+        || (requested_access & FORBIDDEN_ACCESS_MASK) != 0
+        || (requested_access & 0x001F_0000) != 0
+    {
         record_incident(
             target_name,
             "Attempted memory read/write or remote thread injection",
@@ -174,6 +202,42 @@ pub fn verify_registry_write_safety(key_path: &str) -> Result<(), String> {
             }
         }
     }
+
+    const FORBIDDEN_REGISTRY_SUBSTRINGS: &[&str] = &[
+        "services\\easyanticheat",
+        "services\\easyanticheat_eos",
+        "services\\bedaisy",
+        "services\\beservice",
+        "services\\vgk",
+        "services\\vgc",
+        "services\\faceit",
+        "services\\anticheat",
+        "services\\battleye",
+        "services\\punkbuster",
+        "control\\ci",
+        "disabledriversignatureenforcement",
+        "disableintegritychecks",
+        "testsigning",
+        "control\\session manager\\kernel",
+        "control\\session manager\\debug",
+        "control\\session manager\\subsystems",
+        "control\\secureboot",
+        "control\\earlylaunch",
+    ];
+
+    for forbidden in FORBIDDEN_REGISTRY_SUBSTRINGS {
+        if lower.contains(forbidden) {
+            record_incident(
+                key_path,
+                "Attempted modification of kernel driver, anti-cheat service, or code integrity registry key",
+                "BLOCKED_KERNEL_REGISTRY_TAMPER",
+            );
+            return Err(format!(
+                "Security Guard blocked modification on '{key_path}'. Modifying kernel driver or anti-cheat policies is prohibited."
+            ));
+        }
+    }
+
     Ok(())
 }
 
@@ -194,6 +258,25 @@ pub fn verify_registry_delete_safety(key_path: &str) -> Result<(), String> {
         || lower == "software\\microsoft\\windows nt\\currentversion"
     {
         return Err(format!("Security Guard prevented dangerous registry tree deletion on root path: '{key_path}'"));
+    }
+
+    const FORBIDDEN_DELETE_SUBSTRINGS: &[&str] = &[
+        "services\\easyanticheat",
+        "services\\easyanticheat_eos",
+        "services\\bedaisy",
+        "services\\beservice",
+        "services\\vgk",
+        "services\\vgc",
+        "services\\faceit",
+        "services\\anticheat",
+        "services\\battleye",
+        "control\\ci",
+    ];
+
+    for forbidden in FORBIDDEN_DELETE_SUBSTRINGS {
+        if lower.contains(forbidden) {
+            return Err(format!("Security Guard prevented deletion of protected anti-cheat key: '{key_path}'"));
+        }
     }
 
     Ok(())
@@ -237,6 +320,8 @@ pub fn is_protected_game_running() -> Option<String> {
     if let Ok(guard) = CACHED_PROTECTED_GAME.lock() {
         if let Some((instant, ref game)) = *guard {
             if instant.elapsed() < std::time::Duration::from_secs(3) {
+                let active = game.is_some();
+                DORMANT_MODE.store(active, std::sync::atomic::Ordering::Relaxed);
                 return game.clone();
             }
         }
@@ -278,6 +363,9 @@ pub fn is_protected_game_running() -> Option<String> {
         winapi::CloseHandle(snapshot);
         detected
     };
+
+    let active = result.is_some();
+    DORMANT_MODE.store(active, std::sync::atomic::Ordering::Relaxed);
 
     if let Ok(mut guard) = CACHED_PROTECTED_GAME.lock() {
         *guard = Some((std::time::Instant::now(), result.clone()));
@@ -632,5 +720,6 @@ pub fn get_security_guard_status() -> SecurityGuardStatus {
         eac_compatible: audit.is_eac_compatible,
         blocked_incidents_count: incidents.len(),
         recent_incidents: incidents.into_iter().rev().take(10).collect(),
+        dormant_mode_active: is_dormant_mode_active(),
     }
 }

@@ -28,7 +28,6 @@ async function check(name, fn) {
   }
 }
 
-// 1. CSS & Visual Flaw Audit
 await check('CSS: Particle canvas non-blocking', () => {
   const css = fs.readFileSync(cssPath, 'utf8');
   if (!css.includes('.theme-fx-canvas') || !css.includes('pointer-events: none')) {
@@ -69,7 +68,6 @@ await check('CSS: Error boundary styled with accessible contrast', () => {
   return true;
 });
 
-// 2. Anti-Cheat Boundary Safety Audit
 await check('Security: Zero forbidden process injection/memory APIs in frontend', () => {
   const mainJs = fs.readFileSync(mainJsPath, 'utf8');
   const forbiddenPatterns = [
@@ -88,7 +86,6 @@ await check('Security: Zero forbidden process injection/memory APIs in frontend'
   return true;
 });
 
-// 3. Architecture & Fault Tolerance Audit
 await check('Architecture: Fault isolation error boundary active in layout', () => {
   if (!fs.existsSync(errorBoundaryPath)) {
     return 'Missing errorBoundary.js core module';
@@ -100,7 +97,6 @@ await check('Architecture: Fault isolation error boundary active in layout', () 
   return true;
 });
 
-// 4. Translation Completeness Audit (All 22 Languages)
 await check('i18n: 22 Target Languages Present and complete', async () => {
   const i18nModule = await import(`file://${i18nPath.replace(/\\/g, '/')}`);
   const expectedLangs = [
@@ -117,7 +113,6 @@ await check('i18n: 22 Target Languages Present and complete', async () => {
   return true;
 });
 
-// Report Generation
 console.log('=== Synchro Project Inspector Audit ===');
 console.log(`Passed Checks: ${passes.length}`);
 for (const p of passes) {
