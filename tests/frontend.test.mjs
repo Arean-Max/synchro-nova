@@ -53,9 +53,9 @@ test("IPC Bridge: throws and propagates error on command failure", async () => {
   );
 });
 
-test("State: default version is 2.5.0", async () => {
+test("State: default version is 2.5.0-beta", async () => {
   const { viewState } = await import("../src/app/core/state.js");
-  assert.equal(viewState.appVersion, "2.5.0");
+  assert.equal(viewState.appVersion, "2.5.0-beta");
 });
 
 test("State: pageDefs strictly matches active pageOrder", async () => {

@@ -4,6 +4,16 @@ use super::runner::{
 use super::types::{applied, collect_result, failed, TweakApplyResult};
 
 pub fn active_power_scheme_text() -> String {
+    use crate::infra::registry::{RootKey, SafeRegistry};
+    if let Ok(scheme) = SafeRegistry::get_string(
+        RootKey::Hklm,
+        "SYSTEM\\CurrentControlSet\\Control\\Power\\User\\PowerSchemes",
+        "ActivePowerScheme",
+    ) {
+        if !scheme.trim().is_empty() {
+            return scheme;
+        }
+    }
     run_command_output("powercfg", &["/getactivescheme"])
         .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
         .unwrap_or_default()
@@ -11,7 +21,8 @@ pub fn active_power_scheme_text() -> String {
 
 pub fn is_power_plan_high_applied() -> bool {
     let scheme = active_power_scheme_text();
-    scheme.contains("8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c")
+    scheme.eq_ignore_ascii_case("8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c")
+        || scheme.contains("8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c")
         || scheme.to_lowercase().contains("high performance")
         || scheme.contains("Высокая производительность")
 }
@@ -60,7 +71,8 @@ pub fn apply_ultimate_performance(id: &str) -> TweakApplyResult {
 
 pub fn is_ultimate_performance_applied() -> bool {
     let scheme = active_power_scheme_text();
-    scheme.contains("e9a42b02-d5df-448d-aa00-03f14749eb61")
+    scheme.eq_ignore_ascii_case("e9a42b02-d5df-448d-aa00-03f14749eb61")
+        || scheme.contains("e9a42b02-d5df-448d-aa00-03f14749eb61")
         || scheme.to_lowercase().contains("ultimate performance")
         || scheme.contains("Максимальная производительность")
 }

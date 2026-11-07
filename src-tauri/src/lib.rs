@@ -32,47 +32,7 @@ fn calculate_adaptive_window_size(screen_w: f64, screen_h: f64) -> (f64, f64) {
     (final_w, final_h)
 }
 
-#[cfg(target_os = "windows")]
-pub fn suspend_window_webview(window: &tauri::Window) {
-    if let Some(wv) = window.app_handle().get_webview_window(window.label()) {
-        let _ = wv.with_webview(|webview| {
-            use windows_core::Interface;
-            use webview2_com_sys::Microsoft::Web::WebView2::Win32::{ICoreWebView2_3, ICoreWebView2TrySuspendCompletedHandler};
-            let controller = webview.controller();
-            unsafe {
-                let _ = controller.SetIsVisible(false);
-                if let Ok(core) = controller.CoreWebView2() {
-                    if let Ok(core3) = core.cast::<ICoreWebView2_3>() {
-                        let _ = core3.TrySuspend(None::<&ICoreWebView2TrySuspendCompletedHandler>);
-                    }
-                }
-            }
-        });
-    }
-}
-
-#[cfg(target_os = "windows")]
-pub fn resume_window_webview(window: &tauri::Window) {
-    if let Some(wv) = window.app_handle().get_webview_window(window.label()) {
-        let _ = wv.with_webview(|webview| {
-            use windows_core::Interface;
-            use webview2_com_sys::Microsoft::Web::WebView2::Win32::ICoreWebView2_3;
-            let controller = webview.controller();
-            unsafe {
-                if let Ok(core) = controller.CoreWebView2() {
-                    if let Ok(core3) = core.cast::<ICoreWebView2_3>() {
-                        let _ = core3.Resume();
-                    }
-                }
-                let _ = controller.SetIsVisible(true);
-            }
-        });
-    }
-}
-
-#[cfg(not(target_os = "windows"))]
 pub fn suspend_window_webview(_window: &tauri::Window) {}
-#[cfg(not(target_os = "windows"))]
 pub fn resume_window_webview(_window: &tauri::Window) {}
 
 pub fn configure_main_window(window: &tauri::WebviewWindow) {
@@ -127,7 +87,6 @@ pub fn configure_main_window(window: &tauri::WebviewWindow) {
 pub fn hide_main_window(app: &tauri::AppHandle) {
     platform::fullscreen_watcher::set_user_summoned(false);
     if let Some(window) = app.get_webview_window("main") {
-        suspend_window_webview(&window.as_ref().window());
         let _ = window.hide();
         trim_process_memory();
     }
@@ -141,7 +100,6 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
     for attempt in 0..10 {
         if let Some(existing) = app.get_webview_window("main") {
             configure_main_window(&existing);
-            resume_window_webview(&existing.as_ref().window());
             let _ = existing.unminimize();
             let _ = existing.show();
             let _ = existing.set_focus();
@@ -157,7 +115,7 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
             .shadow(false)
             .visible(true)
             .center()
-            .additional_browser_args("--enable-low-end-device-mode --renderer-process-limit=1 --disable-features=Translate,OptimizationHints,MediaRouter,BackForwardCache,InterestFeedContentSuggestions --disable-breakpad --disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --disable-extensions --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disable-logging --disk-cache-size=5242880 --media-cache-size=5242880")
+            .additional_browser_args("--disable-features=Translate,OptimizationHints,MediaRouter,BackForwardCache,InterestFeedContentSuggestions --disable-breakpad --disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --disable-extensions --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disable-logging --disk-cache-size=5242880 --media-cache-size=5242880")
             .on_navigation(|url| {
                 let scheme = url.scheme();
                 let host = url.host_str().unwrap_or("");
@@ -236,7 +194,6 @@ pub fn run() {
 
             let window = create_main_window(app.handle())?;
             if initial.settings.start_minimized {
-                suspend_window_webview(&window.as_ref().window());
                 let _ = window.hide();
                 trim_process_memory();
             }
@@ -268,7 +225,6 @@ pub fn run() {
 
             match event {
                 WindowEvent::Focused(true) => {
-                    resume_window_webview(window);
                     platform::fullscreen_watcher::set_user_summoned(true);
                     domain::color::reapply_active_color();
                 }
