@@ -42,6 +42,14 @@ pub fn get_active_color() -> Option<ColorSettings> {
     }
 }
 
+pub fn reapply_active_color() {
+    if let Ok(lock) = ACTIVE_COLOR.lock() {
+        if let Some((ref color, show_on_recordings)) = *lock {
+            let _ = apply_color_transform(color, show_on_recordings);
+        }
+    }
+}
+
 #[cfg(target_os = "windows")]
 pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) -> Result<(), String> {
     if !color.enabled {
@@ -50,12 +58,6 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
     }
 
     set_active_color(Some((color.clone(), show_on_recordings)));
-
-    if crate::platform::security_guard::is_dormant_mode_active()
-        || crate::platform::security_guard::is_protected_game_running().is_some()
-    {
-        return Ok(());
-    }
 
     let _ = apply_gamma_ramp(color.gamma);
 

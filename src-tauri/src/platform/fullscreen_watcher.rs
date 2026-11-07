@@ -103,15 +103,14 @@ pub fn is_foreground_fullscreen() -> bool {
 pub fn evaluate_and_update(app_handle: &AppHandle) {
     let is_fs = is_foreground_fullscreen();
     let current = get_fullscreen_state();
-    let protected_game = crate::platform::security_guard::is_protected_game_running();
 
-    if protected_game.is_some() || is_fs {
+    if is_fs {
         unsafe {
             use crate::platform::ffi::winapi;
             let _ = winapi::SetPriorityClass(winapi::GetCurrentProcess(), 0x00004000);
         }
 
-        if USER_SUMMONED_MENU.load(Ordering::SeqCst) && protected_game.is_none() {
+        if USER_SUMMONED_MENU.load(Ordering::SeqCst) {
             return;
         }
 
@@ -135,19 +134,24 @@ pub fn evaluate_and_update(app_handle: &AppHandle) {
             let _ = winapi::SetPriorityClass(winapi::GetCurrentProcess(), 0x00000020);
         }
 
-        USER_SUMMONED_MENU.store(false, Ordering::SeqCst);
-
         if current == FullscreenState::MenuHidden || current == FullscreenState::FullscreenForeground {
             if let Ok(mut lock) = CURRENT_STATE.lock() {
                 *lock = FullscreenState::NormalDesktop;
             }
 
-            AUTO_HIDDEN_BY_GAME.store(false, Ordering::SeqCst);
+            if AUTO_HIDDEN_BY_GAME.swap(false, Ordering::SeqCst) {
+                if let Some(window) = app_handle.get_webview_window("main") {
+                    crate::resume_window_webview(&window.as_ref().window());
+                    let _ = window.show();
+                }
+            }
         } else if current == FullscreenState::DisplayStateUnknown {
             if let Ok(mut lock) = CURRENT_STATE.lock() {
                 *lock = FullscreenState::NormalDesktop;
             }
         }
+
+        crate::domain::color::reapply_active_color();
     }
 }
 

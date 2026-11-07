@@ -6,7 +6,7 @@ pub use black_holo::{
     stop_ramp_watchdog, BlackHoloStatus, GpuVendor,
 };
 pub use transform::{
-    apply_color_transform, get_active_color, reset_color_transform, start_color_guard,
-    stop_color_guard,
+    apply_color_transform, get_active_color, reapply_active_color, reset_color_transform,
+    start_color_guard, stop_color_guard,
 };
 
