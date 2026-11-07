@@ -12,7 +12,7 @@
   "homepage": "https://github.com/Arean-Max/synchro-nova",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.mjs && node scripts/verify-syntax.mjs && python scripts/verify-no-comments.py",
+    "test": "node --test tests/*.test.mjs && node scripts/verify-syntax.mjs && node scripts/verify-no-comments.mjs",
     "serve": "node ./scripts/app-server.mjs",
     "dev": "tauri dev",
     "build": "tauri build",
