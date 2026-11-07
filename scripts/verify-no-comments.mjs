@@ -47,10 +47,7 @@ for (const relPath of files) {
     }
 
     if (line.includes(slashStar)) {
-      const stripped = line.trim();
-      if (!stripped.startsWith('"test"') && !line.includes('tests/*.test.mjs')) {
-        commentViolations.push({ file: relPath, line: i + 1, content: line.trim() });
-      }
+      commentViolations.push({ file: relPath, line: i + 1, content: line.trim() });
     }
 
     if (line.includes(htmlComment)) {
