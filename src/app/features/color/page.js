@@ -11,53 +11,6 @@ export const standardTemplateNames = new Set([
   "Rust: Cold Tactical", "Rust: Midnight Neon", "Clear Sight"
 ]);
 
-export function colorGames(viewState) {
-  return Array.isArray(viewState.colorGames) ? viewState.colorGames : [];
-}
-
-function selectedColorGameIndex(viewState) {
-  const games = colorGames(viewState);
-  if (!games.length) return -1;
-  const index = games.findIndex((game) => game.id === viewState.selectedColorGame);
-  return index >= 0 ? index : 0;
-}
-
-export function selectedColorGame(viewState) {
-  const games = colorGames(viewState);
-  const index = selectedColorGameIndex(viewState);
-  return index >= 0 ? games[index] : null;
-}
-
-export function ensureColorGameSelection(viewState) {
-  const games = colorGames(viewState);
-  if (!games.length) {
-    viewState.selectedColorGame = "";
-    viewState.colorGamePanelOpen = false;
-    return;
-  }
-  if (!games.some((game) => game.id === viewState.selectedColorGame)) {
-    viewState.selectedColorGame = games[0].id;
-  }
-}
-
-export function selectColorGame(viewState, gameId, openPanel = true) {
-  const games = colorGames(viewState);
-  const game = games.find((item) => item.id === gameId);
-  if (!game) return false;
-  viewState.selectedColorGame = game.id;
-  if (openPanel) viewState.colorGamePanelOpen = true;
-  return true;
-}
-
-export function stepColorGame(viewState, step) {
-  const games = colorGames(viewState);
-  if (!games.length) return false;
-  const index = selectedColorGameIndex(viewState);
-  const nextIndex = (index + step + games.length) % games.length;
-  viewState.selectedColorGame = games[nextIndex].id;
-  return true;
-}
-
 export function sliderPercent(field, value) {
   const def = sliderDefs[field];
   return ((value - def.min) / (def.max - def.min)) * 100;
@@ -89,139 +42,6 @@ function slider(field, appState, t) {
   const fillStyle = sliderFillStyle(field, value);
   const zeroMark = def?.zero ? '<span class="zero-mark"></span>' : '';
   return `<div class="slider-row" data-slider-row="${field}"><div class="slider-meta"><span>${escapeHtml(label)}</span><span class="slider-value-badge" data-slider-value="${field}" data-field="${field}" tabindex="0" role="button">${formatSliderValue(field, value)}</span></div><div class="slider-track" style="--slider-percent:${pct}%">${zeroMark}<span class="slider-fill" style="${fillStyle}"></span><span class="slider-thumb" style="left:${pct}%"></span><input class="range-input" type="range" min="${def.min}" max="${def.max}" step="${def.step}" value="${escapeAttr(value)}" data-color-field="${field}" aria-label="${escapeAttr(label)}"></div></div>`;
-}
-
-function hashString(value) {
-  let hash = 0;
-  for (let index = 0; index < value.length; index += 1) {
-    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
-  }
-  return hash;
-}
-
-function gameAccent(game) {
-  const palette = ["#3b82f6", "#14b8a6", "#f97316", "#ef4444", "#eab308", "#22c55e", "#8b5cf6", "#06b6d4"];
-  return palette[hashString(game.id || game.name || "") % palette.length];
-}
-
-function gameLogoText(name) {
-  const clean = String(name || "").trim();
-  if (!clean) return "GAME";
-  const words = clean.split(/\s+/).filter(Boolean);
-  if (words.length <= 2) {
-    return words.map((word) => escapeHtml(word)).join("<br>");
-  }
-  return words.slice(0, 3).map((word) => escapeHtml(word)).join("<br>");
-}
-
-function gameImageSrc(game) {
-  const imagePath = game?.imagePath;
-  if (!imagePath) return "";
-  if (imagePath.startsWith("data:") || imagePath.startsWith("http:") || imagePath.startsWith("https:")) {
-    return imagePath;
-  }
-  const convertFileSrc = window.__TAURI__?.core?.convertFileSrc || window.__TAURI__?.tauri?.convertFileSrc;
-  if (!convertFileSrc) return "";
-  try {
-    return convertFileSrc(imagePath);
-  } catch {
-    return "";
-  }
-}
-
-function gameLogoSrc(game) {
-  const logoPath = game?.logoPath;
-  if (!logoPath) return "";
-  if (logoPath.startsWith("data:") || logoPath.startsWith("http:") || logoPath.startsWith("https:")) {
-    return logoPath;
-  }
-  const convertFileSrc = window.__TAURI__?.core?.convertFileSrc || window.__TAURI__?.tauri?.convertFileSrc;
-  if (!logoPath || !convertFileSrc) return "";
-  try {
-    return convertFileSrc(logoPath);
-  } catch {
-    return "";
-  }
-}
-
-function relativeGameOffset(index, selectedIndex, total) {
-  let offset = index - selectedIndex;
-  if (offset > total / 2) offset -= total;
-  if (offset < -total / 2) offset += total;
-  return offset;
-}
-
-function renderGameCard(game, offset, active) {
-  const imageSrc = gameImageSrc(game);
-  const logoSrc = gameLogoSrc(game);
-  const hasImage = Boolean(imageSrc);
-  const image = hasImage
-    ? `<img class="game-card-image" src="${escapeAttr(imageSrc)}" alt="">`
-    : "";
-  const source = game.source ? `<span class="game-card-source">${escapeHtml(game.source)}</span>` : "";
-  const logo = gameLogoText(game.name);
-  const logoImage = logoSrc ? `<img class="game-card-logo-image" src="${escapeAttr(logoSrc)}" alt="">` : "";
-  const watermark = logoSrc
-    ? `<img class="game-card-watermark image" src="${escapeAttr(logoSrc)}" alt="" aria-hidden="true">`
-    : `<span class="game-card-watermark" aria-hidden="true">${logo}</span>`;
-  return [
-    `<button class="game-card" type="button" data-game-id="${escapeAttr(game.id)}" data-offset="${offset}" data-has-image="${hasImage ? "true" : "false"}" data-logo-loaded="${logoSrc ? "true" : "false"}" aria-current="${active ? "true" : "false"}" style="--game-accent:${gameAccent(game)}">`,
-    image,
-    '<span class="game-card-glow" aria-hidden="true"></span>',
-    watermark,
-    logoImage,
-    `<span class="game-card-logo">${logo}</span>`,
-    source,
-    "</button>"
-  ].join("");
-}
-
-function renderGameCarousel(viewState, t) {
-  const games = colorGames(viewState);
-  if (!viewState.colorGamesLoaded) {
-    return `<section class="game-carousel game-carousel-empty"><div class="game-empty-state">${t("loading")}</div></section>`;
-  }
-  if (!games.length) {
-    return `<section class="game-carousel game-carousel-empty"><div class="game-empty-state">${t("noGamesFound")}</div></section>`;
-  }
-
-  ensureColorGameSelection(viewState);
-  const selectedIndex = selectedColorGameIndex(viewState);
-  const selected = games[selectedIndex];
-  const cards = games
-    .map((game, index) => {
-      const offset = relativeGameOffset(index, selectedIndex, games.length);
-      if (Math.abs(offset) > 2) return "";
-      return renderGameCard(game, offset, offset === 0);
-    })
-    .join("");
-  const status = selected.launchable ? t("readyToLaunch") : t("launchUnavailable");
-  const source = selected.source ? `${escapeHtml(selected.source)} - ` : "";
-  const selectedLogo = gameLogoText(selected.name);
-  const selectedLogoSrc = gameLogoSrc(selected);
-  const titleLogo = selectedLogoSrc
-    ? `<img class="game-title-watermark image" src="${escapeAttr(selectedLogoSrc)}" alt="" aria-hidden="true">`
-    : `<span class="game-title-watermark" aria-hidden="true">${selectedLogo}</span>`;
-
-  return [
-    `<section class="game-carousel" tabindex="0" aria-label="${escapeAttr(t("gamesLibrary"))}">`,
-    `<div class="game-carousel-stage">${cards}</div>`,
-    `<div class="game-carousel-title" style="--game-accent:${gameAccent(selected)}">`,
-    titleLogo,
-    `<strong>${escapeHtml(selected.name)}</strong>`,
-    `<span>${source}${escapeHtml(status)}</span>`,
-    "</div>",
-    "</section>"
-  ].join("");
-}
-
-function colorSummary(color) {
-  if (!color) return "";
-  return [
-    `${Math.round(Number(color.saturation ?? 100))}%`,
-    `${Math.round(Number(color.contrast ?? 100))}%`,
-    `${Math.round(Number(color.gamma ?? 100))}%`
-  ].join(" / ");
 }
 
 export function isTemplateActive(id, appState) {
@@ -395,43 +215,6 @@ export function renderTemplateConfigModal(appState, viewState, t) {
           <button class="btn btn-primary template-done-btn" type="button" data-action="close-template-config"><span>${escapeHtml(t("done"))}</span></button>
         </div>
       </div>
-    </div>
-  `;
-}
-
-function renderColorSettingsPanel(appState, viewState, t) {
-  const controls = ["saturation", "hue", "contrast", "gamma"].map((field) => slider(field, appState, t)).join("");
-  const selected = selectedColorGame(viewState);
-  const launch = selected?.launchable
-    ? button(t("launchGame"), "play", "primary", "launch-color-game")
-    : `<button class="btn btn-outline" type="button" disabled>${icon("play")}<span>${t("launchUnavailable")}</span></button>`;
-  const closeBtn = `<button class="color-drawer-close" type="button" data-action="close-color-game-panel" title="${escapeAttr(t("close"))}" aria-label="${escapeAttr(t("close"))}">${icon("x")}</button>`;
-  const headStyle = selected ? ` style="--game-accent:${gameAccent(selected)}"` : "";
-  const headLogoSrc = gameLogoSrc(selected);
-  const headMark = selected
-    ? headLogoSrc
-      ? `<img class="color-game-head-mark image" src="${escapeAttr(headLogoSrc)}" alt="" aria-hidden="true">`
-      : `<span class="color-game-head-mark" aria-hidden="true">${gameLogoText(selected.name)}</span>`
-    : "";
-  const gameHeader = `
-    <div class="color-game-head"${headStyle}>
-      ${headMark}
-      <div class="color-game-head-info">
-        <span class="color-game-head-label">${t("selectedGame")}</span>
-        <strong class="color-game-head-title">${safeValue(selected?.name)}</strong>
-      </div>
-      <div class="color-game-head-actions">${launch}${closeBtn}</div>
-    </div>
-  `;
-
-  return `
-    <div class="color-game-panel">
-      <div class="stack">
-        ${gameHeader}
-        ${card(t("controls"), controls)}
-        ${card(t("templates"), renderTemplates(appState, viewState, t))}
-      </div>
-      ${viewState.editingTemplate ? renderTemplateConfigModal(appState, viewState, t) : ""}
     </div>
   `;
 }
@@ -611,12 +394,6 @@ export function renderColorPage(appState, viewState, t) {
       ${viewState.editingTemplate ? renderTemplateConfigModal(appState, viewState, t) : ""}
     </div>
   `;
-}
-
-export function renderGameColorPage(appState, viewState, t) {
-  const panelOpen = Boolean(viewState.colorGamePanelOpen && selectedColorGame(viewState));
-  const panel = panelOpen ? `<aside class="color-game-drawer">${renderColorSettingsPanel(appState, viewState, t)}</aside>` : "";
-  return `<div class="color-page ${panelOpen ? "panel-open" : "selection-only"}">${renderGameCarousel(viewState, t)}${panel}</div>`;
 }
 
 export function updateSliderDom(field, appState) {

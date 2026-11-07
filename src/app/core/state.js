@@ -50,17 +50,9 @@ export const filterPresets = {
 
 export const viewState = {
   backups: [],
-  configs: [],
-  colorGames: [],
-  colorGamesLoaded: false,
-  selectedColorGame: "",
-  colorGamePanelOpen: false,
-  colorTemplateName: "",
   system: null,
   selectedBackup: "",
-  selectedConfig: "",
   backupName: "",
-  configName: "",
   cpuHistory: [],
   updateStatus: "hidden",
   updatePercent: 0,
@@ -68,6 +60,7 @@ export const viewState = {
   downloadUrl: "",
   assetSize: 0,
   appVersion: "2.5.0",
+  displayVersion: "2.5 Beta",
   lastUpdateCheck: null,
   updateCheckMessage: "",
   showAllDrivers: false,
@@ -120,8 +113,6 @@ export const pageDefs = {
   binds: { title: "bindsTitle", subtitle: "bindsSubtitle", nav: "bindsTitle", icon: "keyboard" },
   characteristics: { title: "characteristicsTitle", subtitle: "characteristicsSubtitle", nav: "characteristicsTitle", icon: "cpu" },
   backups: { title: "backupsTitle", subtitle: "backupsSubtitle", nav: "backupsTitle", icon: "archive" },
-  configs: { title: "configsTitle", subtitle: "configsSubtitle", nav: "configsTitle", icon: "folder" },
-  gameColor: { title: "gameProfilesTitle", subtitle: "gameProfilesSubtitle", nav: "gameProfilesTitle", icon: "layers" },
   settings: { title: "settingsTitle", subtitle: "settingsSubtitle", nav: "settingsTitle", icon: "settings" }
 };
 
@@ -199,7 +190,12 @@ export function mergeState(state) {
   try {
     storedTheme = typeof localStorage !== "undefined" ? localStorage.getItem("synchro_theme") : null;
   } catch (_) {}
-  const resolvedTheme = storedTheme || state?.settings?.theme || existingTheme || "default";
+  const resolvedTheme = state?.settings?.theme || storedTheme || existingTheme || "default";
+  try {
+    if (typeof localStorage !== "undefined" && resolvedTheme) {
+      localStorage.setItem("synchro_theme", resolvedTheme);
+    }
+  } catch (_) {}
 
   appState = {
     color: { ...defaultState.color, ...(state?.color || {}) },
@@ -219,9 +215,22 @@ export function mergeState(state) {
   if (appState.isAdmin && viewState.activeImpactBanner?.isAdminPrompt) {
     viewState.activeImpactBanner = null;
   }
-  const currentLang = lang();
-  document.documentElement.lang = currentLang;
-  document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
-  applyInterfaceAccent(appState.settings.accentColor);
+  if (typeof document !== "undefined" && document.documentElement) {
+    const currentLang = lang();
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
+    if (resolvedTheme) {
+      document.documentElement.setAttribute("data-theme", resolvedTheme);
+    }
+    const themeAccent = resolvedTheme === "winter" ? "#38bdf8"
+      : (resolvedTheme === "autumn" ? "#f59e0b"
+      : (resolvedTheme === "spring" ? "#f472b6"
+      : (resolvedTheme === "summer" ? "#06b6d4" : null)));
+    if (themeAccent) {
+      applyInterfaceAccent(themeAccent);
+    } else {
+      applyInterfaceAccent(appState.settings.accentColor);
+    }
+  }
   return appState;
 }

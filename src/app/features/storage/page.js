@@ -100,19 +100,8 @@ export function renderBackupsPage(viewState, t) {
   `;
 }
 
-export function renderConfigsPage(viewState, t) {
-  const rows = viewState.configs?.length
-    ? viewState.configs.map((item) => `<button class="config-row ${viewState.selectedConfig === item.id ? "selected" : ""}" type="button" data-config-id="${escapeAttr(item.id)}"><span class="config-check">${viewState.selectedConfig === item.id ? icon("check") : ""}</span><span>${escapeHtml(item.name)}</span><em>${escapeHtml(formatColorSummary(item.color))}</em></button>`).join("")
-    : `<div class="empty-state">${escapeHtml(t("noConfigs"))}</div>`;
-  return `<section class="card configs-card"><h2>${escapeHtml(t("savedConfigs"))}</h2><div class="toolbar-row config-name-row"><input class="text-input wide" data-field="configName" value="${escapeAttr(viewState.configName)}" placeholder="${escapeAttr(t("configName"))}" aria-label="${escapeAttr(t("configName"))}">${button(t("saveConfig"), "save", "primary", "save-config")}</div><div class="toolbar-row config-tools">${button(t("loadConfig"), "folder", "outline", "load-config")}${button(t("applyConfig"), "check", "outline", "apply-config")}${button(t("deleteConfig"), "trash", "outline", "delete-config")}${button(t("openFolder"), "folder", "outline", "open-configs-folder")}</div><div class="config-list">${rows}</div></section>`;
-}
-
 export const backupsFeature = {
-  render: renderBackupsPage,
-  mount(container, context) {
-    if (context?.loadLists) {
-      context.loadLists();
-    }
-  },
+  render: (viewState, t) => renderBackupsPage(viewState, t),
+  mount() {},
   unmount() {}
 };

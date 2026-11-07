@@ -15,6 +15,10 @@ class Router {
     return activePage;
   }
 
+  activePageName() {
+    return activePage;
+  }
+
   unmountCurrent() {
     if (this.currentMounted && typeof this.currentMounted.unmount === "function") {
       try {
@@ -43,7 +47,7 @@ class Router {
   }
 
   navigate(pageName, context = {}) {
-    if (!pageDefs[pageName] && pageName !== "gameColor") {
+    if (!pageDefs[pageName]) {
       pageName = "color";
     }
 
