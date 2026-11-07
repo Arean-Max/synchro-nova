@@ -10,18 +10,35 @@ use super::types::skipped;
 pub use snapshot::{collect_tweak_registry_snapshot, restore_tweak_registry_snapshot};
 pub use super::types::{TweakApplyResult, TweakRegistrySnapshot, TweakRegistryValue, TweakStatus};
 
+static TWEAK_STATUS_CACHE: std::sync::Mutex<Option<(std::time::Instant, Vec<TweakStatus>)>> = std::sync::Mutex::new(None);
+
+pub fn invalidate_tweak_status_cache() {
+    if let Ok(mut guard) = TWEAK_STATUS_CACHE.lock() {
+        *guard = None;
+    }
+}
+
 pub fn apply_selected_tweaks(ids: Vec<String>) -> Vec<TweakApplyResult> {
+    invalidate_tweak_status_cache();
     ids.into_iter().take(80).map(|id| apply_one(&id)).collect()
 }
 
 pub fn collect_tweak_statuses() -> Vec<TweakStatus> {
+    if let Ok(guard) = TWEAK_STATUS_CACHE.lock() {
+        if let Some((instant, statuses)) = guard.as_ref() {
+            if instant.elapsed() < std::time::Duration::from_secs(8) {
+                return statuses.clone();
+            }
+        }
+    }
+
     let ids = known_tweak_ids();
     let num_threads = std::thread::available_parallelism()
         .map(|n| n.get().min(8).max(1))
         .unwrap_or(4);
 
     let chunk_size = (ids.len() + num_threads - 1) / num_threads;
-    std::thread::scope(|s| {
+    let results = std::thread::scope(|s| {
         let mut handles = Vec::new();
         for chunk in ids.chunks(chunk_size) {
             let handle = s.spawn(move || {
@@ -38,8 +55,14 @@ pub fn collect_tweak_statuses() -> Vec<TweakStatus> {
         handles
             .into_iter()
             .flat_map(|h| h.join().unwrap_or_default())
-            .collect()
-    })
+            .collect::<Vec<_>>()
+    });
+
+    if let Ok(mut guard) = TWEAK_STATUS_CACHE.lock() {
+        *guard = Some((std::time::Instant::now(), results.clone()));
+    }
+
+    results
 }
 
 pub(crate) fn is_admin_tweak(id: &str) -> bool {

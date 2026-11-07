@@ -6,6 +6,7 @@ use super::runner::{
 use super::types::{applied, failed, skipped, TweakApplyResult};
 
 pub fn revert_selected_tweaks(ids: Vec<String>) -> Vec<TweakApplyResult> {
+    super::engine::invalidate_tweak_status_cache();
     ids.into_iter().take(80).map(|id| revert_one(&id)).collect()
 }
 

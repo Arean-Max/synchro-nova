@@ -186,6 +186,7 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
                     WINEVENT_SKIPOWNPROCESS, WM_TIMER,
                 };
 
+                std::thread::sleep(Duration::from_millis(2000));
                 evaluate_and_update(&app_handle);
 
                 unsafe {

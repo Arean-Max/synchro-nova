@@ -107,8 +107,7 @@ pub fn kill_webview_process() {}
 #[cfg(target_os = "windows")]
 pub fn trim_working_set() {
     unsafe {
-        enable_process_eco_qos();
-        let _ = winapi::SetProcessWorkingSetSize(winapi::GetCurrentProcess(), usize::MAX, usize::MAX);
+                let _ = winapi::SetProcessWorkingSetSize(winapi::GetCurrentProcess(), usize::MAX, usize::MAX);
     }
 }
 

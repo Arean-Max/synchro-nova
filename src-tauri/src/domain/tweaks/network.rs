@@ -161,12 +161,7 @@ pub fn is_rss_applied() -> bool {
             }
         }
     }
-    run_command_output(
-        "powershell",
-        &["-NoProfile", "-NonInteractive", "-Command", "(Get-NetOffloadGlobalSetting).ReceiveSideScaling"],
-    )
-    .map(|o| String::from_utf8_lossy(&o.stdout).trim().eq_ignore_ascii_case("Enabled"))
-    .unwrap_or(false)
+    false
 }
 
 pub fn is_rsc_applied() -> bool {
@@ -179,12 +174,7 @@ pub fn is_rsc_applied() -> bool {
             }
         }
     }
-    run_command_output(
-        "powershell",
-        &["-NoProfile", "-NonInteractive", "-Command", "(Get-NetOffloadGlobalSetting).ReceiveSegmentCoalescing"],
-    )
-    .map(|o| String::from_utf8_lossy(&o.stdout).trim().eq_ignore_ascii_case("Disabled"))
-    .unwrap_or(false)
+    false
 }
 
 pub fn apply_network_udp_buffers(id: &str) -> TweakApplyResult {

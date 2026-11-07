@@ -38,6 +38,12 @@ pub fn is_hibernate_applied() -> bool {
 }
 
 pub fn is_ntfs_last_access_applied() -> bool {
+    if let Some(val) = hklm_dword("SYSTEM\\CurrentControlSet\\Control\\FileSystem", "NtfsDisableLastAccessUpdate") {
+        return val == 1 || (val & 1) == 1;
+    }
+    if !crate::ffi::is_user_admin() {
+        return false;
+    }
     run_command_output("fsutil", &["behavior", "query", "disableLastAccess"])
         .map(|o| String::from_utf8_lossy(&o.stdout).contains("DisableLastAccess = 1"))
         .unwrap_or(false)
@@ -103,19 +109,13 @@ pub fn apply_disable_memory_compression(id: &str) -> TweakApplyResult {
 }
 
 pub fn is_disable_memory_compression_applied() -> bool {
-    run_command_output(
-        "powershell",
-        &[
-            "-NoProfile",
-            "-NonInteractive",
-            "-ExecutionPolicy",
-            "Bypass",
-            "-Command",
-            "(Get-MMAgent).MemoryCompression",
-        ],
-    )
-    .map(|o| String::from_utf8_lossy(&o.stdout).trim().eq_ignore_ascii_case("false"))
-    .unwrap_or(false)
+    if !crate::ffi::is_user_admin() {
+        return false;
+    }
+    hklm_dword(
+        "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management",
+        "DisablePagingExecutive",
+    ) == Some(1)
 }
 
 pub fn apply_large_system_cache_off(id: &str) -> TweakApplyResult {
