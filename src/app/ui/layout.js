@@ -35,7 +35,7 @@ function renderTitlebar(t) {
     <div class="titlebar ${isMacLights ? "has-mac-lights" : ""}" data-window-drag data-tauri-drag-region>
       <div class="titlebar-left" data-window-drag data-tauri-drag-region>
         <span class="titlebar-logo" data-window-drag data-tauri-drag-region>${logo()}</span>
-        <span class="titlebar-title" data-window-drag data-tauri-drag-region>Synchro Nova<span class="titlebar-version-tag">2.5 Beta</span></span>
+        <span class="titlebar-title" data-window-drag data-tauri-drag-region>Synchro Nova</span>
       </div>
       ${controls}
     </div>

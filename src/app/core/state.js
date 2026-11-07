@@ -60,7 +60,7 @@ export const viewState = {
   downloadUrl: "",
   assetSize: 0,
   appVersion: "2.5.0",
-  displayVersion: "2.5 Beta",
+  displayVersion: "2.5.0",
   lastUpdateCheck: null,
   updateCheckMessage: "",
   showAllDrivers: false,

@@ -267,6 +267,11 @@ pub fn run() {
             }
 
             match event {
+                WindowEvent::Focused(true) => {
+                    resume_window_webview(window);
+                    platform::fullscreen_watcher::set_user_summoned(true);
+                    domain::color::reapply_active_color();
+                }
                 WindowEvent::ScaleFactorChanged { .. } => {
                     if let Some(wv) = window.app_handle().get_webview_window("main") {
                         configure_main_window(&wv);
