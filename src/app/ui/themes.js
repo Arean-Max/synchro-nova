@@ -69,6 +69,7 @@ class ParticleSystem {
     this.height = 0;
     this.running = false;
     this.paused = false;
+    this.lastFrameTime = 0;
   }
 
   init(container = (typeof document !== "undefined" ? document.body : null)) {
@@ -96,10 +97,18 @@ class ParticleSystem {
 
   resize() {
     if (!this.canvas) return;
-    this.width = Math.max(window.innerWidth || 0, (typeof document !== "undefined" ? document.documentElement?.clientWidth : 0) || 0, 980);
-    this.height = Math.max(window.innerHeight || 0, (typeof document !== "undefined" ? document.documentElement?.clientHeight : 0) || 0, 620);
-    this.canvas.width = this.width;
-    this.canvas.height = this.height;
+    const rawW = Math.max(window.innerWidth || 0, (typeof document !== "undefined" ? document.documentElement?.clientWidth : 0) || 0, 980);
+    const rawH = Math.max(window.innerHeight || 0, (typeof document !== "undefined" ? document.documentElement?.clientHeight : 0) || 0, 620);
+    const dpr = Math.min((typeof window !== "undefined" && window.devicePixelRatio) || 1, 2);
+    this.width = rawW;
+    this.height = rawH;
+    this.canvas.width = Math.floor(rawW * dpr);
+    this.canvas.height = Math.floor(rawH * dpr);
+    this.canvas.style.width = `${rawW}px`;
+    this.canvas.style.height = `${rawH}px`;
+    if (this.ctx) {
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
   }
 
   setTheme(themeId, disableAnimations = false) {
@@ -132,7 +141,7 @@ class ParticleSystem {
       };
 
       if (this.currentTheme === "winter") {
-        p.kind = i % 3; // 0: bokeh flake, 1: 6-point crystal, 2: star sparkle
+        p.kind = i % 3;
         if (p.kind === 2) {
           p.size = 1.2 + Math.random() * 1.5;
           p.speedY = 0.2 + Math.random() * 0.35;
@@ -232,8 +241,18 @@ class ParticleSystem {
     }
   }
 
-  loop() {
+  loop(timestamp = 0) {
     if (!this.running || this.paused) return;
+    if (typeof document !== "undefined" && document.hidden) {
+      this.paused = true;
+      return;
+    }
+
+    if (timestamp - this.lastFrameTime < 14) {
+      this.animId = requestAnimationFrame((ts) => this.loop(ts));
+      return;
+    }
+    this.lastFrameTime = timestamp;
 
     this.ctx.clearRect(0, 0, this.width, this.height);
     const theme = this.currentTheme;
@@ -255,7 +274,6 @@ class ParticleSystem {
         if (p.x < -10) p.x = this.width + 10;
 
         if (p.kind === 2) {
-          // Diamond glint / 4-point star lens flare
           const pulse = p.alpha * (0.6 + 0.4 * Math.sin(p.phase * 2.5));
           this.ctx.save();
           this.ctx.translate(p.x, p.y);
@@ -274,7 +292,6 @@ class ParticleSystem {
           this.ctx.fill();
           this.ctx.restore();
         } else if (p.kind === 1) {
-          // 6-pointed hexagonal crystal snowflake
           this.ctx.save();
           this.ctx.translate(p.x, p.y);
           this.ctx.rotate(p.rot);
@@ -297,7 +314,6 @@ class ParticleSystem {
           this.ctx.stroke();
           this.ctx.restore();
         } else {
-          // Soft bokeh snow circle
           const grad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
           grad.addColorStop(0, `rgba(240, 249, 255, ${p.alpha})`);
           grad.addColorStop(1, `rgba(186, 230, 253, 0)`);
@@ -342,7 +358,6 @@ class ParticleSystem {
           this.ctx.translate(p.x, p.y);
           this.ctx.rotate(p.rot);
           this.ctx.scale(Math.cos(p.flipPhase), 1);
-          // Curved organic leaf
           this.ctx.beginPath();
           this.ctx.moveTo(0, -p.size);
           this.ctx.bezierCurveTo(p.size * 0.65, -p.size * 0.4, p.size * 0.75, p.size * 0.3, 0, p.size);
@@ -350,7 +365,6 @@ class ParticleSystem {
           this.ctx.fillStyle = p.color;
           this.ctx.globalAlpha = p.alpha;
           this.ctx.fill();
-          // Leaf central vein
           this.ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
           this.ctx.lineWidth = 0.6;
           this.ctx.beginPath();
@@ -384,7 +398,6 @@ class ParticleSystem {
           this.ctx.translate(p.x, p.y);
           this.ctx.rotate(p.rot);
           this.ctx.scale(Math.cos(p.flipPhase), 1);
-          // Japanese sakura petal with notched tip
           this.ctx.beginPath();
           this.ctx.moveTo(0, p.size);
           this.ctx.bezierCurveTo(-p.size * 0.8, p.size * 0.4, -p.size * 0.7, -p.size * 0.6, -p.size * 0.35, -p.size);
@@ -417,7 +430,6 @@ class ParticleSystem {
           this.ctx.fill();
           this.ctx.globalAlpha = 1.0;
         } else {
-          // Bioluminescent firefly with soft glowing double halo
           const glow = p.size * (2.2 + 0.8 * Math.sin(p.phase * 2));
           const grad = this.ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glow);
           grad.addColorStop(0, "rgba(254, 240, 138, 0.95)");
@@ -427,7 +439,6 @@ class ParticleSystem {
           this.ctx.beginPath();
           this.ctx.arc(p.x, p.y, glow, 0, Math.PI * 2);
           this.ctx.fill();
-          // tiny bright hot core
           this.ctx.fillStyle = "#ffffff";
           this.ctx.beginPath();
           this.ctx.arc(p.x, p.y, p.size * 0.45, 0, Math.PI * 2);
@@ -436,7 +447,7 @@ class ParticleSystem {
       }
     }
 
-    this.animId = requestAnimationFrame(() => this.loop());
+    this.animId = requestAnimationFrame((ts) => this.loop(ts));
   }
 }
 
@@ -457,7 +468,7 @@ export function applyTheme(themeId, options = {}) {
   }
 
   const themeDef = THEMES.find((t) => t.id === selectedTheme) || THEMES[0];
-  if (options.updateAccent && themeDef.defaultAccent) {
+  if (themeDef.defaultAccent) {
     applyInterfaceAccent(themeDef.defaultAccent);
   }
 
@@ -483,6 +494,15 @@ export function resolveSeasonalTheme() {
       savedTheme = localStorage.getItem("synchro_theme");
     }
   } catch (_) {}
+
+  if (!lastAutoSeason && savedTheme) {
+    try {
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("synchro_last_auto_season", currentSeason);
+      }
+    } catch (_) {}
+    return savedTheme;
+  }
 
   if (!lastAutoSeason || lastAutoSeason !== currentSeason) {
     try {

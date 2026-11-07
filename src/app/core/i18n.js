@@ -30,6 +30,7 @@ import { allLanguagesTranslations } from "./i18n_all_languages.js";
 
 export const dictionaries = {
   en: {
+    madeWithLove: "Made with love",
     themeTitle: "Interface Theme",
     themeSubtitle: "Seasonal themes with atmospheric visual effects",
     theme_default: "Default",
@@ -49,9 +50,11 @@ export const dictionaries = {
     community: "COMMUNITY PROFILE",
     beta: "BETA",
     template: "Template",
-    scriptsNav: "Scripts",
+    scriptsNav: "Rust",
     scriptsBeta: "Beta",
-    scriptsBetaTitle: "Scripts (Beta) — Coming Soon",
+    scriptsBetaTitle: "Rust (Beta) — Coming Soon",
+    rustBetaTitle: "Rust (Beta) — Coming Soon",
+    tweakApplied: "Applied",
     skipSplash: "Press Esc or click to skip",
     notification_success: "SUCCESS",
     notification_warning: "WARNING",
@@ -406,6 +409,7 @@ export const dictionaries = {
   },
 
   ru: {
+    madeWithLove: "Сделано с любовью",
     themeTitle: "Тема оформления",
     themeSubtitle: "Сезонные темы с визуальными эффектами и атмосферой",
     theme_default: "Дефолт",
@@ -425,9 +429,11 @@ export const dictionaries = {
     community: "COMMUNITY PROFILE",
     beta: "BETA",
     template: "Шаблон",
-    scriptsNav: "Скрипты",
+    scriptsNav: "Rust",
     scriptsBeta: "Бета",
-    scriptsBetaTitle: "Скрипты (Бета) — Скоро",
+    scriptsBetaTitle: "Rust (Бета) — Скоро",
+    rustBetaTitle: "Rust (Бета) — Скоро",
+    tweakApplied: "Применено",
     skipSplash: "Нажмите Esc или кликните для пропуска",
     notification_success: "УСПЕХ",
     notification_warning: "ВНИМАНИЕ",
@@ -780,6 +786,7 @@ export const dictionaries = {
   },
 
   zh: {
+    madeWithLove: "用心制作",
     appSubtitle: "all in one.",
     main: "主页",
     colorTitle: "常规",
@@ -872,6 +879,7 @@ export const dictionaries = {
     runAsAdmin: "以管理员身份运行"
   },
   zht: {
+    madeWithLove: "用心製作",
     appSubtitle: "all in one.",
     main: "主頁",
     colorTitle: "一般",
@@ -964,6 +972,7 @@ export const dictionaries = {
     runAsAdmin: "以系統管理員身分執行"
   },
   ko: {
+    madeWithLove: "사랑을 담아 제작됨",
     appSubtitle: "all in one.",
     main: "메인",
     colorTitle: "일반",
@@ -1056,6 +1065,7 @@ export const dictionaries = {
     runAsAdmin: "관리자 권한으로 실행"
   },
   de: {
+    madeWithLove: "Mit Liebe gemacht",
     appSubtitle: "all in one.",
     main: "HAUPTMENÜ",
     colorTitle: "Allgemein",
@@ -1156,6 +1166,7 @@ export const dictionaries = {
     runAsAdmin: "Als Administrator ausführen"
   },
   es: {
+    madeWithLove: "Hecho con amor",
     appSubtitle: "all in one.",
     main: "PRINCIPAL",
     colorTitle: "General",
@@ -1248,6 +1259,7 @@ export const dictionaries = {
     runAsAdmin: "Ejecutar como Administrador"
   },
   fr: {
+    madeWithLove: "Fait avec amour",
     appSubtitle: "all in one.",
     main: "ACCUEIL",
     colorTitle: "Général",
@@ -1340,6 +1352,7 @@ export const dictionaries = {
     runAsAdmin: "Exécuter en Administrateur"
   },
   it: {
+    madeWithLove: "Fatto con amore",
     appSubtitle: "all in one.",
     main: "PRINCIPALE",
     colorTitle: "Generale",
@@ -1432,6 +1445,7 @@ export const dictionaries = {
     runAsAdmin: "Esegui come Amministratore"
   },
   ja: {
+    madeWithLove: "愛を込めて制作",
     appSubtitle: "all in one.",
     main: "メイン",
     colorTitle: "一般",
@@ -1524,6 +1538,7 @@ export const dictionaries = {
     runAsAdmin: "管理者として実行"
   },
   pl: {
+    madeWithLove: "Stworzone z miłością",
     appSubtitle: "all in one.",
     main: "GŁÓWNA",
     colorTitle: "Ogólne",
@@ -1616,6 +1631,7 @@ export const dictionaries = {
     runAsAdmin: "Uruchom jako Administrator"
   },
   uk: {
+    madeWithLove: "Зроблено з любов'ю",
     appSubtitle: "all in one.",
     main: "ГОЛОВНА",
     colorTitle: "Основні",
@@ -1708,6 +1724,7 @@ export const dictionaries = {
     runAsAdmin: "Запуск від імені адміністратора"
   },
   tr: {
+    madeWithLove: "Sevgiyle yapıldı",
     appSubtitle: "all in one.",
     main: "ANA MENÜ",
     colorTitle: "Genel",
@@ -1800,6 +1817,7 @@ export const dictionaries = {
     runAsAdmin: "Yönetici Olarak Çalıştır"
   },
   br: {
+    madeWithLove: "Feito com amor",
     appSubtitle: "all in one.",
     main: "PRINCIPAL",
     colorTitle: "Geral",
@@ -1892,6 +1910,7 @@ export const dictionaries = {
     runAsAdmin: "Executar como Administrador"
   },
     da: {
+    madeWithLove: "Lavet med kærlighed",
     appSubtitle: "all in one.",
     main: "HOVEDMENU",
     colorTitle: "Generelt",
@@ -1984,6 +2003,7 @@ export const dictionaries = {
     runAsAdmin: "Kør som Administrator",
   },
   no: {
+    madeWithLove: "Laget med kjærlighet",
     appSubtitle: "all in one.",
     main: "HOVEDMENY",
     colorTitle: "Generelt",
@@ -2076,6 +2096,7 @@ export const dictionaries = {
     runAsAdmin: "Kjør som Administrator",
   },
   bs: {
+    madeWithLove: "Napravljeno s ljubavlju",
     appSubtitle: "all in one.",
     main: "GLAVNI MENI",
     colorTitle: "Općenito",
@@ -2168,6 +2189,7 @@ export const dictionaries = {
     runAsAdmin: "Pokreni kao Administrator",
   },
   ar: {
+    madeWithLove: "صُنع بكل حب",
     appSubtitle: "all in one.",
     main: "الرئيسية",
     colorTitle: "عام",
@@ -2260,6 +2282,7 @@ export const dictionaries = {
     runAsAdmin: "تشغيل كمسؤول",
   },
   th: {
+    madeWithLove: "สร้างด้วยความรัก",
     appSubtitle: "all in one.",
     main: "หน้าหลัก",
     colorTitle: "ทั่วไป",
@@ -2352,6 +2375,7 @@ export const dictionaries = {
     runAsAdmin: "เรียกใช้ในฐานะผู้ดูแลระบบ",
   },
   bn: {
+    madeWithLove: "ভালোবাসা দিয়ে তৈরি",
     appSubtitle: "all in one.",
     main: "মূল পাতা",
     colorTitle: "সাধারণ",
@@ -2444,6 +2468,7 @@ export const dictionaries = {
     runAsAdmin: "অ্যাডমিনিস্ট্রেটর হিসেবে চালান",
   },
   gr: {
+    madeWithLove: "Φτιαγμένο με αγάπη",
     appSubtitle: "all in one.",
     main: "ΚΥΡΙΟ ΜΕΝΟΥ",
     colorTitle: "Γενικά",
@@ -2536,6 +2561,7 @@ export const dictionaries = {
     runAsAdmin: "Εκτέλεση ως Διαχειριστής",
   },
   vi: {
+    madeWithLove: "Được tạo bằng tình yêu",
     appSubtitle: "all in one.",
     main: "CHÍNH",
     colorTitle: "Cài đặt chung",
@@ -2642,6 +2668,7 @@ for (const [langCode, dict] of Object.entries(allLanguagesTranslations)) {
 }
 
 const ruOverrides = {
+  madeWithLove: "Сделано с любовью",
   themeTitle: "Тема оформления",
   theme_default: "Дефолт",
   theme_winter: "Новогодняя",

@@ -33,7 +33,7 @@ export function runIntroSplash(options = {}) {
     '<div class="intro-splash-backdrop"></div>',
     '<div class="intro-splash-stage">',
     '  <div class="intro-splash-logo-wrap">',
-    '    <img class="intro-splash-logo-img" src="./assets/synchro-nova-splash.png" alt="Synchro Nova" />',
+    '    <img class="intro-splash-logo-img" src="./assets/synchro-nova-icon.png" alt="Synchro Nova" decoding="sync" loading="eager" />',
     '  </div>',
     '  <div class="intro-splash-title">',
     `    <span class="splash-word-synchro">${synchroHtml}</span>`,
@@ -64,7 +64,7 @@ export function runIntroSplash(options = {}) {
     exitTimeout = setTimeout(() => {
       splash.remove();
       if (typeof onFinish === "function") onFinish();
-    }, 260);
+    }, 280);
   }
 
   function onClick(e) {
@@ -84,11 +84,28 @@ export function runIntroSplash(options = {}) {
   splash.addEventListener("click", onClick, true);
   window.addEventListener("keydown", onKeyDown, true);
 
-  requestAnimationFrame(() => {
-    splash.classList.add("splash-animate");
-  });
+  const img = splash.querySelector(".intro-splash-logo-img");
+  const launchAnim = () => {
+    if (finished) return;
+    requestAnimationFrame(() => {
+      splash.classList.add("splash-animate");
+    });
+  };
+
+  if (img && typeof img.decode === "function") {
+    img.decode().then(launchAnim).catch(launchAnim);
+  } else if (img) {
+    if (img.complete && img.naturalWidth > 0) {
+      launchAnim();
+    } else {
+      img.onload = launchAnim;
+      img.onerror = launchAnim;
+    }
+  } else {
+    launchAnim();
+  }
 
   autoTimeout = setTimeout(() => {
     finishSplash();
-  }, 2950);
+  }, 4800);
 }
