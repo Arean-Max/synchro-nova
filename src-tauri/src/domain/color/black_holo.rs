@@ -50,7 +50,7 @@ pub struct BlackHoloStatus {
 static ORIGINAL_RAMP: Mutex<Option<GammaRamp>> = Mutex::new(None);
 
 static IS_ACTIVE: AtomicBool = AtomicBool::new(false);
-static WATCHDOG_RUNNING: AtomicBool = AtomicBool::new(false);
+
 
 #[cfg(target_os = "windows")]
 pub fn detect_gpu_vendor() -> (GpuVendor, String) {
@@ -148,7 +148,9 @@ fn ensure_cleanup_handlers_registered() {
 }
 
 pub fn stop_ramp_watchdog() {
-    WATCHDOG_RUNNING.store(false, Ordering::SeqCst);
+    #[cfg(target_os = "windows")]
+    let _ = restore_original_system_ramp();
+    IS_ACTIVE.store(false, Ordering::SeqCst);
 }
 
 #[cfg(target_os = "windows")]
@@ -221,9 +223,4 @@ pub fn get_hardware_black_holo_status() -> BlackHoloStatus {
     }
 }
 
-#[cfg(target_os = "windows")]
-pub fn start_black_holo_hotkey_listener(_app_handle: Option<tauri::AppHandle>) {
-}
 
-#[cfg(not(target_os = "windows"))]
-pub fn start_black_holo_hotkey_listener(_app_handle: Option<tauri::AppHandle>) {}

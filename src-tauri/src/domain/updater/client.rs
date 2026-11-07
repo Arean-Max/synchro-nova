@@ -70,10 +70,10 @@ impl ParsedVersion {
         }
 
         match (&self.pre, &current.pre) {
-            (None, Some(_)) => true, // release > prerelease of same core
-            (Some(_), None) => false, // prerelease < release of same core
+            (None, Some(_)) => true,
+            (Some(_), None) => false,
             (Some(a), Some(b)) => a > b,
-            (None, None) => false, // same version
+            (None, None) => false,
         }
     }
 }
@@ -123,7 +123,6 @@ pub fn parse_sha256_manifest(contents: &str, target_filename: &str) -> Result<St
 pub fn validate_update_url(url: &str) -> Result<(), String> {
     let lower = url.trim().to_lowercase();
     let is_valid = lower.starts_with("https://github.com/arean-max/synchro-nova/releases/")
-        || lower.starts_with("https://objects.githubusercontent.com/")
         || lower.starts_with("https://api.github.com/repos/arean-max/synchro-nova/releases");
 
     if !is_valid {

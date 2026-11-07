@@ -1,6 +1,5 @@
 pub mod app;
 pub mod color;
-pub mod games;
 pub mod hotkeys;
 pub mod storage;
 pub mod system;
@@ -9,7 +8,6 @@ pub mod updater;
 
 pub use app::*;
 pub use color::*;
-pub use games::*;
 pub use hotkeys::*;
 pub use storage::*;
 pub use system::*;

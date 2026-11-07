@@ -179,6 +179,14 @@ impl SafeRegistry {
     }
 
     pub fn delete_value(root: RootKey, path: &str, name: &str) -> Result<(), RegistryError> {
+        if let Err(msg) = crate::platform::security_guard::verify_registry_delete_safety(path) {
+            return Err(RegistryError::DeleteValueFailed {
+                root: root.as_str(),
+                path: path.to_string(),
+                name: name.to_string(),
+                source: std::io::Error::new(std::io::ErrorKind::PermissionDenied, msg),
+            });
+        }
         let hkey = RegKey::predef(root.to_hkey());
         let key = hkey.open_subkey_with_flags(path, KEY_WRITE).map_err(|source| {
             RegistryError::OpenKeyFailed {

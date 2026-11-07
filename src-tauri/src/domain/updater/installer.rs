@@ -44,9 +44,12 @@ pub fn apply_install() -> Result<(), String> {
     let target_str = current_exe.to_string_lossy().to_string();
     let payload_str = update_file.to_string_lossy().to_string();
     let backup_str = backup_file.to_string_lossy().to_string();
-    let expected_hash = super::client::get_verified_sha256();
+    let expected_hash = super::client::get_verified_sha256()
+        .ok_or_else(|| "No cryptographically verified SHA-256 available for the staged update package".to_string())?;
 
-    let mut args_slice = vec![
+    super::client::verify_update_package(&update_file, &expected_hash)?;
+
+    let args_slice = vec![
         "--updater-helper".to_string(),
         "--target".to_string(),
         target_str,
@@ -56,11 +59,9 @@ pub fn apply_install() -> Result<(), String> {
         current_pid.to_string(),
         "--backup".to_string(),
         backup_str,
+        "--expected-sha256".to_string(),
+        expected_hash.clone(),
     ];
-    if let Some(ref hash) = expected_hash {
-        args_slice.push("--expected-sha256".to_string());
-        args_slice.push(hash.clone());
-    }
 
     log(
         "INSTALL",
@@ -75,16 +76,14 @@ pub fn apply_install() -> Result<(), String> {
     super::set_status("installing", None);
 
     if needs_elevation {
-        let mut joined_args = format!(
-            "--updater-helper --target \"{}\" --payload \"{}\" --wait-pid {} --backup \"{}\"",
+        let joined_args = format!(
+            "--updater-helper --target \"{}\" --payload \"{}\" --wait-pid {} --backup \"{}\" --expected-sha256 {}",
             current_exe.display(),
             update_file.display(),
             current_pid,
-            backup_file.display()
+            backup_file.display(),
+            expected_hash
         );
-        if let Some(ref hash) = expected_hash {
-            joined_args.push_str(&format!(" --expected-sha256 {}", hash));
-        }
         log("INSTALL", "Launching elevated update helper via UAC");
         crate::platform::ffi::runas_executable_with_args(&helper_exe, Some(&joined_args))?;
     } else {

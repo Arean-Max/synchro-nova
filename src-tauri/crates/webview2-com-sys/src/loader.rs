@@ -56,8 +56,6 @@ struct WinTrustData {
     p_signature_settings: *mut core::ffi::c_void,
 }
 
-/// Verifies that a given PE binary has a valid, untampered Authenticode signature
-/// using Windows native WinVerifyTrust provider.
 fn verify_authenticode(path: &std::path::Path) -> bool {
     if !path.is_file() {
         return false;
@@ -137,8 +135,6 @@ fn verify_authenticode(path: &std::path::Path) -> bool {
     }
 }
 
-/// Ensures the candidate is an authentic Microsoft WebView2Loader binary matching
-/// both byte length and valid Authenticode signature.
 fn is_trusted_loader(path: &std::path::Path) -> bool {
     if !path.is_file() {
         return false;
@@ -159,13 +155,11 @@ fn get_or_load_module() -> HMODULE {
         unsafe {
             let name = to_wide("WebView2Loader.dll");
 
-            // 1. Check if already loaded in this process
             let mut h = GetModuleHandleW(name.as_ptr());
             if !h.is_null() {
                 return h as usize;
             }
 
-            // 2. Check next to current executable (standard setup installer and portable zip)
             if let Ok(exe_path) = std::env::current_exe() {
                 if let Some(dir) = exe_path.parent() {
                     let candidate = dir.join("WebView2Loader.dll");
@@ -179,7 +173,6 @@ fn get_or_load_module() -> HMODULE {
                 }
             }
 
-            // 3. Check installed location from Program Files (protected by admin privileges)
             if let Ok(prog_files) = std::env::var("ProgramFiles") {
                 let candidate = std::path::PathBuf::from(prog_files)
                     .join("Synchro Nova")
@@ -193,7 +186,6 @@ fn get_or_load_module() -> HMODULE {
                 }
             }
 
-            // 4. Check installed location from NSIS per-user setup
             if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
                 let candidate = std::path::PathBuf::from(&local_app_data)
                     .join("Programs")
@@ -208,7 +200,6 @@ fn get_or_load_module() -> HMODULE {
                 }
             }
 
-            // 5. Standalone portable fallback: write genuine Microsoft-signed runtime loader
             if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
                 let dir = std::path::PathBuf::from(local_app_data).join("SynchroNova").join("bin");
                 let _ = std::fs::create_dir_all(&dir);
@@ -216,11 +207,9 @@ fn get_or_load_module() -> HMODULE {
 
                 let trusted = is_trusted_loader(&dll_path);
                 if !trusted {
-                    // Overwrite any missing, truncated, or tampered file with genuine Microsoft bytes
                     let _ = std::fs::write(&dll_path, EMBEDDED_LOADER);
                 }
 
-                // Verify Authenticode signature before calling LoadLibraryW
                 if dll_path.is_file() && is_trusted_loader(&dll_path) {
                     let wide = to_wide(dll_path.to_str().unwrap_or_default());
                     h = LoadLibraryW(wide.as_ptr());
@@ -230,7 +219,6 @@ fn get_or_load_module() -> HMODULE {
                 }
             }
 
-            // 6. Fallback to Windows default search path (System32)
             h = LoadLibraryW(name.as_ptr());
             h as usize
         }

@@ -1,8 +1,5 @@
 use std::collections::BTreeSet;
 
-/// Generate a list of all `ICoreWebView2...Handler` interfaces declared in `WebView2.h`. This is
-/// for testing purposes to make sure they are all covered in
-/// [callback.rs](../../webview2-com/src/callback.rs).
 pub fn all_declared_callbacks() -> BTreeSet<&'static str> {
     let mut interfaces = BTreeSet::new();
 
@@ -97,9 +94,6 @@ pub fn all_declared_callbacks() -> BTreeSet<&'static str> {
     interfaces
 }
 
-/// Generate a list of all `ICoreWebView2EnvironmentOptions` interfaces declared in `WebView2.h`.
-/// This is for testing purposes to make sure they are all covered in
-/// [options.rs](../../webview2-com/src/options.rs).
 pub fn all_declared_options() -> BTreeSet<&'static str> {
     let mut interfaces = BTreeSet::new();
 

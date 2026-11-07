@@ -7,12 +7,11 @@ use std::{
 };
 
 use crate::app::state::ColorSettings;
-use crate::domain::games::InstalledGame;
 
 pub const FAST_BOOT_MAGIC: &[u8; 4] = b"SNFB";
-pub const FAST_BOOT_VERSION: u32 = 1;
-pub const MAX_FAST_CACHE_BYTES: u64 = 10 * 1024 * 1024; // 10 MB limit
-pub const MAX_SNAPSHOT_AGE_SECS: u64 = 30 * 24 * 3600;  // 30 days maximum cache retention
+pub const FAST_BOOT_VERSION: u32 = 2;
+pub const MAX_FAST_CACHE_BYTES: u64 = 10 * 1024 * 1024;
+pub const MAX_SNAPSHOT_AGE_SECS: u64 = 30 * 24 * 3600;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FastBootSnapshot {
@@ -25,7 +24,6 @@ pub struct FastBootSnapshot {
     pub gpu_vendor: String,
     pub gpu_name: String,
     pub active_tweak_ids: Vec<String>,
-    pub games: Vec<InstalledGame>,
 }
 
 static EARLY_WARMUP_SNAPSHOT: OnceLock<Option<FastBootSnapshot>> = OnceLock::new();
@@ -128,7 +126,6 @@ pub fn get_cached_snapshot() -> Option<FastBootSnapshot> {
 pub fn update_disk_cache(
     color: &ColorSettings,
     show_on_recordings: bool,
-    games_override: Option<Vec<InstalledGame>>,
     tweaks_override: Option<Vec<String>>,
 ) {
     let _lock = match PERSIST_LOCK.lock() {
@@ -143,10 +140,6 @@ pub fn update_disk_cache(
     let existing = get_cached_snapshot();
     let (vendor, gpu_name) = crate::domain::color::black_holo::detect_gpu_vendor();
     let matrix = crate::domain::color::transform::build_color_matrix(color, show_on_recordings);
-
-    let games = games_override
-        .or_else(|| existing.as_ref().map(|s| s.games.clone()))
-        .unwrap_or_default();
 
     let active_tweak_ids = tweaks_override
         .or_else(|| existing.as_ref().map(|s| s.active_tweak_ids.clone()))
@@ -167,7 +160,6 @@ pub fn update_disk_cache(
         gpu_vendor: vendor.as_str().to_string(),
         gpu_name,
         active_tweak_ids,
-        games,
     };
 
     if let Ok(encoded) = bincode::serialize(&snapshot) {

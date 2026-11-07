@@ -15,27 +15,19 @@ pub mod settings;
 pub use app::state::{AppSettings, ColorSettings, DriverInfo, PersistedState, RuntimeState};
 pub use app::workers::trim_process_memory;
 pub use domain::color;
-pub use domain::games;
 pub use domain::tweaks;
 pub use platform::ffi::{self, utf16z_to_string};
 
 fn calculate_adaptive_window_size(screen_w: f64, screen_h: f64) -> (f64, f64) {
-    let base_w: f64 = if screen_w <= 1300.0 || screen_h <= 740.0 {
-        880.0
-    } else if screen_w <= 1600.0 || screen_h <= 900.0 {
-        940.0
-    } else if screen_w >= 2400.0 && screen_h >= 1350.0 {
-        1060.0
-    } else {
-        980.0
-    };
+    let ideal_w = 1024.0;
+    let ideal_h = 656.0;
 
-    let base_h: f64 = (base_w / 1.58).round();
-    let max_w: f64 = (screen_w * 0.86).floor();
-    let max_h: f64 = (screen_h * 0.82).floor();
+    let max_w = (screen_w * 0.90).floor();
+    let max_h = (screen_h * 0.88).floor();
 
-    let final_w = base_w.min(max_w).max(860.0);
-    let final_h = base_h.min(max_h).max(540.0);
+    let scale = (max_w / ideal_w).min(max_h / ideal_h).min(1.0);
+    let final_w = (ideal_w * scale).round().max(860.0);
+    let final_h = (ideal_h * scale).round().max(540.0);
 
     (final_w, final_h)
 }
@@ -100,7 +92,7 @@ pub fn configure_main_window(window: &tauri::WebviewWindow) {
 
         calculate_adaptive_window_size(screen_w, screen_h)
     } else {
-        (980.0, 620.0)
+        (1024.0, 656.0)
     };
 
     let target_size = tauri::LogicalSize::new(target_w, target_h);
@@ -158,7 +150,7 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
 
         match tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
             .title("Synchro Nova")
-            .inner_size(980.0, 620.0)
+            .inner_size(1024.0, 656.0)
             .resizable(false)
             .maximizable(false)
             .decorations(false)
@@ -228,7 +220,7 @@ pub fn run() {
             app.manage(runtime);
 
             let _ = domain::color::apply_color_transform(&initial.color, initial.settings.show_on_recordings);
-            infra::fast_cache::update_disk_cache(&initial.color, initial.settings.show_on_recordings, None, None);
+            infra::fast_cache::update_disk_cache(&initial.color, initial.settings.show_on_recordings, None);
             domain::color::start_color_guard();
             infra::screenshot::start_global_screenshot_listener();
             let _ = settings::set_autostart(app.handle(), initial.settings.autostart_windows);
@@ -252,8 +244,6 @@ pub fn run() {
             app::workers::spawn_memory_trimmer(trimmer_sync);
 
             #[cfg(target_os = "windows")]
-            #[cfg(target_os = "windows")]
-            domain::color::black_holo::start_black_holo_hotkey_listener(Some(app.handle().clone()));
             domain::hotkeys::start_global_hotkey_listener(app.handle().clone());
             domain::hotkeys::sync_hotkeys(&initial.keybinds);
 
@@ -277,6 +267,11 @@ pub fn run() {
             }
 
             match event {
+                WindowEvent::ScaleFactorChanged { .. } => {
+                    if let Some(wv) = window.app_handle().get_webview_window("main") {
+                        configure_main_window(&wv);
+                    }
+                }
                 WindowEvent::CloseRequested { api, .. } => {
                     let app = window.app_handle();
                     let state = app.state::<RuntimeState>();
@@ -304,8 +299,6 @@ pub fn run() {
             commands::sync_keybinds,
             commands::get_keybinds,
             commands::open_driver_search,
-            commands::list_installed_games,
-            commands::launch_installed_game,
             commands::apply_tweaks,
             commands::revert_tweaks,
             commands::get_tweak_statuses,
@@ -403,9 +396,17 @@ mod tests {
 
     #[test]
     fn test_adaptive_window_size() {
-        let (w, h) = calculate_adaptive_window_size(1920.0, 1080.0);
-        assert!(w >= 860.0 && w <= 1920.0);
-        assert!(h >= 540.0 && h <= 1080.0);
+        let (w_1080, h_1080) = calculate_adaptive_window_size(1920.0, 1080.0);
+        let (w_1440x1080, h_1440x1080) = calculate_adaptive_window_size(1440.0, 1080.0);
+        let (w_2560x1920, h_2560x1920) = calculate_adaptive_window_size(2560.0, 1920.0);
+
+        assert_eq!((w_1440x1080, h_1440x1080), (1024.0, 656.0));
+        assert_eq!((w_2560x1920, h_2560x1920), (1024.0, 656.0));
+        assert_eq!((w_1080, h_1080), (1024.0, 656.0));
+
+        let (w_small, h_small) = calculate_adaptive_window_size(1280.0, 720.0);
+        assert!(w_small >= 860.0 && w_small <= 1280.0);
+        assert!(h_small >= 540.0 && h_small <= 720.0);
     }
 
     #[test]
@@ -513,7 +514,7 @@ a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90  synchro.exe\n"
     fn test_update_url_validation() {
         use commands::updater::validate_update_url;
         assert!(validate_update_url("https://github.com/Arean-Max/synchro-nova/releases/download/v2.2.4/synchro.exe").is_ok());
-        assert!(validate_update_url("https://objects.githubusercontent.com/production/synchro.exe").is_ok());
+        assert!(validate_update_url("https://objects.githubusercontent.com/production/synchro.exe").is_err());
         assert!(validate_update_url("https://evil-site.com/synchro.exe").is_err());
         assert!(validate_update_url("http://github.com/Arean-Max/synchro-nova/releases/download/v2.2.4/synchro.exe").is_err());
         assert!(validate_update_url("https://github.com/attacker/repo/releases/download/bad.exe").is_err());
