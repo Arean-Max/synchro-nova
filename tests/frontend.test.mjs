@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-// Global DOM mock for Node environment tests
 globalThis.window = globalThis;
 const docAttrs = new Map();
 globalThis.document = {
@@ -59,11 +58,13 @@ test("State: default version is 2.5.0", async () => {
   assert.equal(viewState.appVersion, "2.5.0");
 });
 
-test("State: pageDefs contains configs and gameColor routes", async () => {
-  const { pageDefs } = await import("../src/app/core/state.js");
-  assert.ok(pageDefs.configs, "pageDefs.configs must be defined");
-  assert.ok(pageDefs.gameColor, "pageDefs.gameColor must be defined");
-  assert.equal(pageDefs.configs.icon, "folder");
+test("State: pageDefs strictly matches active pageOrder", async () => {
+  const { pageDefs, pageOrder } = await import("../src/app/core/state.js");
+  for (const page of pageOrder) {
+    assert.ok(pageDefs[page], `pageDefs.${page} must be defined`);
+    assert.ok(pageDefs[page].icon, `pageDefs.${page} must have an icon`);
+  }
+  assert.equal(Object.keys(pageDefs).length, pageOrder.length);
 });
 
 test("State: mergeState preserves and deep-merges templateOverrides", async () => {
@@ -85,7 +86,6 @@ test("State: mergeState preserves and deep-merges templateOverrides", async () =
   assert.ok(s0.settings.templateOverrides.rust_cold_tactical);
   assert.equal(s0.settings.templateOverrides.rust_cold_tactical.name, "Tactical Custom");
 
-  // Partial settings update without templateOverrides must preserve existing
   const s1 = mergeState({
     settings: {
       applyInstantly: true,
@@ -96,7 +96,6 @@ test("State: mergeState preserves and deep-merges templateOverrides", async () =
   assert.ok(s1.settings.templateOverrides.rust_cold_tactical);
   assert.equal(s1.settings.templateOverrides.rust_cold_tactical.name, "Tactical Custom");
 
-  // Another update adding vibrant must preserve tactical custom
   const s2 = mergeState({
     settings: {
       templateOverrides: {
@@ -128,13 +127,11 @@ test("Tweaks Apply Modal: truthful header and badges for errors and empty result
   const { renderApplyModal } = await import("../src/app/features/tweaks/applyModal.js");
   const t = (k) => k;
 
-  // Case 1: Empty results
   const emptyHtml = renderApplyModal({ phase: "complete", results: [] }, t);
   assert.match(emptyHtml, /noResultsReceived/);
   assert.match(emptyHtml, /role="dialog"/);
   assert.match(emptyHtml, /aria-modal="true"/);
 
-  // Case 2: All failed
   const failedHtml = renderApplyModal({
     phase: "complete",
     results: [
@@ -145,7 +142,6 @@ test("Tweaks Apply Modal: truthful header and badges for errors and empty result
   assert.match(failedHtml, /applyFailed/);
   assert.match(failedHtml, /apply-stat-pill failed/);
 
-  // Case 3: Partial success
   const partialHtml = renderApplyModal({
     phase: "complete",
     results: [
@@ -157,7 +153,6 @@ test("Tweaks Apply Modal: truthful header and badges for errors and empty result
   assert.match(partialHtml, /apply-stat-pill applied/);
   assert.match(partialHtml, /apply-stat-pill failed/);
 
-  // Case 4: Full success
   const successHtml = renderApplyModal({
     phase: "complete",
     results: [
@@ -207,7 +202,7 @@ test("Characteristics Page: Outdated driver with unknown update version does not
         className: "media",
         version: "6.0.9239.1",
         isOutdated: true,
-        latestVersion: "" // unknown latest version
+        latestVersion: ""
       }
     ]
   }, t);
@@ -240,18 +235,17 @@ test("Localization: All 22 supported languages contain critical keys without ret
   }
 });
 
-test("HTML Security: settings accent color attribute is escaped", async () => {
+test("HTML Security: settings attributes and content are safely escaped", async () => {
   const { renderSettingsPage } = await import("../src/app/features/settings/page.js");
-  const t = (k) => k;
+  const t = (k) => k === "madeWithLove" ? 'Made with love" onfocus="alert(1)' : k;
   const mockState = {
     settings: {
-      language: "en",
-      accentColor: '#34d399" onfocus="alert(1)'
+      language: "en"
     }
   };
   const html = renderSettingsPage(mockState, {}, t);
-  assert.ok(html.includes('&quot; onfocus=&quot;alert(1)'), "Accent color input value must be HTML-attribute-escaped");
-  assert.ok(!html.includes('value="#34d399" onfocus="alert(1)"'));
+  assert.ok(html.includes('&quot; onfocus=&quot;alert(1)'), "Localized content must be HTML-escaped");
+  assert.ok(!html.includes('onfocus="alert(1)"'), "Raw unescaped quotes must not appear");
 });
 
 test("CSP Compliance: game cards do not contain inline onerror handlers", async () => {
@@ -353,7 +347,6 @@ test("Layout Navigation: renderNavList generates smooth-scroll sub-buttons under
   const { setActivePage } = await import("../src/app/core/state.js");
   const t = (k) => k;
 
-  // Tweaks active
   setActivePage("tweaks");
   const tweaksNavHtml = renderNavList(t, { sidebarCollapsed: false });
   assert.ok(tweaksNavHtml.includes('class="nav-sub-list"'), "Sub-navigation list must be rendered");
@@ -362,22 +355,18 @@ test("Layout Navigation: renderNavList generates smooth-scroll sub-buttons under
   assert.ok(tweaksNavHtml.includes('data-section="tweak-section-gaming_latency"'), "Must scroll to gaming_latency");
   assert.ok(tweaksNavHtml.includes('data-section="tweak-section-scheduler"'), "Must scroll to scheduler");
 
-  // Tweaks active but toggled closed (accordion behavior)
   const tweaksCollapsedHtml = renderNavList(t, { sidebarCollapsed: false, collapsedSubNav: { tweaks: true } });
   assert.ok(!tweaksCollapsedHtml.includes('class="nav-sub-list"'), "Sub-navigation list must be hidden when toggled closed");
 
-  // Characteristics active
   setActivePage("characteristics");
   const driversNavHtml = renderNavList(t, { sidebarCollapsed: false });
   assert.ok(driversNavHtml.includes('data-section="driver-section-display"'), "Must scroll to driver-section-display");
   assert.ok(driversNavHtml.includes('data-section="driver-section-media"'), "Must scroll to driver-section-media");
 
-  // Settings active (unified card: no sub-items)
   setActivePage("settings");
   const settingsNavHtml = renderNavList(t, { sidebarCollapsed: false });
   assert.ok(!settingsNavHtml.includes('class="nav-sub-list"'), "Settings must not render sub-navigation in unified layout");
 
-  // Reset active page to color
   setActivePage("color");
 });
 
@@ -391,7 +380,6 @@ test("Scroll Spy: resolveActiveSubSection accurately resolves boundaries includi
     { id: "sec-4", getBoundingClientRect: () => ({ top: 1200 }) }
   ];
 
-  // At top of container
   const topPanel = {
     scrollHeight: 2000,
     clientHeight: 600,
@@ -400,7 +388,6 @@ test("Scroll Spy: resolveActiveSubSection accurately resolves boundaries includi
   };
   assert.strictEqual(resolveActiveSubSection(topPanel, mockSections), "sec-1");
 
-  // Middle section
   const midPanel = {
     scrollHeight: 2000,
     clientHeight: 600,
@@ -415,7 +402,6 @@ test("Scroll Spy: resolveActiveSubSection accurately resolves boundaries includi
   ];
   assert.strictEqual(resolveActiveSubSection(midPanel, midSections), "sec-3");
 
-  // Scrolled to bottom: terminal section must be selected even if its top > 100
   const bottomPanel = {
     scrollHeight: 2000,
     clientHeight: 600,
@@ -591,7 +577,6 @@ test("Themes: getCurrentSeason accurately maps calendar months to seasons", asyn
 test("Themes: resolveSeasonalTheme preserves user manual theme until season changes", async () => {
   const { resolveSeasonalTheme } = await import("../src/app/ui/themes.js");
 
-  // User in autumn chooses default
   globalThis.localStorage = {
     _data: new Map([
       ["synchro_last_auto_season", "autumn"],
@@ -604,20 +589,18 @@ test("Themes: resolveSeasonalTheme preserves user manual theme until season chan
   const themeSameSeason = resolveSeasonalTheme();
   assert.strictEqual(themeSameSeason, "default", "Manual theme default must be preserved during current season");
 
-  // Season changes from summer/autumn to winter
   globalThis.localStorage.setItem("synchro_last_auto_season", "summer");
   const themeNewSeason = resolveSeasonalTheme();
-  // Today is October -> autumn, so it will update to autumn!
   assert.strictEqual(themeNewSeason, "autumn", "New season must automatically apply seasonal theme");
 });
 
-test("Sidebar: renders divider and disabled Scripts (Beta) button", async () => {
+test("Sidebar: renders divider and disabled Rust (Beta) button", async () => {
   const { renderShell } = await import("../src/app/ui/layout.js");
   const t = (k) => k;
   const html = renderShell({ sidebarCollapsed: false }, t);
   assert.ok(html.includes("sidebar-divider"), "Must render sidebar divider");
-  assert.ok(html.includes("nav-item-disabled"), "Must render disabled Scripts button");
-  assert.ok(html.includes("Scripts"), "Must include Scripts label");
+  assert.ok(html.includes("nav-item-disabled"), "Must render disabled Rust button");
+  assert.ok(html.includes("Rust"), "Must include Rust label");
   assert.ok(html.includes("nav-beta-badge") && html.includes("Beta"), "Must include Beta badge");
 });
 
@@ -626,13 +609,11 @@ test("Titlebar: macTrafficLights toggle switches window controls to macOS traffi
   const { appState } = await import("../src/app/core/state.js");
   const t = (k) => k;
 
-  // Disabled: standard window buttons
   appState.settings.macTrafficLights = false;
   const defaultTitlebar = renderShell({ sidebarCollapsed: false }, t);
   assert.ok(defaultTitlebar.includes("window-btn"), "Must render standard window buttons");
   assert.ok(!defaultTitlebar.includes("mac-traffic-lights"), "Must not render mac traffic lights when disabled");
 
-  // Enabled: macOS traffic lights
   appState.settings.macTrafficLights = true;
   const macTitlebar = renderShell({ sidebarCollapsed: false }, t);
   assert.ok(macTitlebar.includes("mac-traffic-lights"), "Must render macOS traffic lights when enabled");
@@ -644,7 +625,6 @@ test("Titlebar: macTrafficLights toggle switches window controls to macOS traffi
     "Minimize must appear before close"
   );
 
-  // Reset
   appState.settings.macTrafficLights = false;
 });
 
@@ -794,4 +774,75 @@ test("Color Template Modal: omits gray subtext and layout eliminates empty black
   assert.ok(css.includes(".template-config-title p") && css.includes("display: none"), "CSS must hide template-config-title p");
   assert.ok(css.includes(".global-color-grid") && css.includes("flex: 1 1 auto;"), "CSS must allow global-color-grid to stretch");
   assert.ok(css.includes(".smart-tips-backdrop") && css.includes("backdrop-filter: blur(12px);"), "Backdrop must provide smooth frosted blur");
+});
+test("Module Integration: all feature modules export valid handlers without missing dependencies", async () => {
+  const { router } = await import("../src/app/core/router.js");
+  const { backupsFeature } = await import("../src/app/features/storage/page.js");
+  const { colorFeature } = await import("../src/app/features/color/page.js");
+  const { tweaksFeature } = await import("../src/app/features/tweaks/page.js");
+  const { bindsFeature } = await import("../src/app/features/binds/page.js");
+  const { characteristicsFeature } = await import("../src/app/features/characteristics/page.js");
+  const { settingsFeature } = await import("../src/app/features/settings/page.js");
+
+  assert.equal(typeof backupsFeature.render, "function");
+  assert.equal(typeof colorFeature.render, "function");
+  assert.equal(typeof tweaksFeature.render, "function");
+  assert.equal(typeof bindsFeature.render, "function");
+  assert.equal(typeof characteristicsFeature.render, "function");
+  assert.equal(typeof settingsFeature.render, "function");
+  assert.equal(typeof router.activePageName, "function");
+  assert.equal(typeof router.getCurrentPage, "function");
+});
+
+test("Language Picker Flags: settings dropdown renders authentic iOS emoji flag images for all 22 supported languages", async () => {
+  const { renderSettingsPage } = await import("../src/app/features/settings/page.js");
+  const { supportedLanguages } = await import("../src/app/core/i18n.js");
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+
+  const mockState = {
+    settings: {
+      language: "ru",
+      accentColor: "#ffffff",
+      templateOverrides: {}
+    }
+  };
+  const t = (key) => key;
+
+  const htmlClosed = renderSettingsPage(mockState, { languageDropdownOpen: false }, t);
+  assert.ok(htmlClosed.includes('class="language-dropdown-flag" src="./assets/flags/ru.png"'), "Trigger must render current language flag");
+
+  const htmlOpen = renderSettingsPage(mockState, { languageDropdownOpen: true }, t);
+  for (const { code } of supportedLanguages) {
+    const flagPath = path.resolve("src", "assets", "flags", `${code}.png`);
+    assert.ok(fs.existsSync(flagPath), `Flag asset file must exist on disk for [${code}]`);
+    const stats = fs.statSync(flagPath);
+    assert.ok(stats.size > 1000, "Flag asset must be non-empty image");
+
+    assert.ok(htmlOpen.includes(`class="language-item-flag" src="./assets/flags/${code}.png"`), `Dropdown menu must render flag image for [${code}]`);
+  }
+});
+
+test("Settings: renders Made with love badge with iOS heart emoji across all 22 languages", async () => {
+  const { renderSettingsPage } = await import("../src/app/features/settings/page.js");
+  const { supportedLanguages, translate } = await import("../src/app/core/i18n.js");
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+
+  const heartPath = path.resolve("src/assets/heart.png");
+  assert.ok(fs.existsSync(heartPath), "Apple iOS heart.png asset must exist");
+  assert.ok(fs.statSync(heartPath).size > 1000, "heart.png must be a valid image");
+
+  for (const { code } of supportedLanguages) {
+    const localized = translate(code, "madeWithLove");
+    assert.ok(localized && localized.trim().length > 0, `Language [${code}] missing madeWithLove translation`);
+    assert.notStrictEqual(localized, "madeWithLove", `Language [${code}] returned literal key name`);
+
+    const html = renderSettingsPage({ settings: { language: code } }, {}, (k) => translate(code, k));
+    assert.ok(html.includes("settings-made-with-love"), "Must render settings-made-with-love container");
+    assert.ok(html.includes("./assets/heart.png"), "Must render heart.png emoji image");
+    const { escapeHtml } = await import("../src/app/core/html.js");
+    assert.ok(html.includes(escapeHtml(localized)), `Settings HTML must include localized string for [${code}]`);
+    assert.ok(!html.includes("accent-picker-wrapper"), "Must not render removed RGB accent picker");
+  }
 });

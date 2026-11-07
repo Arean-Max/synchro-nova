@@ -95,6 +95,10 @@ export function renderApplyModal(modalState, t) {
       ? `<button class="tweak-help-btn tweak-error-btn apply-result-help-btn" type="button" data-action="show-tweak-error" data-tweak-id="${escapeAttr(item.id)}" data-error-msg="${escapeAttr(item.message || (isRu ? "Ошибка применения твика в системе" : "Tweak application error"))}" title="${escapeAttr(helpTooltip)}">${icon("alert")}</button>`
       : `<button class="tweak-help-btn apply-result-help-btn" type="button" data-action="show-tweak-impact" data-tweak-id="${escapeAttr(item.id)}" title="${escapeAttr(helpTooltip)}">${icon("helpCircle")}</button>`;
 
+    const badgeHtml = item.status === "applied"
+      ? ""
+      : `<span class="apply-result-badge ${escapeAttr(statusClass)}">${escapeHtml(statusTag)}</span>`;
+
     return [
       `<div class="apply-result-item ${escapeAttr(statusClass)}">`,
       '  <div class="apply-result-left">',
@@ -104,7 +108,7 @@ export function renderApplyModal(modalState, t) {
       `      <span class="apply-result-desc">${escapeHtml(desc)}</span>`,
       '    </div>',
       '  </div>',
-      `  <span class="apply-result-badge ${escapeAttr(statusClass)}">${escapeHtml(statusTag)}</span>`,
+      badgeHtml,
       '</div>'
     ].join("");
   }).join("");
@@ -123,11 +127,11 @@ export function renderApplyModal(modalState, t) {
   }
 
   const statBadges = [
-    appliedCount > 0 ? `<span class="apply-stat-pill applied">${appliedCount} ${isRu ? "применено" : "applied"}</span>` : "",
-    restoredCount > 0 ? `<span class="apply-stat-pill reverted">${restoredCount} ${isRu ? "откачено" : "restored"}</span>` : "",
+    appliedCount > 0 ? `<span class="apply-stat-pill applied" aria-hidden="true">${appliedCount}</span>` : "",
+    restoredCount > 0 ? `<span class="apply-stat-pill reverted">${restoredCount}</span>` : "",
     failedCount > 0 ? `<span class="apply-stat-pill failed">${failedCount} ${isRu ? "ошибок" : "failed"}</span>` : "",
     adminCount > 0 ? `<span class="apply-stat-pill admin">${icon("shield")} ${adminCount} ${isRu ? "требуют прав админа" : "requires admin"}</span>` : "",
-    skippedCount > 0 ? `<span class="apply-stat-pill skipped">${skippedCount} ${isRu ? "пропущено" : "skipped"}</span>` : ""
+    skippedCount > 0 ? `<span class="apply-stat-pill skipped">${skippedCount}</span>` : ""
   ].filter(Boolean).join("");
 
   const adminNotice = adminCount > 0 ? [
@@ -140,13 +144,18 @@ export function renderApplyModal(modalState, t) {
     '</div>'
   ].join("") : "";
 
+  const headIcon = failedCount > 0 ? icon("alert") : icon("check");
+
   return [
     '<div class="apply-modal-backdrop" id="apply-modal-backdrop">',
     '  <div class="apply-modal-complete" role="dialog" aria-modal="true" aria-labelledby="apply-modal-title">',
     '    <div class="apply-complete-head">',
-    '      <div class="apply-complete-titles">',
-    `        <h2 id="apply-modal-title">${escapeHtml(headerTitle)}</h2>`,
-    `        <div class="apply-stat-pills">${statBadges}</div>`,
+    '      <div class="apply-complete-title-wrap">',
+    `        <div class="apply-complete-icon ${failedCount > 0 ? "failed" : "success"}">${headIcon}</div>`,
+    '        <div class="apply-complete-text">',
+    `          <h2 id="apply-modal-title">${escapeHtml(headerTitle)}</h2>`,
+    statBadges ? `          <div class="apply-stat-pills">${statBadges}</div>` : '',
+    '        </div>',
     '      </div>',
     '    </div>',
     '    <div class="apply-complete-list">',
@@ -154,8 +163,8 @@ export function renderApplyModal(modalState, t) {
     '    </div>',
     adminNotice,
     '    <div class="apply-complete-actions">',
-    `      <button class="btn-apply-ok" type="button" data-action="dismiss-apply-modal">${escapeHtml(t("okButton") || "OK")}</button>`,
-    `      <button class="btn-apply-rollback" type="button" data-action="rollback-from-apply-modal">${escapeHtml(t("rollbackButton") || (isRu ? "Откатить" : "Rollback"))}</button>`,
+    `      <button class="btn btn-primary btn-apply-ok" type="button" data-action="dismiss-apply-modal">${escapeHtml(t("okButton") || (isRu ? "Готово" : "Done"))}</button>`,
+    `      <button class="btn btn-outline btn-apply-rollback" type="button" data-action="rollback-from-apply-modal">${escapeHtml(t("rollbackButton") || (isRu ? "Откатить" : "Rollback"))}</button>`,
     '    </div>',
     '  </div>',
     '</div>'

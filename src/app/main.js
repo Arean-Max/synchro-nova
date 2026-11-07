@@ -17,13 +17,8 @@ import {
 } from "./core/state.js";
 import { translate } from "./core/i18n.js";
 import {
-  ensureColorGameSelection,
-  renderGameColorPage,
   renderColorPage,
-  selectColorGame,
-  selectedColorGame,
   standardTemplateNames,
-  stepColorGame,
   formatSliderValue,
   syncAllSliders,
   syncAllTemplateSliders,
@@ -70,16 +65,13 @@ import {
 
 
 router.register("color", colorFeature);
-router.register("gameColor", colorFeature);
 router.register("tweaks", tweaksFeature);
 router.register("binds", bindsFeature);
 router.register("characteristics", characteristicsFeature);
 router.register("backups", backupsFeature);
-router.register("configs", backupsFeature);
 router.register("settings", settingsFeature);
 
 let applyTimer = 0;
-let carouselStepAt = 0;
 let trimTimer = 0;
 function showToastBanner(title, impactText, category = "safe") {
   return rawShowToastBanner(title, impactText, category, t);
@@ -226,21 +218,27 @@ function updateNavState() {
   syncNavIndicator();
 }
 
+let scrollSpyRafId = null;
 function bindScrollSpy(scrollPanelEl) {
   if (!scrollPanelEl) return;
   scrollPanelEl.onscroll = () => {
     if (viewState.scrollLockUntil && Date.now() < viewState.scrollLockUntil) {
       return;
     }
-    const sections = scrollPanelEl.querySelectorAll(".tweak-group, .driver-group, .settings-group");
-    if (!sections.length) return;
-    const currentId = resolveActiveSubSection(scrollPanelEl, sections);
-    if (currentId && currentId !== viewState.activeSubSection) {
-      viewState.activeSubSection = currentId;
-      document.querySelectorAll(".nav-sub-item").forEach((btn) => {
-        btn.classList.toggle("active", btn.getAttribute("data-section") === currentId);
-      });
-    }
+    if (scrollSpyRafId) return;
+    scrollSpyRafId = window.requestAnimationFrame(() => {
+      scrollSpyRafId = null;
+      if (!scrollPanelEl.isConnected) return;
+      const sections = scrollPanelEl.querySelectorAll(".tweak-group, .driver-group, .settings-group");
+      if (!sections.length) return;
+      const currentId = resolveActiveSubSection(scrollPanelEl, sections);
+      if (currentId && currentId !== viewState.activeSubSection) {
+        viewState.activeSubSection = currentId;
+        document.querySelectorAll(".nav-sub-item").forEach((btn) => {
+          btn.classList.toggle("active", btn.getAttribute("data-section") === currentId);
+        });
+      }
+    });
   };
 }
 
@@ -252,8 +250,7 @@ function updateMain() {
   const mountContext = {
     appState,
     viewState,
-    showAdminBanner: showAdminNotificationBanner,
-    loadTweakStatuses
+    showAdminBanner: showAdminNotificationBanner
   };
   if (title && subtitle && body) {
     title.textContent = t(page.title);
@@ -269,7 +266,7 @@ function updateMain() {
       if (nextBody) router.mount(activePage, nextBody, mountContext);
     }
   }
-  if (activePage === "color" || activePage === "gameColor") {
+  if (activePage === "color") {
     syncAllSliders(appState, viewState);
   }
   updateNavState();
@@ -575,24 +572,21 @@ async function applyUpdateInstall() {
   }
 }
 
-function updateColorPage(options = {}) {
-  const isColorSurface = activePage === "color" || activePage === "gameColor";
-  const body = document.querySelector(activePage === "gameColor" ? ".page-gameColor" : ".page-color");
-  if (!body || !isColorSurface) {
+function updateColorPage() {
+  const activePage = router.activePageName();
+  if (activePage !== "color") {
     updateMain();
     return;
   }
-  const app = document.getElementById("app");
-  if (options.stableDrawer && app) app.classList.add("stable-drawer");
-  body.innerHTML = activePage === "gameColor"
-    ? renderGameColorPage(appState, viewState, t)
-    : renderColorPage(appState, viewState, t);
+  const body = document.querySelector(".page-color");
+  if (!body) {
+    updateMain();
+    return;
+  }
+  body.innerHTML = renderColorPage(appState, viewState, t);
   syncAllSliders(appState, viewState);
   if (viewState.editingTemplate && viewState.editingTemplateColor) {
     syncAllTemplateSliders(viewState.editingTemplateColor);
-  }
-  if (options.stableDrawer && app) {
-    window.requestAnimationFrame(() => app.classList.remove("stable-drawer"));
   }
 }
 
@@ -689,15 +683,30 @@ async function loadLists() {
   }
 }
 
-async function loadColorGames() {
-  const games = await invokeCommand("list_installed_games");
-  viewState.colorGames = Array.isArray(games) ? games : [];
-  viewState.colorGamesLoaded = true;
-  ensureColorGameSelection(viewState);
-  if (activePage === "gameColor") updateMain();
+
+function syncAllTweakTilesDom(installedSet) {
+  const tiles = document.querySelectorAll(".tweak-tile[data-tweak-id]");
+  tiles.forEach((tile) => {
+    const id = tile.getAttribute("data-tweak-id");
+    if (!id) return;
+    const isInstalled = Boolean(installedSet?.has(id));
+    const isPendingRevert = Boolean(viewState.pendingRevertTweaks?.has(id));
+    const installed = isInstalled && !isPendingRevert;
+    const selected = Boolean(viewState.selectedTweaks?.has(id));
+    tile.classList.toggle("installed", installed);
+    tile.classList.toggle("pending-revert", isPendingRevert);
+    tile.classList.toggle("selected", selected);
+    tile.classList.toggle("not-installed", !installed && !selected && !isPendingRevert);
+    tile.setAttribute("aria-pressed", (installed || selected || isPendingRevert) ? "true" : "false");
+  });
+  syncTweaksActionButtons();
 }
 
+let isLoadingTweakStatuses = false;
+
 async function loadTweakStatuses() {
+  if (isLoadingTweakStatuses) return;
+  isLoadingTweakStatuses = true;
   try {
     const statuses = await invokeCommand("get_tweak_statuses");
     if (!Array.isArray(statuses)) return;
@@ -705,16 +714,35 @@ async function loadTweakStatuses() {
     statuses.forEach((item) => {
       if (item?.installed && item.id) nextInstalled.add(item.id);
     });
+    const prevInstalled = viewState.installedTweaks;
+    let changed = false;
+    if (!prevInstalled || prevInstalled.size !== nextInstalled.size) {
+      changed = true;
+    } else {
+      for (const id of nextInstalled) {
+        if (!prevInstalled.has(id)) {
+          changed = true;
+          break;
+        }
+      }
+    }
     viewState.installedTweaks = nextInstalled;
+    if (activePage === "tweaks" && changed) {
+      syncAllTweakTilesDom(nextInstalled);
+    }
   } catch (err) {
     console.warn("Failed to load tweak statuses:", err);
+  } finally {
+    isLoadingTweakStatuses = false;
   }
 }
 
 async function triggerScanDrivers() {
   if (viewState.driversLoading) return;
   viewState.driversLoading = true;
-  updateMain();
+  if (activePage === "characteristics") {
+    updateMain();
+  }
   try {
     const list = await invokeCommand("scan_drivers");
     if (Array.isArray(list)) {
@@ -724,7 +752,9 @@ async function triggerScanDrivers() {
     console.error("Failed to scan drivers:", err);
   } finally {
     viewState.driversLoading = false;
-    updateMain();
+    if (activePage === "characteristics") {
+      updateMain();
+    }
   }
 }
 
@@ -805,14 +835,6 @@ async function applyPreset(name) {
   await applyColor();
 }
 
-function stepColorSelection(step) {
-  const now = performance.now();
-  if (now - carouselStepAt < 150) return false;
-  if (!stepColorGame(viewState, step)) return false;
-  carouselStepAt = now;
-  updateColorPage({ stableDrawer: true });
-  return true;
-}
 
 async function handleAction(action) {
   switch (action) {
@@ -875,16 +897,7 @@ async function handleAction(action) {
       return null;
     }
 
-    case "close-color-game-panel":
-      viewState.colorGamePanelOpen = false;
-      updateColorPage({ stableDrawer: true });
-      return null;
-
-    case "launch-color-game": {
-      const game = selectedColorGame(viewState);
-      if (game?.id && game.launchable) return invokeCommand("launch_installed_game", { id: game.id });
-      return null;
-    }
+    
 
     case "fix-anticheat": {
       try {
@@ -909,17 +922,7 @@ async function handleAction(action) {
       return null;
     }
 
-    case "save-color-template": {
-      const name = (viewState.colorTemplateName || "").trim() || "Default";
-      const configs = await invokeCommand("save_config", { name });
-      if (Array.isArray(configs)) {
-        viewState.configs = configs;
-        viewState.selectedConfig = configs[0]?.id || "";
-        viewState.colorTemplateName = "";
-        updateColorPage();
-      }
-      return null;
-    }
+    
 
     case "close-template-config": {
       if (viewState.editingTemplate) {
@@ -1026,7 +1029,9 @@ async function handleAction(action) {
     case "dismiss-apply-modal":
       viewState.applyModal = null;
       renderApplyModalDom();
-      updateMain();
+      if (activePage === "tweaks") {
+        syncTweaksActionButtons();
+      }
       return null;
 
     case "rollback-from-apply-modal": {
@@ -1521,16 +1526,16 @@ async function handleClick(event) {
       });
       const targetEl = document.getElementById(sectionId);
       if (targetEl) {
-        viewState.scrollLockUntil = Date.now() + 600;
-        const scrollPanel = targetEl.closest(".scroll-panel") || document.querySelector(".scroll-panel") || document.querySelector(".page-body");
-        const behavior = appState.settings?.disableAnimations ? "auto" : "smooth";
+        viewState.scrollLockUntil = Date.now() + 500;
+        const scrollPanel = targetEl.closest(".scroll-panel") || document.querySelector(".scroll-panel");
         if (scrollPanel) {
-          const prevBehavior = scrollPanel.style.scrollBehavior;
-          scrollPanel.style.scrollBehavior = behavior;
-          targetEl.scrollIntoView({ behavior, block: "start" });
-          scrollPanel.style.scrollBehavior = prevBehavior;
-        } else {
-          targetEl.scrollIntoView({ behavior, block: "start" });
+          const panelRect = scrollPanel.getBoundingClientRect();
+          const targetRect = targetEl.getBoundingClientRect();
+          const targetTop = scrollPanel.scrollTop + (targetRect.top - panelRect.top);
+          scrollPanel.scrollTo({
+            top: Math.max(0, targetTop),
+            behavior: appState.settings?.disableAnimations ? "auto" : "smooth"
+          });
         }
       }
     }
@@ -1560,8 +1565,15 @@ async function handleClick(event) {
       viewState.collapsedSubNav[nextPage] = false;
     }
     viewState.activeSubSection = null;
+    viewState.scrollLockUntil = 0;
     viewState.languageDropdownOpen = false;
     viewState.openDropdownBindId = null;
+    const ws = document.querySelector(".workspace");
+    if (ws && ws.scrollTop > 0) ws.scrollTop = 0;
+    const mp = document.querySelector(".main-panel");
+    if (mp && mp.scrollTop > 0) mp.scrollTop = 0;
+    const pb = document.querySelector(".page-body");
+    if (pb && pb.scrollTop > 0) pb.scrollTop = 0;
     if (nextPage !== "tweaks" && viewState.activeImpactBanner) {
       dismissNotificationBanner(true);
     }
@@ -1571,12 +1583,9 @@ async function handleClick(event) {
       },
       appState,
       viewState,
-      showAdminBanner: showAdminNotificationBanner,
-      loadTweakStatuses
+      showAdminBanner: showAdminNotificationBanner
     });
-    if (nextPage === "gameColor" && !viewState.colorGamesLoaded) {
-      loadColorGames();
-    } else if (nextPage === "tweaks") {
+    if (nextPage === "tweaks") {
       if (!appState.isAdmin) {
         showAdminNotificationBanner();
       }
@@ -1588,17 +1597,16 @@ async function handleClick(event) {
           }
         });
       }
-      if (viewState.installedTweaks.size === 0) {
-        loadTweakStatuses().then(updateMain);
-      }
+      loadTweakStatuses();
     } else if (nextPage === "characteristics") {
       if (!viewState.drivers || !viewState.drivers.length) {
         triggerScanDrivers();
       }
-    } else if ((nextPage === "color" || nextPage === "gameColor" || nextPage === "backups" || nextPage === "configs" || nextPage === "storage") && (!viewState.configs.length || !viewState.backups.length)) {
+    } else if (nextPage === "backups" && !viewState.backups.length) {
       loadLists().then(() => {
-        if (nextPage === "color" || nextPage === "gameColor") updateColorPage();
-        else updateMain();
+        if (activePage === "backups") {
+          updateMain();
+        }
       });
     }
     return;
@@ -1946,43 +1954,7 @@ async function handleClick(event) {
     return;
   }
 
-  const deleteTemplate = target.closest("[data-action='delete-color-template']");
-  if (deleteTemplate) {
-    event.preventDefault();
-    event.stopPropagation();
-    const id = deleteTemplate.getAttribute("data-delete-config-id");
-    if (id) {
-      const configs = await invokeCommand("delete_config", { id });
-      if (Array.isArray(configs)) {
-        viewState.configs = configs;
-        if (viewState.selectedConfig === id) {
-          viewState.selectedConfig = configs[0]?.id || "";
-        }
-        updateColorPage();
-      }
-    }
-    return;
-  }
-
-  const colorTemplate = target.closest("[data-color-template-id]");
-  if (colorTemplate) {
-    const id = colorTemplate.getAttribute("data-color-template-id");
-    if (!id) return;
-    const loaded = await invokeCommand("load_config", { id });
-    if (loaded) {
-      mergeState(loaded);
-      updateColorPage();
-      scheduleApplyColor();
-    }
-    return;
-  }
-
-  const colorGame = target.closest("[data-game-id]");
-  if (colorGame) {
-    const id = colorGame.getAttribute("data-game-id");
-    if (id && selectColorGame(viewState, id, true)) updateColorPage();
-    return;
-  }
+  
 
   const tweakHelp = target.closest("[data-action='show-tweak-impact']");
   if (tweakHelp) {
@@ -2010,8 +1982,8 @@ async function handleClick(event) {
     return;
   }
 
-  if (!appState.isAdmin && (activePage === "tweaks" || target.closest(".tweaks-page"))) {
-    if (target.closest("[data-tweak-id]") || target.closest("[data-action='apply-tweaks']") || target.closest("[data-action='rollback-tweaks']") || target.closest(".tweaks-page.admin-locked")) {
+  if (!appState.isAdmin && activePage === "tweaks" && target.closest(".page-body .tweaks-page")) {
+    if (target.closest("[data-tweak-id]") || target.closest("[data-action='apply-tweaks']") || target.closest("[data-action='rollback-tweaks']")) {
       event.preventDefault();
       event.stopPropagation();
       highlightAdminBanner();
@@ -2229,24 +2201,12 @@ async function handleClick(event) {
     return;
   }
 
-  const config = target.closest("[data-config-id]");
-  if (config) {
-    viewState.selectedConfig = config.getAttribute("data-config-id");
-    updateMain();
-    return;
-  }
+  
 
   const action = target.closest("[data-action]");
   if (action) await handleAction(action.getAttribute("data-action"));
 }
 
-function handleWheel(event) {
-  const target = event.target instanceof Element ? event.target : null;
-  if (!target?.closest(".game-carousel")) return;
-  const step = event.deltaY > 0 || event.deltaX > 0 ? 1 : -1;
-  if (!stepColorSelection(step)) return;
-  event.preventDefault();
-}
 
 async function handleKeydown(event) {
   if (viewState.recordingBindId) {
@@ -2342,43 +2302,14 @@ async function handleKeydown(event) {
       return;
     }
   }
-  if (activePage !== "gameColor") return;
-  const target = event.target;
-  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return;
-  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-    if (stepColorSelection(1)) {
-      event.preventDefault();
-    }
-    return;
-  }
-  if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-    if (stepColorSelection(-1)) {
-      event.preventDefault();
-    }
-    return;
-  }
-  if (event.key === "Enter") {
-    const game = selectedColorGame(viewState);
-    if (!game) return;
-    viewState.colorGamePanelOpen = true;
-    event.preventDefault();
-    updateColorPage();
-    return;
-  }
-  if (event.key === "Escape") {
-    if (viewState.colorGamePanelOpen) {
-      viewState.colorGamePanelOpen = false;
-      event.preventDefault();
-      updateColorPage();
-    }
-  }
+  
 }
 
 function handlePointerDown(event) {
   if (event.button !== 0) return;
   const target = event.target instanceof Element ? event.target : null;
   if (!target?.closest("[data-window-drag]")) return;
-  if (target.closest("button, input, textarea, select, a, [data-action], [data-page], [data-setting], [data-game-id], .window-controls")) return;
+  if (target.closest("button, input, textarea, select, a, [data-action], [data-page], [data-setting], .window-controls")) return;
   event.preventDefault();
   invokeCommand("start_window_drag");
 }
@@ -2404,8 +2335,11 @@ function handleImageError(event) {
 function render() {
   const app = document.getElementById("app");
   document.documentElement.lang = lang();
-  applyTheme(appState.settings?.theme || "default", { disableAnimations: appState.settings?.disableAnimations });
-  applyInterfaceAccent(appState.settings.accentColor);
+  const curTheme = appState.settings?.theme || "default";
+  applyTheme(curTheme, { disableAnimations: appState.settings?.disableAnimations });
+  if (curTheme === "default" && appState.settings.accentColor) {
+    applyInterfaceAccent(appState.settings.accentColor);
+  }
   app.className = "app-shell";
   app.innerHTML = renderShell(viewState, t);
   syncAllSliders(appState, viewState);
@@ -2452,9 +2386,11 @@ async function checkSecurityIncidents() {
 
 async function boot() {
   registerLifecycleHooks();
-  const activeSeasonalTheme = resolveSeasonalTheme();
-  applyTheme(activeSeasonalTheme, { disableAnimations: false });
-  if (appState.settings) appState.settings.theme = activeSeasonalTheme;
+  let cachedTheme = "default";
+  try {
+    cachedTheme = localStorage.getItem("synchro_theme") || "default";
+  } catch {}
+  applyTheme(cachedTheme, { disableAnimations: true });
 
   const statePromise = invokeCommand("get_app_state");
   const holoPromise = loadBlackHoloStatus();
@@ -2482,6 +2418,9 @@ async function boot() {
 
   const state = await statePromise;
   if (state) mergeState(state);
+  applyTheme(appState.settings?.theme || "default", {
+    disableAnimations: Boolean(appState.settings?.disableAnimations)
+  });
   if (!appState.color?.activeFilter) {
     saveNormalColorState();
   }
@@ -2507,7 +2446,9 @@ async function boot() {
   render();
 
   Promise.all([holoPromise, loadLists()]).then(() => {
-    updateMainKeepingScroll();
+    if (activePage === "backups") {
+      updateMainKeepingScroll();
+    }
   });
 
   checkForUpdates(false);
@@ -2522,7 +2463,6 @@ document.addEventListener("click", withErrorBoundary(handleClick, "Click"));
 document.addEventListener("contextmenu", (e) => e.preventDefault(), { capture: true });
 document.addEventListener("pointerdown", handlePointerDown);
 document.addEventListener("error", handleImageError, true);
-document.addEventListener("wheel", handleWheel, { passive: false });
 document.addEventListener("keydown", withErrorBoundary(handleKeydown, "Keydown"));
 window.addEventListener("resize", syncNavIndicator);
 window.addEventListener("visibilitychange", () => {
@@ -2572,7 +2512,9 @@ if (window.__TAURI__?.event?.listen) {
       const label = payload.name ? `${t("templateAppliedToast") || (isRu ? "Применён шаблон" : "Template applied")}: ${payload.name}` : (t("colorsUpdatedToast") || (isRu ? "Цвета обновлены" : "Colors updated"));
       showToastBanner(t("colorTitle"), label, "safe");
     }
-    updateMain();
+    if (activePage === "color") {
+      updateColorPage();
+    }
   });
 
   window.__TAURI__.event.listen("black-holo-toggled", (e) => {

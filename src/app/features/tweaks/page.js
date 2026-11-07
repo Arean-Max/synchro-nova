@@ -208,9 +208,6 @@ export const tweaksFeature = {
       viewState.activeImpactBanner = null;
       document.querySelectorAll(".ios-banner-container").forEach((c) => c.remove());
     }
-    if (context?.loadTweakStatuses) {
-      context.loadTweakStatuses();
-    }
   },
   unmount() {
   }
