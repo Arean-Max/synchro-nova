@@ -246,9 +246,8 @@ pub fn enrich_with_real_version_checks(drivers: &mut [DriverInfo]) {
         let year = extract_year(&driver.date);
         if year > 2000 && year < 2023 {
             driver.is_outdated = true;
-            let bumped = compute_bumped_version(&driver.version);
-            driver.latest_version = bumped.clone();
-            driver.status = format!("Update Available: v{}", bumped);
+            driver.latest_version = String::new();
+            driver.status = "Outdated".to_string();
         } else {
             driver.is_outdated = false;
             driver.latest_version = driver.version.clone();
@@ -342,23 +341,6 @@ fn compare_amd(cur: &str, lat: &str) -> Ordering {
     }
 }
 
-fn compute_bumped_version(version: &str) -> String {
-    let parts: Vec<&str> = version.split('.').collect();
-    if parts.len() == 4 {
-        let p0 = parts[0];
-        let p1 = parts[1];
-        let p2 = parts[2];
-        let p3: u64 = parts[3].parse().unwrap_or(0);
-        return format!("{}.{}.{}.{}", p0, p1, p2, p3 + 120);
-    }
-    if parts.len() == 3 {
-        let p0 = parts[0];
-        let p1 = parts[1];
-        let p2: u64 = parts[2].parse().unwrap_or(0);
-        return format!("{}.{}.{}", p0, p1, p2 + 10);
-    }
-    version.to_string()
-}
 
 fn extract_year(date: &str) -> u32 {
     let digits: String = date.chars().filter(|c| c.is_ascii_digit()).collect();

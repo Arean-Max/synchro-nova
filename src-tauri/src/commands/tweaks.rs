@@ -52,7 +52,7 @@ pub fn apply_tweaks(
     log_tweaks_audit(&state.app_dir, &results);
     let active_ids = results.iter().filter(|r| r.status == "applied").map(|r| r.id.clone()).collect::<Vec<_>>();
     if let Ok(current) = state.snapshot() {
-        crate::infra::fast_cache::update_disk_cache(&current.color, current.settings.show_on_recordings, None, Some(active_ids));
+        crate::infra::fast_cache::update_disk_cache(&current.color, current.settings.show_on_recordings, Some(active_ids));
     }
     trim_process_memory();
     Ok(results)
@@ -67,7 +67,7 @@ pub fn revert_tweaks(
     log_tweaks_audit(&state.app_dir, &results);
     let active_ids = results.iter().filter(|r| r.status == "applied").map(|r| r.id.clone()).collect::<Vec<_>>();
     if let Ok(current) = state.snapshot() {
-        crate::infra::fast_cache::update_disk_cache(&current.color, current.settings.show_on_recordings, None, Some(active_ids));
+        crate::infra::fast_cache::update_disk_cache(&current.color, current.settings.show_on_recordings, Some(active_ids));
     }
     trim_process_memory();
     Ok(results)

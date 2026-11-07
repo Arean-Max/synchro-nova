@@ -9,6 +9,16 @@ pub struct DetectedAppConflictInfo {
     pub details: String,
 }
 
+fn steam_install_root() -> Option<std::path::PathBuf> {
+    use crate::infra::registry::{RootKey, SafeRegistry};
+    SafeRegistry::get_string(RootKey::Hkcu, "Software\\Valve\\Steam", "SteamPath")
+        .or_else(|_| SafeRegistry::get_string(RootKey::Hklm, "SOFTWARE\\WOW6432Node\\Valve\\Steam", "InstallPath"))
+        .or_else(|_| SafeRegistry::get_string(RootKey::Hklm, "SOFTWARE\\Valve\\Steam", "InstallPath"))
+        .ok()
+        .map(std::path::PathBuf::from)
+        .filter(|path| path.is_dir())
+}
+
 pub fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
     let mut apps = Vec::new();
 
@@ -89,7 +99,7 @@ pub fn detect_installed_tweak_apps() -> Vec<DetectedAppConflictInfo> {
     });
 
     let has_steam = pf_dirs.iter().any(|dir| dir.join("Steam").exists())
-        || crate::domain::games::steam_install_root().is_some();
+        || steam_install_root().is_some();
     apps.push(DetectedAppConflictInfo {
         id: "steam".to_string(),
         name: "Steam".to_string(),
@@ -178,17 +188,32 @@ fn check_fast_startup_enabled() -> bool {
 }
 
 fn check_bluetooth_present() -> bool {
-    let drivers = crate::driver_info::collect_drivers();
-    drivers.iter().any(|d| {
-        let text = format!("{} {} {}", d.name, d.class_name, d.provider).to_lowercase();
-        text.contains("bluetooth") || text.contains("bth")
-    })
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        if hklm.open_subkey(r"SYSTEM\CurrentControlSet\Services\BTHPORT").is_ok()
+            || hklm.open_subkey(r"SYSTEM\CurrentControlSet\Services\bthserv").is_ok()
+        {
+            return true;
+        }
+    }
+    false
 }
 
 fn check_vpn_present() -> bool {
-    let drivers = crate::driver_info::collect_drivers();
-    drivers.iter().any(|d| {
-        let text = format!("{} {} {}", d.name, d.class_name, d.provider).to_lowercase();
-        text.contains("wireguard") || text.contains("tap-") || text.contains("wintun") || text.contains("openvpn") || text.contains("nordlynx")
-    })
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        if hklm.open_subkey(r"SYSTEM\CurrentControlSet\Services\WireGuard").is_ok()
+            || hklm.open_subkey(r"SYSTEM\CurrentControlSet\Services\openvpn-service").is_ok()
+            || hklm.open_subkey(r"SYSTEM\CurrentControlSet\Services\tap0901").is_ok()
+            || hklm.open_subkey(r"SOFTWARE\WireGuard").is_ok()
+            || hklm.open_subkey(r"SOFTWARE\OpenVPN").is_ok()
+        {
+            return true;
+        }
+    }
+    false
 }
