@@ -273,7 +273,6 @@ pub fn is_intel_hybrid() -> bool {
         if let Ok(name) = key.get_value::<String, _>("ProcessorNameString") {
             let lower = name.to_lowercase();
             let is_intel = lower.contains("intel");
-            // CPU topology: identify hybrid architectures (P-cores + E-cores) across Alder Lake through Core Ultra.
             let has_hybrid = lower.contains("12th")
                 || lower.contains("13th")
                 || lower.contains("14th")

@@ -58,7 +58,6 @@ pub fn is_foreground_fullscreen() -> bool {
             return false;
         }
 
-        // Exclude standard Windows desktop surfaces from fullscreen game detection.
         let mut class_name_buf = [0u16; 256];
         let len = winapi::GetClassNameW(hwnd, class_name_buf.as_mut_ptr(), 256);
         if len > 0 {
@@ -104,9 +103,15 @@ pub fn is_foreground_fullscreen() -> bool {
 pub fn evaluate_and_update(app_handle: &AppHandle) {
     let is_fs = is_foreground_fullscreen();
     let current = get_fullscreen_state();
+    let protected_game = crate::platform::security_guard::is_protected_game_running();
 
-    if is_fs {
-        if USER_SUMMONED_MENU.load(Ordering::SeqCst) {
+    if protected_game.is_some() || is_fs {
+        unsafe {
+            use crate::platform::ffi::winapi;
+            let _ = winapi::SetPriorityClass(winapi::GetCurrentProcess(), 0x00004000);
+        }
+
+        if USER_SUMMONED_MENU.load(Ordering::SeqCst) && protected_game.is_none() {
             return;
         }
 
@@ -125,6 +130,11 @@ pub fn evaluate_and_update(app_handle: &AppHandle) {
             }
         }
     } else {
+        unsafe {
+            use crate::platform::ffi::winapi;
+            let _ = winapi::SetPriorityClass(winapi::GetCurrentProcess(), 0x00000020);
+        }
+
         USER_SUMMONED_MENU.store(false, Ordering::SeqCst);
 
         if current == FullscreenState::MenuHidden || current == FullscreenState::FullscreenForeground {
@@ -175,7 +185,6 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
                 evaluate_and_update(&app_handle);
 
                 unsafe {
-                    // Out-of-context hook receives OS notifications on the thread's message queue without DLL injection.
                     let hook = winapi::SetWinEventHook(
                         EVENT_SYSTEM_FOREGROUND,
                         EVENT_SYSTEM_FOREGROUND,
@@ -209,7 +218,6 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
                         }
                         winapi::UnhookWinEvent(hook);
                     } else {
-                        // Fallback polling loop if hook cannot be registered.
                         while !shutdown.load(Ordering::Relaxed) {
                             std::thread::sleep(Duration::from_millis(3000));
                             evaluate_and_update(&app_handle);

@@ -15,13 +15,31 @@ pub fn apply_selected_tweaks(ids: Vec<String>) -> Vec<TweakApplyResult> {
 }
 
 pub fn collect_tweak_statuses() -> Vec<TweakStatus> {
-        known_tweak_ids()
-        .iter()
-        .map(|id| TweakStatus {
-            id: (*id).to_string(),
-            installed: is_tweak_applied(id),
-        })
-        .collect()
+    let ids = known_tweak_ids();
+    let num_threads = std::thread::available_parallelism()
+        .map(|n| n.get().min(8).max(1))
+        .unwrap_or(4);
+
+    let chunk_size = (ids.len() + num_threads - 1) / num_threads;
+    std::thread::scope(|s| {
+        let mut handles = Vec::new();
+        for chunk in ids.chunks(chunk_size) {
+            let handle = s.spawn(move || {
+                chunk
+                    .iter()
+                    .map(|id| TweakStatus {
+                        id: (*id).to_string(),
+                        installed: is_tweak_applied(id),
+                    })
+                    .collect::<Vec<_>>()
+            });
+            handles.push(handle);
+        }
+        handles
+            .into_iter()
+            .flat_map(|h| h.join().unwrap_or_default())
+            .collect()
+    })
 }
 
 pub(crate) fn is_admin_tweak(id: &str) -> bool {
