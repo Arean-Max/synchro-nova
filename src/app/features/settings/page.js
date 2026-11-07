@@ -5,16 +5,7 @@ import { supportedLanguages } from "../../core/i18n.js";
 import { lang } from "../../core/state.js";
 import { THEMES } from "../../ui/themes.js";
 
-const ACCENT_PRESETS = [
-  { color: "#ffffff", name: "White" },
-  { color: "#2563eb", name: "Royal Blue" },
-  { color: "#38bdf8", name: "Cyan" },
-  { color: "#a855f7", name: "Purple" },
-  { color: "#ec4899", name: "Pink" },
-  { color: "#22c55e", name: "Green" },
-  { color: "#f59e0b", name: "Amber" },
-  { color: "#ef4444", name: "Red" }
-];
+
 
 const SETTING_TOGGLE_KEYS = [
   { key: "macTrafficLights", labelKey: "macTrafficLights" },
@@ -35,14 +26,14 @@ export function renderSettingsPage(appState, viewState, t) {
   const currentLangCode = appState?.settings?.language || "en";
   const currentLang = supportedLanguages.find((l) => l.code === currentLangCode) || supportedLanguages[0];
   const isDropdownOpen = Boolean(viewState?.languageDropdownOpen);
-  const currentAccent = (appState?.settings?.accentColor || "#ffffff").toLowerCase();
-  const isPresetActive = ACCENT_PRESETS.some((p) => p.color.toLowerCase() === currentAccent);
+
 
   const langItems = supportedLanguages.map((l) => {
     const isSelected = l.code === currentLangCode;
     return `
       <button class="language-dropdown-item ${isSelected ? "selected" : ""}" type="button" data-action="select-language" data-language="${escapeAttr(l.code)}">
         <span class="language-item-left">
+          <img class="language-item-flag" src="./assets/flags/${escapeAttr(l.code)}.png" alt="${escapeAttr(l.name)}" loading="lazy" decoding="async" />
           <span class="language-item-native">${escapeHtml(l.nativeName)}</span>
           <span class="language-item-name">${escapeHtml(l.name)}</span>
         </span>
@@ -58,6 +49,7 @@ export function renderSettingsPage(appState, viewState, t) {
     <div class="language-custom-dropdown ${isDropdownOpen ? "open" : ""}">
       <button class="language-dropdown-trigger" type="button" data-action="toggle-language-dropdown">
         <span class="language-dropdown-label">
+          <img class="language-dropdown-flag" src="./assets/flags/${escapeAttr(currentLang.code)}.png" alt="${escapeAttr(currentLang.name)}" />
           <span class="language-label-native">${escapeHtml(currentLang.nativeName)}</span>
           ${langSecondary}
         </span>
@@ -67,19 +59,10 @@ export function renderSettingsPage(appState, viewState, t) {
     </div>
   `;
 
-  const swatches = ACCENT_PRESETS.map((p) => {
-    const active = currentAccent === p.color.toLowerCase() ? "active" : "";
-    return `<button class="accent-swatch ${active}" type="button" data-action="set-accent-color" data-color="${p.color}" style="background-color:${p.color};--swatch-color:${p.color};" title="${p.name}"></button>`;
-  }).join("");
-
-  const accentControl = `
-    <div class="form-label" style="margin-top:14px;">${escapeHtml(t("interfaceAccent") || (isRu ? "Акцентный цвет" : "Interface Accent"))}</div>
-    <div class="accent-color-row">
-      ${swatches}
-      <label class="accent-picker-wrapper ${!isPresetActive ? "active" : ""}" title="${escapeAttr(t("interfaceAccent") || "Interface Accent")}">
-        <input type="color" class="accent-color-input" data-action="pick-accent-color" value="${escapeAttr(currentAccent)}">
-        <span class="accent-custom-icon"></span>
-      </label>
+  const madeWithLove = `
+    <div class="settings-made-with-love">
+      <span class="made-with-love-text">${escapeHtml(t("madeWithLove") || (isRu ? "Сделано с любовью" : "Made with love"))}</span>
+      <img class="made-with-love-heart" src="./assets/heart.png" alt="❤️" />
     </div>
   `;
 
@@ -142,7 +125,7 @@ export function renderSettingsPage(appState, viewState, t) {
     <div class="settings-top-row">
       <div class="settings-top-left">
         ${languageDropdown}
-        ${accentControl}
+        ${madeWithLove}
       </div>
       <div class="settings-top-right">
         ${communityLinks}
