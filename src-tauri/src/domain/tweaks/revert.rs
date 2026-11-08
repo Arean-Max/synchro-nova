@@ -362,6 +362,10 @@ fn revert_one(id: &str) -> TweakApplyResult {
             [
                 delete_hklm_value(
                     "SYSTEM\\CurrentControlSet\\Services\\AFD\\Parameters",
+                    "FastSendDatagramThreshold",
+                ),
+                delete_hklm_value(
+                    "SYSTEM\\CurrentControlSet\\Services\\AFD\\Parameters",
                     "DefaultReceiveWindow",
                 ),
                 delete_hklm_value(
@@ -423,17 +427,36 @@ fn revert_one(id: &str) -> TweakApplyResult {
             applied(id, "Network adapter energy saving configuration restored")
         }
 
-        "tcp-heuristics-off" => run_netsh(
-            id,
-            &["interface", "tcp", "set", "heuristics", "default"],
-            "TCP window heuristics restored to default",
-        ),
+        "tcp-heuristics-off" => {
+            let r1 = run_command_result(id, "netsh", &["interface", "tcp", "set", "heuristics", "default"], "");
+            let r2 = run_command_result(id, "netsh", &["interface", "tcp", "set", "global", "autotuninglevel=normal"], "");
+            let _ = super::runner::run_command("netsh", &["interface", "tcp", "set", "global", "timestamps=default"]);
+            let _ = super::runner::run_command("netsh", &["interface", "tcp", "set", "global", "chimney=default"]);
+            if r1.status == "applied" || r2.status == "applied" {
+                applied(id, "TCP window heuristics, autotuning and timestamps restored to defaults")
+            } else {
+                r1
+            }
+        }
 
-        "rss-adaptive-cores" => run_netsh(
-            id,
-            &["interface", "tcp", "set", "global", "rss=default"],
-            "Receive-Side Scaling global configuration restored to default",
-        ),
+        "rss-adaptive-cores" => {
+            let r = run_netsh(
+                id,
+                &["interface", "tcp", "set", "global", "rss=default"],
+                "Receive-Side Scaling global configuration restored to default",
+            );
+            let _ = super::runner::run_command(
+                "powershell.exe",
+                &[
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-Command",
+                    "Get-NetAdapterRss -ErrorAction SilentlyContinue | ForEach-Object { Set-NetAdapterRss -Name $_.Name -BaseProcessorNumber 0 -ErrorAction SilentlyContinue }",
+                ],
+            );
+            r
+        }
 
         "rsc-off" => run_netsh(
             id,
@@ -485,4 +508,69 @@ fn revert_one(id: &str) -> TweakApplyResult {
 
         _ => skipped(id, "No restore action required for this tweak"),
     }
+}
+
+pub fn reset_network_stack() {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+        let base_path = r"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces";
+        if let Ok(interfaces) = hklm.open_subkey(base_path) {
+            for subkey_name in interfaces.enum_keys().flatten() {
+                let full_path = format!("{base_path}\\{subkey_name}");
+                let _ = delete_hklm_value(&full_path, "TcpAckFrequency");
+                let _ = delete_hklm_value(&full_path, "TCPNoDelay");
+                let _ = delete_hklm_value(&full_path, "TcpDelAckTicks");
+            }
+        }
+        let afd_path = r"SYSTEM\CurrentControlSet\Services\AFD\Parameters";
+        let _ = delete_hklm_value(afd_path, "FastSendDatagramThreshold");
+        let _ = delete_hklm_value(afd_path, "DefaultReceiveWindow");
+        let _ = delete_hklm_value(afd_path, "DefaultSendWindow");
+
+        let sysprof_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile";
+        let _ = delete_hklm_value(sysprof_path, "NetworkThrottlingIndex");
+
+        let class_path = r"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}";
+        if let Ok(class_key) = hklm.open_subkey(class_path) {
+            for subkey_name in class_key.enum_keys().flatten() {
+                let full_path = format!("{class_path}\\{subkey_name}");
+                let _ = delete_hklm_value(&full_path, "*EEE");
+                let _ = delete_hklm_value(&full_path, "*FlowControl");
+                let _ = delete_hklm_value(&full_path, "AutoPowerSaveModeEnabled");
+                let _ = delete_hklm_value(&full_path, "SavePowerNowEnabled");
+                let _ = delete_hklm_value(&full_path, "ReduceSpeedOnPowerDown");
+                let _ = delete_hklm_value(&full_path, "GreenEthernet");
+                let _ = delete_hklm_value(&full_path, "AdvancedEEE");
+                let _ = delete_hklm_value(&full_path, "EnablePME");
+            }
+        }
+
+        let _ = super::runner::run_command("netsh", &["interface", "tcp", "set", "heuristics", "default"]);
+        let _ = super::runner::run_command("netsh", &["interface", "tcp", "set", "global", "autotuninglevel=normal"]);
+        let _ = super::runner::run_command("netsh", &["interface", "tcp", "set", "global", "timestamps=default"]);
+        let _ = super::runner::run_command("netsh", &["interface", "tcp", "set", "global", "chimney=default"]);
+        let _ = super::runner::run_command("netsh", &["interface", "tcp", "set", "global", "rss=default"]);
+        let _ = super::runner::run_command("netsh", &["interface", "tcp", "set", "global", "rsc=default"]);
+        let _ = super::runner::run_command("ipconfig", &["/flushdns"]);
+
+        let _ = super::runner::run_command(
+            "powershell.exe",
+            &[
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                "Get-NetAdapter -Physical | ForEach-Object { Enable-NetAdapterPowerManagement -Name $_.Name -ErrorAction SilentlyContinue }; Get-NetAdapterRss -ErrorAction SilentlyContinue | ForEach-Object { Set-NetAdapterRss -Name $_.Name -BaseProcessorNumber 0 -ErrorAction SilentlyContinue }",
+            ],
+        );
+    }
+}
+
+pub fn revert_all_tweaks() -> Vec<TweakApplyResult> {
+    let all_ids = super::engine::known_tweak_ids().iter().map(|s| s.to_string()).collect();
+    let results = revert_selected_tweaks(all_ids);
+    reset_network_stack();
+    results
 }

@@ -1490,7 +1490,14 @@ async function handleAction(action) {
         const restored = await invokeCommand("restore_backup", { id: viewState.selectedBackup });
         if (restored) {
           mergeState(restored);
+          await loadTweakStatuses();
           render();
+          const isRu = lang() === "ru";
+          showToastBanner(
+            t("backupNotificationTitle") || (isRu ? "Резервная копия" : "Backup"),
+            t("backupRestoredToast") || (isRu ? "Бэкап успешно применён, твики и сеть возвращены к стандарту" : "Backup restored, tweaks and network reset to defaults"),
+            "safe"
+          );
         }
       }
       return null;

@@ -51,7 +51,6 @@ pub fn apply_tcp_nodelay_ack(id: &str) -> TweakApplyResult {
                 let full_path = format!("{path}\\{subkey_name}");
                 let _ = set_hklm_dword(&full_path, "TcpAckFrequency", 1);
                 let _ = set_hklm_dword(&full_path, "TCPNoDelay", 1);
-                let _ = set_hklm_dword(&full_path, "TcpDelAckTicks", 0);
                 count += 1;
             }
             if count > 0 {
@@ -126,12 +125,12 @@ pub fn apply_nic_energy_saving_off(id: &str) -> TweakApplyResult {
 pub fn apply_tcp_heuristics_off(id: &str) -> TweakApplyResult {
     let r1 = run_command("netsh", &["interface", "tcp", "set", "heuristics", "disabled"]);
     let r2 = run_command("netsh", &["interface", "tcp", "set", "global", "autotuninglevel=normal"]);
-    let _ = run_command("netsh", &["interface", "tcp", "set", "global", "timestamps", "disabled"]);
+    let _ = run_command("netsh", &["interface", "tcp", "set", "global", "timestamps=allowed"]);
     let _ = run_command("netsh", &["interface", "tcp", "set", "global", "chimney=disabled"]);
     if r1.is_ok() || r2.is_ok() {
         applied(
             id,
-            "TCP heuristics disabled, timestamps disabled & autotuning optimized (minimal packet loss and jitter)",
+            "TCP heuristics disabled & autotuning optimized (minimal packet loss and jitter)",
         )
     } else {
         failed(id, "Failed to apply TCP heuristics settings via netsh; run Synchro as administrator")
@@ -178,28 +177,23 @@ pub fn is_rsc_applied() -> bool {
 }
 
 pub fn apply_network_udp_buffers(id: &str) -> TweakApplyResult {
-    let ram_gb = super::runner::total_ram_gb();
-    let window_bytes: u32 = if ram_gb >= 24.0 { 1048576 } else { 524288 };
-    let mb_str = if window_bytes == 1048576 { "1 MB" } else { "512 KB" };
+    let _ = super::runner::delete_hklm_value(
+        "SYSTEM\\CurrentControlSet\\Services\\AFD\\Parameters",
+        "DefaultReceiveWindow",
+    );
+    let _ = super::runner::delete_hklm_value(
+        "SYSTEM\\CurrentControlSet\\Services\\AFD\\Parameters",
+        "DefaultSendWindow",
+    );
     let r1 = set_hklm_dword(
         "SYSTEM\\CurrentControlSet\\Services\\AFD\\Parameters",
         "FastSendDatagramThreshold",
-        65536,
-    );
-    let r2 = set_hklm_dword(
-        "SYSTEM\\CurrentControlSet\\Services\\AFD\\Parameters",
-        "DefaultReceiveWindow",
-        window_bytes,
-    );
-    let r3 = set_hklm_dword(
-        "SYSTEM\\CurrentControlSet\\Services\\AFD\\Parameters",
-        "DefaultSendWindow",
-        window_bytes,
+        1500,
     );
     super::types::collect_result(
         id,
-        [r1, r2, r3],
-        &format!("AFD socket buffers optimized for RakNet UDP ({mb_str} buffer based on {ram_gb:.1} GB RAM)"),
+        [r1],
+        "AFD socket datagram threshold optimized for gaming MTU (bufferbloat eliminated)",
     )
 }
 
@@ -207,7 +201,7 @@ pub fn is_network_udp_buffers_applied() -> bool {
     super::runner::hklm_dword(
         "SYSTEM\\CurrentControlSet\\Services\\AFD\\Parameters",
         "FastSendDatagramThreshold",
-    ) == Some(65536)
+    ) == Some(1500)
 }
 
 pub fn apply_rss_adaptive_cores(id: &str) -> TweakApplyResult {

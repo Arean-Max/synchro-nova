@@ -83,7 +83,7 @@ pub fn rollback_last_tweaks(
     app: AppHandle,
     state: State<'_, RuntimeState>,
 ) -> Result<PersistedState, String> {
-    let entries = read_backup_entries(&state.backups_dir)?;
+    let entries = read_backup_entries(&state.backups_dir).unwrap_or_default();
     let latest = entries
         .iter()
         .find(|e| {
@@ -91,11 +91,14 @@ pub fn rollback_last_tweaks(
                 || e.name.starts_with("Startup backup")
                 || e.name.starts_with("Before tweaks")
         })
-        .or_else(|| entries.first())
-        .ok_or_else(|| "No safety backup available to restore".to_string())?;
+        .or_else(|| entries.first());
 
-    let restored = restore_backup(app, latest.id.clone(), state)?;
-    Ok(restored)
+    if let Some(entry) = latest {
+        restore_backup(app, entry.id.clone(), state)
+    } else {
+        let _ = crate::domain::tweaks::revert_all_tweaks();
+        state.snapshot()
+    }
 }
 
 #[tauri::command]

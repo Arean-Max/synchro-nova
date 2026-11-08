@@ -157,6 +157,7 @@ pub fn restore_backup(
     backup.state.settings.accepted_agreement = current.settings.accepted_agreement;
     apply_color_transform(&backup.state.color, backup.state.settings.show_on_recordings)?;
     set_autostart(&app, backup.state.settings.autostart_windows)?;
+    let _ = crate::domain::tweaks::revert_all_tweaks();
     let _ = restore_tweak_registry_snapshot(&backup.tweak_registry);
 
     {
