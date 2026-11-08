@@ -36,6 +36,14 @@ class Router {
     return this.pageCache.get(name);
   }
 
+  clearPageCache(name) {
+    if (name) {
+      this.pageCache.delete(name);
+    } else {
+      this.pageCache.clear();
+    }
+  }
+
   clearCache() {
     this.pageCache.clear();
   }

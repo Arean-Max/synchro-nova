@@ -200,7 +200,7 @@ const safeBackups = safeRender(renderBackupsPage, "System Backups");
 const safeSettings = safeRender(renderSettingsPage, "Preferences");
 
 export function renderPageBody(viewState, t, bypassCache = false) {
-  if (!bypassCache && activePage !== "color") {
+  if (!bypassCache) {
     const cached = router.getCachedPageHtml(activePage);
     if (cached) return cached;
   }
@@ -216,9 +216,9 @@ export function renderPageBody(viewState, t, bypassCache = false) {
   return html;
 }
 
-export function renderMain(viewState, t) {
+export function renderMain(viewState, t, bypassCache = false) {
   const page = pageDefs[activePage];
-  return `<main class="main-panel"><header class="page-header" data-window-drag data-tauri-drag-region><h1 data-window-drag data-tauri-drag-region>${escapeHtml(t(page.title))}</h1><p data-window-drag data-tauri-drag-region>${escapeHtml(t(page.subtitle))}</p></header><div class="page-body page-${activePage}">${renderPageBody(viewState, t)}</div></main>`;
+  return `<main class="main-panel"><header class="page-header" data-window-drag data-tauri-drag-region><h1 data-window-drag data-tauri-drag-region>${escapeHtml(t(page.title))}</h1><p data-window-drag data-tauri-drag-region>${escapeHtml(t(page.subtitle))}</p></header><div class="page-body page-${activePage}">${renderPageBody(viewState, t, bypassCache)}</div></main>`;
 }
 
 export function renderShell(viewState, t) {

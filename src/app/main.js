@@ -485,6 +485,7 @@ function bindScrollSpy(scrollPanelEl) {
 }
 
 function updateMain() {
+  router.clearPageCache(activePage);
   const page = pageDefs[activePage];
   const title = document.querySelector(".page-header h1");
   const subtitle = document.querySelector(".page-header p");
@@ -498,12 +499,12 @@ function updateMain() {
     title.textContent = t(page.title);
     subtitle.textContent = t(page.subtitle);
     body.className = `page-body page-${activePage}`;
-    body.innerHTML = renderPageBody(viewState, t);
+    body.innerHTML = renderPageBody(viewState, t, true);
     router.mount(activePage, body, mountContext);
   } else {
     const main = document.querySelector(".main-panel");
     if (main) {
-      main.outerHTML = renderMain(viewState, t);
+      main.outerHTML = renderMain(viewState, t, true);
       const nextBody = document.querySelector(".page-body");
       if (nextBody) router.mount(activePage, nextBody, mountContext);
     }

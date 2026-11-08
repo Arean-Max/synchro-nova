@@ -846,3 +846,23 @@ test("Settings: renders Made with love badge with iOS heart emoji across all 22 
     assert.ok(!html.includes("accent-picker-wrapper"), "Must not render removed RGB accent picker");
   }
 });
+
+test("Keybinds: Create First Bind button successfully creates a bind and updates UI from empty state", async () => {
+  const { renderBindsPage } = await import("../src/app/features/binds/page.js");
+  const t = (k) => k;
+
+  const emptyState = { keybinds: [] };
+  const emptyHtml = renderBindsPage(emptyState, {}, t);
+  assert.ok(emptyHtml.includes('data-action="add-bind"'), "Must render add-bind button");
+  assert.ok(emptyHtml.includes("binds-empty-state"), "Empty state must be rendered when binds are empty");
+
+  const populatedState = {
+    keybinds: [
+      { id: "bind_test_1", key: "F1", modifiers: 0, vk: 112, action: "template:vibrant", enabled: true }
+    ]
+  };
+  const populatedHtml = renderBindsPage(populatedState, {}, t);
+  assert.ok(!populatedHtml.includes("binds-empty-state"), "Must not show empty state when bind exists");
+  assert.ok(populatedHtml.includes("bind-row"), "Must render bind rows");
+  assert.ok(populatedHtml.includes("bind_test_1"), "Must render the created bind");
+});
