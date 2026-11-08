@@ -9,7 +9,7 @@ import { renderBackupsPage } from "../features/storage/page.js";
 import { renderTweaksPage } from "../features/tweaks/page.js";
 import { tweakCatalog, tweakGroupTitle } from "../features/tweaks/catalog.js";
 import { renderBindsPage } from "../features/binds/page.js";
-import { icon } from "./icons.js";
+import { logo, icon } from "./icons.js";
 
 function renderTitlebar(t) {
   const isMacLights = Boolean(appState?.settings?.macTrafficLights);
@@ -168,7 +168,10 @@ function renderSidebar(t, viewState) {
 
   return `
     <aside class="sidebar">
-      <div class="brand" data-window-drag data-tauri-drag-region></div>
+      <div class="brand" data-window-drag data-tauri-drag-region>
+        ${logo("lockup")}
+        ${logo("mark")}
+      </div>
       <span class="nav-indicator" aria-hidden="true"></span>
       <div class="nav-section-head">
         <span class="nav-label">${escapeHtml(t("main"))}</span>

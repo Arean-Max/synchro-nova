@@ -145,8 +145,8 @@ function renderNotificationBannerDom() {
       const appEl = existingBanner.querySelector(".ios-banner-app");
       const titleEl = existingBanner.querySelector(".ios-banner-title");
       const msgEl = existingBanner.querySelector(".ios-banner-message");
-      if (appEl && viewState.activeImpactBanner?.appName) {
-        appEl.textContent = viewState.activeImpactBanner.appName;
+      if (appEl) {
+        appEl.textContent = "Synchro Notification";
       }
       if (titleEl && viewState.activeImpactBanner?.title) {
         titleEl.textContent = viewState.activeImpactBanner.title;

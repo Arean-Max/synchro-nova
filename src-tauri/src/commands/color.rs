@@ -1,8 +1,52 @@
+use std::sync::Mutex;
 use tauri::State;
 
 use crate::app::state::{ColorSettings, PersistedState, RuntimeState};
 use crate::domain::color::apply_color_transform;
 use crate::infra::screenshot::{capture_juicy_screenshot, JuicyScreenshotResult};
+
+static PENDING_SAVE: Mutex<Option<(std::path::PathBuf, PersistedState)>> = Mutex::new(None);
+static SAVE_WORKER_ACTIVE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+fn schedule_debounced_save(path: std::path::PathBuf, snap: PersistedState) {
+    if let Ok(mut lock) = PENDING_SAVE.lock() {
+        *lock = Some((path, snap));
+    }
+    if !SAVE_WORKER_ACTIVE.swap(true, std::sync::atomic::Ordering::SeqCst) {
+        std::thread::Builder::new()
+            .name("synchro-async-save".to_string())
+            .stack_size(128 * 1024)
+            .spawn(|| {
+                loop {
+                    std::thread::sleep(std::time::Duration::from_millis(300));
+                    let item = if let Ok(mut lock) = PENDING_SAVE.lock() {
+                        lock.take()
+                    } else {
+                        None
+                    };
+                    if let Some((path, snap)) = item {
+                        let _ = crate::app::state::write_json_file(&path, &snap);
+                        crate::infra::fast_cache::update_disk_cache(
+                            &snap.color,
+                            snap.settings.show_on_recordings,
+                            None,
+                        );
+                    } else {
+                        SAVE_WORKER_ACTIVE.store(false, std::sync::atomic::Ordering::SeqCst);
+                        if let Ok(lock) = PENDING_SAVE.lock() {
+                            if lock.is_some()
+                                && !SAVE_WORKER_ACTIVE.swap(true, std::sync::atomic::Ordering::SeqCst)
+                            {
+                                continue;
+                            }
+                        }
+                        break;
+                    }
+                }
+            })
+            .ok();
+    }
+}
 
 #[tauri::command]
 pub fn apply_color_settings(
@@ -23,16 +67,7 @@ pub fn apply_color_settings(
         let snapshot = data.clone();
 
         if snapshot.settings.save_color_correction {
-            let path = state.settings_path.clone();
-            let snap = snapshot.clone();
-            std::thread::Builder::new()
-                .name("synchro-async-save".to_string())
-                .stack_size(64 * 1024)
-                .spawn(move || {
-                    let _ = crate::app::state::write_json_file(&path, &snap);
-                    crate::infra::fast_cache::update_disk_cache(&snap.color, snap.settings.show_on_recordings, None);
-                })
-                .ok();
+            schedule_debounced_save(state.settings_path.clone(), snapshot);
         }
     }
 

@@ -187,7 +187,7 @@ export function renderIosNotification(viewState, t) {
     '    </div>',
     '    <div class="ios-banner-content">',
     '      <div class="ios-banner-header">',
-    `        <span class="ios-banner-app">${escapeHtml(banner.appName)}</span>`,
+    '        <span class="ios-banner-app">Synchro Notification</span>',
     '      </div>',
     `      <div class="ios-banner-title">${escapeHtml(banner.title)}</div>`,
     `      <div class="ios-banner-message">${escapeHtml(banner.impactText)}</div>`,

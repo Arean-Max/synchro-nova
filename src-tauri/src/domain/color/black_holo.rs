@@ -173,7 +173,6 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
     let (vendor, gpu_name) = detect_gpu_vendor();
 
     if enabled {
-        let _ = restore_original_system_ramp();
         IS_ACTIVE.store(true, Ordering::SeqCst);
 
         BlackHoloStatus {
@@ -186,13 +185,7 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
             error: None,
         }
     } else {
-        let res = restore_original_system_ramp();
         IS_ACTIVE.store(false, Ordering::SeqCst);
-
-        let err = match res {
-            Ok(_) => None,
-            Err(e) => Some(e),
-        };
 
         BlackHoloStatus {
             active: false,
@@ -201,7 +194,7 @@ pub fn set_hardware_black_holo(enabled: bool) -> BlackHoloStatus {
             curve_profile: "Standard".to_string(),
             hotkey: "".to_string(),
             rust_synced: false,
-            error: err,
+            error: None,
         }
     }
 }

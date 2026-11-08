@@ -146,7 +146,8 @@ export function renderBindsPage(appState, viewState, t) {
     `;
   }
 
-  const clearText = t("clearAllBinds") || (isRu ? "Очистить все" : "Clear All");
+  const rawClear = t("clearAllBinds");
+  const clearText = rawClear && rawClear !== "clearAllBinds" ? rawClear : (isRu ? "Форматировать" : "Format");
 
   return `
     <section class="card binds-card">

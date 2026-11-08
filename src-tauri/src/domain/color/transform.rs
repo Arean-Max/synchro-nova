@@ -1,16 +1,16 @@
 static ORIGINAL_GAMMA_RAMP: std::sync::OnceLock<crate::platform::ffi::GammaRamp> = std::sync::OnceLock::new();
 static MAG_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
 static MAG_INITIALIZED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static LAST_APPLIED_GAMMA: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
 
 #[cfg(target_os = "windows")]
 fn ensure_mag_initialized() {
-    if !MAG_INITIALIZED.load(std::sync::atomic::Ordering::SeqCst) {
-        unsafe {
-            if crate::platform::ffi::winapi::MagInitialize() != 0 {
-                MAG_INITIALIZED.store(true, std::sync::atomic::Ordering::SeqCst);
-            }
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| unsafe {
+        if crate::platform::ffi::winapi::MagInitialize() != 0 {
+            MAG_INITIALIZED.store(true, std::sync::atomic::Ordering::SeqCst);
         }
-    }
+    });
 }
 
 #[cfg(target_os = "windows")]
@@ -110,6 +110,7 @@ pub(crate) fn apply_color_transform(_color: &ColorSettings, _show_on_recordings:
 
 #[cfg(target_os = "windows")]
 pub fn reset_color_transform() -> Result<(), String> {
+    LAST_APPLIED_GAMMA.store(u32::MAX, std::sync::atomic::Ordering::Relaxed);
     set_active_color(None);
     let effect = crate::platform::ffi::MagColorEffect {
         transform: identity_matrix(),
@@ -151,11 +152,7 @@ fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) 
     let _guard = MAG_MUTEX.lock().ok();
     ensure_mag_initialized();
     unsafe {
-        if crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect) == 0 {
-            let _ = crate::platform::ffi::winapi::MagInitialize();
-            MAG_INITIALIZED.store(true, std::sync::atomic::Ordering::SeqCst);
-            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
-        }
+        let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
     }
 
     Ok(())
@@ -163,6 +160,11 @@ fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) 
 
 #[cfg(target_os = "windows")]
 fn apply_gamma_ramp(gamma_percent: f32) -> Result<(), String> {
+    let gamma_bits = gamma_percent.to_bits();
+    if LAST_APPLIED_GAMMA.load(std::sync::atomic::Ordering::Relaxed) == gamma_bits {
+        return Ok(());
+    }
+
     ensure_original_gamma_captured();
     let gamma = (gamma_percent / 100.0).clamp(0.5, 1.5);
     let exponent = 1.0 / gamma;
@@ -192,6 +194,7 @@ fn apply_gamma_ramp(gamma_percent: f32) -> Result<(), String> {
         }
     }
 
+    LAST_APPLIED_GAMMA.store(gamma_bits, std::sync::atomic::Ordering::Relaxed);
     Ok(())
 }
 
