@@ -215,7 +215,7 @@ export function icon(name, extraClass) {
 }
 
 export function logo(variant = "mark") {
-  const src = variant === "lockup" ? "./assets/synchro-nova-lockup.png" : "./assets/synchro-nova-icon.png";
+  const src = variant === "lockup" ? "./assets/synchro-nova-lockup.png" : "./assets/synchro-nova-logo.svg";
   const className = variant === "lockup" ? "brand-lockup" : "brand-mark";
   return `<div class="${className}" aria-hidden="true"><img src="${src}" alt=""></div>`;
 }

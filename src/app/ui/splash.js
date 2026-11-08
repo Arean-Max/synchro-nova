@@ -34,7 +34,7 @@ export function runIntroSplash(options = {}) {
       '<div class="intro-splash-backdrop"></div>',
       '<div class="intro-splash-stage">',
       '  <div class="intro-splash-logo-wrap">',
-      '    <img class="intro-splash-logo-img" src="./assets/synchro-nova-icon.png" alt="Synchro Nova" decoding="sync" loading="eager" />',
+      '    <img class="intro-splash-logo-img" src="./assets/synchro-nova-logo.svg" alt="Synchro Nova" decoding="sync" loading="eager" />',
       '  </div>',
       '  <div class="intro-splash-title">',
       `    <span class="splash-word-synchro">${synchroHtml}</span>`,
