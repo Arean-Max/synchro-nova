@@ -19,7 +19,7 @@
 author - vkmef.t,me
 */
 use std::sync::{atomic::Ordering, Arc};
-use tauri::{Manager, WindowEvent};
+use tauri::{Emitter, Manager, WindowEvent};
 
 pub mod admin;
 pub mod app;
@@ -53,6 +53,24 @@ fn calculate_adaptive_window_size(screen_w: f64, screen_h: f64) -> (f64, f64) {
 }
 
 pub fn suspend_window_webview(_window: &tauri::Window) {}
+
+#[cfg(target_os = "windows")]
+pub fn resume_window_webview(window: &tauri::Window) {
+    if let Some(wv) = window.app_handle().get_webview_window(window.label()) {
+        let _ = wv.with_webview(|webview| {
+            let controller = webview.controller();
+            unsafe {
+                let _ = controller.SetIsVisible(true);
+                let _ = controller.NotifyParentWindowPositionChanged();
+                let _ = controller.MoveFocus(
+                    webview2_com_sys::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC,
+                );
+            }
+        });
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
 pub fn resume_window_webview(_window: &tauri::Window) {}
 
 pub fn configure_main_window(window: &tauri::WebviewWindow) {
@@ -265,6 +283,8 @@ pub fn run() {
                 WindowEvent::Focused(true) => {
                     platform::fullscreen_watcher::set_user_summoned(true);
                     domain::color::reapply_active_color();
+                    resume_window_webview(window);
+                    let _ = window.emit("window-restored", ());
                 }
                 WindowEvent::ScaleFactorChanged { .. } => {
                     if let Some(wv) = window.app_handle().get_webview_window("main") {

@@ -101,6 +101,7 @@ unsafe extern "system" {
     pub fn FindWindowW(class_name: *const u16, window_name: *const u16) -> *mut c_void;
     pub fn ShowWindow(hwnd: *mut c_void, cmd_show: i32) -> i32;
     pub fn SetForegroundWindow(hwnd: *mut c_void) -> i32;
+    pub fn SetFocus(hwnd: *mut c_void) -> *mut c_void;
     pub fn EnumDisplayDevicesW(
         device_name: *const u16,
         dev_num: u32,

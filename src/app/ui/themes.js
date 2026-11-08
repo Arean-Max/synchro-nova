@@ -86,6 +86,7 @@ class ParticleSystem {
     this.resize();
 
     window.addEventListener("resize", () => this.resize(), { passive: true });
+    window.addEventListener("focus", () => this.resume(), { passive: true });
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         this.pause();

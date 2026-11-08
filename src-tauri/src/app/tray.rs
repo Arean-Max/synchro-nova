@@ -1,7 +1,7 @@
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager,
+    AppHandle, Emitter, Manager,
 };
 
 use super::state::RuntimeState;
@@ -80,17 +80,25 @@ pub fn show_main_window(app: &AppHandle) {
         #[cfg(target_os = "windows")]
         if let Ok(hwnd) = window.hwnd() {
             unsafe {
+                crate::platform::ffi::winapi::ShowWindow(hwnd.0 as _, 5);
                 crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
+                crate::platform::ffi::winapi::SetFocus(hwnd.0 as _);
             }
         }
+        let _ = window.emit("window-restored", ());
     } else if let Ok(window) = crate::create_main_window(app) {
+        crate::resume_window_webview(&window.as_ref().window());
+        let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
         #[cfg(target_os = "windows")]
         if let Ok(hwnd) = window.hwnd() {
             unsafe {
+                crate::platform::ffi::winapi::ShowWindow(hwnd.0 as _, 5);
                 crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
+                crate::platform::ffi::winapi::SetFocus(hwnd.0 as _);
             }
         }
+        let _ = window.emit("window-restored", ());
     }
 }

@@ -61,7 +61,7 @@ import { button } from "./ui/components.js";
 import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget, renderNavList, resolveActiveSubSection } from "./ui/layout.js";
 import { escapeHtml } from "./core/html.js";
 import { runIntroSplash } from "./ui/splash.js";
-import { applyTheme, resolveSeasonalTheme } from "./ui/themes.js";
+import { applyTheme, resolveSeasonalTheme, themeFx } from "./ui/themes.js";
 import { registerLifecycleHooks, withErrorBoundary } from "./core/lifecycle.js";
 import { copyTextToClipboard } from "./core/clipboard.js";
 import { formatKeyLabel, getWin32Vk } from "./features/binds/keyUtils.js";
@@ -1109,10 +1109,8 @@ async function handleAction(action) {
     case "window-maximize":
       return invokeCommand("toggle_window_maximize");
     case "window-close":
-      document.body.style.pointerEvents = "none";
       return invokeCommand("close_window");
     case "exit-app":
-      document.body.style.pointerEvents = "none";
       return invokeCommand("exit_app");
 
     case "restart-as-admin": {
@@ -2864,14 +2862,26 @@ window.addEventListener(
   },
   { capture: true }
 );
+function handleWindowRestored() {
+  document.body.style.pointerEvents = "";
+  document.body.classList.remove("paused-animations");
+  window.dispatchEvent(new Event("resize"));
+  syncNavIndicator();
+  checkSecurityIncidents();
+  if (typeof themeFx !== "undefined" && themeFx && typeof themeFx.resume === "function") {
+    themeFx.resume();
+  }
+}
+
 window.addEventListener("resize", syncNavIndicator);
+window.addEventListener("focus", handleWindowRestored);
+window.addEventListener("pageshow", handleWindowRestored);
 window.addEventListener("visibilitychange", () => {
   if (document.hidden) {
     clearImpactBannerTimer();
     document.body.classList.add("paused-animations");
   } else {
-    document.body.classList.remove("paused-animations");
-    checkSecurityIncidents();
+    handleWindowRestored();
   }
 });
 window.addEventListener("keydown", async (event) => {
@@ -2894,6 +2904,7 @@ window.addEventListener("keydown", async (event) => {
 });
 
 if (window.__TAURI__?.event?.listen) {
+  window.__TAURI__.event.listen("window-restored", handleWindowRestored);
   window.__TAURI__.event.listen("hotkey-triggered", (e) => {
     const payload = e?.payload;
     if (!payload) return;

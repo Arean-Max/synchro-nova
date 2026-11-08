@@ -147,9 +147,17 @@ fn execute_action(action: &str, app: &AppHandle) {
                     let _ = window.unminimize();
                     let _ = window.show();
                     let _ = window.set_focus();
+                    #[cfg(target_os = "windows")]
+                    if let Ok(hwnd) = window.hwnd() {
+                        unsafe {
+                            crate::platform::ffi::winapi::ShowWindow(hwnd.0 as _, 5);
+                            crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
+                            crate::platform::ffi::winapi::SetFocus(hwnd.0 as _);
+                        }
+                    }
+                    let _ = window.emit("window-restored", ());
                 } else {
                     crate::platform::set_user_summoned(false);
-                    crate::suspend_window_webview(&window.as_ref().window());
                     let _ = window.hide();
                     crate::app::workers::trim_process_memory();
                 }
