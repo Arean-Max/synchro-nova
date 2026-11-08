@@ -964,6 +964,7 @@ function syncAllTweakTilesDom(installedSet) {
 }
 
 let isLoadingTweakStatuses = false;
+let isRestartingAsAdmin = false;
 
 async function loadTweakStatuses() {
   if (isLoadingTweakStatuses) return;
@@ -1111,23 +1112,26 @@ async function handleAction(action) {
       return invokeCommand("exit_app");
 
     case "restart-as-admin": {
+      if (isRestartingAsAdmin) return null;
+      isRestartingAsAdmin = true;
       try {
         localStorage.setItem("synchro_pending_nav", "tweaks");
       } catch {}
       const banner = document.querySelector(".ios-banner");
+      const titleEl = banner?.querySelector(".ios-banner-title");
+      const origTitle = titleEl ? titleEl.textContent : "";
       if (banner) banner.style.pointerEvents = "none";
+      if (titleEl) {
+        titleEl.textContent = lang() === "ru" ? "Запрос прав администратора..." : "Requesting administrator rights...";
+      }
       try {
         const res = await invokeCommand("restart_as_admin");
-        if (res === null && !appState.isAdmin) {
-          if (banner) banner.style.pointerEvents = "auto";
-          if (activePage === "tweaks") {
-            showAdminNotificationBanner();
-          }
-        }
         return res;
       } catch (err) {
         console.error("restart_as_admin failed or cancelled:", err);
+        isRestartingAsAdmin = false;
         if (banner) banner.style.pointerEvents = "auto";
+        if (titleEl && origTitle) titleEl.textContent = origTitle;
         if (!appState.isAdmin && activePage === "tweaks") {
           showAdminNotificationBanner();
         }

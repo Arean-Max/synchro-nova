@@ -41,7 +41,7 @@ pub fn runas_executable_with_args(path: &Path, args: Option<&str>) -> Result<(),
 }
 
 #[cfg(target_os = "windows")]
-pub fn runas_executable_with_hwnd_and_args(path: &Path, hwnd: isize, args: Option<&str>) -> Result<(), String> {
+pub fn runas_executable_with_hwnd_and_args(path: &Path, _hwnd: isize, args: Option<&str>) -> Result<(), String> {
     let operation = wide_null("runas");
     let path_str = path.to_string_lossy();
     let clean_path = path_str.strip_prefix(r"\\?\").unwrap_or(&path_str);
@@ -56,8 +56,8 @@ pub fn runas_executable_with_hwnd_and_args(path: &Path, hwnd: isize, args: Optio
     let dir_ptr = dir.as_ref().map(|d| d.as_ptr()).unwrap_or(std::ptr::null());
 
     let mut sei = ShellExecuteInfoW::default();
-    sei.f_mask = SEE_MASK_NOCLOSEPROCESS;
-    sei.hwnd = hwnd as *mut c_void;
+    sei.f_mask = 0;
+    sei.hwnd = std::ptr::null_mut();
     sei.lp_verb = operation.as_ptr();
     sei.lp_file = file.as_ptr();
     sei.lp_parameters = params_ptr;
@@ -73,11 +73,6 @@ pub fn runas_executable_with_hwnd_and_args(path: &Path, hwnd: isize, args: Optio
         return Err(format!("Failed to execute process with elevated privileges (error {err})"));
     }
 
-    if !sei.h_process.is_null() {
-        unsafe {
-            winapi::CloseHandle(sei.h_process);
-        }
-    }
     Ok(())
 }
 

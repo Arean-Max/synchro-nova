@@ -129,15 +129,16 @@ pub fn exit_app(app: AppHandle, state: State<'_, RuntimeState>) {
 
 #[tauri::command]
 pub fn restart_as_admin(app: AppHandle, state: State<'_, RuntimeState>) -> Result<(), String> {
-    let hwnd = app
-        .get_webview_window("main")
-        .and_then(|w| w.hwnd().ok())
-        .map(|h| h.0 as isize)
-        .unwrap_or(0);
+    if state.exiting.swap(true, std::sync::atomic::Ordering::SeqCst) {
+        return Ok(());
+    }
 
-    crate::admin::restart_as_admin_with_hwnd(hwnd, Some("tweaks"))?;
+    if let Err(e) = crate::admin::restart_as_admin(Some("tweaks")) {
+        state.exiting.store(false, std::sync::atomic::Ordering::SeqCst);
+        return Err(e);
+    }
 
-    crate::ffi::release_single_instance();
+    crate::platform::ffi::release_single_instance();
     state.signal_shutdown();
 
     if let Some(w) = app.get_webview_window("main") {
@@ -146,9 +147,9 @@ pub fn restart_as_admin(app: AppHandle, state: State<'_, RuntimeState>) -> Resul
 
     let app_handle = app.clone();
     std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(300));
+        std::thread::sleep(std::time::Duration::from_millis(50));
         app_handle.exit(0);
-        std::thread::sleep(std::time::Duration::from_millis(400));
+        std::thread::sleep(std::time::Duration::from_millis(100));
         std::process::exit(0);
     });
 
