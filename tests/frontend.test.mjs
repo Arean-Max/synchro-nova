@@ -865,6 +865,8 @@ test("Keybinds: Create First Bind button successfully creates a bind and updates
   assert.ok(!populatedHtml.includes("binds-empty-state"), "Must not show empty state when bind exists");
   assert.ok(populatedHtml.includes("bind-row"), "Must render bind rows");
   assert.ok(populatedHtml.includes("bind_test_1"), "Must render the created bind");
+  assert.ok(populatedHtml.includes('data-action="delete-bind"'), "Must render delete-bind action button");
+  assert.ok(populatedHtml.includes('data-action="clear-all-binds"'), "Must render clear-all-binds action button");
 });
 
 test("Characteristics: renders scanning card when loading and structured categories when loaded", async () => {

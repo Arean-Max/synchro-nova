@@ -424,11 +424,13 @@ function scheduleTrimMemory(delay = 400) {
 
 function syncKeybinds() {
   try {
-    invokeCommand("sync_keybinds", { keybinds: appState.keybinds || [] }).catch((err) => {
+    return invokeCommand("sync_keybinds", { keybinds: appState.keybinds || [] }).catch((err) => {
       console.error("Failed to sync keybinds:", err);
+      return null;
     });
   } catch (err) {
     console.error("Failed to sync keybinds:", err);
+    return Promise.resolve(null);
   }
 }
 
@@ -2497,6 +2499,17 @@ async function handleClick(event) {
       await syncKeybinds();
       updateMain();
     }
+    return;
+  }
+
+  const clearAllBinds = target.closest("[data-action='clear-all-binds']");
+  if (clearAllBinds) {
+    event.preventDefault();
+    appState.keybinds = [];
+    viewState.recordingBindId = null;
+    viewState.openDropdownBindId = null;
+    await syncKeybinds();
+    updateMain();
     return;
   }
 

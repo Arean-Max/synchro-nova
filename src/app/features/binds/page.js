@@ -146,6 +146,8 @@ export function renderBindsPage(appState, viewState, t) {
     `;
   }
 
+  const clearText = t("clearAllBinds") || (isRu ? "Очистить все" : "Clear All");
+
   return `
     <section class="card binds-card">
       <div class="binds-list">${rows}</div>
@@ -153,6 +155,10 @@ export function renderBindsPage(appState, viewState, t) {
         <button class="btn btn-primary bind-add-btn" type="button" data-action="add-bind" title="${escapeAttr(t("addBind"))}">
           ${icon("plus")}
           <span>${escapeHtml(t("addBind"))}</span>
+        </button>
+        <button class="btn btn-danger bind-clear-btn" type="button" data-action="clear-all-binds" title="${escapeAttr(clearText)}">
+          ${icon("trash")}
+          <span>${escapeHtml(clearText)}</span>
         </button>
       </div>
     </section>

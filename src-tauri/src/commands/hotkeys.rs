@@ -8,9 +8,15 @@ pub fn sync_keybinds(
     keybinds: Vec<Keybind>,
     state: State<'_, RuntimeState>,
 ) -> Result<Vec<Keybind>, String> {
-    let mut snapshot = state.snapshot()?;
-    snapshot.keybinds = keybinds.clone();
-    state.save(&snapshot)?;
+    {
+        let mut data = state
+            .data
+            .lock()
+            .map_err(|_| "Settings lock poisoned".to_string())?;
+        data.keybinds = keybinds.clone();
+        let snapshot = data.clone();
+        state.save(&snapshot)?;
+    }
     crate::domain::hotkeys::sync_hotkeys(&keybinds);
     Ok(keybinds)
 }
