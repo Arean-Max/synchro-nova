@@ -182,14 +182,6 @@ pub fn run() {
             domain::color::start_color_guard();
             infra::screenshot::start_global_screenshot_listener();
             let _ = settings::set_autostart(app.handle(), initial.settings.autostart_windows);
-            #[cfg(target_os = "windows")]
-            {
-                domain::tweaks::gaming::clean_legacy_rust_ifeo();
-                domain::tweaks::system::clean_legacy_csrss_override();
-            }
-            if initial.settings.eac_auto_protect {
-                let _ = platform::security_guard::fix_anticheat_integrity();
-            }
             app::tray::install_tray(app.handle())?;
 
             let window = create_main_window(app.handle())?;
@@ -197,6 +189,22 @@ pub fn run() {
                 let _ = window.hide();
                 trim_process_memory();
             }
+
+            let eac_protect = initial.settings.eac_auto_protect;
+            std::thread::Builder::new()
+                .name("synchro-bg-integrity".to_string())
+                .stack_size(64 * 1024)
+                .spawn(move || {
+                    #[cfg(target_os = "windows")]
+                    {
+                        domain::tweaks::gaming::clean_legacy_rust_ifeo();
+                        domain::tweaks::system::clean_legacy_csrss_override();
+                        if eac_protect {
+                            let _ = platform::security_guard::fix_anticheat_integrity();
+                        }
+                    }
+                })
+                .ok();
 
             app::workers::spawn_memory_trimmer(trimmer_sync);
 

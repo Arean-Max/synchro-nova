@@ -1,7 +1,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FullscreenState {
@@ -15,7 +15,6 @@ pub enum FullscreenState {
 }
 
 static CURRENT_STATE: Mutex<FullscreenState> = Mutex::new(FullscreenState::DisplayStateUnknown);
-static AUTO_HIDDEN_BY_GAME: AtomicBool = AtomicBool::new(false);
 static USER_SUMMONED_MENU: AtomicBool = AtomicBool::new(false);
 
 #[cfg(target_os = "windows")]
@@ -100,58 +99,24 @@ pub fn is_foreground_fullscreen() -> bool {
 }
 
 #[cfg(target_os = "windows")]
-pub fn evaluate_and_update(app_handle: &AppHandle) {
+pub fn evaluate_and_update(_app_handle: &AppHandle) {
     let is_fs = is_foreground_fullscreen();
     let current = get_fullscreen_state();
 
     if is_fs {
-        unsafe {
-            use crate::platform::ffi::winapi;
-            let _ = winapi::SetPriorityClass(winapi::GetCurrentProcess(), 0x00004000);
-        }
-
-        if USER_SUMMONED_MENU.load(Ordering::SeqCst) {
-            return;
-        }
-
-        if current != FullscreenState::MenuHidden && current != FullscreenState::FullscreenForeground {
+        if current != FullscreenState::FullscreenForeground {
             if let Ok(mut lock) = CURRENT_STATE.lock() {
-                *lock = FullscreenState::Transition;
+                *lock = FullscreenState::FullscreenForeground;
             }
-
-            if app_handle.get_webview_window("main").is_some() {
-                crate::hide_main_window(app_handle);
-                AUTO_HIDDEN_BY_GAME.store(true, Ordering::SeqCst);
-            }
-
-            if let Ok(mut lock) = CURRENT_STATE.lock() {
-                *lock = FullscreenState::MenuHidden;
-            }
+            crate::domain::color::reapply_active_color();
         }
     } else {
-        unsafe {
-            use crate::platform::ffi::winapi;
-            let _ = winapi::SetPriorityClass(winapi::GetCurrentProcess(), 0x00000020);
-        }
-
-        if current == FullscreenState::MenuHidden || current == FullscreenState::FullscreenForeground {
+        if current != FullscreenState::NormalDesktop {
             if let Ok(mut lock) = CURRENT_STATE.lock() {
                 *lock = FullscreenState::NormalDesktop;
             }
-
-            if AUTO_HIDDEN_BY_GAME.swap(false, Ordering::SeqCst) {
-                if let Some(window) = app_handle.get_webview_window("main") {
-                    crate::resume_window_webview(&window.as_ref().window());
-                    let _ = window.show();
-                }
-            }
-        } else if current == FullscreenState::DisplayStateUnknown {
-            if let Ok(mut lock) = CURRENT_STATE.lock() {
-                *lock = FullscreenState::NormalDesktop;
-            }
+            crate::domain::color::reapply_active_color();
         }
-
-        crate::domain::color::reapply_active_color();
     }
 }
 

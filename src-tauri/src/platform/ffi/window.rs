@@ -6,16 +6,6 @@ use super::types::*;
 use super::winapi;
 
 #[cfg(target_os = "windows")]
-type SubclassProc = unsafe extern "system" fn(isize, u32, usize, isize, usize, usize) -> isize;
-#[cfg(target_os = "windows")]
-type FnSetWindowSubclass = unsafe extern "system" fn(isize, SubclassProc, usize, usize) -> i32;
-#[cfg(target_os = "windows")]
-type FnDefSubclassProc = unsafe extern "system" fn(isize, u32, usize, isize) -> isize;
-
-#[cfg(target_os = "windows")]
-static SUBCLASS_FNS: std::sync::OnceLock<Option<(FnSetWindowSubclass, FnDefSubclassProc)>> = std::sync::OnceLock::new();
-
-#[cfg(target_os = "windows")]
 pub fn eliminate_window_borders(hwnd: isize) {
     if hwnd == 0 {
         return;
@@ -55,64 +45,6 @@ pub fn eliminate_window_borders(hwnd: isize) {
             &caption_color as *const _ as _,
             std::mem::size_of::<u32>() as u32,
         );
-
-        let fns = SUBCLASS_FNS.get_or_init(|| {
-            #[link(name = "kernel32")]
-            extern "system" {
-                fn LoadLibraryA(lpLibFileName: *const u8) -> *mut std::ffi::c_void;
-                fn GetProcAddress(hModule: *mut std::ffi::c_void, lpProcName: *const u8) -> *mut std::ffi::c_void;
-            }
-
-            let mod_handle = LoadLibraryA(b"comctl32.dll\0".as_ptr());
-            if mod_handle.is_null() {
-                return None;
-            }
-            let p_set = GetProcAddress(mod_handle, b"SetWindowSubclass\0".as_ptr());
-            let p_def = GetProcAddress(mod_handle, b"DefSubclassProc\0".as_ptr());
-            if p_set.is_null() || p_def.is_null() {
-                return None;
-            }
-            Some((
-                std::mem::transmute::<_, FnSetWindowSubclass>(p_set),
-                std::mem::transmute::<_, FnDefSubclassProc>(p_def),
-            ))
-        });
-
-        if let Some((set_subclass, _)) = fns {
-            unsafe extern "system" fn non_resizable_subclass(
-                hwnd: isize,
-                msg: u32,
-                wparam: usize,
-                lparam: isize,
-                _id: usize,
-                _data: usize,
-            ) -> isize {
-                const WM_NCHITTEST: u32 = 0x0084;
-                const HTCLIENT: isize = 1;
-                const HTLEFT: isize = 10;
-                const HTRIGHT: isize = 11;
-                const HTTOP: isize = 12;
-                const HTTOPLEFT: isize = 13;
-                const HTTOPRIGHT: isize = 14;
-                const HTBOTTOM: isize = 15;
-                const HTBOTTOMLEFT: isize = 16;
-                const HTBOTTOMRIGHT: isize = 17;
-
-                if let Some(Some((_, def_proc))) = SUBCLASS_FNS.get() {
-                    if msg == WM_NCHITTEST {
-                        let hit = def_proc(hwnd, msg, wparam, lparam);
-                        if (HTLEFT..=HTBOTTOMRIGHT).contains(&hit) {
-                            return HTCLIENT;
-                        }
-                        return hit;
-                    }
-                    return def_proc(hwnd, msg, wparam, lparam);
-                }
-                0
-            }
-
-            let _ = set_subclass(hwnd, non_resizable_subclass, 0x53594E43, 0);
-        }
     }
 }
 

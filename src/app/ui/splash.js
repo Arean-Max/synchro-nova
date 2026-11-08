@@ -107,5 +107,5 @@ export function runIntroSplash(options = {}) {
 
   autoTimeout = setTimeout(() => {
     finishSplash();
-  }, 4800);
+  }, 2400);
 }

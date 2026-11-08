@@ -2443,7 +2443,13 @@ async function boot() {
   if (Array.isArray(appState.keybinds) && appState.keybinds.length) {
     syncKeybinds();
   }
-  render();
+  try {
+    render();
+  } catch (err) {
+    const splashEl = document.getElementById("intro-splash-screen");
+    if (splashEl) splashEl.remove();
+    console.error("Critical error during render:", err);
+  }
 
   Promise.all([holoPromise, loadLists()]).then(() => {
     if (activePage === "backups") {
