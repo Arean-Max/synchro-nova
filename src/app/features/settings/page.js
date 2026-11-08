@@ -1,3 +1,23 @@
+/*
+   ,--,                                            
+,---.'|                                            
+|   | :                                            
+:   : |                        ,--,                
+|   ' :                      ,--.'|                
+;   ; '                 .---.|  |,      .--.--.    
+'   | |__   ,---.     /.  ./|`--'_     /  /    '   
+|   | :.'| /       .-' . ' |,' ,'|   |  :  /`./   
+'   :    ;/    /  |/___/ \: |'  | |   |  :  ;_     
+|   |  ./.    ' / |.   \  ' .|  | :    \  \    `.  
+;   : ;  '   ;   /| \   \   ''  : |__   `----.   \ 
+|   ,/   '   |  / |  \   \   |  | '.'| /  /`--'  / 
+'---'    |   :    |   \   \ |;  :    ;'--'.     /  
+          \   \  /     '---" |  ,   /   `--'---'   
+           `----'             ---`-'               
+                                                   
+
+author - vkmef.t,me
+*/
 import { card, checkbox } from "../../ui/components.js";
 import { icon } from "../../ui/icons.js";
 import { escapeAttr, escapeHtml } from "../../core/html.js";
@@ -6,6 +26,27 @@ import { lang } from "../../core/state.js";
 import { THEMES } from "../../ui/themes.js";
 
 
+
+export const AVAILABLE_FONTS = [
+  { id: "Inter", name: "Inter (Modern UI)" },
+  { id: "Segoe UI", name: "Segoe UI (Windows Default)" },
+  { id: "Bahnschrift", name: "Bahnschrift (DIN Variable)" },
+  { id: "Cascadia Code", name: "Cascadia Code (Modern Terminal)" },
+  { id: "Consolas", name: "Consolas (Code Mono)" },
+  { id: "Trebuchet MS", name: "Trebuchet MS (Humanist)" },
+  { id: "Verdana", name: "Verdana (Wide Screen)" },
+  { id: "Georgia", name: "Georgia (Elegant Serif)" },
+  { id: "Tahoma", name: "Tahoma (Compact UI)" },
+  { id: "Arial", name: "Arial (Standard Clean)" },
+  { id: "Century Gothic", name: "Century Gothic (Geometric)" },
+  { id: "Franklin Gothic Medium", name: "Franklin Gothic (Editorial)" },
+  { id: "Palatino Linotype", name: "Palatino (Classic Book)" },
+  { id: "Lucida Console", name: "Lucida Console (Retro Mono)" },
+  { id: "Courier New", name: "Courier New (Typewriter)" },
+  { id: "Impact", name: "Impact (Bold Headline)" },
+  { id: "Comic Sans MS", name: "Comic Sans MS (Casual)" },
+  { id: "MS Sans Serif", name: "Microsoft Sans Serif (Classic)" }
+];
 
 const SETTING_TOGGLE_KEYS = [
   { key: "macTrafficLights", labelKey: "macTrafficLights" },
@@ -112,6 +153,25 @@ export function renderSettingsPage(appState, viewState, t) {
     </div>
   `;
 
+  const currentFont = appState?.settings?.fontFamily || (typeof localStorage !== "undefined" && localStorage.getItem("synchro_font")) || "Inter";
+
+  const fontOptions = AVAILABLE_FONTS.map((f) => {
+    const isSelected = currentFont === f.id;
+    return `
+      <button class="font-picker-item ${isSelected ? "selected" : ""}" type="button" data-action="select-font" data-font="${escapeAttr(f.id)}" style="font-family: '${escapeAttr(f.id)}', sans-serif;">
+        <span class="font-picker-name" style="font-family: '${escapeAttr(f.id)}', sans-serif;">${escapeHtml(f.name)}</span>
+        ${isSelected ? `<span class="font-picker-check">${icon("check")}</span>` : ""}
+      </button>
+    `;
+  }).join("");
+
+  const fontSection = `
+    <div class="form-label">${escapeHtml(t("fontTitle") || (isRu ? "Шрифт интерфейса (с предпросмотром)" : "Interface Font (Live Preview)"))}</div>
+    <div class="font-picker-grid">
+      ${fontOptions}
+    </div>
+  `;
+
   const appToggles = SETTING_TOGGLE_KEYS.map(({ key, labelKey }) => {
     const checked = Boolean(appState?.settings?.[key]);
     return checkbox(t(labelKey), checked, key);
@@ -120,6 +180,10 @@ export function renderSettingsPage(appState, viewState, t) {
   const unifiedCardBody = `
     <div class="settings-theme-section">
       ${themeSection}
+    </div>
+    <div class="settings-section-divider"></div>
+    <div class="settings-font-section">
+      ${fontSection}
     </div>
     <div class="settings-section-divider"></div>
     <div class="settings-top-row">

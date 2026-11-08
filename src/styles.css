@@ -107,7 +107,7 @@ body {
   overflow: hidden;
   background: #141414;
   color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--app-font-family, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -6672,8 +6672,8 @@ p, .description {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, rgba(120, 119, 198, 0.12), transparent 65%), #0a0b0e;
+  pointer-events: auto;
   overflow: hidden;
   cursor: pointer;
   user-select: none;
@@ -7799,6 +7799,56 @@ body.paused-animations *::after {
   flex-direction: column;
   gap: 8px;
   width: 100%;
+}
+
+.settings-font-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.font-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+  width: 100%;
+}
+
+.font-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 13px;
+  text-align: left;
+}
+
+.font-picker-item:hover {
+  background: var(--bg-card-strong);
+  border-color: var(--border-strong);
+}
+
+.font-picker-item.selected {
+  background: var(--bg-card-strong);
+  border-color: var(--ui-accent, #ffffff);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+}
+
+.font-picker-check {
+  display: flex;
+  align-items: center;
+  color: var(--ui-accent, #ffffff);
+  margin-left: 6px;
 }
 
 .theme-cards-grid {

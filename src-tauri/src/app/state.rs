@@ -109,12 +109,18 @@ pub struct AppSettings {
     pub mac_traffic_lights: bool,
     #[serde(default = "default_theme")]
     pub theme: String,
+    #[serde(default = "default_font_family")]
+    pub font_family: String,
     #[serde(default)]
     pub template_overrides: std::collections::HashMap<String, ColorTemplateOverride>,
 }
 
 fn default_theme() -> String {
     "default".to_string()
+}
+
+fn default_font_family() -> String {
+    "Inter".to_string()
 }
 
 #[cfg(windows)]
@@ -156,6 +162,7 @@ impl Default for AppSettings {
             eac_auto_protect: true,
             mac_traffic_lights: false,
             theme: default_theme(),
+            font_family: default_font_family(),
             template_overrides: std::collections::HashMap::new(),
         }
     }
@@ -183,6 +190,17 @@ impl AppSettings {
         const VALID_THEMES: &[&str] = &["default", "winter", "autumn", "spring", "summer"];
         if !VALID_THEMES.contains(&self.theme.as_str()) {
             self.theme = "default".to_string();
+        }
+
+        const VALID_FONTS: &[&str] = &[
+            "Inter", "Segoe UI", "Bahnschrift", "Cascadia Code", "Consolas",
+            "Trebuchet MS", "Verdana", "Georgia", "Tahoma", "Arial",
+            "Century Gothic", "Franklin Gothic Medium", "Palatino Linotype",
+            "Lucida Console", "Courier New", "Impact", "Comic Sans MS", "MS Sans Serif",
+            "Roboto", "Montserrat", "JetBrains Mono", "Fira Code", "SF Pro Display", "Ubuntu", "Oswald", "Poppins", "Rubik"
+        ];
+        if !VALID_FONTS.contains(&self.font_family.as_str()) {
+            self.font_family = "Inter".to_string();
         }
 
         for (_, template) in self.template_overrides.iter_mut() {
@@ -344,7 +362,6 @@ impl RuntimeState {
             let _ = color::black_holo::restore_original_system_ramp();
         }
         color::black_holo::stop_ramp_watchdog();
-        crate::platform::ffi::terminate_webview_tree();
     }
 
     pub fn snapshot(&self) -> Result<PersistedState, String> {

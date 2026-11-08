@@ -1,3 +1,23 @@
+/*
+   ,--,                                            
+,---.'|                                            
+|   | :                                            
+:   : |                        ,--,                
+|   ' :                      ,--.'|                
+;   ; '                 .---.|  |,      .--.--.    
+'   | |__   ,---.     /.  ./|`--'_     /  /    '   
+|   | :.'| /       .-' . ' |,' ,'|   |  :  /`./   
+'   :    ;/    /  |/___/ \: |'  | |   |  :  ;_     
+|   |  ./.    ' / |.   \  ' .|  | :    \  \    `.  
+;   : ;  '   ;   /| \   \   ''  : |__   `----.   \ 
+|   ,/   '   |  / |  \   \   |  | '.'| /  /`--'  / 
+'---'    |   :    |   \   \ |;  :    ;'--'.     /  
+          \   \  /     '---" |  ,   /   `--'---'   
+           `----'             ---`-'               
+                                                   
+
+author - vkmef.t,me
+*/
 export function detectDefaultLanguage() {
   try {
     const sys = (
@@ -24,6 +44,7 @@ export const defaultState = {
     showOnRecordings: true,
     accentColor: "#ffffff",
     theme: "default",
+    fontFamily: "Inter",
     autoUpdate: true,
     disableSplash: false,
     disableAnimations: false,
@@ -197,12 +218,25 @@ export function mergeState(state) {
     }
   } catch (_) {}
 
+  const existingFont = appState?.settings?.fontFamily;
+  let storedFont = null;
+  try {
+    storedFont = typeof localStorage !== "undefined" ? localStorage.getItem("synchro_font") : null;
+  } catch (_) {}
+  const resolvedFont = state?.settings?.fontFamily || storedFont || existingFont || "Inter";
+  try {
+    if (typeof localStorage !== "undefined" && resolvedFont) {
+      localStorage.setItem("synchro_font", resolvedFont);
+    }
+  } catch (_) {}
+
   appState = {
     color: { ...defaultState.color, ...(state?.color || {}) },
     settings: {
       ...defaultState.settings,
       ...(state?.settings || {}),
       theme: resolvedTheme,
+      fontFamily: resolvedFont,
       templateOverrides: {
         ...(defaultState.settings.templateOverrides || {}),
         ...existingOverrides,
@@ -221,6 +255,9 @@ export function mergeState(state) {
     document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
     if (resolvedTheme) {
       document.documentElement.setAttribute("data-theme", resolvedTheme);
+    }
+    if (resolvedFont) {
+      document.documentElement.style.setProperty("--app-font-family", `'${resolvedFont}', sans-serif`);
     }
     const themeAccent = resolvedTheme === "winter" ? "#38bdf8"
       : (resolvedTheme === "autumn" ? "#f59e0b"
