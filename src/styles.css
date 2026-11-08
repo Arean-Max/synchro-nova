@@ -206,7 +206,7 @@ p, .description {
   color: var(--text-secondary);
   font-size: 12px;
   font-weight: 620;
-  opacity: 0;
+  opacity: 1;
   pointer-events: auto;
 }
 

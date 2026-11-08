@@ -240,7 +240,6 @@ fn main() {
             let _ = std::fs::create_dir_all(&webview_cache);
             std::env::set_var("WEBVIEW2_USER_DATA_FOLDER", webview_cache);
         }
-        std::env::set_var("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0xFF121214");
 
         prerequisites_check::ensure_runtime_prerequisites();
     }

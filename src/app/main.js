@@ -2334,6 +2334,7 @@ function handleImageError(event) {
 
 function render() {
   const app = document.getElementById("app");
+  if (!app) return;
   document.documentElement.lang = lang();
   const curTheme = appState.settings?.theme || "default";
   applyTheme(curTheme, { disableAnimations: appState.settings?.disableAnimations });
@@ -2402,11 +2403,14 @@ async function boot() {
   let initialPage = "color";
   try {
     const pendingStorage = localStorage.getItem("synchro_pending_nav");
-    if (pendingStorage) {
+    if (pendingStorage && pageDefs[pendingStorage]) {
       initialPage = pendingStorage;
       localStorage.removeItem("synchro_pending_nav");
     }
   } catch {}
+  if (!pageDefs[initialPage]) {
+    initialPage = "color";
+  }
   setActivePage(initialPage);
 
   try {
@@ -2415,19 +2419,21 @@ async function boot() {
     console.error("Critical error during initial render:", err);
   }
 
-  const statePromise = invokeCommand("get_app_state");
-  const holoPromise = loadBlackHoloStatus();
+  const statePromise = invokeCommand("get_app_state").catch(() => null);
+  const holoPromise = loadBlackHoloStatus().catch(() => null);
 
   try {
     const pendingNav = await invokeCommand("get_pending_navigation");
-    if (pendingNav && typeof pendingNav === "string" && pendingNav !== initialPage) {
+    if (pendingNav && typeof pendingNav === "string" && pendingNav !== initialPage && pageDefs[pendingNav]) {
       setActivePage(pendingNav);
       render();
     }
   } catch {}
 
-  const state = await statePromise;
-  if (state) mergeState(state);
+  try {
+    const state = await statePromise;
+    if (state) mergeState(state);
+  } catch {}
   applyTheme(appState.settings?.theme || "default", {
     disableAnimations: Boolean(appState.settings?.disableAnimations)
   });
@@ -2568,4 +2574,10 @@ window.addEventListener("unhandledrejection", (event) => {
   }
 });
 
-boot();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    boot();
+  });
+} else {
+  boot();
+}

@@ -92,6 +92,15 @@ unsafe extern "system" {
 #[cfg(target_os = "windows")]
 #[link(name = "User32")]
 unsafe extern "system" {
+    pub fn SetWindowPos(
+        hwnd: *mut c_void,
+        hwnd_insert_after: *mut c_void,
+        x: i32,
+        y: i32,
+        cx: i32,
+        cy: i32,
+        flags: u32,
+    ) -> i32;
     pub fn MessageBoxW(
         hwnd: *mut c_void,
         text: *const u16,

@@ -73,6 +73,10 @@ pub fn configure_main_window(window: &tauri::WebviewWindow) {
     #[cfg(target_os = "windows")]
     let _ = window.with_webview(|webview| {
         let controller = webview.controller();
+        unsafe {
+            let _ = controller.SetIsVisible(true);
+            let _ = controller.NotifyParentWindowPositionChanged();
+        }
         if let Ok(core) = unsafe { controller.CoreWebView2() } {
             let mut pid = 0u32;
             if unsafe { core.BrowserProcessId(&mut pid) }.is_ok() && pid != 0 {
@@ -113,22 +117,25 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
             .maximizable(false)
             .decorations(false)
             .shadow(false)
-            .visible(true)
+            .visible(false)
             .center()
             .on_navigation(|url| {
                 let scheme = url.scheme();
                 let host = url.host_str().unwrap_or("");
+                let url_str = url.as_str();
                 let is_local_origin = scheme == "tauri"
                     || scheme == "asset"
                     || host == "localhost"
+                    || host == "127.0.0.1"
                     || host.ends_with(".localhost")
-                    || url.as_str() == "about:blank";
+                    || url_str == "about:blank"
+                    || url_str.contains("index.html");
 
                 if is_local_origin {
                     true
                 } else {
                     if scheme == "http" || scheme == "https" {
-                        let _ = crate::platform::ffi::open_path_or_url(url.as_str());
+                        let _ = crate::platform::ffi::open_path_or_url(url_str);
                     }
                     false
                 }
