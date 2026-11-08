@@ -2630,7 +2630,7 @@ function handleImageError(event) {
   }
 }
 
-function render() {
+function render(bypassCache = true) {
   const app = document.getElementById("app");
   if (!app) return;
   document.documentElement.lang = lang();
@@ -2640,7 +2640,7 @@ function render() {
     applyInterfaceAccent(appState.settings.accentColor);
   }
   app.className = "app-shell";
-  app.innerHTML = renderShell(viewState, t);
+  app.innerHTML = renderShell(viewState, t, bypassCache);
   syncAllSliders(appState, viewState);
   updateNavState();
   const scrollPanelEl = document.querySelector(".scroll-panel");
@@ -2712,29 +2712,23 @@ async function boot() {
   if (!pageDefs[initialPage]) {
     initialPage = "color";
   }
-  setActivePage(initialPage);
-
-  try {
-    render();
-  } catch (err) {
-    console.error("Critical error during initial render:", err);
-  }
 
   const statePromise = invokeCommand("get_app_state").catch(() => null);
   const holoPromise = loadBlackHoloStatus().catch(() => null);
+  const pendingNavPromise = invokeCommand("get_pending_navigation").catch(() => null);
 
-  try {
-    const pendingNav = await invokeCommand("get_pending_navigation");
-    if (pendingNav && typeof pendingNav === "string" && pendingNav !== initialPage && pageDefs[pendingNav]) {
-      setActivePage(pendingNav);
-      render();
-    }
-  } catch {}
+  const [state, pendingNav] = await Promise.all([statePromise, pendingNavPromise]);
+  if (state) {
+    mergeState(state);
+  }
 
-  try {
-    const state = await statePromise;
-    if (state) mergeState(state);
-  } catch {}
+  const targetPage = (pendingNav && typeof pendingNav === "string" && pageDefs[pendingNav])
+    ? pendingNav
+    : initialPage;
+
+  setActivePage(targetPage);
+  router.clearPageCache();
+
   applyTheme(appState.settings?.theme || "default", {
     disableAnimations: Boolean(appState.settings?.disableAnimations)
   });
@@ -2755,9 +2749,9 @@ async function boot() {
   }
 
   try {
-    render();
+    render(true);
   } catch (err) {
-    console.error("Critical error during state render:", err);
+    console.error("Critical error during initial render:", err);
   }
 
   Promise.all([holoPromise, loadLists()]).then(() => {

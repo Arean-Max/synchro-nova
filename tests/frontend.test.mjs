@@ -889,3 +889,17 @@ test("Characteristics: renders scanning card when loading and structured categor
   assert.ok(populatedHtml.includes("NVIDIA GeForce RTX 3060"));
   assert.ok(populatedHtml.includes("Realtek High Definition Audio"));
 });
+
+test("Tweaks: renderTweaksPage does not apply admin-locked when isAdmin is true", async () => {
+  const { renderTweaksPage } = await import("../src/app/features/tweaks/page.js");
+  const { appState } = await import("../src/app/core/state.js");
+  const t = (k) => k;
+
+  appState.isAdmin = false;
+  const lockedHtml = renderTweaksPage({}, t);
+  assert.ok(lockedHtml.includes("admin-locked"), "Must have admin-locked class when non-admin");
+
+  appState.isAdmin = true;
+  const unlockedHtml = renderTweaksPage({}, t);
+  assert.ok(!unlockedHtml.includes("admin-locked"), "Must not have admin-locked class when admin");
+});

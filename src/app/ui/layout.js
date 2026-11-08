@@ -218,9 +218,9 @@ export function renderMain(viewState, t, bypassCache = false) {
   return `<main class="main-panel"><header class="page-header" data-window-drag data-tauri-drag-region><h1 data-window-drag data-tauri-drag-region>${escapeHtml(t(page.title))}</h1><p data-window-drag data-tauri-drag-region>${escapeHtml(t(page.subtitle))}</p></header><div class="page-body page-${activePage}">${renderPageBody(viewState, t, bypassCache)}</div></main>`;
 }
 
-export function renderShell(viewState, t) {
+export function renderShell(viewState, t, bypassCache = false) {
   const collapsed = viewState?.sidebarCollapsed ? " sidebar-collapsed" : "";
-  return `${renderTitlebar(t)}<div class="workspace${collapsed}">${renderSidebar(t, viewState)}${renderMain(viewState, t)}</div>`;
+  return `${renderTitlebar(t)}<div class="workspace${collapsed}">${renderSidebar(t, viewState)}${renderMain(viewState, t, bypassCache)}</div>`;
 }
 
 export function resolveActiveSubSection(scrollPanelEl, sections) {
