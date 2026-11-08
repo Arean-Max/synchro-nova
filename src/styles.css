@@ -5469,6 +5469,51 @@ p, .description {
   scroll-behavior: smooth;
 }
 
+.driver-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  gap: 12px;
+  min-height: 320px;
+  box-sizing: border-box;
+}
+
+.driver-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary, #8e8e93);
+  margin-bottom: 4px;
+}
+
+.driver-empty-icon .icon {
+  width: 28px;
+  height: 28px;
+}
+
+.driver-empty-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+}
+
+.driver-empty-desc {
+  margin: 0;
+  max-width: 440px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary, #8e8e93);
+}
+
 .driver-group {
   display: block;
   width: 100%;

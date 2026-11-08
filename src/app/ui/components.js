@@ -1,10 +1,10 @@
 import { escapeAttr, escapeHtml } from "../core/html.js";
 import { icon } from "./icons.js";
 
-export function button(label, iconName, variant, action) {
+export function button(label, iconName, variant, action, extraIconClass) {
   const className = variant === "primary" ? "btn btn-primary" : "btn btn-outline";
   const data = action ? ` data-action="${action}"` : "";
-  return `<button class="${className}" type="button"${data}>${iconName ? icon(iconName) : ""}<span>${label}</span></button>`;
+  return `<button class="${className}" type="button"${data}>${iconName ? icon(iconName, extraIconClass) : ""}<span>${label}</span></button>`;
 }
 
 export function checkbox(label, checked, key) {

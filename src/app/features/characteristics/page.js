@@ -67,63 +67,71 @@ export function renderCharacteristicsPage(viewState, t) {
 
   const drivers = rawDrivers.filter((d) => d && d.name && d.name !== "Unknown");
 
+  let scrollContent = "";
+
   if (isScanning && !drivers.length) {
-    return `
-      <div class="drivers-page">
-        <div class="scroll-panel">
-          <div class="empty-state"><div class="empty-state-spinner">${icon("rotate", "spin")}</div><span>${escapeHtml(t("scanningDrivers") || (isRu ? "Сканирование ПК..." : "Scanning system..."))}</span></div>
-        </div>
+    scrollContent = `
+      <div class="card driver-empty-card driver-scanning-card">
+        <div class="driver-empty-icon">${icon("rotate", "spin")}</div>
+        <h2 class="driver-empty-title">${escapeHtml(t("scanningDrivers") || (isRu ? "Сканирование оборудования..." : "Scanning Hardware Devices..."))}</h2>
+        <p class="driver-empty-desc">${escapeHtml(isRu ? "Опрос видеокарты, звуковых чипов, сетевых контроллеров и проверка актуальности через реестр Windows..." : "Enumerating GPU, audio chips, network adapters, and verifying driver versions...")}</p>
       </div>
     `;
-  }
+  } else {
+    const groupCards = DRIVER_CATEGORIES.map((cat) => {
+      const items = drivers.filter((d) => {
+        const cls = (d.className || d.class_name || "").toLowerCase();
+        return cat.match(cls);
+      });
 
-  const groupCards = DRIVER_CATEGORIES.map((cat) => {
-    const items = drivers.filter((d) => {
-      const cls = (d.className || d.class_name || "").toLowerCase();
-      return cat.match(cls);
+      if (!items.length) return "";
+
+      const title = t("driverGroup_" + cat.id) || (isRu ? cat.titleRu : cat.titleEn);
+      const tiles = items.map((driver) => renderDriverTile(driver, t, isRu)).join("");
+
+      return `
+        <section class="card driver-group" id="driver-section-${escapeAttr(cat.id)}">
+          <h2 class="group-title">${icon(cat.icon)}<span>${escapeHtml(title)}</span></h2>
+          <div class="driver-grid">${tiles}</div>
+        </section>
+      `;
+    }).filter(Boolean);
+
+    const categorized = new Set();
+    DRIVER_CATEGORIES.forEach((cat) => {
+      drivers.forEach((d) => {
+        const cls = (d.className || d.class_name || "").toLowerCase();
+        if (cat.match(cls)) categorized.add(d);
+      });
     });
+    const remaining = drivers.filter((d) => !categorized.has(d));
+    if (remaining.length) {
+      const title = t("driverGroup_other") || (isRu ? "Прочие устройства" : "Other Hardware");
+      const tiles = remaining.map((driver) => renderDriverTile(driver, t, isRu)).join("");
+      groupCards.push(`
+        <section class="card driver-group" id="driver-section-other">
+          <h2 class="group-title">${icon("layers")}<span>${escapeHtml(title)}</span></h2>
+          <div class="driver-grid">${tiles}</div>
+        </section>
+      `);
+    }
 
-    if (!items.length) return "";
-
-    const title = t("driverGroup_" + cat.id) || (isRu ? cat.titleRu : cat.titleEn);
-    const tiles = items.map((driver) => renderDriverTile(driver, t, isRu)).join("");
-
-    return `
-      <section class="card driver-group" id="driver-section-${escapeAttr(cat.id)}">
-        <h2 class="group-title">${icon(cat.icon)}<span>${escapeHtml(title)}</span></h2>
-        <div class="driver-grid">${tiles}</div>
-      </section>
-    `;
-  }).filter(Boolean);
-
-  const categorized = new Set();
-  DRIVER_CATEGORIES.forEach((cat) => {
-    drivers.forEach((d) => {
-      const cls = (d.className || d.class_name || "").toLowerCase();
-      if (cat.match(cls)) categorized.add(d);
-    });
-  });
-  const remaining = drivers.filter((d) => !categorized.has(d));
-  if (remaining.length) {
-    const title = t("driverGroup_other") || (isRu ? "Прочие устройства" : "Other Hardware");
-    const tiles = remaining.map((driver) => renderDriverTile(driver, t, isRu)).join("");
-    groupCards.push(`
-      <section class="card driver-group" id="driver-section-other">
-        <h2 class="group-title">${icon("layers")}<span>${escapeHtml(title)}</span></h2>
-        <div class="driver-grid">${tiles}</div>
-      </section>
-    `);
+    scrollContent = groupCards.length
+      ? groupCards.join("")
+      : `
+        <div class="card driver-empty-card">
+          <div class="driver-empty-icon">${icon("cpu")}</div>
+          <h2 class="driver-empty-title">${escapeHtml(t("noDriversFound") || (isRu ? "Оборудование не обнаружено" : "No hardware drivers found"))}</h2>
+          <p class="driver-empty-desc">${escapeHtml(isRu ? "Нажмите «Сканировать ПК», чтобы опросить видеокарту, звук, сеть и системные устройства." : "Click 'Scan PC for Drivers' to detect your graphics card, sound, network, and system hardware.")}</p>
+        </div>
+      `;
   }
-
-  const scrollContent = groupCards.length
-    ? groupCards.join("")
-    : `<div class="empty-state">${escapeHtml(t("noDriversFound") || (isRu ? "Устройства не обнаружены" : "No hardware drivers found"))}</div>`;
 
   return `
     <div class="drivers-page">
       <div class="scroll-panel">${scrollContent}</div>
       <div class="actions tweaks-actions drivers-actions">
-        ${button(scanLabel, "rotate", "primary", "scan-drivers")}
+        ${button(scanLabel, "rotate", "primary", "scan-drivers", isScanning ? "spin" : "")}
         ${button(
           t("driverUpdateViaWindows") || t("updateViaWindows") || (isRu ? "Обновить через Windows" : "Windows Update"),
           "settings",

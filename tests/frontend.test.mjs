@@ -866,3 +866,26 @@ test("Keybinds: Create First Bind button successfully creates a bind and updates
   assert.ok(populatedHtml.includes("bind-row"), "Must render bind rows");
   assert.ok(populatedHtml.includes("bind_test_1"), "Must render the created bind");
 });
+
+test("Characteristics: renders scanning card when loading and structured categories when loaded", async () => {
+  const { renderCharacteristicsPage } = await import("../src/app/features/characteristics/page.js");
+  const t = (k) => k;
+
+  const scanningHtml = renderCharacteristicsPage({ drivers: [], driversLoading: true }, t);
+  assert.ok(scanningHtml.includes("driver-scanning-card"));
+  assert.ok(scanningHtml.includes("scan-drivers"));
+
+  const populatedHtml = renderCharacteristicsPage({
+    drivers: [
+      { name: "NVIDIA GeForce RTX 3060", vendor: "nvidia", className: "Display", version: "32.0.16.2101", isOutdated: false },
+      { name: "Realtek High Definition Audio", vendor: "realtek", className: "Media", version: "6.0.9000.1", isOutdated: false }
+    ],
+    driversLoading: false
+  }, t);
+
+  assert.ok(!populatedHtml.includes("driver-empty-card"));
+  assert.ok(populatedHtml.includes("driver-section-display"));
+  assert.ok(populatedHtml.includes("driver-section-media"));
+  assert.ok(populatedHtml.includes("NVIDIA GeForce RTX 3060"));
+  assert.ok(populatedHtml.includes("Realtek High Definition Audio"));
+});

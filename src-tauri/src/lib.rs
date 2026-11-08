@@ -358,6 +358,12 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_driver_collection() {
+        let drivers = driver_info::collect_drivers();
+        assert!(!drivers.is_empty());
+    }
+
+    #[test]
     fn test_default_state_sanitization() {
         let state = PersistedState {
             color: ColorSettings {
