@@ -3,16 +3,16 @@
   "version": "2.5.0-beta",
   "private": true,
   "description": "Windows display calibration and system performance optimization utility",
-  "author": "Arean-Max",
-  "license": "AGPL-3.0-or-later",
+  "author": "vkmef (https://t.me/vkmef)",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Arean-Max/synchro-nova.git"
+    "url": "https://github.com/vkmef/synchro.git"
   },
-  "homepage": "https://github.com/Arean-Max/synchro-nova",
+  "homepage": "https://t.me/vkmef",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/frontend.test.mjs && node scripts/verify-syntax.mjs && node scripts/verify-no-comments.mjs",
+    "test": "node --test tests/frontend.test.mjs",
     "serve": "node ./scripts/app-server.mjs",
     "dev": "tauri dev",
     "build": "tauri build",

@@ -41,8 +41,10 @@
 
   RMDir /r "$LOCALAPPDATA\SynchroNova"
   RMDir /r "$LOCALAPPDATA\app.synchro.performance"
+  RMDir /r "$LOCALAPPDATA\synchro"
   RMDir /r "$APPDATA\SynchroNova"
   RMDir /r "$APPDATA\app.synchro.performance"
+  RMDir /r "$APPDATA\synchro"
 
   RMDir /r "$TEMP\SynchroNova"
 
