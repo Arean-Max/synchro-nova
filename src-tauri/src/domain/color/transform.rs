@@ -56,17 +56,21 @@ pub fn get_active_color() -> Option<ColorSettings> {
 }
 
 pub fn reapply_active_color() {
-    std::thread::Builder::new()
-        .name("synchro-color-worker".to_string())
-        .stack_size(128 * 1024)
-        .spawn(|| {
-            if let Ok(lock) = ACTIVE_COLOR.lock() {
-                if let Some((ref color, show_on_recordings)) = *lock {
-                    let _ = apply_color_transform(color, show_on_recordings);
-                }
-            }
-        })
-        .ok();
+    let payload = if let Ok(lock) = ACTIVE_COLOR.lock() {
+        lock.clone()
+    } else {
+        None
+    };
+
+    if let Some((color, show_on_recordings)) = payload {
+        std::thread::Builder::new()
+            .name("synchro-color-worker".to_string())
+            .stack_size(128 * 1024)
+            .spawn(move || {
+                let _ = apply_color_transform(&color, show_on_recordings);
+            })
+            .ok();
+    }
 }
 
 #[cfg(target_os = "windows")]

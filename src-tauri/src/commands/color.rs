@@ -57,21 +57,22 @@ pub fn apply_color_settings(
     let current = state.snapshot()?;
     apply_color_transform(&color, current.settings.show_on_recordings)?;
 
-    {
+    let snapshot = {
         let mut data = state
             .data
             .lock()
             .map_err(|_| "Settings lock poisoned".to_string())?;
         data.color = color;
         data.is_admin = current.is_admin;
-        let snapshot = data.clone();
+        let snap = data.clone();
 
-        if snapshot.settings.save_color_correction {
-            schedule_debounced_save(state.settings_path.clone(), snapshot);
+        if snap.settings.save_color_correction {
+            schedule_debounced_save(state.settings_path.clone(), snap.clone());
         }
-    }
+        snap
+    };
 
-    state.snapshot()
+    Ok(snapshot)
 }
 
 #[tauri::command]
