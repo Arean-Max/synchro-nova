@@ -6737,7 +6737,7 @@ p, .description {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 50% 45%, rgba(120, 119, 198, 0.12), transparent 65%), #0a0b0e;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.035), transparent 65%), #141414;
   pointer-events: auto;
   overflow: hidden;
   cursor: pointer;
