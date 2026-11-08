@@ -31,6 +31,8 @@ import { allLanguagesTranslations } from "./i18n_all_languages.js";
 export const dictionaries = {
   en: {
     madeWithLove: "Made with love",
+    fontTitle: "Interface Font",
+    interfaceFont: "Interface Font",
     themeTitle: "Interface Theme",
     themeSubtitle: "Seasonal themes with atmospheric visual effects",
     theme_default: "Default",
@@ -410,6 +412,8 @@ export const dictionaries = {
 
   ru: {
     madeWithLove: "Сделано с любовью",
+    fontTitle: "Шрифт интерфейса",
+    interfaceFont: "Шрифт интерфейса",
     themeTitle: "Тема оформления",
     themeSubtitle: "Сезонные темы с визуальными эффектами и атмосферой",
     theme_default: "Дефолт",

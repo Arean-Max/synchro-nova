@@ -30,22 +30,16 @@ import { THEMES } from "../../ui/themes.js";
 export const AVAILABLE_FONTS = [
   { id: "Inter", name: "Inter (Modern UI)" },
   { id: "Segoe UI", name: "Segoe UI (Windows Default)" },
+  { id: "Segoe UI Variable", name: "Segoe UI Variable (Windows 11)" },
   { id: "Bahnschrift", name: "Bahnschrift (DIN Variable)" },
-  { id: "Cascadia Code", name: "Cascadia Code (Modern Terminal)" },
+  { id: "Cascadia Code", name: "Cascadia Code (Monospace)" },
   { id: "Consolas", name: "Consolas (Code Mono)" },
   { id: "Trebuchet MS", name: "Trebuchet MS (Humanist)" },
   { id: "Verdana", name: "Verdana (Wide Screen)" },
-  { id: "Georgia", name: "Georgia (Elegant Serif)" },
-  { id: "Tahoma", name: "Tahoma (Compact UI)" },
   { id: "Arial", name: "Arial (Standard Clean)" },
+  { id: "Georgia", name: "Georgia (Serif)" },
   { id: "Century Gothic", name: "Century Gothic (Geometric)" },
-  { id: "Franklin Gothic Medium", name: "Franklin Gothic (Editorial)" },
-  { id: "Palatino Linotype", name: "Palatino (Classic Book)" },
-  { id: "Lucida Console", name: "Lucida Console (Retro Mono)" },
-  { id: "Courier New", name: "Courier New (Typewriter)" },
-  { id: "Impact", name: "Impact (Bold Headline)" },
-  { id: "Comic Sans MS", name: "Comic Sans MS (Casual)" },
-  { id: "MS Sans Serif", name: "Microsoft Sans Serif (Classic)" }
+  { id: "Tahoma", name: "Tahoma (Compact UI)" }
 ];
 
 const SETTING_TOGGLE_KEYS = [
@@ -153,22 +147,31 @@ export function renderSettingsPage(appState, viewState, t) {
     </div>
   `;
 
-  const currentFont = appState?.settings?.fontFamily || (typeof localStorage !== "undefined" && localStorage.getItem("synchro_font")) || "Inter";
+  const isFontDropdownOpen = Boolean(viewState?.fontDropdownOpen);
+  const currentFontId = appState?.settings?.fontFamily || (typeof localStorage !== "undefined" && localStorage.getItem("synchro_font")) || "Inter";
+  const currentFont = AVAILABLE_FONTS.find((f) => f.id === currentFontId) || AVAILABLE_FONTS[0];
 
-  const fontOptions = AVAILABLE_FONTS.map((f) => {
-    const isSelected = currentFont === f.id;
+  const fontItems = AVAILABLE_FONTS.map((f) => {
+    const isSelected = f.id === currentFont.id;
     return `
-      <button class="font-picker-item ${isSelected ? "selected" : ""}" type="button" data-action="select-font" data-font="${escapeAttr(f.id)}" style="font-family: '${escapeAttr(f.id)}', sans-serif;">
-        <span class="font-picker-name" style="font-family: '${escapeAttr(f.id)}', sans-serif;">${escapeHtml(f.name)}</span>
-        ${isSelected ? `<span class="font-picker-check">${icon("check")}</span>` : ""}
+      <button class="font-dropdown-item ${isSelected ? "selected" : ""}" type="button" data-action="select-font" data-font="${escapeAttr(f.id)}">
+        <span class="font-dropdown-preview" style="font-family: '${escapeAttr(f.id)}', sans-serif;">${escapeHtml(f.name)}</span>
+        ${isSelected ? `<span class="language-item-check">${icon("check")}</span>` : ""}
       </button>
     `;
   }).join("");
 
-  const fontSection = `
-    <div class="form-label">${escapeHtml(t("fontTitle") || (isRu ? "Шрифт интерфейса (с предпросмотром)" : "Interface Font (Live Preview)"))}</div>
-    <div class="font-picker-grid">
-      ${fontOptions}
+  const fontDropdown = `
+    <div class="form-label">${escapeHtml(t("interfaceFont") || t("fontTitle") || (isRu ? "Шрифт интерфейса" : "Interface Font"))}</div>
+    <div class="font-custom-dropdown ${isFontDropdownOpen ? "open" : ""}">
+      <button class="font-dropdown-trigger" type="button" data-action="toggle-font-dropdown">
+        <span class="font-dropdown-label" style="font-family: '${escapeAttr(currentFont.id)}', sans-serif;">
+          <span class="font-icon-badge">Aa</span>
+          <span class="font-label-name">${escapeHtml(currentFont.name)}</span>
+        </span>
+        <span class="language-dropdown-arrow">${icon("chevronDown")}</span>
+      </button>
+      ${isFontDropdownOpen ? `<div class="font-dropdown-menu">${fontItems}</div>` : ""}
     </div>
   `;
 
@@ -182,17 +185,14 @@ export function renderSettingsPage(appState, viewState, t) {
       ${themeSection}
     </div>
     <div class="settings-section-divider"></div>
-    <div class="settings-font-section">
-      ${fontSection}
-    </div>
-    <div class="settings-section-divider"></div>
     <div class="settings-top-row">
       <div class="settings-top-left">
         ${languageDropdown}
-        ${madeWithLove}
+        ${fontDropdown}
       </div>
       <div class="settings-top-right">
         ${communityLinks}
+        ${madeWithLove}
       </div>
     </div>
     <div class="settings-section-divider"></div>

@@ -1940,6 +1940,16 @@ async function handleClick(event) {
   if (toggleLanguageDropdown) {
     event.preventDefault();
     viewState.languageDropdownOpen = !viewState.languageDropdownOpen;
+    viewState.fontDropdownOpen = false;
+    updateMain();
+    return;
+  }
+
+  const toggleFontDropdown = target.closest("[data-action='toggle-font-dropdown']");
+  if (toggleFontDropdown) {
+    event.preventDefault();
+    viewState.fontDropdownOpen = !viewState.fontDropdownOpen;
+    viewState.languageDropdownOpen = false;
     updateMain();
     return;
   }
@@ -1974,13 +1984,12 @@ async function handleClick(event) {
   if (fontBtn) {
     const nextFont = fontBtn.getAttribute("data-font") || "Inter";
     appState.settings.fontFamily = nextFont;
+    viewState.fontDropdownOpen = false;
     document.documentElement.style.setProperty("--app-font-family", `'${nextFont}', sans-serif`);
     try {
       localStorage.setItem("synchro_font", nextFont);
     } catch (_) {}
-    document.querySelectorAll(".font-picker-item").forEach((b) => {
-      b.classList.toggle("selected", b.getAttribute("data-font") === nextFont);
-    });
+    updateMain();
     await saveSettings();
     return;
   }
@@ -2448,6 +2457,11 @@ async function handleClick(event) {
     updateMain();
   }
 
+  if (viewState.fontDropdownOpen && !target.closest(".font-custom-dropdown")) {
+    viewState.fontDropdownOpen = false;
+    updateMain();
+  }
+
   const recordBind = target.closest("[data-action='record-bind']");
   if (recordBind) {
     event.preventDefault();
@@ -2546,6 +2560,13 @@ async function handleKeydown(event) {
   if (viewState.languageDropdownOpen && event.key === "Escape") {
     event.preventDefault();
     viewState.languageDropdownOpen = false;
+    updateMain();
+    return;
+  }
+
+  if (viewState.fontDropdownOpen && event.key === "Escape") {
+    event.preventDefault();
+    viewState.fontDropdownOpen = false;
     updateMain();
     return;
   }

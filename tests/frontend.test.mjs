@@ -903,3 +903,21 @@ test("Tweaks: renderTweaksPage does not apply admin-locked when isAdmin is true"
   const unlockedHtml = renderTweaksPage({}, t);
   assert.ok(!unlockedHtml.includes("admin-locked"), "Must not have admin-locked class when admin");
 });
+
+test("Settings: renders compact custom font dropdown with guaranteed Windows fonts", async () => {
+  const { renderSettingsPage, AVAILABLE_FONTS } = await import("../src/app/features/settings/page.js");
+  const t = (k) => k;
+
+  const closedHtml = renderSettingsPage({}, { fontDropdownOpen: false }, t);
+  assert.ok(closedHtml.includes("font-custom-dropdown"), "Must render custom font dropdown container");
+  assert.ok(closedHtml.includes("toggle-font-dropdown"), "Must render dropdown trigger");
+  assert.ok(!closedHtml.includes("font-dropdown-menu"), "Must not render menu when closed");
+  assert.ok(!closedHtml.includes("font-picker-grid"), "Must not render cluttered button grid");
+
+  const openHtml = renderSettingsPage({}, { fontDropdownOpen: true }, t);
+  assert.ok(openHtml.includes("font-dropdown-menu"), "Must render menu when open");
+  assert.ok(openHtml.includes("Segoe UI"), "Must include Segoe UI");
+  assert.ok(openHtml.includes("Bahnschrift"), "Must include Bahnschrift");
+  assert.ok(openHtml.includes("Cascadia Code"), "Must include Cascadia Code");
+  assert.ok(AVAILABLE_FONTS.length >= 10, "Must provide ample choice of fonts");
+});
