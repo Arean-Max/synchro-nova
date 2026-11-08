@@ -3678,14 +3678,33 @@ p, .description {
   margin-top: 10px;
 }
 
+.toolbar-row.backup-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
 .backup-tools .btn {
-  flex: 0 1 auto;
-  min-width: 118px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 12px;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .backup-tools .btn span {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backup-tools .btn .icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }
 
 .config-tools .input-like {
