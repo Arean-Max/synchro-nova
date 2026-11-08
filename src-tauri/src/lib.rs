@@ -466,6 +466,10 @@ mod tests {
         assert!(!is_newer_version("v1.9.9", "2.2.2"));
         assert!(!is_newer_version("2.3.4-beta", "2.3.4"));
         assert!(!is_newer_version("invalid-string", "2.3.4"));
+        assert!(!is_newer_version("v2.5.0", "2.5.0-beta"));
+        assert!(!is_newer_version("v2.5.0-beta", "2.5.0-beta"));
+        assert!(is_newer_version("v2.5.1", "2.5.0-beta"));
+        assert!(is_newer_version("v2.6.0", "2.5.0-beta"));
     }
 
     #[test]

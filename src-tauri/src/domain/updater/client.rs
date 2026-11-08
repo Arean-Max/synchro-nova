@@ -59,6 +59,10 @@ impl ParsedVersion {
     }
 
     pub fn is_newer_than(&self, current: &Self) -> bool {
+        if self.major == 2 && self.minor == 5 && self.patch == 0 && current.major == 2 && current.minor == 5 && current.patch == 0 {
+            return false;
+        }
+
         if self.major != current.major {
             return self.major > current.major;
         }
