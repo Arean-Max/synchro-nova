@@ -1,10 +1,43 @@
+/*
+   ,--,                                            
+,---.'|                                            
+|   | :                                            
+:   : |                        ,--,                
+|   ' :                      ,--.'|                
+;   ; '                 .---.|  |,      .--.--.    
+'   | |__   ,---.     /.  ./|`--'_     /  /    '   
+|   | :.'| /       .-' . ' |,' ,'|   |  :  /`./   
+'   :    ;/    /  |/___/ \: |'  | |   |  :  ;_     
+|   |  ./.    ' / |.   \  ' .|  | :    \  \    `.  
+;   : ;  '   ;   /| \   \   ''  : |__   `----.   \ 
+|   ,/   '   |  / |  \   \   |  | '.'| /  /`--'  / 
+'---'    |   :    |   \   \ |;  :    ;'--'.     /  
+          \   \  /     '---" |  ,   /   `--'---'   
+           `----'             ---`-'               
+                                                   
+
+author - vkmef.t,me
+*/
 import { activePage, setActivePage, pageDefs } from "./state.js";
 
 class Router {
   constructor() {
     this.routes = new Map();
+    this.pageCache = new Map();
     this.currentMounted = null;
     this.currentRouteName = activePage;
+  }
+
+  cachePageHtml(name, html) {
+    this.pageCache.set(name, html);
+  }
+
+  getCachedPageHtml(name) {
+    return this.pageCache.get(name);
+  }
+
+  clearCache() {
+    this.pageCache.clear();
   }
 
   register(name, handler) {

@@ -1,5 +1,6 @@
 import { safeRender } from "../core/errorBoundary.js";
 import { activePage, appState, lang, pageDefs, pageOrder } from "../core/state.js";
+import { router } from "../core/router.js";
 import { escapeAttr, escapeHtml } from "../core/html.js";
 import { renderCharacteristicsPage, DRIVER_CATEGORIES } from "../features/characteristics/page.js";
 import { renderColorPage } from "../features/color/page.js";
@@ -33,10 +34,7 @@ function renderTitlebar(t) {
 
   return `
     <div class="titlebar ${isMacLights ? "has-mac-lights" : ""}" data-window-drag data-tauri-drag-region>
-      <div class="titlebar-left" data-window-drag data-tauri-drag-region>
-        <span class="titlebar-logo" data-window-drag data-tauri-drag-region>${logo()}</span>
-        <span class="titlebar-title" data-window-drag data-tauri-drag-region>Synchro Nova</span>
-      </div>
+      <div class="titlebar-left" data-window-drag data-tauri-drag-region></div>
       ${controls}
     </div>
   `;
@@ -201,14 +199,21 @@ const safeCharacteristics = safeRender(renderCharacteristicsPage, "Hardware Driv
 const safeBackups = safeRender(renderBackupsPage, "System Backups");
 const safeSettings = safeRender(renderSettingsPage, "Preferences");
 
-export function renderPageBody(viewState, t) {
-  if (activePage === "color") return safeColor(appState, viewState, t);
-  if (activePage === "tweaks") return safeTweaks(viewState, t);
-  if (activePage === "binds") return safeBinds(appState, viewState, t);
-  if (activePage === "characteristics") return safeCharacteristics(viewState, t);
-  if (activePage === "backups") return safeBackups(viewState, t);
-  if (activePage === "settings") return safeSettings(appState, viewState, t);
-  return safeColor(appState, viewState, t);
+export function renderPageBody(viewState, t, bypassCache = false) {
+  if (!bypassCache && activePage !== "color") {
+    const cached = router.getCachedPageHtml(activePage);
+    if (cached) return cached;
+  }
+  let html = "";
+  if (activePage === "color") html = safeColor(appState, viewState, t);
+  else if (activePage === "tweaks") html = safeTweaks(viewState, t);
+  else if (activePage === "binds") html = safeBinds(appState, viewState, t);
+  else if (activePage === "characteristics") html = safeCharacteristics(viewState, t);
+  else if (activePage === "backups") html = safeBackups(viewState, t);
+  else if (activePage === "settings") html = safeSettings(appState, viewState, t);
+  else html = safeColor(appState, viewState, t);
+  router.cachePageHtml(activePage, html);
+  return html;
 }
 
 export function renderMain(viewState, t) {

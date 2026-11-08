@@ -1,3 +1,23 @@
+/*
+   ,--,                                            
+,---.'|                                            
+|   | :                                            
+:   : |                        ,--,                
+|   ' :                      ,--.'|                
+;   ; '                 .---.|  |,      .--.--.    
+'   | |__   ,---.     /.  ./|`--'_     /  /    '   
+|   | :.'| /       .-' . ' |,' ,'|   |  :  /`./   
+'   :    ;/    /  |/___/ \: |'  | |   |  :  ;_     
+|   |  ./.    ' / |.   \  ' .|  | :    \  \    `.  
+;   : ;  '   ;   /| \   \   ''  : |__   `----.   \ 
+|   ,/   '   |  / |  \   \   |  | '.'| /  /`--'  / 
+'---'    |   :    |   \   \ |;  :    ;'--'.     /  
+          \   \  /     '---" |  ,   /   `--'---'   
+           `----'             ---`-'               
+                                                   
+
+author - vkmef.t,me
+*/
 import { invokeCommand } from "./core/bridge.js";
 import {
   activePage,
@@ -863,17 +883,35 @@ function syncTweakTile(id) {
   syncTweaksActionButtons();
 }
 
+let isApplyingColor = false;
+let pendingColorApply = false;
+
 async function applyColor() {
+  if (isApplyingColor) {
+    pendingColorApply = true;
+    return;
+  }
+  isApplyingColor = true;
+  pendingColorApply = false;
   if (!appState.color?.activeFilter) {
     saveNormalColorState();
   }
-  const result = await invokeCommand("apply_color_settings", { color: appState.color });
-  if (result) mergeState(result);
+  try {
+    await invokeCommand("apply_color_settings", { color: appState.color });
+  } catch (err) {
+    console.error("Color apply error:", err);
+  } finally {
+    isApplyingColor = false;
+    if (pendingColorApply) {
+      pendingColorApply = false;
+      scheduleApplyColor(16);
+    }
+  }
 }
 
-function scheduleApplyColor() {
+function scheduleApplyColor(delay = 40) {
   window.clearTimeout(applyTimer);
-  applyTimer = window.setTimeout(applyColor, 50);
+  applyTimer = window.setTimeout(applyColor, delay);
 }
 
 
@@ -1065,8 +1103,10 @@ async function handleAction(action) {
     case "window-maximize":
       return invokeCommand("toggle_window_maximize");
     case "window-close":
+      document.body.style.pointerEvents = "none";
       return invokeCommand("close_window");
     case "exit-app":
+      document.body.style.pointerEvents = "none";
       return invokeCommand("exit_app");
 
     case "restart-as-admin": {
@@ -1919,6 +1959,21 @@ async function handleClick(event) {
     return;
   }
 
+  const fontBtn = target.closest("[data-action='select-font']");
+  if (fontBtn) {
+    const nextFont = fontBtn.getAttribute("data-font") || "Inter";
+    appState.settings.fontFamily = nextFont;
+    document.documentElement.style.setProperty("--app-font-family", `'${nextFont}', sans-serif`);
+    try {
+      localStorage.setItem("synchro_font", nextFont);
+    } catch (_) {}
+    document.querySelectorAll(".font-picker-item").forEach((b) => {
+      b.classList.toggle("selected", b.getAttribute("data-font") === nextFont);
+    });
+    await saveSettings();
+    return;
+  }
+
   if (accentSwatch) {
     const color = accentSwatch.getAttribute("data-color");
     if (color) {
@@ -2087,7 +2142,6 @@ async function handleClick(event) {
       updateBlackHoloDom(nextVal > 0, viewState.blackHoloStatus);
     }
 
-    scheduleApplyColor();
     return;
   }
 
@@ -2617,10 +2671,13 @@ async function checkSecurityIncidents() {
 async function boot() {
   registerLifecycleHooks();
   let cachedTheme = "default";
+  let cachedFont = "Inter";
   try {
     cachedTheme = localStorage.getItem("synchro_theme") || "default";
+    cachedFont = localStorage.getItem("synchro_font") || "Inter";
   } catch {}
   applyTheme(cachedTheme, { disableAnimations: true });
+  document.documentElement.style.setProperty("--app-font-family", `'${cachedFont}', sans-serif`);
 
   try {
     const savedCollapsed = localStorage.getItem("synchro_sidebar_collapsed");
@@ -2674,6 +2731,9 @@ async function boot() {
   document.body.classList.toggle("no-animations", shouldDisableAnim);
 
   invokeCommand("consume_intro_splash").catch(() => false);
+  if (!shouldDisableAnim && !appState.settings?.disableSplash) {
+    runIntroSplash();
+  }
 
   if (Array.isArray(appState.keybinds) && appState.keybinds.length) {
     syncKeybinds();
@@ -2784,7 +2844,6 @@ if (window.__TAURI__?.event?.listen) {
         "safe"
       );
     }
-    scheduleApplyColor();
   });
 }
 
