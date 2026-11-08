@@ -184,10 +184,18 @@ unsafe extern "system" {
 }
 
 #[cfg(target_os = "windows")]
+fn get_magnification_module() -> *mut c_void {
+    static MAG_MOD: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+    *MAG_MOD.get_or_init(|| unsafe {
+        let wide_name: Vec<u16> = "Magnification.dll\0".encode_utf16().collect();
+        LoadLibraryW(wide_name.as_ptr()) as usize
+    }) as *mut c_void
+}
+
+#[cfg(target_os = "windows")]
 #[allow(non_snake_case)]
 pub unsafe fn MagInitialize() -> i32 {
-    let wide_name: Vec<u16> = "Magnification.dll\0".encode_utf16().collect();
-    let mod_handle = LoadLibraryW(wide_name.as_ptr());
+    let mod_handle = get_magnification_module();
     if mod_handle.is_null() {
         return 0;
     }
@@ -202,8 +210,7 @@ pub unsafe fn MagInitialize() -> i32 {
 #[cfg(target_os = "windows")]
 #[allow(non_snake_case)]
 pub unsafe fn MagSetFullscreenColorEffect(effect: *const MagColorEffect) -> i32 {
-    let wide_name: Vec<u16> = "Magnification.dll\0".encode_utf16().collect();
-    let mod_handle = LoadLibraryW(wide_name.as_ptr());
+    let mod_handle = get_magnification_module();
     if mod_handle.is_null() {
         return 0;
     }
@@ -217,8 +224,7 @@ pub unsafe fn MagSetFullscreenColorEffect(effect: *const MagColorEffect) -> i32 
 
 #[cfg(target_os = "windows")]
 pub unsafe fn mag_uninitialize() -> i32 {
-    let wide_name: Vec<u16> = "Magnification.dll\0".encode_utf16().collect();
-    let mod_handle = LoadLibraryW(wide_name.as_ptr());
+    let mod_handle = get_magnification_module();
     if mod_handle.is_null() {
         return 0;
     }

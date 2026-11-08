@@ -66,6 +66,13 @@ pub fn show_main_window(app: &AppHandle) {
         let _ = window.show();
         let _ = window.set_focus();
         #[cfg(target_os = "windows")]
+        let _ = window.with_webview(|wv| {
+            let controller = wv.controller();
+            unsafe {
+                let _ = controller.SetIsVisible(true);
+            }
+        });
+        #[cfg(target_os = "windows")]
         if let Ok(hwnd) = window.hwnd() {
             unsafe {
                 crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
@@ -74,6 +81,13 @@ pub fn show_main_window(app: &AppHandle) {
     } else if let Ok(window) = crate::create_main_window(app) {
         let _ = window.show();
         let _ = window.set_focus();
+        #[cfg(target_os = "windows")]
+        let _ = window.with_webview(|wv| {
+            let controller = wv.controller();
+            unsafe {
+                let _ = controller.SetIsVisible(true);
+            }
+        });
         #[cfg(target_os = "windows")]
         if let Ok(hwnd) = window.hwnd() {
             unsafe {

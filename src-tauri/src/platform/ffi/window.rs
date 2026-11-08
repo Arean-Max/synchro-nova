@@ -98,16 +98,7 @@ pub fn ensure_single_instance_retry(mutex_name: &str, window_title: &str, is_res
                 continue;
             }
 
-            let title_w = wide_null(window_title);
-            let hwnd = unsafe {
-                winapi::FindWindowW(std::ptr::null(), title_w.as_ptr())
-            };
-            if !hwnd.is_null() {
-                unsafe {
-                    winapi::ShowWindow(hwnd, SW_RESTORE);
-                    winapi::SetForegroundWindow(hwnd);
-                }
-            }
+            notify_running_instance(window_title);
             return false;
         }
 
@@ -117,6 +108,100 @@ pub fn ensure_single_instance_retry(mutex_name: &str, window_title: &str, is_res
 
     true
 }
+
+#[cfg(target_os = "windows")]
+pub fn notify_running_instance(window_title: &str) {
+    use std::io::Write;
+    let _ = std::fs::OpenOptions::new()
+        .write(true)
+        .open(r"\\.\pipe\SynchroNovaInstancePipe")
+        .and_then(|mut f| f.write_all(b"SHOW"));
+
+    let title_w = wide_null(window_title);
+    let hwnd = unsafe {
+        winapi::FindWindowW(std::ptr::null(), title_w.as_ptr())
+    };
+    if !hwnd.is_null() {
+        unsafe {
+            winapi::ShowWindow(hwnd, SW_RESTORE);
+            winapi::SetForegroundWindow(hwnd);
+        }
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn notify_running_instance(_window_title: &str) {}
+
+#[cfg(target_os = "windows")]
+pub fn start_single_instance_listener(app: tauri::AppHandle) {
+    std::thread::Builder::new()
+        .name("synchro-instance-pipe".to_string())
+        .stack_size(64 * 1024)
+        .spawn(move || {
+            #[link(name = "Kernel32")]
+            extern "system" {
+                fn CreateNamedPipeW(
+                    lpName: *const u16,
+                    dwOpenMode: u32,
+                    dwPipeMode: u32,
+                    nMaxInstances: u32,
+                    nOutBufferSize: u32,
+                    nInBufferSize: u32,
+                    nDefaultTimeOut: u32,
+                    lpSecurityAttributes: *mut c_void,
+                ) -> *mut c_void;
+                fn ConnectNamedPipe(hNamedPipe: *mut c_void, lpOverlapped: *mut c_void) -> i32;
+                fn DisconnectNamedPipe(hNamedPipe: *mut c_void) -> i32;
+                fn ReadFile(
+                    hFile: *mut c_void,
+                    lpBuffer: *mut u8,
+                    nNumberOfBytesToRead: u32,
+                    lpNumberOfBytesRead: *mut u32,
+                    lpOverlapped: *mut c_void,
+                ) -> i32;
+            }
+
+            let pipe_name = wide_null(r"\\.\pipe\SynchroNovaInstancePipe");
+            const PIPE_ACCESS_INBOUND: u32 = 0x00000001;
+            const PIPE_TYPE_BYTE: u32 = 0x00000000;
+            const PIPE_READMODE_BYTE: u32 = 0x00000000;
+            const PIPE_WAIT: u32 = 0x00000000;
+
+            loop {
+                let handle = unsafe {
+                    CreateNamedPipeW(
+                        pipe_name.as_ptr(),
+                        PIPE_ACCESS_INBOUND,
+                        PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
+                        1,
+                        64,
+                        64,
+                        1000,
+                        std::ptr::null_mut(),
+                    )
+                };
+
+                if handle.is_null() || handle as isize == -1 {
+                    std::thread::sleep(std::time::Duration::from_millis(1000));
+                    continue;
+                }
+
+                let connected = unsafe { ConnectNamedPipe(handle, std::ptr::null_mut()) };
+                if connected != 0 || unsafe { winapi::GetLastError() } == 535 {
+                    let mut buf = [0u8; 16];
+                    let mut read_bytes = 0u32;
+                    let _ = unsafe { ReadFile(handle, buf.as_mut_ptr(), 16, &mut read_bytes, std::ptr::null_mut()) };
+                    crate::app::tray::show_main_window(&app);
+                    unsafe { DisconnectNamedPipe(handle); }
+                }
+                unsafe { winapi::CloseHandle(handle); }
+            }
+        })
+        .ok();
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn start_single_instance_listener(_app: tauri::AppHandle) {}
 
 #[cfg(not(target_os = "windows"))]
 pub fn ensure_single_instance(_mutex_name: &str, _window_title: &str) -> bool {

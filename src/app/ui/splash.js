@@ -92,17 +92,12 @@ export function runIntroSplash(options = {}) {
     });
   };
 
+  launchAnim();
   if (img && typeof img.decode === "function") {
     img.decode().then(launchAnim).catch(launchAnim);
-  } else if (img) {
-    if (img.complete && img.naturalWidth > 0) {
-      launchAnim();
-    } else {
-      img.onload = launchAnim;
-      img.onerror = launchAnim;
-    }
-  } else {
-    launchAnim();
+  } else if (img && !img.complete) {
+    img.onload = launchAnim;
+    img.onerror = launchAnim;
   }
 
   autoTimeout = setTimeout(() => {

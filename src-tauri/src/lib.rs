@@ -212,6 +212,7 @@ pub fn run() {
             domain::hotkeys::sync_hotkeys(&initial.keybinds);
 
             platform::fullscreen_watcher::spawn_fullscreen_watcher(app.handle().clone(), watcher_shutdown);
+            platform::ffi::start_single_instance_listener(app.handle().clone());
 
             let auto_download = initial.settings.auto_update;
             std::thread::Builder::new()
@@ -233,13 +234,7 @@ pub fn run() {
             match event {
                 WindowEvent::Focused(true) => {
                     platform::fullscreen_watcher::set_user_summoned(true);
-                    std::thread::Builder::new()
-                        .name("synchro-focus-color".to_string())
-                        .stack_size(64 * 1024)
-                        .spawn(|| {
-                            domain::color::reapply_active_color();
-                        })
-                        .ok();
+                    domain::color::reapply_active_color();
                 }
                 WindowEvent::ScaleFactorChanged { .. } => {
                     if let Some(wv) = window.app_handle().get_webview_window("main") {

@@ -1,5 +1,17 @@
 static ORIGINAL_GAMMA_RAMP: std::sync::OnceLock<crate::platform::ffi::GammaRamp> = std::sync::OnceLock::new();
 static MAG_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
+static MAG_INITIALIZED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[cfg(target_os = "windows")]
+fn ensure_mag_initialized() {
+    if !MAG_INITIALIZED.load(std::sync::atomic::Ordering::SeqCst) {
+        unsafe {
+            if crate::platform::ffi::winapi::MagInitialize() != 0 {
+                MAG_INITIALIZED.store(true, std::sync::atomic::Ordering::SeqCst);
+            }
+        }
+    }
+}
 
 #[cfg(target_os = "windows")]
 fn ensure_original_gamma_captured() {
@@ -44,11 +56,17 @@ pub fn get_active_color() -> Option<ColorSettings> {
 }
 
 pub fn reapply_active_color() {
-    if let Ok(lock) = ACTIVE_COLOR.lock() {
-        if let Some((ref color, show_on_recordings)) = *lock {
-            let _ = apply_color_transform(color, show_on_recordings);
-        }
-    }
+    std::thread::Builder::new()
+        .name("synchro-color-worker".to_string())
+        .stack_size(128 * 1024)
+        .spawn(|| {
+            if let Ok(lock) = ACTIVE_COLOR.lock() {
+                if let Some((ref color, show_on_recordings)) = *lock {
+                    let _ = apply_color_transform(color, show_on_recordings);
+                }
+            }
+        })
+        .ok();
 }
 
 #[cfg(target_os = "windows")]
@@ -72,10 +90,10 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
     if !has_matrix_effect {
         let _guard = MAG_MUTEX.lock().ok();
         unsafe {
+            ensure_mag_initialized();
             let effect = crate::platform::ffi::MagColorEffect {
                 transform: identity_matrix(),
             };
-            let _ = crate::platform::ffi::winapi::MagInitialize();
             let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
         }
     } else {
@@ -100,9 +118,8 @@ pub fn reset_color_transform() -> Result<(), String> {
     {
         let _guard = MAG_MUTEX.lock().ok();
         unsafe {
-            let _ = crate::platform::ffi::winapi::MagInitialize();
+            ensure_mag_initialized();
             let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
-            let _ = crate::platform::ffi::winapi::mag_uninitialize();
         }
     }
     if !super::black_holo::is_black_holo_active() {
@@ -132,12 +149,18 @@ fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) 
     let effect = crate::platform::ffi::MagColorEffect { transform: matrix };
 
     let _guard = MAG_MUTEX.lock().ok();
+    ensure_mag_initialized();
     unsafe {
-        crate::platform::ffi::winapi::MagInitialize();
         if crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect) == 0 {
-            std::thread::sleep(std::time::Duration::from_millis(30));
-            crate::platform::ffi::winapi::MagInitialize();
-            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+            let delays = [40, 120, 250];
+            for ms in delays {
+                std::thread::sleep(std::time::Duration::from_millis(ms));
+                let _ = crate::platform::ffi::winapi::MagInitialize();
+                MAG_INITIALIZED.store(true, std::sync::atomic::Ordering::SeqCst);
+                if crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect) != 0 {
+                    break;
+                }
+            }
         }
     }
 
