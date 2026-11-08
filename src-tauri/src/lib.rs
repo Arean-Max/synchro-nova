@@ -115,7 +115,6 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
             .shadow(false)
             .visible(true)
             .center()
-            .additional_browser_args("--disable-features=Translate,OptimizationHints,MediaRouter,BackForwardCache,InterestFeedContentSuggestions --disable-breakpad --disable-background-networking --disable-component-update --disable-domain-reliability --disable-sync --disable-extensions --disable-speech-api --disable-speech-synthesis-api --disable-notifications --disable-logging --disk-cache-size=5242880 --media-cache-size=5242880")
             .on_navigation(|url| {
                 let scheme = url.scheme();
                 let host = url.host_str().unwrap_or("");
@@ -234,7 +233,13 @@ pub fn run() {
             match event {
                 WindowEvent::Focused(true) => {
                     platform::fullscreen_watcher::set_user_summoned(true);
-                    domain::color::reapply_active_color();
+                    std::thread::Builder::new()
+                        .name("synchro-focus-color".to_string())
+                        .stack_size(64 * 1024)
+                        .spawn(|| {
+                            domain::color::reapply_active_color();
+                        })
+                        .ok();
                 }
                 WindowEvent::ScaleFactorChanged { .. } => {
                     if let Some(wv) = window.app_handle().get_webview_window("main") {

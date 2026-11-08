@@ -1,4 +1,5 @@
 static ORIGINAL_GAMMA_RAMP: std::sync::OnceLock<crate::platform::ffi::GammaRamp> = std::sync::OnceLock::new();
+static MAG_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 #[cfg(target_os = "windows")]
 fn ensure_original_gamma_captured() {
@@ -69,6 +70,7 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
         || (color.gamma - 100.0).abs() >= 0.1;
 
     if !has_matrix_effect {
+        let _guard = MAG_MUTEX.lock().ok();
         unsafe {
             let effect = crate::platform::ffi::MagColorEffect {
                 transform: identity_matrix(),
@@ -95,10 +97,13 @@ pub fn reset_color_transform() -> Result<(), String> {
         transform: identity_matrix(),
     };
 
-    unsafe {
-        let _ = crate::platform::ffi::winapi::MagInitialize();
-        let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
-        let _ = crate::platform::ffi::winapi::mag_uninitialize();
+    {
+        let _guard = MAG_MUTEX.lock().ok();
+        unsafe {
+            let _ = crate::platform::ffi::winapi::MagInitialize();
+            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+            let _ = crate::platform::ffi::winapi::mag_uninitialize();
+        }
     }
     if !super::black_holo::is_black_holo_active() {
         if let Some(orig) = ORIGINAL_GAMMA_RAMP.get() {
@@ -126,9 +131,11 @@ fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) 
     let matrix = build_color_matrix(color, include_matrix_gamma);
     let effect = crate::platform::ffi::MagColorEffect { transform: matrix };
 
+    let _guard = MAG_MUTEX.lock().ok();
     unsafe {
         crate::platform::ffi::winapi::MagInitialize();
         if crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect) == 0 {
+            std::thread::sleep(std::time::Duration::from_millis(30));
             crate::platform::ffi::winapi::MagInitialize();
             let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
         }
