@@ -2392,14 +2392,13 @@ async function boot() {
   } catch {}
   applyTheme(cachedTheme, { disableAnimations: true });
 
-  const statePromise = invokeCommand("get_app_state");
-  const holoPromise = loadBlackHoloStatus();
   try {
     const savedCollapsed = localStorage.getItem("synchro_sidebar_collapsed");
     if (savedCollapsed !== null) {
       viewState.sidebarCollapsed = savedCollapsed === "true";
     }
   } catch {}
+
   let initialPage = "color";
   try {
     const pendingStorage = localStorage.getItem("synchro_pending_nav");
@@ -2408,13 +2407,24 @@ async function boot() {
       localStorage.removeItem("synchro_pending_nav");
     }
   } catch {}
+  setActivePage(initialPage);
+
+  try {
+    render();
+  } catch (err) {
+    console.error("Critical error during initial render:", err);
+  }
+
+  const statePromise = invokeCommand("get_app_state");
+  const holoPromise = loadBlackHoloStatus();
+
   try {
     const pendingNav = await invokeCommand("get_pending_navigation");
-    if (pendingNav && typeof pendingNav === "string") {
-      initialPage = pendingNav;
+    if (pendingNav && typeof pendingNav === "string" && pendingNav !== initialPage) {
+      setActivePage(pendingNav);
+      render();
     }
   } catch {}
-  setActivePage(initialPage);
 
   const state = await statePromise;
   if (state) mergeState(state);
@@ -2428,27 +2438,16 @@ async function boot() {
   const shouldDisableAnim = Boolean(appState.settings?.disableAnimations);
   document.body.classList.toggle("no-animations", shouldDisableAnim);
 
-  const splashAllowed = await invokeCommand("consume_intro_splash").catch(() => false);
-  const shouldSkipSplash = Boolean(
-    !splashAllowed ||
-    appState.settings?.disableSplash ||
-    appState.settings?.disableAnimations ||
-    appState.settings?.startMinimized
-  );
-
-  if (!shouldSkipSplash) {
-    runIntroSplash();
-  }
+  invokeCommand("consume_intro_splash").catch(() => false);
 
   if (Array.isArray(appState.keybinds) && appState.keybinds.length) {
     syncKeybinds();
   }
+
   try {
     render();
   } catch (err) {
-    const splashEl = document.getElementById("intro-splash-screen");
-    if (splashEl) splashEl.remove();
-    console.error("Critical error during render:", err);
+    console.error("Critical error during state render:", err);
   }
 
   Promise.all([holoPromise, loadLists()]).then(() => {

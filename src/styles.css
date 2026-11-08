@@ -6672,7 +6672,8 @@ p, .description {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-sidebar, #131313);
+  background: transparent;
+  pointer-events: none;
   overflow: hidden;
   cursor: pointer;
   user-select: none;
