@@ -1098,6 +1098,8 @@ async function applyPreset(name) {
 }
 
 
+let isTogglingBlackHolo = false;
+
 async function handleAction(action) {
   switch (action) {
     case "window-minimize":
@@ -2101,6 +2103,8 @@ async function handleClick(event) {
 
   const toggleBlackHolo = target.closest("[data-action='toggle-black-holo']");
   if (toggleBlackHolo) {
+    if (isTogglingBlackHolo) return;
+    isTogglingBlackHolo = true;
     const isCurrentlyActive = Boolean(
       toggleBlackHolo.classList.contains("active") ||
       Number(appState?.color?.blackHolo || 0) > 0
@@ -2149,6 +2153,8 @@ async function handleClick(event) {
       console.error("Hardware black holo toggle error:", err);
       showErrorToast(t("blackHolo"), err);
       updateBlackHoloDom(nextVal > 0, viewState.blackHoloStatus);
+    } finally {
+      isTogglingBlackHolo = false;
     }
 
     return;

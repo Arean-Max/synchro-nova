@@ -386,8 +386,8 @@ p, .description {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 56px;
-  margin: 0 4px 12px;
+  min-height: 14px;
+  margin: 0 4px 6px;
   transition: margin 260ms ease, min-height 260ms ease;
 }
 
@@ -429,8 +429,8 @@ p, .description {
 }
 
 .workspace.sidebar-collapsed .sidebar .brand {
-  min-height: 44px;
-  margin: 0 auto 14px;
+  min-height: 14px;
+  margin: 0 auto 6px;
   display: flex;
   justify-content: center;
   align-items: center;
