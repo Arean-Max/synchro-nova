@@ -48,12 +48,19 @@ pub struct BlackHoloStatus {
 
 #[cfg(target_os = "windows")]
 static ORIGINAL_RAMP: Mutex<Option<GammaRamp>> = Mutex::new(None);
+static CACHED_GPU: Mutex<Option<(GpuVendor, String)>> = Mutex::new(None);
 
 static IS_ACTIVE: AtomicBool = AtomicBool::new(false);
 
-
 #[cfg(target_os = "windows")]
 pub fn detect_gpu_vendor() -> (GpuVendor, String) {
+    if let Ok(guard) = CACHED_GPU.lock() {
+        if let Some(ref cached) = *guard {
+            return cached.clone();
+        }
+    }
+
+    let mut detected = (GpuVendor::Unknown, "Standard Display Adapter".to_string());
     for idx in 0..8 {
         let mut device = crate::platform::ffi::DisplayDeviceW::default();
         let ok = unsafe {
@@ -66,16 +73,23 @@ pub fn detect_gpu_vendor() -> (GpuVendor, String) {
         let name = crate::utf16z_to_string(&device.device_string);
         let lower = name.to_lowercase();
         if lower.contains("nvidia") || lower.contains("geforce") || lower.contains("rtx") || lower.contains("gtx") {
-            return (GpuVendor::Nvidia, name);
+            detected = (GpuVendor::Nvidia, name);
+            break;
         }
         if lower.contains("amd") || lower.contains("radeon") || lower.contains("rx ") {
-            return (GpuVendor::Amd, name);
+            detected = (GpuVendor::Amd, name);
+            break;
         }
         if lower.contains("intel") || lower.contains("arc") || lower.contains("iris") || lower.contains("uhd") {
-            return (GpuVendor::Intel, name);
+            detected = (GpuVendor::Intel, name);
+            break;
         }
     }
-    (GpuVendor::Unknown, "Standard Display Adapter".to_string())
+
+    if let Ok(mut guard) = CACHED_GPU.lock() {
+        *guard = Some(detected.clone());
+    }
+    detected
 }
 
 #[cfg(not(target_os = "windows"))]

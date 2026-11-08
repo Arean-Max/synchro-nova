@@ -23,8 +23,16 @@ pub fn apply_color_settings(
         let snapshot = data.clone();
 
         if snapshot.settings.save_color_correction {
-            state.save(&snapshot)?;
-            crate::infra::fast_cache::update_disk_cache(&snapshot.color, snapshot.settings.show_on_recordings, None);
+            let path = state.settings_path.clone();
+            let snap = snapshot.clone();
+            std::thread::Builder::new()
+                .name("synchro-async-save".to_string())
+                .stack_size(64 * 1024)
+                .spawn(move || {
+                    let _ = crate::app::state::write_json_file(&path, &snap);
+                    crate::infra::fast_cache::update_disk_cache(&snap.color, snap.settings.show_on_recordings, None);
+                })
+                .ok();
         }
     }
 
@@ -50,13 +58,14 @@ pub fn toggle_hardware_black_holo(
     state: State<'_, RuntimeState>,
 ) -> Result<crate::domain::color::BlackHoloStatus, String> {
     let status = crate::domain::color::set_hardware_black_holo(enabled);
-    {
+    let (color_snapshot, show_on_recordings) = {
         let mut data = state
             .data
             .lock()
             .map_err(|_| "Settings lock poisoned".to_string())?;
         data.color.black_holo = if status.active { 100.0 } else { 0.0 };
-        let _ = crate::domain::color::apply_color_transform(&data.color, data.settings.show_on_recordings);
-    }
+        (data.color.clone(), data.settings.show_on_recordings)
+    };
+    let _ = crate::domain::color::apply_color_transform(&color_snapshot, show_on_recordings);
     Ok(status)
 }

@@ -1,3 +1,23 @@
+/*
+   ,--,                                            
+,---.'|                                            
+|   | :                                            
+:   : |                        ,--,                
+|   ' :                      ,--.'|                
+;   ; '                 .---.|  |,      .--.--.    
+'   | |__   ,---.     /.  ./|`--'_     /  /    '   
+|   | :.'| /       .-' . ' |,' ,'|   |  :  /`./   
+'   :    ;/    /  |/___/ \: |'  | |   |  :  ;_     
+|   |  ./.    ' / |.   \  ' .|  | :    \  \    `.  
+;   : ;  '   ;   /| \   \   ''  : |__   `----.   \ 
+|   ,/   '   |  / |  \   \   |  | '.'| /  /`--'  / 
+'---'    |   :    |   \   \ |;  :    ;'--'.     /  
+          \   \  /     '---" |  ,   /   `--'---'   
+           `----'             ---`-'               
+                                                   
+
+author - vkmef.t,me
+*/
 import { defaultPresets, filterPresets, lang, sliderDefs } from "../../core/state.js";
 import { escapeAttr, escapeHtml, safeValue } from "../../core/html.js";
 import { button, card } from "../../ui/components.js";

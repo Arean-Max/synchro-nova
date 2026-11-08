@@ -152,15 +152,9 @@ fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) 
     ensure_mag_initialized();
     unsafe {
         if crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect) == 0 {
-            let delays = [40, 120, 250];
-            for ms in delays {
-                std::thread::sleep(std::time::Duration::from_millis(ms));
-                let _ = crate::platform::ffi::winapi::MagInitialize();
-                MAG_INITIALIZED.store(true, std::sync::atomic::Ordering::SeqCst);
-                if crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect) != 0 {
-                    break;
-                }
-            }
+            let _ = crate::platform::ffi::winapi::MagInitialize();
+            MAG_INITIALIZED.store(true, std::sync::atomic::Ordering::SeqCst);
+            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
         }
     }
 
