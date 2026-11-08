@@ -45,20 +45,6 @@ pub fn eliminate_window_borders(hwnd: isize) {
             &caption_color as *const _ as _,
             std::mem::size_of::<u32>() as u32,
         );
-
-        const SWP_NOSIZE: u32 = 0x0001;
-        const SWP_NOMOVE: u32 = 0x0002;
-        const SWP_NOZORDER: u32 = 0x0004;
-        const SWP_FRAMECHANGED: u32 = 0x0020;
-        let _ = winapi::SetWindowPos(
-            hwnd as _,
-            std::ptr::null_mut(),
-            0,
-            0,
-            0,
-            0,
-            SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED,
-        );
     }
 }
 

@@ -73,10 +73,6 @@ pub fn configure_main_window(window: &tauri::WebviewWindow) {
     #[cfg(target_os = "windows")]
     let _ = window.with_webview(|webview| {
         let controller = webview.controller();
-        unsafe {
-            let _ = controller.SetIsVisible(true);
-            let _ = controller.NotifyParentWindowPositionChanged();
-        }
         if let Ok(core) = unsafe { controller.CoreWebView2() } {
             let mut pid = 0u32;
             if unsafe { core.BrowserProcessId(&mut pid) }.is_ok() && pid != 0 {
@@ -117,7 +113,7 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
             .maximizable(false)
             .decorations(false)
             .shadow(false)
-            .visible(false)
+            .visible(true)
             .center()
             .on_navigation(|url| {
                 let scheme = url.scheme();
