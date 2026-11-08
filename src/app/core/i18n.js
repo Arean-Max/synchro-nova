@@ -30,7 +30,7 @@ import { allLanguagesTranslations } from "./i18n_all_languages.js";
 
 export const dictionaries = {
   en: {
-    madeWithLove: "Made with love",
+    madeWithLove: "Made with",
     fontTitle: "Interface Font",
     interfaceFont: "Interface Font",
     themeTitle: "Interface Theme",
@@ -411,7 +411,7 @@ export const dictionaries = {
   },
 
   ru: {
-    madeWithLove: "Сделано с любовью",
+    madeWithLove: "Сделано с",
     fontTitle: "Шрифт интерфейса",
     interfaceFont: "Шрифт интерфейса",
     themeTitle: "Тема оформления",
@@ -2672,7 +2672,7 @@ for (const [langCode, dict] of Object.entries(allLanguagesTranslations)) {
 }
 
 const ruOverrides = {
-  madeWithLove: "Сделано с любовью",
+  madeWithLove: "Сделано с",
   themeTitle: "Тема оформления",
   theme_default: "Дефолт",
   theme_winter: "Новогодняя",

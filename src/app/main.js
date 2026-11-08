@@ -1855,10 +1855,6 @@ async function handleClick(event) {
     if (nextPage !== "tweaks" && viewState.activeImpactBanner) {
       dismissNotificationBanner(true);
     }
-    if (nextPage === "characteristics" && (!viewState.drivers || !viewState.drivers.length)) {
-      viewState.driversLoading = true;
-      triggerScanDrivers();
-    }
     router.navigate(nextPage, {
       onNavigate: () => {
         updateMain();
@@ -2793,6 +2789,8 @@ async function boot() {
       updateMainKeepingScroll();
     }
   });
+
+  triggerScanDrivers();
 
   checkForUpdates(false);
   window.setInterval(() => checkForUpdates(false), 4 * 60 * 60 * 1000);

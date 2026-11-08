@@ -96,7 +96,7 @@ export function renderSettingsPage(appState, viewState, t) {
 
   const madeWithLove = `
     <div class="settings-made-with-love">
-      <span class="made-with-love-text">${escapeHtml(t("madeWithLove") || (isRu ? "Сделано с любовью" : "Made with love"))}</span>
+      <span class="made-with-love-text">${escapeHtml(t("madeWithLove") || (isRu ? "Сделано с" : "Made with"))}</span>
       <img class="made-with-love-heart" src="./assets/heart.png" alt="❤️" />
     </div>
   `;
@@ -192,7 +192,6 @@ export function renderSettingsPage(appState, viewState, t) {
       </div>
       <div class="settings-top-right">
         ${communityLinks}
-        ${madeWithLove}
       </div>
     </div>
     <div class="settings-section-divider"></div>
@@ -201,9 +200,16 @@ export function renderSettingsPage(appState, viewState, t) {
     </div>
   `;
 
+  const cardTitle = [
+    '<div class="settings-card-head">',
+    `  <span class="settings-card-title">${escapeHtml(t("application") || (isRu ? "Параметры приложения" : "Application"))}</span>`,
+    `  ${madeWithLove}`,
+    '</div>'
+  ].join("");
+
   return `
     <div class="settings-page settings-unified-page">
-      ${card(t("application") || (isRu ? "Параметры приложения" : "Application"), unifiedCardBody, "settings-unified-card")}
+      ${card(cardTitle, unifiedCardBody, "settings-unified-card")}
     </div>
   `;
 }
