@@ -114,17 +114,20 @@ pub fn exit_app(app: AppHandle, state: State<'_, RuntimeState>) {
     if state.exiting.swap(true, std::sync::atomic::Ordering::SeqCst) {
         return;
     }
-    state.signal_shutdown();
-    crate::platform::ffi::release_single_instance();
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.hide();
     }
+    state.signal_shutdown();
+    crate::platform::ffi::release_single_instance();
     let app_handle = app.clone();
-    std::thread::spawn(move || {
-        app_handle.exit(0);
-        std::thread::sleep(std::time::Duration::from_millis(150));
-        std::process::exit(0);
-    });
+    std::thread::Builder::new()
+        .name("synchro-fast-exit".to_string())
+        .spawn(move || {
+            app_handle.exit(0);
+            std::thread::sleep(std::time::Duration::from_millis(40));
+            std::process::exit(0);
+        })
+        .ok();
 }
 
 #[tauri::command]

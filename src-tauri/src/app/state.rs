@@ -344,15 +344,15 @@ impl RuntimeState {
     pub fn signal_shutdown(&self) {
         let preserve_color = self
             .data
-            .lock()
+            .try_lock()
             .map(|d| d.settings.zero_daemon_mode || d.settings.save_color_correction)
-            .unwrap_or(false);
+            .unwrap_or(true);
         self.signal_shutdown_with_behavior(preserve_color);
     }
 
     pub fn signal_shutdown_with_behavior(&self, preserve_color: bool) {
         self.exiting.store(true, Ordering::SeqCst);
-        if let Ok(mut lock) = self.trimmer_sync.exited.lock() {
+        if let Ok(mut lock) = self.trimmer_sync.exited.try_lock() {
             *lock = true;
             self.trimmer_sync.condvar.notify_all();
         }
