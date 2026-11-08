@@ -1,39 +1,81 @@
-static ORIGINAL_GAMMA_RAMP: std::sync::OnceLock<crate::platform::ffi::GammaRamp> = std::sync::OnceLock::new();
-static MAG_MUTEX: std::sync::Mutex<()> = std::sync::Mutex::new(());
-static MAG_INITIALIZED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-static LAST_APPLIED_GAMMA: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(u32::MAX);
-
-#[cfg(target_os = "windows")]
-fn ensure_mag_initialized() {
-    static ONCE: std::sync::Once = std::sync::Once::new();
-    ONCE.call_once(|| unsafe {
-        if crate::platform::ffi::winapi::MagInitialize() != 0 {
-            MAG_INITIALIZED.store(true, std::sync::atomic::Ordering::SeqCst);
-        }
-    });
-}
-
-#[cfg(target_os = "windows")]
-fn ensure_original_gamma_captured() {
-    if ORIGINAL_GAMMA_RAMP.get().is_none() {
-        unsafe {
-            let hdc = crate::platform::ffi::winapi::GetDC(std::ptr::null_mut());
-            if !hdc.is_null() {
-                let mut orig = crate::platform::ffi::GammaRamp::default();
-                if crate::platform::ffi::winapi::GetDeviceGammaRamp(hdc, &mut orig) != 0 {
-                    let _ = ORIGINAL_GAMMA_RAMP.set(orig);
-                }
-                let _ = crate::platform::ffi::winapi::ReleaseDC(std::ptr::null_mut(), hdc);
-            }
-        }
-    }
-}
 use crate::app::state::ColorSettings;
-use std::sync::Mutex;
+use std::sync::{
+    atomic::{AtomicBool, AtomicU32, Ordering},
+    Condvar, Mutex, OnceLock,
+};
 
+static ORIGINAL_GAMMA_RAMP: OnceLock<crate::platform::ffi::GammaRamp> = OnceLock::new();
+static MAG_INITIALIZED: AtomicBool = AtomicBool::new(false);
+static LAST_APPLIED_GAMMA: AtomicU32 = AtomicU32::new(u32::MAX);
 static ACTIVE_COLOR: Mutex<Option<(ColorSettings, bool)>> = Mutex::new(None);
 
-pub fn start_color_guard() {}
+#[derive(Clone, Debug)]
+struct PipelineCommand {
+    color: Option<ColorSettings>,
+    show_on_recordings: bool,
+    reset: bool,
+}
+
+struct PipelineState {
+    pending: Mutex<Option<PipelineCommand>>,
+    cv: Condvar,
+    worker_started: AtomicBool,
+}
+
+static PIPELINE: PipelineState = PipelineState {
+    pending: Mutex::new(None),
+    cv: Condvar::new(),
+    worker_started: AtomicBool::new(false),
+};
+
+fn ensure_pipeline_started() {
+    if !PIPELINE.worker_started.swap(true, Ordering::SeqCst) {
+        std::thread::Builder::new()
+            .name("synchro-color-worker".to_string())
+            .stack_size(256 * 1024)
+            .spawn(|| {
+                #[cfg(target_os = "windows")]
+                unsafe {
+                    if crate::platform::ffi::winapi::MagInitialize() != 0 {
+                        MAG_INITIALIZED.store(true, Ordering::SeqCst);
+                    }
+                }
+
+                loop {
+                    let cmd = {
+                        let mut lock = match PIPELINE.pending.lock() {
+                            Ok(guard) => guard,
+                            Err(poisoned) => poisoned.into_inner(),
+                        };
+                        while lock.is_none() {
+                            lock = match PIPELINE.cv.wait(lock) {
+                                Ok(guard) => guard,
+                                Err(poisoned) => poisoned.into_inner(),
+                            };
+                        }
+                        let Some(cmd) = lock.take() else {
+                            continue;
+                        };
+                        cmd
+                    };
+
+                    #[cfg(target_os = "windows")]
+                    {
+                        if cmd.reset {
+                            let _ = raw_reset_color_transform();
+                        } else if let Some(ref color) = cmd.color {
+                            let _ = raw_apply_color_transform(color, cmd.show_on_recordings);
+                        }
+                    }
+                }
+            })
+            .ok();
+    }
+}
+
+pub fn start_color_guard() {
+    ensure_pipeline_started();
+}
 
 pub fn stop_color_guard() {
     if let Ok(mut lock) = ACTIVE_COLOR.lock() {
@@ -63,18 +105,13 @@ pub fn reapply_active_color() {
     };
 
     if let Some((color, show_on_recordings)) = payload {
-        std::thread::Builder::new()
-            .name("synchro-color-worker".to_string())
-            .stack_size(128 * 1024)
-            .spawn(move || {
-                let _ = apply_color_transform(&color, show_on_recordings);
-            })
-            .ok();
+        let _ = apply_color_transform(&color, show_on_recordings);
     }
 }
 
-#[cfg(target_os = "windows")]
 pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) -> Result<(), String> {
+    ensure_pipeline_started();
+
     if !color.enabled {
         set_active_color(None);
         return reset_color_transform();
@@ -82,6 +119,45 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
 
     set_active_color(Some((color.clone(), show_on_recordings)));
 
+    {
+        let mut lock = PIPELINE
+            .pending
+            .lock()
+            .map_err(|_| "Color pipeline mutex poisoned".to_string())?;
+        *lock = Some(PipelineCommand {
+            color: Some(color.clone()),
+            show_on_recordings,
+            reset: false,
+        });
+        PIPELINE.cv.notify_one();
+    }
+
+    Ok(())
+}
+
+pub fn reset_color_transform() -> Result<(), String> {
+    ensure_pipeline_started();
+    set_active_color(None);
+    LAST_APPLIED_GAMMA.store(u32::MAX, Ordering::Relaxed);
+
+    {
+        let mut lock = PIPELINE
+            .pending
+            .lock()
+            .map_err(|_| "Color pipeline mutex poisoned".to_string())?;
+        *lock = Some(PipelineCommand {
+            color: None,
+            show_on_recordings: false,
+            reset: true,
+        });
+        PIPELINE.cv.notify_one();
+    }
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn raw_apply_color_transform(color: &ColorSettings, show_on_recordings: bool) -> Result<(), String> {
     let _ = apply_gamma_ramp(color.gamma);
 
     let has_matrix_effect = !color.active_filter.is_empty()
@@ -91,41 +167,27 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
         || color.black_holo > 0.0
         || (color.gamma - 100.0).abs() >= 0.1;
 
-    if !has_matrix_effect {
-        let _guard = MAG_MUTEX.lock().ok();
-        unsafe {
-            ensure_mag_initialized();
-            let effect = crate::platform::ffi::MagColorEffect {
-                transform: identity_matrix(),
-            };
-            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
-        }
-    } else {
-        let _ = apply_magnification_color(color, show_on_recordings);
+    unsafe {
+        let matrix = if has_matrix_effect {
+            build_color_matrix(color, show_on_recordings)
+        } else {
+            identity_matrix()
+        };
+        let effect = crate::platform::ffi::MagColorEffect { transform: matrix };
+        let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
     }
 
     Ok(())
 }
 
-#[cfg(not(target_os = "windows"))]
-pub(crate) fn apply_color_transform(_color: &ColorSettings, _show_on_recordings: bool) -> Result<(), String> {
-    Ok(())
-}
-
 #[cfg(target_os = "windows")]
-pub fn reset_color_transform() -> Result<(), String> {
-    LAST_APPLIED_GAMMA.store(u32::MAX, std::sync::atomic::Ordering::Relaxed);
-    set_active_color(None);
-    let effect = crate::platform::ffi::MagColorEffect {
-        transform: identity_matrix(),
-    };
-
-    {
-        let _guard = MAG_MUTEX.lock().ok();
-        unsafe {
-            ensure_mag_initialized();
-            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
-        }
+fn raw_reset_color_transform() -> Result<(), String> {
+    LAST_APPLIED_GAMMA.store(u32::MAX, Ordering::Relaxed);
+    unsafe {
+        let effect = crate::platform::ffi::MagColorEffect {
+            transform: identity_matrix(),
+        };
+        let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
     }
     if !super::black_holo::is_black_holo_active() {
         if let Some(orig) = ORIGINAL_GAMMA_RAMP.get() {
@@ -143,23 +205,20 @@ pub fn reset_color_transform() -> Result<(), String> {
     Ok(())
 }
 
-#[cfg(not(target_os = "windows"))]
-pub fn reset_color_transform() -> Result<(), String> {
-    Ok(())
-}
-
 #[cfg(target_os = "windows")]
-fn apply_magnification_color(color: &ColorSettings, include_matrix_gamma: bool) -> Result<(), String> {
-    let matrix = build_color_matrix(color, include_matrix_gamma);
-    let effect = crate::platform::ffi::MagColorEffect { transform: matrix };
-
-    let _guard = MAG_MUTEX.lock().ok();
-    ensure_mag_initialized();
-    unsafe {
-        let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+fn ensure_original_gamma_captured() {
+    if ORIGINAL_GAMMA_RAMP.get().is_none() {
+        unsafe {
+            let hdc = crate::platform::ffi::winapi::GetDC(std::ptr::null_mut());
+            if !hdc.is_null() {
+                let mut orig = crate::platform::ffi::GammaRamp::default();
+                if crate::platform::ffi::winapi::GetDeviceGammaRamp(hdc, &mut orig) != 0 {
+                    let _ = ORIGINAL_GAMMA_RAMP.set(orig);
+                }
+                let _ = crate::platform::ffi::winapi::ReleaseDC(std::ptr::null_mut(), hdc);
+            }
+        }
     }
-
-    Ok(())
 }
 
 #[cfg(target_os = "windows")]

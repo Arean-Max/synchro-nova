@@ -107,12 +107,18 @@ pub struct AppSettings {
     pub eac_auto_protect: bool,
     #[serde(default)]
     pub mac_traffic_lights: bool,
+    #[serde(default = "default_true")]
+    pub show_sidebar_subnav: bool,
     #[serde(default = "default_theme")]
     pub theme: String,
     #[serde(default = "default_font_family")]
     pub font_family: String,
     #[serde(default)]
     pub template_overrides: std::collections::HashMap<String, ColorTemplateOverride>,
+}
+
+fn default_true() -> bool {
+    true
 }
 
 fn default_theme() -> String {
@@ -161,6 +167,7 @@ impl Default for AppSettings {
             disable_animations: false,
             eac_auto_protect: true,
             mac_traffic_lights: false,
+            show_sidebar_subnav: true,
             theme: default_theme(),
             font_family: default_font_family(),
             template_overrides: std::collections::HashMap::new(),
@@ -203,7 +210,7 @@ impl AppSettings {
             self.font_family = "Inter".to_string();
         }
 
-        for (_, template) in self.template_overrides.iter_mut() {
+        for template in self.template_overrides.values_mut() {
             template.saturation = template.saturation.clamp(0.0, 200.0);
             template.hue = template.hue.clamp(-180.0, 180.0);
             template.contrast = template.contrast.clamp(0.0, 200.0);

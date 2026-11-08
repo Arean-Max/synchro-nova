@@ -34,10 +34,10 @@ pub fn collect_tweak_statuses() -> Vec<TweakStatus> {
 
     let ids = known_tweak_ids();
     let num_threads = std::thread::available_parallelism()
-        .map(|n| n.get().min(8).max(1))
+        .map(|n| n.get().clamp(1, 8))
         .unwrap_or(4);
 
-    let chunk_size = (ids.len() + num_threads - 1) / num_threads;
+    let chunk_size = ids.len().div_ceil(num_threads);
     let results = std::thread::scope(|s| {
         let mut handles = Vec::new();
         for chunk in ids.chunks(chunk_size) {

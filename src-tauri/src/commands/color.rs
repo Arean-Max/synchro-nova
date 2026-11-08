@@ -54,8 +54,18 @@ pub fn apply_color_settings(
     state: State<'_, RuntimeState>,
 ) -> Result<PersistedState, String> {
     let color = color.sanitized();
-    let current = state.snapshot()?;
-    apply_color_transform(&color, current.settings.show_on_recordings)?;
+    let (is_admin, show_on_recordings, save_color_correction) = {
+        let data = state
+            .data
+            .lock()
+            .map_err(|_| "Settings lock poisoned".to_string())?;
+        (
+            data.is_admin,
+            data.settings.show_on_recordings,
+            data.settings.save_color_correction,
+        )
+    };
+    apply_color_transform(&color, show_on_recordings)?;
 
     let snapshot = {
         let mut data = state
@@ -63,10 +73,10 @@ pub fn apply_color_settings(
             .lock()
             .map_err(|_| "Settings lock poisoned".to_string())?;
         data.color = color;
-        data.is_admin = current.is_admin;
+        data.is_admin = is_admin;
         let snap = data.clone();
 
-        if snap.settings.save_color_correction {
+        if save_color_correction {
             schedule_debounced_save(state.settings_path.clone(), snap.clone());
         }
         snap

@@ -50,6 +50,7 @@ export const defaultState = {
     disableAnimations: false,
     eacAutoProtect: true,
     macTrafficLights: false,
+    showSidebarSubnav: true,
     templateOverrides: {}
   },
   keybinds: [],

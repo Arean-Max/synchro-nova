@@ -52,6 +52,7 @@ const SETTING_TOGGLE_KEYS = [
   { key: "autoBackupOnStart", labelKey: "autoBackupOnStart" },
   { key: "showOnRecordings", labelKey: "showOnRecordings" },
   { key: "autoUpdate", labelKey: "autoUpdate" },
+  { key: "showSidebarSubnav", labelKey: "showSidebarSubnav" },
   { key: "disableSplash", labelKey: "disableSplash" },
   { key: "disableAnimations", labelKey: "disableAnimations" }
 ];

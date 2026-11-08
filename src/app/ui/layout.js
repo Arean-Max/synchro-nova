@@ -127,7 +127,8 @@ export function renderNavList(t, viewState) {
       const topBtn = `<button class="nav-item ${active}" type="button" data-page="${key}" title="${escapeHtml(label)}">${icon(page.icon)}<span>${escapeHtml(label)}</span></button>`;
 
       const isSubNavCollapsed = Boolean(viewState?.collapsedSubNav?.[key]);
-      if (isCollapsed || key !== activePage || isSubNavCollapsed) {
+      const showSubnav = appState?.settings?.showSidebarSubnav !== false;
+      if (isCollapsed || key !== activePage || isSubNavCollapsed || !showSubnav) {
         return topBtn;
       }
 

@@ -1588,9 +1588,6 @@ function handleInput(event) {
   if (colorField && sliderDefs[colorField]) {
     appState.color[colorField] = Number(input.value);
     updateSliderDom(colorField, appState);
-    if (!appState.color.activeFilter) {
-      saveNormalColorState();
-    }
     scheduleApplyColor();
     return;
   }
@@ -1923,6 +1920,9 @@ async function handleClick(event) {
     }
     if (key === "macTrafficLights") {
       render();
+    }
+    if (key === "showSidebarSubnav") {
+      updateNavState();
     }
     if (key === "eacAutoProtect" && nextVal) {
       try {
@@ -2530,6 +2530,33 @@ async function handleClick(event) {
 
 
 async function handleKeydown(event) {
+  const k = event.key;
+  const isCtrl = event.ctrlKey || event.metaKey;
+  const isAlt = event.altKey;
+
+  const isBrowserShortcut =
+    k === "F1" ||
+    k === "F3" ||
+    k === "F5" ||
+    k === "F6" ||
+    k === "F7" ||
+    k === "F11" ||
+    k === "F12" ||
+    (isCtrl && ["f", "g", "p", "u", "s", "h", "j", "o", "n", "t", "w", "r", "d"].includes(k?.toLowerCase())) ||
+    (isAlt && (k === "ArrowLeft" || k === "ArrowRight"));
+
+  if (isBrowserShortcut) {
+    const targetTag = (event.target && event.target.tagName) ? event.target.tagName.toLowerCase() : "";
+    const isEditingText = targetTag === "input" || targetTag === "textarea";
+    const isTextEditCommand = isCtrl && ["c", "v", "x", "a", "z", "y"].includes(k?.toLowerCase());
+
+    if (!isEditingText || !isTextEditCommand) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!viewState.recordingBindId) return;
+    }
+  }
+
   if (viewState.recordingBindId) {
     if (event.key === "Escape" && !event.ctrlKey && !event.shiftKey && !event.altKey) {
       event.preventDefault();
@@ -2805,6 +2832,38 @@ document.addEventListener("contextmenu", (e) => e.preventDefault(), { capture: t
 document.addEventListener("pointerdown", handlePointerDown);
 document.addEventListener("error", handleImageError, true);
 document.addEventListener("keydown", withErrorBoundary(handleKeydown, "Keydown"));
+window.addEventListener(
+  "keydown",
+  (e) => {
+    const k = e.key;
+    const isCtrl = e.ctrlKey || e.metaKey;
+    const isAlt = e.altKey;
+    const isBrowserShortcut =
+      k === "F1" ||
+      k === "F3" ||
+      k === "F5" ||
+      k === "F6" ||
+      k === "F7" ||
+      k === "F11" ||
+      k === "F12" ||
+      (isCtrl && ["f", "g", "p", "u", "s", "h", "j", "o", "n", "t", "w", "r", "d"].includes(k?.toLowerCase())) ||
+      (isAlt && (k === "ArrowLeft" || k === "ArrowRight"));
+
+    if (isBrowserShortcut) {
+      const targetTag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+      const isEditingText = targetTag === "input" || targetTag === "textarea";
+      const isTextEditCommand = isCtrl && ["c", "v", "x", "a", "z", "y"].includes(k?.toLowerCase());
+
+      if (!isEditingText || !isTextEditCommand) {
+        if (!viewState.recordingBindId) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    }
+  },
+  { capture: true }
+);
 window.addEventListener("resize", syncNavIndicator);
 window.addEventListener("visibilitychange", () => {
   if (document.hidden) {
