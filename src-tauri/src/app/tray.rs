@@ -27,8 +27,20 @@ pub fn install_tray(app: &AppHandle) -> tauri::Result<()> {
             "show" => show_main_window(app),
             "exit" => {
                 let state = app.state::<RuntimeState>();
+                if state.exiting.swap(true, std::sync::atomic::Ordering::SeqCst) {
+                    return;
+                }
                 state.signal_shutdown();
-                std::process::exit(0);
+                crate::platform::ffi::release_single_instance();
+                if let Some(w) = app.get_webview_window("main") {
+                    let _ = w.hide();
+                }
+                let app_handle = app.clone();
+                std::thread::spawn(move || {
+                    app_handle.exit(0);
+                    std::thread::sleep(std::time::Duration::from_millis(150));
+                    std::process::exit(0);
+                });
             }
             _ => {}
         })

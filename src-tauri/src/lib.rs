@@ -1,3 +1,23 @@
+/*
+   ,--,                                            
+,---.'|                                            
+|   | :                                            
+:   : |                        ,--,                
+|   ' :                      ,--.'|                
+;   ; '                 .---.|  |,      .--.--.    
+'   | |__   ,---.     /.  ./|`--'_     /  /    '   
+|   | :.'| /       .-' . ' |,' ,'|   |  :  /`./   
+'   :    ;/    /  |/___/ \: |'  | |   |  :  ;_     
+|   |  ./.    ' / |.   \  ' .|  | :    \  \    `.  
+;   : ;  '   ;   /| \   \   ''  : |__   `----.   \ 
+|   ,/   '   |  / |  \   \   |  | '.'| /  /`--'  / 
+'---'    |   :    |   \   \ |;  :    ;'--'.     /  
+          \   \  /     '---" |  ,   /   `--'---'   
+           `----'             ---`-'               
+                                                   
+
+author - vkmef.t,me
+*/
 use std::sync::{atomic::Ordering, Arc};
 use tauri::{Manager, WindowEvent};
 
@@ -256,8 +276,18 @@ pub fn run() {
                             api.prevent_close();
                             hide_main_window(window.app_handle());
                         } else {
+                            if state.exiting.swap(true, Ordering::SeqCst) {
+                                return;
+                            }
                             state.signal_shutdown();
-                            std::process::exit(0);
+                            platform::ffi::release_single_instance();
+                            let _ = window.hide();
+                            let app_handle = app.clone();
+                            std::thread::spawn(move || {
+                                app_handle.exit(0);
+                                std::thread::sleep(std::time::Duration::from_millis(150));
+                                std::process::exit(0);
+                            });
                         }
                     }
                 }
