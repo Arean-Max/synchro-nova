@@ -367,6 +367,7 @@ pub fn run() {
             commands::download_update,
             commands::get_update_progress,
             commands::install_update,
+            commands::set_taskbar_progress,
         ])
         .build(tauri::generate_context!())
         .expect("failed to build Synchro")
@@ -582,7 +583,7 @@ a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90  synchro.exe\n"
         let temp_dir = domain::updater::client::get_update_dir();
         let target_file = temp_dir.join("synchro_latest.exe");
         let _ = std::fs::remove_file(&target_file);
-        let res = domain::updater::installer::apply_install();
+        let res = domain::updater::installer::apply_install(false);
         assert!(res.is_err(), "Expected apply_install to fail when update file does not exist");
     }
 

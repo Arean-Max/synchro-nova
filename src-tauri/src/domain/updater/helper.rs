@@ -11,6 +11,7 @@ pub struct HelperArgs {
     pub wait_pid: u32,
     pub backup: PathBuf,
     pub expected_sha256: Option<String>,
+    pub no_relaunch: bool,
 }
 
 impl HelperArgs {
@@ -20,6 +21,7 @@ impl HelperArgs {
         let mut wait_pid = None;
         let mut backup = None;
         let mut expected_sha256 = None;
+        let mut no_relaunch = false;
 
         let mut i = 0;
         while i < args.len() {
@@ -54,6 +56,9 @@ impl HelperArgs {
                         i += 1;
                     }
                 }
+                "--no-relaunch" => {
+                    no_relaunch = true;
+                }
                 _ => {}
             }
             i += 1;
@@ -74,6 +79,7 @@ impl HelperArgs {
             wait_pid: pid,
             backup: backup_path,
             expected_sha256,
+            no_relaunch,
         })
     }
 }
@@ -281,7 +287,14 @@ pub fn run_updater_helper(args: &[String]) {
             std::process::exit(1);
         }
 
-        log("HELPER", "Binary replacement succeeded; launching updated application");
+        log("HELPER", "Binary replacement succeeded");
+
+        if parsed.no_relaunch {
+            log("HELPER", "Exiting cleanly without relaunch as requested");
+            std::process::exit(0);
+        }
+
+        log("HELPER", "Launching updated application");
 
         let mut cmd = Command::new(&parsed.target);
         cmd.arg("--post-update-check");

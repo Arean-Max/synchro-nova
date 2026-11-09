@@ -923,3 +923,13 @@ test("Settings: renders compact custom font dropdown with guaranteed Windows fon
   assert.ok(openHtml.includes("Cascadia Code"), "Must include Cascadia Code");
   assert.ok(AVAILABLE_FONTS.length >= 10, "Must provide ample choice of fonts");
 });
+
+test("Autoupdater: sidebar update widget is removed and splash updater component is available", async () => {
+  const { renderSidebarUpdateWidget } = await import("../src/app/ui/layout.js");
+  const splash = await import("../src/app/ui/splash.js");
+
+  assert.strictEqual(renderSidebarUpdateWidget(), "", "renderSidebarUpdateWidget must return empty string");
+  assert.strictEqual(typeof splash.updateSplashUpdater, "function", "updateSplashUpdater must be exported");
+  assert.strictEqual(typeof splash.setSplashDownloading, "function", "setSplashDownloading must be exported");
+  assert.strictEqual(typeof splash.finishIntroSplash, "function", "finishIntroSplash must be exported");
+});

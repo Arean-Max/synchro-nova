@@ -7,6 +7,21 @@ use crate::settings::set_autostart;
 
 static PENDING_NAVIGATION: Mutex<Option<String>> = Mutex::new(None);
 
+#[tauri::command]
+pub fn set_taskbar_progress(window: Window, progress: u32, is_error: bool) {
+    let status = if is_error {
+        Some(tauri::window::ProgressBarStatus::Error)
+    } else if progress == 0 {
+        Some(tauri::window::ProgressBarStatus::None)
+    } else {
+        Some(tauri::window::ProgressBarStatus::Normal)
+    };
+    let _ = window.set_progress_bar(tauri::window::ProgressBarState {
+        status,
+        progress: Some(progress as u64),
+    });
+}
+
 pub fn set_pending_navigation(page: String) {
     if let Ok(mut lock) = PENDING_NAVIGATION.lock() {
         *lock = Some(page);

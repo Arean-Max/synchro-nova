@@ -60,7 +60,7 @@ import { icon } from "./ui/icons.js";
 import { button } from "./ui/components.js";
 import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget, renderNavList, resolveActiveSubSection } from "./ui/layout.js";
 import { escapeHtml } from "./core/html.js";
-import { runIntroSplash } from "./ui/splash.js";
+import { runIntroSplash, updateSplashUpdater, setSplashDownloading, finishIntroSplash, isSplashActive } from "./ui/splash.js";
 import { applyTheme, resolveSeasonalTheme, themeFx } from "./ui/themes.js";
 import { registerLifecycleHooks, withErrorBoundary } from "./core/lifecycle.js";
 import { copyTextToClipboard } from "./core/clipboard.js";
@@ -808,12 +808,134 @@ async function applyUpdateInstall() {
     viewState.updateStatus = "installing";
     updateSidebarUpdateWidgetDom();
     startGlobalUpdatePoller();
-    await invokeCommand("install_update");
+    await invokeCommand("install_update", { noRelaunch: true });
   } catch (err) {
     console.error("Apply update failed:", err);
     viewState.updateStatus = "error";
     stopGlobalUpdatePoller();
     updateSidebarUpdateWidgetDom();
+  }
+}
+
+async function handleStartupUpdateCheck() {
+  updateSplashUpdater({
+    text: t("checkingUpdates"),
+    isIndeterminate: true,
+    showManual: false
+  });
+
+  try {
+    const res = await invokeCommand("check_for_updates");
+    if (!res) {
+      throw new Error("No response from update service");
+    }
+
+    if (res.currentVersion) {
+      viewState.appVersion = res.currentVersion;
+    }
+
+    if (res.updateAvailable) {
+      viewState.updateStatus = "available";
+      viewState.latestVersion = res.latestVersion || "";
+      viewState.downloadUrl = res.downloadUrl || "";
+      viewState.assetSize = res.assetSize || 0;
+      viewState.shaManifestUrl = res.shaManifestUrl || "";
+
+      setSplashDownloading(true);
+
+      updateSplashUpdater({
+        text: t("downloading"),
+        percent: 0,
+        showManual: true,
+        isIndeterminate: false
+      });
+      await invokeCommand("set_taskbar_progress", { progress: 0, isError: false }).catch(() => {});
+
+      await invokeCommand("download_update", {
+        url: viewState.downloadUrl || null,
+        size: viewState.assetSize || null,
+        version: viewState.latestVersion || null,
+        manifestUrl: viewState.shaManifestUrl || null
+      });
+
+      let installTriggered = false;
+
+      const pollStartupProgress = async () => {
+        try {
+          const progress = await invokeCommand("get_update_progress");
+          if (!progress) return;
+          const pct = Math.max(0, Math.min(100, Number(progress.percent) || 0));
+          const status = progress.status;
+
+          if (status === "downloading" || status === "verifying") {
+            updateSplashUpdater({
+              text: t("downloading"),
+              percent: pct,
+              showManual: true,
+              isIndeterminate: false
+            });
+            await invokeCommand("set_taskbar_progress", { progress: pct, isError: false }).catch(() => {});
+            setTimeout(pollStartupProgress, 120);
+          } else if (status === "ready") {
+            if (installTriggered) return;
+            installTriggered = true;
+
+            updateSplashUpdater({
+              text: t("installing"),
+              percent: 100,
+              showManual: false,
+              isIndeterminate: false
+            });
+            await invokeCommand("set_taskbar_progress", { progress: 100, isError: false }).catch(() => {});
+
+            setTimeout(async () => {
+              try {
+                await invokeCommand("install_update", { noRelaunch: true });
+              } catch (err) {
+                console.error("Install update failed:", err);
+                updateSplashUpdater({
+                  text: t("updateError"),
+                  showManual: true,
+                  isIndeterminate: false
+                });
+                await invokeCommand("set_taskbar_progress", { progress: 0, isError: true }).catch(() => {});
+                setSplashDownloading(false);
+              }
+            }, 600);
+          } else if (status === "error") {
+            updateSplashUpdater({
+              text: t("updateError"),
+              showManual: true,
+              isIndeterminate: false
+            });
+            await invokeCommand("set_taskbar_progress", { progress: 0, isError: true }).catch(() => {});
+            setSplashDownloading(false);
+            setTimeout(() => {
+              finishIntroSplash();
+            }, 2000);
+          }
+        } catch (_) {
+          setTimeout(pollStartupProgress, 250);
+        }
+      };
+
+      setTimeout(pollStartupProgress, 100);
+    } else {
+      updateSplashUpdater({
+        text: t("statusUpToDate") || t("latestVersionInstalled"),
+        percent: 100,
+        showManual: false,
+        isIndeterminate: false
+      });
+      await invokeCommand("set_taskbar_progress", { progress: 0, isError: false }).catch(() => {});
+      setTimeout(() => {
+        finishIntroSplash();
+      }, 500);
+    }
+  } catch (err) {
+    console.warn("Startup update check failed:", err);
+    await invokeCommand("set_taskbar_progress", { progress: 0, isError: false }).catch(() => {});
+    finishIntroSplash(400);
   }
 }
 
@@ -2795,8 +2917,16 @@ async function boot() {
   document.body.classList.toggle("no-animations", shouldDisableAnim);
 
   invokeCommand("consume_intro_splash").catch(() => false);
-  if (!shouldDisableAnim && !appState.settings?.disableSplash) {
-    runIntroSplash();
+  const showSplash = !shouldDisableAnim && !appState.settings?.disableSplash;
+  if (showSplash) {
+    runIntroSplash({
+      onManualDownload: () => {
+        invokeCommand("open_external_url", { url: "https://github.com/Arean-Max/synchro-nova/releases/latest" });
+      }
+    });
+    handleStartupUpdateCheck();
+  } else {
+    checkForUpdates(false);
   }
 
   if (Array.isArray(appState.keybinds) && appState.keybinds.length) {
@@ -2817,7 +2947,6 @@ async function boot() {
 
   triggerScanDrivers();
 
-  checkForUpdates(false);
   window.setInterval(() => checkForUpdates(false), 4 * 60 * 60 * 1000);
   loadTweakStatuses();
   scheduleTrimMemory(600);

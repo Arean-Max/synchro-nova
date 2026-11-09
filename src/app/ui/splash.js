@@ -1,7 +1,124 @@
 import { translate } from "../core/i18n.js";
+import { escapeHtml } from "../core/html.js";
+
+let splashFinished = false;
+let isDownloadingUpdate = false;
+let autoTimeout = null;
+let exitTimeout = null;
+let finishCallback = null;
+let keyListener = null;
+let clickListener = null;
+
+export function setSplashDownloading(downloading) {
+  isDownloadingUpdate = Boolean(downloading);
+  if (isDownloadingUpdate && autoTimeout) {
+    clearTimeout(autoTimeout);
+    autoTimeout = null;
+  }
+}
+
+export function isSplashDownloading() {
+  return isDownloadingUpdate;
+}
+
+export function isSplashActive() {
+  return Boolean(document.getElementById("intro-splash-screen")) && !splashFinished;
+}
+
+export function updateSplashUpdater({ text, percent = null, showManual = false, isIndeterminate = false }) {
+  const splash = document.getElementById("intro-splash-screen");
+  if (!splash) return;
+
+  const statusEl = document.getElementById("splash-updater-status");
+  const pctEl = document.getElementById("splash-updater-pct");
+  const manualBtn = document.getElementById("splash-updater-manual");
+  const fillEl = document.getElementById("splash-updater-fill");
+
+  if (statusEl && text !== undefined) {
+    statusEl.textContent = text;
+  }
+
+  if (pctEl) {
+    if (percent !== null && percent !== undefined && !isIndeterminate) {
+      pctEl.textContent = `${percent}%`;
+      pctEl.style.display = "";
+    } else {
+      pctEl.textContent = "";
+      pctEl.style.display = "none";
+    }
+  }
+
+  if (manualBtn) {
+    manualBtn.style.display = showManual ? "" : "none";
+  }
+
+  if (fillEl) {
+    if (isIndeterminate) {
+      fillEl.classList.add("indeterminate");
+      fillEl.style.width = "100%";
+    } else {
+      fillEl.classList.remove("indeterminate");
+      const p = Math.max(0, Math.min(100, Number(percent) || 0));
+      fillEl.style.width = `${p}%`;
+    }
+  }
+}
+
+function doFinishSplash() {
+  if (splashFinished) return;
+  splashFinished = true;
+
+  if (autoTimeout) {
+    clearTimeout(autoTimeout);
+    autoTimeout = null;
+  }
+  if (exitTimeout) {
+    clearTimeout(exitTimeout);
+    exitTimeout = null;
+  }
+
+  const splash = document.getElementById("intro-splash-screen");
+  if (!splash) {
+    if (typeof finishCallback === "function") {
+      finishCallback();
+      finishCallback = null;
+    }
+    return;
+  }
+
+  if (keyListener) {
+    window.removeEventListener("keydown", keyListener, true);
+    keyListener = null;
+  }
+  if (clickListener) {
+    splash.removeEventListener("click", clickListener, true);
+    clickListener = null;
+  }
+
+  splash.classList.add("splash-fade-out");
+  exitTimeout = setTimeout(() => {
+    splash.remove();
+    if (typeof finishCallback === "function") {
+      finishCallback();
+      finishCallback = null;
+    }
+  }, 280);
+}
+
+export function finishIntroSplash(delay = 0) {
+  if (splashFinished) return;
+  if (delay > 0) {
+    setTimeout(() => doFinishSplash(), delay);
+  } else {
+    doFinishSplash();
+  }
+}
 
 export function runIntroSplash(options = {}) {
-  const { onFinish, skipAnimation = false } = options;
+  const { onFinish, onManualDownload, skipAnimation = false } = options;
+  finishCallback = onFinish;
+  splashFinished = false;
+  isDownloadingUpdate = false;
 
   let splash = document.getElementById("intro-splash-screen");
 
@@ -14,6 +131,8 @@ export function runIntroSplash(options = {}) {
   const currentLang = document.documentElement.lang || localStorage.getItem("synchro_language") || "en";
   const isRu = currentLang === "ru";
   const skipText = translate(currentLang, "skipSplash") || (isRu ? "Нажмите Esc или кликните для пропуска" : "Press Esc or click to skip");
+  const checkingText = translate(currentLang, "checkingUpdates") || (isRu ? "Проверка обновлений..." : "Checking for updates...");
+  const manualDownloadText = translate(currentLang, "manualDownload") || (isRu ? "Скачать вручную" : "Manual Download");
 
   if (!splash) {
     const lettersSynchro = ["S", "y", "n", "c", "h", "r", "o"];
@@ -33,16 +152,32 @@ export function runIntroSplash(options = {}) {
     splash.innerHTML = [
       '<div class="intro-splash-backdrop"></div>',
       '<div class="intro-splash-stage">',
-      '  <div class="intro-splash-logo-wrap">',
-      '    <img class="intro-splash-logo-img" src="./assets/synchro-nova-icon.png" alt="Synchro Nova" decoding="sync" loading="eager" />',
+      '  <div class="intro-splash-brand-row">',
+      '    <div class="intro-splash-logo-wrap">',
+      '      <img class="intro-splash-logo-img" src="./assets/synchro-nova-icon.png" alt="Synchro Nova" decoding="sync" loading="eager" />',
+      '    </div>',
+      '    <div class="intro-splash-title">',
+      `      <span class="splash-word-synchro">${synchroHtml}</span>`,
+      '      <span class="splash-space">&nbsp;</span>',
+      `      <span class="splash-word-nova">${novaHtml}</span>`,
+      '    </div>',
       '  </div>',
-      '  <div class="intro-splash-title">',
-      `    <span class="splash-word-synchro">${synchroHtml}</span>`,
-      '    <span class="splash-space">&nbsp;</span>',
-      `    <span class="splash-word-nova">${novaHtml}</span>`,
+      '  <div class="intro-splash-updater" id="splash-updater">',
+      '    <div class="splash-updater-row">',
+      '      <div class="splash-updater-left">',
+      `        <span class="splash-updater-status" id="splash-updater-status">${escapeHtml(checkingText)}</span>`,
+      '      </div>',
+      '      <div class="splash-updater-right">',
+      '        <span class="splash-updater-pct" id="splash-updater-pct" style="display:none"></span>',
+      `        <button class="splash-updater-manual" id="splash-updater-manual" type="button" style="display:none">${escapeHtml(manualDownloadText)}</button>`,
+      '      </div>',
+      '    </div>',
+      '    <div class="splash-updater-track" id="splash-updater-track">',
+      '      <div class="splash-updater-fill indeterminate" id="splash-updater-fill" style="width: 100%"></div>',
+      '    </div>',
       '  </div>',
       '</div>',
-      `<div class="intro-splash-skip-hint">${skipText}</div>`
+      `<div class="intro-splash-skip-hint">${escapeHtml(skipText)}</div>`
     ].join("");
     document.body.appendChild(splash);
   } else {
@@ -51,47 +186,44 @@ export function runIntroSplash(options = {}) {
     splash.classList.add("splash-animate");
   }
 
-  let finished = false;
-  let exitTimeout = null;
-  let autoTimeout = null;
-
-  function finishSplash() {
-    if (finished) return;
-    finished = true;
-
-    if (autoTimeout) clearTimeout(autoTimeout);
-    if (exitTimeout) clearTimeout(exitTimeout);
-
-    window.removeEventListener("keydown", onKeyDown, true);
-    splash.removeEventListener("click", onClick, true);
-
-    splash.classList.add("splash-fade-out");
-    exitTimeout = setTimeout(() => {
-      splash.remove();
-      if (typeof onFinish === "function") onFinish();
-    }, 280);
-  }
-
-  function onClick(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    finishSplash();
-  }
-
-  function onKeyDown(e) {
-    if (e.key === "Escape" || e.key === " " || e.key === "Enter") {
+  const manualBtn = splash.querySelector("#splash-updater-manual");
+  if (manualBtn) {
+    manualBtn.onclick = (e) => {
       e.preventDefault();
       e.stopPropagation();
-      finishSplash();
-    }
+      if (typeof onManualDownload === "function") {
+        onManualDownload();
+      }
+    };
   }
 
-  splash.addEventListener("click", onClick, true);
-  window.addEventListener("keydown", onKeyDown, true);
+  clickListener = function onClick(e) {
+    if (e.target && e.target.closest("#splash-updater-manual")) {
+      return;
+    }
+    if (isDownloadingUpdate) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    doFinishSplash();
+  };
+
+  keyListener = function onKeyDown(e) {
+    if (e.key === "Escape" || e.key === " " || e.key === "Enter") {
+      if (isDownloadingUpdate) return;
+      e.preventDefault();
+      e.stopPropagation();
+      doFinishSplash();
+    }
+  };
+
+  splash.addEventListener("click", clickListener, true);
+  window.addEventListener("keydown", keyListener, true);
 
   const img = splash.querySelector(".intro-splash-logo-img");
   const launchAnim = () => {
-    if (finished) return;
+    if (splashFinished) return;
     requestAnimationFrame(() => {
       splash.classList.add("splash-animate");
     });
@@ -105,7 +237,10 @@ export function runIntroSplash(options = {}) {
     img.onerror = launchAnim;
   }
 
+  // Safety fallback: if no update is checking/downloading after 4.5s, finish splash smoothly
   autoTimeout = setTimeout(() => {
-    finishSplash();
-  }, 2400);
+    if (!isDownloadingUpdate) {
+      doFinishSplash();
+    }
+  }, 4500);
 }

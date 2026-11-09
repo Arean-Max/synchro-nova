@@ -46,6 +46,6 @@ pub fn get_update_progress() -> Result<UpdateProgress, String> {
 }
 
 #[tauri::command]
-pub fn install_update() -> Result<(), String> {
-    apply_install()
+pub fn install_update(no_relaunch: Option<bool>) -> Result<(), String> {
+    apply_install(no_relaunch.unwrap_or(true))
 }

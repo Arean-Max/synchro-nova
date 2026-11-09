@@ -8,7 +8,7 @@ use std::os::windows::process::CommandExt;
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 #[cfg(target_os = "windows")]
-pub fn apply_install() -> Result<(), String> {
+pub fn apply_install(no_relaunch: bool) -> Result<(), String> {
     let update_file = super::client::get_update_file_path();
     if !update_file.is_file() {
         let msg = "No verified update package ready on disk for installation".to_string();
@@ -49,7 +49,7 @@ pub fn apply_install() -> Result<(), String> {
 
     super::client::verify_update_package(&update_file, &expected_hash)?;
 
-    let args_slice = vec![
+    let mut args_slice = vec![
         "--updater-helper".to_string(),
         "--target".to_string(),
         target_str,
@@ -62,21 +62,25 @@ pub fn apply_install() -> Result<(), String> {
         "--expected-sha256".to_string(),
         expected_hash.clone(),
     ];
+    if no_relaunch {
+        args_slice.push("--no-relaunch".to_string());
+    }
 
     log(
         "INSTALL",
         &format!(
-            "Preparing installation: target='{}', needs_elevation={}, verified_sha256={:?}",
+            "Preparing installation: target='{}', needs_elevation={}, verified_sha256={:?}, no_relaunch={}",
             current_exe.display(),
             needs_elevation,
-            expected_hash
+            expected_hash,
+            no_relaunch
         ),
     );
 
     super::set_status("installing", None);
 
     if needs_elevation {
-        let joined_args = format!(
+        let mut joined_args = format!(
             "--updater-helper --target \"{}\" --payload \"{}\" --wait-pid {} --backup \"{}\" --expected-sha256 {}",
             current_exe.display(),
             update_file.display(),
@@ -84,6 +88,9 @@ pub fn apply_install() -> Result<(), String> {
             backup_file.display(),
             expected_hash
         );
+        if no_relaunch {
+            joined_args.push_str(" --no-relaunch");
+        }
         log("INSTALL", "Launching elevated update helper via UAC");
         crate::platform::ffi::runas_executable_with_args(&helper_exe, Some(&joined_args))?;
     } else {
@@ -101,7 +108,7 @@ pub fn apply_install() -> Result<(), String> {
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn apply_install() -> Result<(), String> {
+pub fn apply_install(_no_relaunch: bool) -> Result<(), String> {
     log("INSTALL", "apply_install simulated on non-windows platform");
     Ok(())
 }

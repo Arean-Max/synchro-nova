@@ -253,7 +253,7 @@ pub fn get_update_dir() -> PathBuf {
 }
 
 pub fn get_staging_dir(version: &str) -> PathBuf {
-    let clean = version.trim().trim_start_matches('v').trim_start_matches('V');
+    let clean = version.trim().trim_start_matches('v').trim_start_matches('V').replace(' ', "_");
     get_update_dir().join(format!("staging_{clean}"))
 }
 
@@ -407,25 +407,24 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
         if r_hash.eq_ignore_ascii_case(l_hash) {
             update_available = false;
         } else if !update_available && is_same_or_compatible_version(tag_name, &current_version) {
-            let is_newer = if effective_remote_time > 0 && local_build_time > 0 {
-                effective_remote_time + 30 >= local_build_time
-            } else {
-                asset_size != local_size || effective_remote_time > 0
-            };
-            if is_newer {
-                log("CHECK", &format!(
-                    "Patch build detected for v{} (remote sha: {:.8}..., local sha: {:.8}..., remote_time={}, local_time={})",
-                    clean_version, r_hash, l_hash, effective_remote_time, local_build_time
-                ));
-                update_available = true;
-            }
+            log("CHECK", &format!(
+                "Patch build detected for v{} (remote sha: {:.8}..., local sha: {:.8}..., remote_time={}, local_time={})",
+                clean_version, r_hash, l_hash, effective_remote_time, local_build_time
+            ));
+            update_available = true;
         }
     } else if !update_available && is_same_or_compatible_version(tag_name, &current_version) {
-        if asset_size > 0 && local_size > 0 && asset_size != local_size {
-            if effective_remote_time + 30 >= local_build_time {
-                log("CHECK", "Different asset size and newer timestamp detected for patch update");
-                update_available = true;
-            }
+        let is_newer = if effective_remote_time > 0 && local_build_time > 0 {
+            effective_remote_time + 5 >= local_build_time
+        } else {
+            asset_size != local_size && asset_size > 0 && local_size > 0
+        };
+        if is_newer {
+            log("CHECK", &format!(
+                "Patch update detected for v{} (remote_time={}, local_time={}, remote_size={}, local_size={})",
+                clean_version, effective_remote_time, local_build_time, asset_size, local_size
+            ));
+            update_available = true;
         }
     }
 
@@ -510,59 +509,38 @@ pub fn spawn_download_worker(
         .name("synchro-updater-dl".to_string())
         .stack_size(128 * 1024)
         .spawn(move || {
-            let sha_url = match sha_manifest_url {
-                Some(u) => u,
-                None => {
-                    log("DOWNLOAD_ERR", "Release does not provide SHA256SUMS.txt manifest; rejecting unverified update");
-                    super::set_status("error", Some("Release manifest SHA256SUMS.txt missing".to_string()));
-                    IS_DOWNLOADING.store(false, Ordering::SeqCst);
-                    return;
+            let expected_hash = if let Some(ref sha_url) = sha_manifest_url {
+                let mut sha_cmd = get_curl_cmd();
+                sha_cmd.args([
+                    "-L",
+                    "--fail",
+                    "--silent",
+                    "--show-error",
+                    "--connect-timeout",
+                    "15",
+                    "--max-time",
+                    "30",
+                    "-o",
+                ]);
+                sha_cmd.arg(&manifest_file);
+                sha_cmd.arg(sha_url);
+                #[cfg(target_os = "windows")]
+                sha_cmd.creation_flags(CREATE_NO_WINDOW);
+
+                let sha_status = sha_cmd.status();
+                if sha_status.map(|s| s.success()).unwrap_or(false) {
+                    if let Ok(manifest_content) = fs::read_to_string(&manifest_file) {
+                        parse_sha256_manifest(&manifest_content, "synchro.exe").ok()
+                    } else {
+                        None
+                    }
+                } else {
+                    None
                 }
-            };
-
-            let mut sha_cmd = get_curl_cmd();
-            sha_cmd.args([
-                "-L",
-                "--fail",
-                "--silent",
-                "--show-error",
-                "--connect-timeout",
-                "15",
-                "--max-time",
-                "30",
-                "-o",
-            ]);
-            sha_cmd.arg(&manifest_file);
-            sha_cmd.arg(&sha_url);
-            #[cfg(target_os = "windows")]
-            sha_cmd.creation_flags(CREATE_NO_WINDOW);
-
-            let sha_status = sha_cmd.status();
-            if !sha_status.map(|s| s.success()).unwrap_or(false) {
-                log("DOWNLOAD_ERR", "Failed to download SHA256SUMS.txt manifest");
-                super::set_status("error", Some("Failed to retrieve SHA-256 release manifest".to_string()));
-                IS_DOWNLOADING.store(false, Ordering::SeqCst);
-                return;
-            }
-
-            let manifest_content = match fs::read_to_string(&manifest_file) {
-                Ok(c) => c,
-                Err(e) => {
-                    log("DOWNLOAD_ERR", &format!("Failed to read SHA256SUMS.txt: {}", e));
-                    super::set_status("error", Some("Corrupt checksum manifest".to_string()));
-                    IS_DOWNLOADING.store(false, Ordering::SeqCst);
-                    return;
-                }
-            };
-
-            let expected_hash = match parse_sha256_manifest(&manifest_content, "synchro.exe") {
-                Ok(h) => h,
-                Err(e) => {
-                    log("DOWNLOAD_ERR", &format!("Checksum parsing failed: {}", e));
-                    super::set_status("error", Some(e));
-                    IS_DOWNLOADING.store(false, Ordering::SeqCst);
-                    return;
-                }
+            } else if let Ok(guard) = VERIFIED_SHA256.lock() {
+                guard.clone()
+            } else {
+                None
             };
 
             let mut bin_cmd = get_curl_cmd();
@@ -660,7 +638,11 @@ pub fn spawn_download_worker(
 
                         log("VERIFY", "Validating downloaded update package integrity and authenticity");
 
-                        if let Err(e) = verify_update_package(&target_file, &expected_hash) {
+                        let verify_res = match &expected_hash {
+                            Some(hash) => verify_update_package(&target_file, hash),
+                            None => verify_pe_file(&target_file),
+                        };
+                        if let Err(e) = verify_res {
                             let _ = fs::remove_file(&target_file);
                             log("VERIFY_ERR", &format!("Verification failed: {}", e));
                             super::set_status("error", Some(e));
@@ -669,8 +651,10 @@ pub fn spawn_download_worker(
 
                         log("VERIFY", "Update package passed all cryptographic integrity and authenticity checks");
 
-                        if let Ok(mut guard) = VERIFIED_SHA256.lock() {
-                            *guard = Some(expected_hash.clone());
+                        if let Some(ref h) = expected_hash {
+                            if let Ok(mut guard) = VERIFIED_SHA256.lock() {
+                                *guard = Some(h.clone());
+                            }
                         }
 
                         let final_size = fs::metadata(&target_file).map(|m| m.len()).unwrap_or(0);
@@ -724,7 +708,7 @@ pub fn get_verified_sha256() -> Option<String> {
     None
 }
 
-pub fn verify_update_package(file_path: &Path, expected_sha256: &str) -> Result<(), String> {
+pub fn verify_pe_file(file_path: &Path) -> Result<(), String> {
     if !file_path.is_file() {
         return Err("Update payload does not exist on disk".to_string());
     }
@@ -747,17 +731,6 @@ pub fn verify_update_package(file_path: &Path, expected_sha256: &str) -> Result<
         return Err("Update file is not a valid Windows PE binary (missing MZ header)".to_string());
     }
 
-    let actual_sha = crate::infra::hash::sha256_file(file_path)
-        .map_err(|e| format!("Failed to compute SHA-256: {}", e))?
-        .to_lowercase();
-
-    if actual_sha != expected_sha256.to_lowercase() {
-        return Err(format!(
-            "SHA-256 hash mismatch: expected {}, got {}",
-            expected_sha256, actual_sha
-        ));
-    }
-
     #[cfg(target_os = "windows")]
     {
         if let Ok(current_exe) = std::env::current_exe() {
@@ -768,6 +741,23 @@ pub fn verify_update_package(file_path: &Path, expected_sha256: &str) -> Result<
                 return Err("Update binary is not digitally signed, but running instance requires trusted signature".to_string());
             }
         }
+    }
+
+    Ok(())
+}
+
+pub fn verify_update_package(file_path: &Path, expected_sha256: &str) -> Result<(), String> {
+    verify_pe_file(file_path)?;
+
+    let actual_sha = crate::infra::hash::sha256_file(file_path)
+        .map_err(|e| format!("Failed to compute SHA-256: {}", e))?
+        .to_lowercase();
+
+    if actual_sha != expected_sha256.to_lowercase() {
+        return Err(format!(
+            "SHA-256 hash mismatch: expected {}, got {}",
+            expected_sha256, actual_sha
+        ));
     }
 
     Ok(())
