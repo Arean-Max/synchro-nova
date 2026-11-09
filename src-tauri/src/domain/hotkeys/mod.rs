@@ -136,32 +136,35 @@ pub fn start_global_hotkey_listener(_app: AppHandle) {}
 fn execute_action(action: &str, app: &AppHandle) {
     match action {
         "toggle_window" => {
-            if let Some(window) = app.get_webview_window("main") {
-                let is_visible = window.is_visible().unwrap_or(false);
-                let is_minimized = window.is_minimized().unwrap_or(false);
-                if !is_visible || is_minimized {
-                    crate::platform::set_user_summoned(true);
-                    #[cfg(target_os = "windows")]
-                    crate::platform::ffi::disable_process_eco_qos();
-                    crate::resume_window_webview(&window.as_ref().window());
-                    let _ = window.unminimize();
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                    #[cfg(target_os = "windows")]
-                    if let Ok(hwnd) = window.hwnd() {
-                        unsafe {
-                            crate::platform::ffi::winapi::ShowWindow(hwnd.0 as _, 5);
-                            crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
-                            crate::platform::ffi::winapi::SetFocus(hwnd.0 as _);
+            let app_handle = app.clone();
+            let _ = app.run_on_main_thread(move || {
+                if let Some(window) = app_handle.get_webview_window("main") {
+                    let is_visible = window.is_visible().unwrap_or(false);
+                    let is_minimized = window.is_minimized().unwrap_or(false);
+                    if !is_visible || is_minimized {
+                        crate::platform::set_user_summoned(true);
+                        #[cfg(target_os = "windows")]
+                        crate::platform::ffi::disable_process_eco_qos();
+                        crate::resume_window_webview(&window.as_ref().window());
+                        let _ = window.unminimize();
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                        #[cfg(target_os = "windows")]
+                        if let Ok(hwnd) = window.hwnd() {
+                            unsafe {
+                                crate::platform::ffi::winapi::ShowWindow(hwnd.0 as _, 5);
+                                crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
+                                crate::platform::ffi::winapi::SetFocus(hwnd.0 as _);
+                            }
                         }
+                        let _ = window.emit("window-restored", ());
+                    } else {
+                        crate::platform::set_user_summoned(false);
+                        let _ = window.hide();
+                        crate::app::workers::trim_process_memory();
                     }
-                    let _ = window.emit("window-restored", ());
-                } else {
-                    crate::platform::set_user_summoned(false);
-                    let _ = window.hide();
-                    crate::app::workers::trim_process_memory();
                 }
-            }
+            });
         }
         "trim_memory" => {
             crate::app::workers::trim_process_memory();

@@ -6,8 +6,10 @@ use crate::domain::updater::installer::apply_install;
 use crate::domain::updater::{get_progress, UpdateProgress};
 
 #[tauri::command]
-pub fn check_for_updates() -> Result<UpdateCheckResult, String> {
-    fetch_latest_release_info()
+pub async fn check_for_updates() -> Result<UpdateCheckResult, String> {
+    tauri::async_runtime::spawn_blocking(fetch_latest_release_info)
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]

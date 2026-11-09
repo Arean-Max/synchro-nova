@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <a href="https://github.com/Arean-Max/synchro-nova">
     <picture>
       <source srcset="docs/logo-dark.png" media="(prefers-color-scheme: dark)">
@@ -15,7 +15,7 @@
   <a href="https://deepwiki.com/Arean-Max/synchro-nova"><img alt="Docs" src="https://img.shields.io/badge/Docs-DeepWiki-blueviolet?style=flat-square" /></a>
   <a href="https://gitdiagram.com/arean-max/synchro-nova"><img alt="Architecture" src="https://img.shields.io/badge/Diagram-GitDiagram-orange?style=flat-square" /></a>
   <a href="https://github.com/Arean-Max/synchro-nova/releases"><img alt="Releases" src="https://img.shields.io/github/v/release/Arean-Max/synchro-nova?style=flat-square&color=emerald" /></a>
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square" /></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" /></a>
   <a href="https://microsoft.com/windows"><img alt="Platform" src="https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20(x64)-informational?style=flat-square" /></a>
 </p>
 
@@ -92,4 +92,5 @@ npm run build     # build release installer
 
 ### License
 
-[AGPL-3.0](LICENSE)
+[MIT](LICENSE)
+

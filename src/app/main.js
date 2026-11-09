@@ -2830,6 +2830,50 @@ document.addEventListener("contextmenu", (e) => e.preventDefault(), { capture: t
 document.addEventListener("pointerdown", handlePointerDown);
 document.addEventListener("error", handleImageError, true);
 document.addEventListener("keydown", withErrorBoundary(handleKeydown, "Keydown"));
+
+window.addEventListener("wheel", (event) => {
+  if (event.ctrlKey || event.altKey) return;
+  const target = event.target instanceof Element ? event.target : null;
+  if (!target) return;
+
+  const modal = target.closest(".modal-card, .apply-modal, .dropdown-menu");
+  if (modal) {
+    const modalScroll = modal.querySelector(".modal-body, .apply-modal-content") || modal;
+    if (modalScroll && modalScroll.scrollHeight > modalScroll.clientHeight) {
+      return;
+    }
+  }
+
+  const mainPanel = document.querySelector(".main-panel");
+  if (!mainPanel || !mainPanel.contains(target)) return;
+
+  let el = target;
+  let canScrollNaturally = false;
+  while (el && el !== mainPanel) {
+    if (el.scrollHeight > el.clientHeight + 1) {
+      const style = window.getComputedStyle(el);
+      const ovY = style.overflowY;
+      if (ovY === "auto" || ovY === "scroll") {
+        const atTop = el.scrollTop <= 0 && event.deltaY < 0;
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1 && event.deltaY > 0;
+        if (!atTop && !atBottom) {
+          canScrollNaturally = true;
+          break;
+        }
+      }
+    }
+    el = el.parentElement;
+  }
+
+  if (!canScrollNaturally) {
+    const primary = mainPanel.querySelector(
+      ".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page"
+    );
+    if (primary && primary.scrollHeight > primary.clientHeight) {
+      primary.scrollBy({ top: event.deltaY, behavior: "auto" });
+    }
+  }
+}, { passive: true });
 window.addEventListener(
   "keydown",
   (e) => {
@@ -2864,6 +2908,7 @@ window.addEventListener(
 );
 function handleWindowRestored() {
   document.body.style.pointerEvents = "";
+  document.documentElement.style.pointerEvents = "";
   document.body.classList.remove("paused-animations");
   window.dispatchEvent(new Event("resize"));
   syncNavIndicator();

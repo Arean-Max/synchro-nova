@@ -1318,8 +1318,27 @@ p, .description {
   gap: 12px;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
-  padding-right: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scroll-behavior: smooth;
+}
+
+.global-color-page::-webkit-scrollbar {
+  width: 6px;
+}
+
+.global-color-page::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.global-color-page::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+}
+
+.global-color-page::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .global-color-grid {
@@ -2514,13 +2533,17 @@ p, .description {
   gap: 14px;
 }
 
-.tweaks-page.admin-locked .scroll-panel,
-.tweaks-page.admin-locked .tweaks-actions {
+.tweaks-page.admin-locked .scroll-panel {
   filter: blur(6px);
   opacity: 0.45;
-  pointer-events: none;
   user-select: none;
   transition: filter 0.25s ease, opacity 0.25s ease;
+}
+
+.tweaks-page.admin-locked .tweaks-actions,
+.tweaks-page.admin-locked .scroll-panel button,
+.tweaks-page.admin-locked .scroll-panel input {
+  pointer-events: none;
 }
 
 .scroll-panel {

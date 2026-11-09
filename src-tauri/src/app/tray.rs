@@ -67,38 +67,41 @@ pub fn install_tray(app: &AppHandle) -> tauri::Result<()> {
 }
 
 pub fn show_main_window(app: &AppHandle) {
-    #[cfg(target_os = "windows")]
-    crate::platform::ffi::disable_process_eco_qos();
-
-    crate::platform::fullscreen_watcher::set_user_summoned(true);
-
-    if let Some(window) = app.get_webview_window("main") {
-        crate::resume_window_webview(&window.as_ref().window());
-        let _ = window.unminimize();
-        let _ = window.show();
-        let _ = window.set_focus();
+    let app_handle = app.clone();
+    let _ = app.run_on_main_thread(move || {
         #[cfg(target_os = "windows")]
-        if let Ok(hwnd) = window.hwnd() {
-            unsafe {
-                crate::platform::ffi::winapi::ShowWindow(hwnd.0 as _, 5);
-                crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
-                crate::platform::ffi::winapi::SetFocus(hwnd.0 as _);
+        crate::platform::ffi::disable_process_eco_qos();
+
+        crate::platform::fullscreen_watcher::set_user_summoned(true);
+
+        if let Some(window) = app_handle.get_webview_window("main") {
+            crate::resume_window_webview(&window.as_ref().window());
+            let _ = window.unminimize();
+            let _ = window.show();
+            let _ = window.set_focus();
+            #[cfg(target_os = "windows")]
+            if let Ok(hwnd) = window.hwnd() {
+                unsafe {
+                    crate::platform::ffi::winapi::ShowWindow(hwnd.0 as _, 5);
+                    crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
+                    crate::platform::ffi::winapi::SetFocus(hwnd.0 as _);
+                }
             }
-        }
-        let _ = window.emit("window-restored", ());
-    } else if let Ok(window) = crate::create_main_window(app) {
-        crate::resume_window_webview(&window.as_ref().window());
-        let _ = window.unminimize();
-        let _ = window.show();
-        let _ = window.set_focus();
-        #[cfg(target_os = "windows")]
-        if let Ok(hwnd) = window.hwnd() {
-            unsafe {
-                crate::platform::ffi::winapi::ShowWindow(hwnd.0 as _, 5);
-                crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
-                crate::platform::ffi::winapi::SetFocus(hwnd.0 as _);
+            let _ = window.emit("window-restored", ());
+        } else if let Ok(window) = crate::create_main_window(&app_handle) {
+            crate::resume_window_webview(&window.as_ref().window());
+            let _ = window.unminimize();
+            let _ = window.show();
+            let _ = window.set_focus();
+            #[cfg(target_os = "windows")]
+            if let Ok(hwnd) = window.hwnd() {
+                unsafe {
+                    crate::platform::ffi::winapi::ShowWindow(hwnd.0 as _, 5);
+                    crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
+                    crate::platform::ffi::winapi::SetFocus(hwnd.0 as _);
+                }
             }
+            let _ = window.emit("window-restored", ());
         }
-        let _ = window.emit("window-restored", ());
-    }
+    });
 }

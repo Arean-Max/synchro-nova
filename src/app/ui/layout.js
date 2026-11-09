@@ -219,7 +219,7 @@ export function renderPageBody(viewState, t, bypassCache = false) {
 
 export function renderMain(viewState, t, bypassCache = false) {
   const page = pageDefs[activePage];
-  return `<main class="main-panel"><header class="page-header" data-window-drag data-tauri-drag-region><h1 data-window-drag data-tauri-drag-region>${escapeHtml(t(page.title))}</h1><p data-window-drag data-tauri-drag-region>${escapeHtml(t(page.subtitle))}</p></header><div class="page-body page-${activePage}">${renderPageBody(viewState, t, bypassCache)}</div></main>`;
+  return `<main class="main-panel"><header class="page-header"><h1>${escapeHtml(t(page.title))}</h1><p>${escapeHtml(t(page.subtitle))}</p></header><div class="page-body page-${activePage}">${renderPageBody(viewState, t, bypassCache)}</div></main>`;
 }
 
 export function renderShell(viewState, t, bypassCache = false) {

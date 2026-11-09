@@ -8,8 +8,10 @@ pub fn open_driver_search(query: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn scan_drivers() -> Vec<DriverInfo> {
-    driver_info::collect_drivers()
+pub async fn scan_drivers() -> Vec<DriverInfo> {
+    tauri::async_runtime::spawn_blocking(driver_info::collect_drivers)
+        .await
+        .unwrap_or_default()
 }
 
 pub fn validate_external_url(url: &str) -> Result<(), String> {
