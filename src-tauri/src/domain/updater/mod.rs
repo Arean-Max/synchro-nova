@@ -26,7 +26,7 @@ impl Default for UpdateProgress {
             total_bytes: 0,
             percent: 0,
             latest_version: None,
-            current_version: env!("CARGO_PKG_VERSION").to_string(),
+            current_version: client::get_app_version(),
             error: None,
         }
     }

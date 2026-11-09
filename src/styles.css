@@ -1321,7 +1321,6 @@ p, .description {
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 4px;
-  scroll-behavior: smooth;
 }
 
 .global-color-page::-webkit-scrollbar {
@@ -2551,7 +2550,6 @@ p, .description {
   min-height: 0;
   overflow-y: auto;
   padding-right: 6px;
-  scroll-behavior: smooth;
 }
 
 .tweaks-page .scroll-panel,
@@ -3591,7 +3589,6 @@ p, .description {
   padding-bottom: 24px;
   padding-right: 6px;
   box-sizing: border-box;
-  scroll-behavior: smooth;
 }
 
 .storage-page-container::-webkit-scrollbar {
@@ -3908,7 +3905,6 @@ p, .description {
   padding-bottom: 24px;
   padding-right: 6px;
   box-sizing: border-box;
-  scroll-behavior: smooth;
 }
 
 .settings-page::-webkit-scrollbar {
@@ -3936,7 +3932,6 @@ p, .description {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  scroll-behavior: smooth;
 }
 
 .settings-group {
@@ -5523,7 +5518,6 @@ p, .description {
   min-height: 0;
   overflow-y: auto;
   padding-right: 6px;
-  scroll-behavior: smooth;
 }
 
 .driver-empty-card {
@@ -6815,23 +6809,19 @@ p, .description {
 
 .intro-splash-stage {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  user-select: none;
-}
-
-.intro-splash-brand-row {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 20px;
+  user-select: none;
 }
 
 /* Discord-Style Autoupdater Component */
 .intro-splash-updater {
+  position: absolute;
+  top: calc(50% + 70px);
+  left: 50%;
+  transform: translate3d(-50%, 0, 0);
   width: 340px;
   max-width: 90vw;
   background: #1e1f22;
@@ -6841,19 +6831,19 @@ p, .description {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
   opacity: 0;
-  transform: translateY(6px);
   animation: splashUpdaterFadeIn 0.35s 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: opacity, transform;
+  pointer-events: auto;
 }
 
 @keyframes splashUpdaterFadeIn {
   0% {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translate3d(-50%, 6px, 0);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 

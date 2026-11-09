@@ -248,6 +248,12 @@ pub fn get_curl_cmd() -> Command {
     }
 }
 
+pub fn get_app_version() -> String {
+    option_env!("SYNCHRO_FORCE_TEST_VERSION")
+        .unwrap_or(env!("CARGO_PKG_VERSION"))
+        .to_string()
+}
+
 pub fn get_update_dir() -> PathBuf {
     std::env::temp_dir().join("synchro_update")
 }
@@ -270,7 +276,7 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
     log("CHECK", "Checking for updates at official GitHub releases endpoint");
     super::set_status("checking", None);
 
-    let current_version = env!("CARGO_PKG_VERSION").to_string();
+    let current_version = get_app_version();
     let mut cmd = get_curl_cmd();
     cmd.args([
         "-s",
@@ -499,7 +505,7 @@ pub fn spawn_download_worker(
         total_bytes: expected_size,
         percent: 0,
         latest_version: Some(latest_version.clone()),
-        current_version: env!("CARGO_PKG_VERSION").to_string(),
+        current_version: get_app_version(),
         error: None,
     });
 
@@ -606,7 +612,7 @@ pub fn spawn_download_worker(
                         total_bytes: expected_size,
                         percent: pct,
                         latest_version: Some(latest_version.clone()),
-                        current_version: env!("CARGO_PKG_VERSION").to_string(),
+                        current_version: get_app_version(),
                         error: None,
                     });
                 }
@@ -632,7 +638,7 @@ pub fn spawn_download_worker(
                             total_bytes: expected_size,
                             percent: 99,
                             latest_version: Some(latest_version.clone()),
-                            current_version: env!("CARGO_PKG_VERSION").to_string(),
+                            current_version: get_app_version(),
                             error: None,
                         });
 
@@ -664,7 +670,7 @@ pub fn spawn_download_worker(
                             total_bytes: final_size,
                             percent: 100,
                             latest_version: Some(latest_version.clone()),
-                            current_version: env!("CARGO_PKG_VERSION").to_string(),
+                            current_version: get_app_version(),
                             error: None,
                         });
 

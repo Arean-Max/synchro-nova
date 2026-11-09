@@ -2965,42 +2965,23 @@ window.addEventListener("wheel", (event) => {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
 
-  const modal = target.closest(".modal-card, .apply-modal, .dropdown-menu");
-  if (modal) {
-    const modalScroll = modal.querySelector(".modal-body, .apply-modal-content") || modal;
-    if (modalScroll && modalScroll.scrollHeight > modalScroll.clientHeight) {
-      return;
-    }
+  if (target.closest(".modal-card, .apply-modal, .dropdown-menu, .template-config-dialog, .backup-name-dialog")) {
+    return;
   }
 
   const mainPanel = document.querySelector(".main-panel");
   if (!mainPanel || !mainPanel.contains(target)) return;
 
-  let el = target;
-  let canScrollNaturally = false;
-  while (el && el !== mainPanel) {
-    if (el.scrollHeight > el.clientHeight + 1) {
-      const style = window.getComputedStyle(el);
-      const ovY = style.overflowY;
-      if (ovY === "auto" || ovY === "scroll") {
-        const atTop = el.scrollTop <= 0 && event.deltaY < 0;
-        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1 && event.deltaY > 0;
-        if (!atTop && !atBottom) {
-          canScrollNaturally = true;
-          break;
-        }
-      }
-    }
-    el = el.parentElement;
+  const activeContainer = target.closest(".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page");
+  if (activeContainer) {
+    return;
   }
 
-  if (!canScrollNaturally) {
-    const primary = mainPanel.querySelector(
-      ".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page"
-    );
-    if (primary && primary.scrollHeight > primary.clientHeight) {
-      primary.scrollBy({ top: event.deltaY, behavior: "auto" });
-    }
+  const primary = mainPanel.querySelector(
+    ".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page"
+  );
+  if (primary && primary.scrollHeight > primary.clientHeight) {
+    primary.scrollTop += event.deltaY;
   }
 }, { passive: true });
 window.addEventListener(
