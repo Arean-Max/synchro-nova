@@ -91,9 +91,9 @@ pub fn validate_target_path(target: &Path) -> Result<(), String> {
         .ok_or_else(|| "Target path lacks a valid file name".to_string())?
         .to_lowercase();
 
-    if file_name != "synchro.exe" {
+    if !file_name.ends_with(".exe") || !file_name.contains("synchro") {
         return Err(format!(
-            "Target executable name must be 'synchro.exe', got '{}'",
+            "Target executable name must be a Synchro binary ending with .exe, got '{}'",
             file_name
         ));
     }
@@ -299,7 +299,7 @@ pub fn run_updater_helper(args: &[String]) {
         let mut cmd = Command::new(&parsed.target);
         cmd.arg("--post-update-check");
         cmd.arg("--restarted-from-pid");
-        cmd.arg(std::process::id().to_string());
+        cmd.arg(parsed.wait_pid.to_string());
 
         let mut child = match cmd.spawn() {
             Ok(c) => c,
@@ -311,11 +311,11 @@ pub fn run_updater_helper(args: &[String]) {
         };
 
         let watchdog_start = Instant::now();
-        let watchdog_timeout = Duration::from_secs(5);
+        let watchdog_timeout = Duration::from_secs(3);
         let mut crashed = false;
 
         while watchdog_start.elapsed() < watchdog_timeout {
-            std::thread::sleep(Duration::from_millis(200));
+            std::thread::sleep(Duration::from_millis(150));
             match child.try_wait() {
                 Ok(Some(status)) => {
                     log(
@@ -325,8 +325,7 @@ pub fn run_updater_helper(args: &[String]) {
                     crashed = true;
                     break;
                 }
-                Ok(None) => {
-                    }
+                Ok(None) => {}
                 Err(e) => {
                     log("HELPER_WARN", &format!("Could not inspect child process: {}", e));
                 }
@@ -400,6 +399,8 @@ mod tests {
     fn test_validate_target_path() {
         assert!(validate_target_path(Path::new(r"C:\Users\test\AppData\Local\Programs\synchro\synchro.exe")).is_ok());
         assert!(validate_target_path(Path::new(r"C:\Program Files\Synchro Nova\synchro.exe")).is_ok());
+        assert!(validate_target_path(Path::new(r"C:\Users\tyler\Desktop\synchro-test-updater.exe")).is_ok());
+        assert!(validate_target_path(Path::new(r"C:\Users\tyler\Desktop\synchro-portable.exe")).is_ok());
 
         assert!(validate_target_path(Path::new(r"C:\Windows\System32\cmd.exe")).is_err());
         assert!(validate_target_path(Path::new(r"C:\Windows\System32\synchro.exe")).is_err());

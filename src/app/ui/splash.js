@@ -182,6 +182,37 @@ export function runIntroSplash(options = {}) {
     const hint = splash.querySelector(".intro-splash-skip-hint");
     if (hint) hint.textContent = skipText;
     splash.classList.add("splash-animate");
+
+    let updater = splash.querySelector("#splash-updater");
+    if (!updater) {
+      updater = document.createElement("div");
+      updater.className = "intro-splash-updater";
+      updater.id = "splash-updater";
+      updater.innerHTML = [
+        '<div class="splash-updater-row">',
+        '  <div class="splash-updater-left">',
+        `    <span class="splash-updater-status" id="splash-updater-status">${escapeHtml(checkingText)}</span>`,
+        '  </div>',
+        '  <div class="splash-updater-right">',
+        '    <span class="splash-updater-pct" id="splash-updater-pct" style="display:none"></span>',
+        `    <button class="splash-updater-manual" id="splash-updater-manual" type="button" style="display:none">${escapeHtml(manualDownloadText)}</button>`,
+        '  </div>',
+        '</div>',
+        '<div class="splash-updater-track" id="splash-updater-track">',
+        '  <div class="splash-updater-fill indeterminate" id="splash-updater-fill" style="width: 100%"></div>',
+        '</div>'
+      ].join("");
+      if (hint) {
+        splash.insertBefore(updater, hint);
+      } else {
+        splash.appendChild(updater);
+      }
+    } else {
+      const statusEl = updater.querySelector("#splash-updater-status");
+      if (statusEl) statusEl.textContent = checkingText;
+      const manualEl = updater.querySelector("#splash-updater-manual");
+      if (manualEl) manualEl.textContent = manualDownloadText;
+    }
   }
 
   const manualBtn = splash.querySelector("#splash-updater-manual");

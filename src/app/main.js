@@ -808,7 +808,7 @@ async function applyUpdateInstall() {
     viewState.updateStatus = "installing";
     updateSidebarUpdateWidgetDom();
     startGlobalUpdatePoller();
-    await invokeCommand("install_update", { noRelaunch: true });
+    await invokeCommand("install_update", { noRelaunch: false });
   } catch (err) {
     console.error("Apply update failed:", err);
     viewState.updateStatus = "error";
@@ -881,7 +881,7 @@ async function handleStartupUpdateCheck() {
             installTriggered = true;
 
             updateSplashUpdater({
-              text: t("installing"),
+              text: t("installingRestarting") || t("installing") || "Installing update... Restarting",
               percent: 100,
               showManual: false,
               isIndeterminate: false
@@ -890,7 +890,7 @@ async function handleStartupUpdateCheck() {
 
             setTimeout(async () => {
               try {
-                await invokeCommand("install_update", { noRelaunch: true });
+                await invokeCommand("install_update", { noRelaunch: false });
               } catch (err) {
                 console.error("Install update failed:", err);
                 updateSplashUpdater({
@@ -901,7 +901,7 @@ async function handleStartupUpdateCheck() {
                 await invokeCommand("set_taskbar_progress", { progress: 0, isError: true }).catch(() => {});
                 setSplashDownloading(false);
               }
-            }, 600);
+            }, 800);
           } else if (status === "error") {
             updateSplashUpdater({
               text: t("updateError"),
