@@ -135,6 +135,109 @@ pub fn validate_update_url(url: &str) -> Result<(), String> {
     Ok(())
 }
 
+pub fn parse_rfc3339_timestamp(s: &str) -> Option<u64> {
+    let s = s.trim();
+    if s.len() < 19 {
+        return None;
+    }
+    let year: i64 = s.get(0..4)?.parse().ok()?;
+    let month: u32 = s.get(5..7)?.parse().ok()?;
+    let day: u32 = s.get(8..10)?.parse().ok()?;
+    let hour: u64 = s.get(11..13)?.parse().ok()?;
+    let min: u64 = s.get(14..16)?.parse().ok()?;
+    let sec: u64 = s.get(17..19)?.parse().ok()?;
+
+    if !(1..=12).contains(&month) || !(1..=31).contains(&day) || hour > 23 || min > 59 || sec > 60 {
+        return None;
+    }
+
+    let is_leap = |y: i64| (y % 4 == 0 && y % 100 != 0) || (y % 400 == 0);
+    let days_in_month = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+    let mut days: i64 = 0;
+    if year >= 1970 {
+        for y in 1970..year {
+            days += if is_leap(y) { 366 } else { 365 };
+        }
+    } else {
+        return None;
+    }
+
+    for m in 1..month {
+        days += days_in_month[m as usize];
+        if m == 2 && is_leap(year) {
+            days += 1;
+        }
+    }
+    days += (day - 1) as i64;
+
+    let total_secs = (days as u64) * 86400 + hour * 3600 + min * 60 + sec;
+    Some(total_secs)
+}
+
+pub fn get_local_executable_details() -> (Option<String>, u64, u64) {
+    let current_exe = match std::env::current_exe() {
+        Ok(p) => p,
+        Err(_) => return (None, 0, 0),
+    };
+    let meta = std::fs::metadata(&current_exe).ok();
+    let size = meta.as_ref().map(|m| m.len()).unwrap_or(0);
+    let mod_time = meta
+        .and_then(|m| m.modified().ok())
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let sha256 = crate::infra::hash::sha256_file(&current_exe).ok();
+    (sha256, size, mod_time)
+}
+
+pub fn get_local_build_timestamp() -> u64 {
+    option_env!("SYNCHRO_BUILD_UNIX_TIMESTAMP")
+        .and_then(|s| s.parse::<u64>().ok())
+        .filter(|&t| t > 0)
+        .unwrap_or_else(|| {
+            let (_, _, mod_time) = get_local_executable_details();
+            mod_time
+        })
+}
+
+pub fn is_same_or_compatible_version(tag: &str, current: &str) -> bool {
+    let p_tag = ParsedVersion::parse(tag);
+    let p_curr = ParsedVersion::parse(current);
+    match (p_tag, p_curr) {
+        (Some(t), Some(c)) => {
+            t.major == c.major && t.minor == c.minor && t.patch == c.patch
+        }
+        _ => {
+            let clean_tag = tag.trim().trim_start_matches('v').trim_start_matches('V').to_lowercase();
+            let clean_curr = current.trim().trim_start_matches('v').trim_start_matches('V').to_lowercase();
+            clean_tag.starts_with(&clean_curr) || clean_curr.starts_with(&clean_tag)
+        }
+    }
+}
+
+pub fn fetch_remote_manifest_hash(manifest_url: &str, target_filename: &str) -> Option<String> {
+    let mut cmd = get_curl_cmd();
+    cmd.args([
+        "-s",
+        "-L",
+        "--connect-timeout",
+        "10",
+        "--max-time",
+        "15",
+        manifest_url,
+    ]);
+    #[cfg(target_os = "windows")]
+    cmd.creation_flags(CREATE_NO_WINDOW);
+
+    let output = cmd.output().ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let content = String::from_utf8_lossy(&output.stdout);
+    parse_sha256_manifest(&content, target_filename).ok()
+}
+
 pub fn get_curl_cmd() -> Command {
     let system_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
     let curl_exe = std::path::PathBuf::from(system_root).join("System32").join("curl.exe");
@@ -211,9 +314,17 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
         .unwrap_or("")
         .to_string();
 
+    let release_published_at = json
+        .get("published_at")
+        .and_then(|v| v.as_str())
+        .and_then(parse_rfc3339_timestamp)
+        .unwrap_or(0);
+
     let mut download_url = None;
     let mut asset_size: u64 = 0;
     let mut sha_manifest_url = None;
+    let mut asset_updated_at: u64 = 0;
+    let mut remote_sha256: Option<String> = None;
 
     if let Some(assets) = json.get("assets").and_then(|v| v.as_array()) {
         for asset in assets {
@@ -230,6 +341,17 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string());
                 asset_size = asset.get("size").and_then(|v| v.as_u64()).unwrap_or(0);
+                asset_updated_at = asset
+                    .get("updated_at")
+                    .or_else(|| asset.get("created_at"))
+                    .and_then(|v| v.as_str())
+                    .and_then(parse_rfc3339_timestamp)
+                    .unwrap_or(0);
+                if let Some(digest) = asset.get("digest").and_then(|v| v.as_str()) {
+                    if let Some(hex) = digest.strip_prefix("sha256:") {
+                        remote_sha256 = Some(hex.to_lowercase());
+                    }
+                }
             }
         }
 
@@ -242,13 +364,70 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string());
                     asset_size = asset.get("size").and_then(|v| v.as_u64()).unwrap_or(0);
+                    asset_updated_at = asset
+                        .get("updated_at")
+                        .or_else(|| asset.get("created_at"))
+                        .and_then(|v| v.as_str())
+                        .and_then(parse_rfc3339_timestamp)
+                        .unwrap_or(0);
+                    if let Some(digest) = asset.get("digest").and_then(|v| v.as_str()) {
+                        if let Some(hex) = digest.strip_prefix("sha256:") {
+                            remote_sha256 = Some(hex.to_lowercase());
+                        }
+                    }
                     break;
                 }
             }
         }
     }
 
-    let update_available = is_newer_version(tag_name, &current_version);
+    if remote_sha256.is_none() {
+        if let Some(ref m_url) = sha_manifest_url {
+            remote_sha256 = fetch_remote_manifest_hash(m_url, "synchro.exe");
+        }
+    }
+
+    if let Some(ref hash) = remote_sha256 {
+        if let Ok(mut lock) = VERIFIED_SHA256.lock() {
+            *lock = Some(hash.clone());
+        }
+    }
+
+    let (local_sha256, local_size, _) = get_local_executable_details();
+    let local_build_time = get_local_build_timestamp();
+    let effective_remote_time = if asset_updated_at > 0 {
+        asset_updated_at
+    } else {
+        release_published_at
+    };
+
+    let mut update_available = is_newer_version(tag_name, &current_version);
+
+    if let (Some(ref r_hash), Some(ref l_hash)) = (&remote_sha256, &local_sha256) {
+        if r_hash.eq_ignore_ascii_case(l_hash) {
+            update_available = false;
+        } else if !update_available && is_same_or_compatible_version(tag_name, &current_version) {
+            let is_newer = if effective_remote_time > 0 && local_build_time > 0 {
+                effective_remote_time + 30 >= local_build_time
+            } else {
+                asset_size != local_size || effective_remote_time > 0
+            };
+            if is_newer {
+                log("CHECK", &format!(
+                    "Patch build detected for v{} (remote sha: {:.8}..., local sha: {:.8}..., remote_time={}, local_time={})",
+                    clean_version, r_hash, l_hash, effective_remote_time, local_build_time
+                ));
+                update_available = true;
+            }
+        }
+    } else if !update_available && is_same_or_compatible_version(tag_name, &current_version) {
+        if asset_size > 0 && local_size > 0 && asset_size != local_size {
+            if effective_remote_time + 30 >= local_build_time {
+                log("CHECK", "Different asset size and newer timestamp detected for patch update");
+                update_available = true;
+            }
+        }
+    }
 
     let result = UpdateCheckResult {
         update_available,

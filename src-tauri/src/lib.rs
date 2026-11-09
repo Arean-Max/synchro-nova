@@ -473,6 +473,24 @@ mod tests {
     }
 
     #[test]
+    fn test_rfc3339_timestamp_parser() {
+        use domain::updater::client::parse_rfc3339_timestamp;
+        assert_eq!(parse_rfc3339_timestamp("1970-01-01T00:00:00Z"), Some(0));
+        assert_eq!(parse_rfc3339_timestamp("2026-11-09T22:17:53Z"), Some(1794262673));
+        assert_eq!(parse_rfc3339_timestamp("invalid-date"), None);
+    }
+
+    #[test]
+    fn test_is_same_or_compatible_version() {
+        use domain::updater::client::is_same_or_compatible_version;
+        assert!(is_same_or_compatible_version("v2.5.0-beta", "2.5.0-beta"));
+        assert!(is_same_or_compatible_version("v2.5.0", "2.5.0-beta"));
+        assert!(is_same_or_compatible_version("2.5.0", "2.5.0"));
+        assert!(!is_same_or_compatible_version("v2.6.0", "2.5.0-beta"));
+        assert!(!is_same_or_compatible_version("v2.4.9", "2.5.0-beta"));
+    }
+
+    #[test]
     fn test_sha256_manifest_parser() {
         use domain::updater::client::parse_sha256_manifest;
 

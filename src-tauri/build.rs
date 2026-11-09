@@ -1,4 +1,10 @@
 fn main() {
+    let build_timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    println!("cargo:rustc-env=SYNCHRO_BUILD_UNIX_TIMESTAMP={}", build_timestamp);
+
     if std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("gnu") {
         if let Ok(out_dir) = std::env::var("OUT_DIR") {
             let out_path = std::path::Path::new(&out_dir);

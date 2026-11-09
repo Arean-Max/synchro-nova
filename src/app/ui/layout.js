@@ -47,7 +47,8 @@ export function renderSidebarUpdateWidget(t, viewState) {
   }
 
   if (status === "available") {
-    const versionText = viewState?.latestVersion ? `v${viewState.latestVersion}` : "";
+    const isSameVersion = Boolean(viewState?.latestVersion && viewState?.appVersion && viewState.latestVersion === viewState.appVersion);
+    const versionText = viewState?.latestVersion ? `v${viewState.latestVersion}${isSameVersion ? " (Patch)" : ""}` : "";
     return `
       <div id="sidebar-update-wrapper" class="sidebar-update-wrapper available">
         <button class="update-action-btn" type="button" data-action="start-update-download" title="${escapeHtml(t("downloadUpdate"))}">
