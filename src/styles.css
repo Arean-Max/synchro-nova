@@ -951,14 +951,14 @@ p, .description {
 
 .slider-inline-input {
   width: 100%;
-  min-width: 32px;
-  max-width: 44px;
+  min-width: 38px;
+  max-width: 54px;
   height: 18px;
-  padding: 0;
+  padding: 0 2px;
   margin: 0;
   font-family: inherit;
-  font-size: inherit;
-  font-weight: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
   color: #ffffff;
   background: transparent !important;
   border: none !important;
@@ -966,8 +966,19 @@ p, .description {
   text-align: center;
   outline: none !important;
   box-shadow: none !important;
-  -moz-appearance: textfield;
+  -webkit-appearance: none !important;
+  -moz-appearance: textfield !important;
+  appearance: none !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  cursor: text !important;
   caret-color: #ffffff;
+}
+
+.slider-inline-input::-webkit-outer-spin-button,
+.slider-inline-input::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
 }
 
 .slider-inline-input:focus,

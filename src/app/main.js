@@ -1770,8 +1770,6 @@ async function handleClick(event) {
       valBadge.innerHTML = `<input class="slider-inline-input" type="number" min="${def.min}" max="${def.max}" step="${def.step}" value="${curVal}">`;
       const numInput = valBadge.querySelector("input");
       if (numInput) {
-        numInput.focus();
-        numInput.select();
         let committed = false;
         const commit = () => {
           if (committed) return;
@@ -1784,7 +1782,11 @@ async function handleClick(event) {
           scheduleApplyColor();
           saveSettings();
         };
-        numInput.addEventListener("blur", commit, { once: true });
+        const mountTime = Date.now();
+        numInput.addEventListener("blur", () => {
+          if (Date.now() - mountTime < 150) return;
+          commit();
+        });
         numInput.addEventListener("keydown", (e) => {
           if (e.key === "Enter") {
             e.preventDefault();
@@ -1796,6 +1798,13 @@ async function handleClick(event) {
           }
         });
         numInput.addEventListener("click", (e) => e.stopPropagation());
+        numInput.addEventListener("pointerdown", (e) => e.stopPropagation());
+        numInput.addEventListener("mousedown", (e) => e.stopPropagation());
+        numInput.addEventListener("mouseup", (e) => e.stopPropagation());
+        window.requestAnimationFrame(() => {
+          numInput.focus();
+          numInput.select();
+        });
       }
       return;
     }
@@ -1812,8 +1821,6 @@ async function handleClick(event) {
       tplValBadge.innerHTML = `<input class="slider-inline-input" type="number" min="${def.min}" max="${def.max}" step="${def.step}" value="${curVal}">`;
       const numInput = tplValBadge.querySelector("input");
       if (numInput) {
-        numInput.focus();
-        numInput.select();
         let committed = false;
         const commit = () => {
           if (committed) return;
@@ -1824,7 +1831,11 @@ async function handleClick(event) {
           tplValBadge.textContent = formatSliderValue(field, finalVal);
           updateTemplateSliderDom(field, viewState.editingTemplateColor);
         };
-        numInput.addEventListener("blur", commit, { once: true });
+        const mountTime = Date.now();
+        numInput.addEventListener("blur", () => {
+          if (Date.now() - mountTime < 150) return;
+          commit();
+        });
         numInput.addEventListener("keydown", (e) => {
           if (e.key === "Enter") {
             e.preventDefault();
@@ -1836,6 +1847,13 @@ async function handleClick(event) {
           }
         });
         numInput.addEventListener("click", (e) => e.stopPropagation());
+        numInput.addEventListener("pointerdown", (e) => e.stopPropagation());
+        numInput.addEventListener("mousedown", (e) => e.stopPropagation());
+        numInput.addEventListener("mouseup", (e) => e.stopPropagation());
+        window.requestAnimationFrame(() => {
+          numInput.focus();
+          numInput.select();
+        });
       }
       return;
     }
@@ -2141,7 +2159,7 @@ async function handleClick(event) {
     viewState.colorPreviewMode = nextMode;
     const img = document.getElementById("color-preview-image");
     if (img instanceof HTMLImageElement) {
-      img.src = nextMode === "night" ? "./assets/night.png" : (nextMode === "holo" ? "./assets/blackholo.png" : "./assets/preview.png");
+      img.src = nextMode === "night" ? "./assets/night.webp" : (nextMode === "holo" ? "./assets/blackholo.webp" : "./assets/preview.webp");
     }
     document.querySelectorAll(".preview-mode-btn[data-mode]").forEach((btn) => {
       btn.classList.toggle("active", btn.getAttribute("data-mode") === nextMode);
@@ -2776,7 +2794,8 @@ async function handleKeydown(event) {
       activeEl.classList.contains("check-row") ||
       activeEl.classList.contains("tweak-tile") ||
       activeEl.classList.contains("color-filter-tile") ||
-      activeEl.classList.contains("template-tile")
+      activeEl.classList.contains("template-tile") ||
+      activeEl.classList.contains("slider-value-badge")
     ) {
       event.preventDefault();
       activeEl.click();
@@ -2971,25 +2990,36 @@ window.addEventListener("wheel", (event) => {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
 
-  if (target.closest(".modal-card, .apply-modal, .dropdown-menu, .template-config-dialog, .backup-name-dialog")) {
+  const modalScroll = target.closest(
+    ".modal-body, .modal-card, .dropdown-menu, .template-config-dialog, .backup-name-dialog, .language-dropdown-menu, .font-dropdown-menu"
+  );
+  if (modalScroll && modalScroll.scrollHeight > modalScroll.clientHeight + 2) {
+    modalScroll.scrollTop += event.deltaY;
+    event.preventDefault();
+    return;
+  }
+
+  const navList = target.closest(".nav-list");
+  if (navList && navList.scrollHeight > navList.clientHeight + 2) {
+    navList.scrollTop += event.deltaY;
+    event.preventDefault();
     return;
   }
 
   const mainPanel = document.querySelector(".main-panel");
   if (!mainPanel || !mainPanel.contains(target)) return;
 
-  const activeContainer = target.closest(".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page");
-  if (activeContainer) {
-    return;
-  }
-
-  const primary = mainPanel.querySelector(
-    ".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page"
+  const scrollContainer = target.closest(
+    ".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page, .page-body"
+  ) || mainPanel.querySelector(
+    ".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page, .page-body"
   );
-  if (primary && primary.scrollHeight > primary.clientHeight) {
-    primary.scrollTop += event.deltaY;
+
+  if (scrollContainer && scrollContainer.scrollHeight > scrollContainer.clientHeight) {
+    scrollContainer.scrollTop += event.deltaY;
+    event.preventDefault();
   }
-}, { passive: true });
+}, { passive: false });
 window.addEventListener(
   "keydown",
   (e) => {

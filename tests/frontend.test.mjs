@@ -933,3 +933,39 @@ test("Autoupdater: sidebar update widget is removed and splash updater component
   assert.strictEqual(typeof splash.setSplashDownloading, "function", "setSplashDownloading must be exported");
   assert.strictEqual(typeof splash.finishIntroSplash, "function", "finishIntroSplash must be exported");
 });
+
+test("Color Calibration: slider value badges render with interactive role, tabindex, and title for manual editing", async () => {
+  const { renderColorPage, formatSliderValue } = await import("../src/app/features/color/page.js");
+  const t = (k) => k;
+  const mockState = {
+    color: {
+      saturation: 200,
+      hue: 0,
+      contrast: 100,
+      gamma: 100,
+      blackHolo: 0
+    }
+  };
+  const html = renderColorPage(mockState, {}, t);
+  assert.ok(html.includes('class="slider-value-badge" data-slider-value="saturation"'), "Must render slider value badge for saturation");
+  assert.ok(html.includes('role="button"'), "Must have role button for accessibility");
+  assert.ok(html.includes('tabindex="0"'), "Must have tabindex 0 for keyboard focus");
+  assert.ok(html.includes("200%"), "Must display 200% formatted value");
+  assert.strictEqual(formatSliderValue("saturation", 200), "200%");
+  assert.strictEqual(formatSliderValue("hue", -45), "-45 deg");
+  assert.strictEqual(formatSliderValue("contrast", 125), "125%");
+});
+
+test("Optimized Assets: preview image references use high-efficiency WebP", async () => {
+  const { renderColorPage } = await import("../src/app/features/color/page.js");
+  const t = (k) => k;
+  const dayHtml = renderColorPage({ color: {} }, { colorPreviewMode: "day" }, t);
+  assert.ok(dayHtml.includes("preview.webp"), "Day mode must use preview.webp");
+  assert.ok(!dayHtml.includes("preview.png"), "Must not use heavy preview.png");
+
+  const nightHtml = renderColorPage({ color: {} }, { colorPreviewMode: "night" }, t);
+  assert.ok(nightHtml.includes("night.webp"), "Night mode must use night.webp");
+
+  const holoHtml = renderColorPage({ color: {} }, { colorPreviewMode: "holo" }, t);
+  assert.ok(holoHtml.includes("blackholo.webp"), "Holo mode must use blackholo.webp");
+});
