@@ -857,7 +857,7 @@ async function handleStartupUpdateCheck() {
           checkSkipped = true;
           setSplashDownloading(false);
           invokeCommand("set_taskbar_progress", { progress: 0, isError: false }).catch(() => {});
-          finishIntroSplash();
+          finishIntroSplash(0, true);
         }
       });
 

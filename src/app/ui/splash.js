@@ -10,6 +10,8 @@ let keyListener = null;
 let clickListener = null;
 let manualCallback = null;
 let skipCallback = null;
+let splashStartTime = 0;
+const MIN_SPLASH_ANIM_MS = 2500;
 
 export function setSplashDownloading(downloading) {
   isDownloadingUpdate = Boolean(downloading);
@@ -202,10 +204,17 @@ function doFinishSplash() {
   }, 280);
 }
 
-export function finishIntroSplash(delay = 0) {
+export function finishIntroSplash(delay = 0, force = false) {
   if (splashFinished) return;
-  if (delay > 0) {
-    setTimeout(() => doFinishSplash(), delay);
+  if (force) {
+    doFinishSplash();
+    return;
+  }
+  const elapsed = performance.now() - splashStartTime;
+  const remaining = Math.max(0, MIN_SPLASH_ANIM_MS - elapsed);
+  const totalWait = remaining + delay;
+  if (totalWait > 0) {
+    setTimeout(() => doFinishSplash(), totalWait);
   } else {
     doFinishSplash();
   }
@@ -213,6 +222,7 @@ export function finishIntroSplash(delay = 0) {
 
 export function runIntroSplash(options = {}) {
   const { onFinish, onManualDownload, skipAnimation = false } = options;
+  splashStartTime = performance.now();
   finishCallback = onFinish;
   manualCallback = onManualDownload || null;
   splashFinished = false;
