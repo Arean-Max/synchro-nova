@@ -1,4 +1,4 @@
-﻿<p align="center">
+<p align="center">
   <a href="https://github.com/Arean-Max/synchro-nova">
     <picture>
       <source srcset="docs/logo-dark.png" media="(prefers-color-scheme: dark)">
@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">Быстрая и легковесная утилита для сочности монитора и оптимизации задержки Windows.</p>
+<p align="center">📖 <b><a href="https://deepwiki.com/Arean-Max/synchro-nova">Полная интерактивная документация на DeepWiki</a></b></p>
 
 <p align="center">
   <a href="https://t.me/synchronova"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-Channel-229ED9?style=flat-square&logo=telegram&logoColor=white" /></a>

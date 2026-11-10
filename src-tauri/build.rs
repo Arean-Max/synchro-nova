@@ -1,4 +1,6 @@
 fn main() {
+    println!("cargo:rerun-if-changed=icons/icon.ico");
+    println!("cargo:rerun-if-changed=tauri.conf.json");
     let build_timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs())
@@ -42,7 +44,16 @@ fn main() {
         }
     }
 
-    let windows_attrs = tauri_build::WindowsAttributes::new();
+    let ico_path = std::path::Path::new("icons/icon.ico");
+    let mut windows_attrs = tauri_build::WindowsAttributes::new();
+    if ico_path.exists() {
+        windows_attrs = windows_attrs.window_icon_path(ico_path);
+        let full_ico = std::fs::canonicalize(ico_path)
+            .unwrap_or_else(|_| ico_path.to_path_buf())
+            .to_string_lossy()
+            .replace('\\', "\\\\");
+        windows_attrs = windows_attrs.append_rc_content(format!("1 ICON \"{}\"", full_ico));
+    }
     let attrs = tauri_build::Attributes::new().windows_attributes(windows_attrs);
     tauri_build::try_build(attrs).expect("failed to run tauri-build");
 
