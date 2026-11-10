@@ -9,7 +9,6 @@ pub fn trim_process_memory() {
 pub fn spawn_memory_trimmer(trimmer_sync: Arc<TrimmerSync>) {
     std::thread::Builder::new()
         .name("synchro-memory-trimmer".to_string())
-        .stack_size(64 * 1024)
         .spawn(move || {
             let mut lock = match trimmer_sync.exited.lock() {
                 Ok(l) => l,

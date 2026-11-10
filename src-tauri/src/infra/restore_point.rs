@@ -36,7 +36,10 @@ pub fn create_system_restore_point(description: &str) -> bool {
             safe_desc
         );
 
-        let ps_path = crate::domain::tweaks::runner::resolve_system_program("powershell");
+        let Ok(ps_path) = crate::domain::tweaks::runner::resolve_system_program("powershell") else {
+            eprintln!("[RestorePoint] Failed to resolve PowerShell in System32");
+            return false;
+        };
         let mut child = Command::new(&ps_path);
         child.args([
             "-NoProfile",
@@ -47,22 +50,49 @@ pub fn create_system_restore_point(description: &str) -> bool {
             &cmd,
         ]);
         child.creation_flags(CREATE_NO_WINDOW);
+        child.stdout(std::process::Stdio::null());
+        child.stderr(std::process::Stdio::null());
 
-        match child.status() {
-            Ok(status) => {
-                let success = status.success();
-                if success {
-                    eprintln!("[RestorePoint] PowerShell restore point created: {}", safe_desc);
-                } else {
-                    eprintln!("[RestorePoint] PowerShell Checkpoint-Computer exited with code: {:?}", status.code());
-                }
-                success
-            }
+        use std::time::{Duration, Instant};
+        let mut spawned = match child.spawn() {
+            Ok(c) => c,
             Err(e) => {
                 eprintln!("[RestorePoint] Failed to launch PowerShell: {}", e);
-                false
+                return false;
             }
-        }
+        };
+
+        let start = Instant::now();
+        let timeout = Duration::from_secs(25);
+        let success = loop {
+            match spawned.try_wait() {
+                Ok(Some(status)) => {
+                    let ok = status.success();
+                    if ok {
+                        eprintln!("[RestorePoint] PowerShell restore point created: {}", safe_desc);
+                    } else {
+                        eprintln!("[RestorePoint] PowerShell Checkpoint-Computer exited with code: {:?}", status.code());
+                    }
+                    break ok;
+                }
+                Ok(None) => {
+                    if start.elapsed() >= timeout {
+                        let _ = spawned.kill();
+                        let _ = spawned.wait();
+                        eprintln!("[RestorePoint] PowerShell Checkpoint-Computer timed out after 25s");
+                        break false;
+                    }
+                    std::thread::sleep(Duration::from_millis(100));
+                }
+                Err(e) => {
+                    let _ = spawned.kill();
+                    let _ = spawned.wait();
+                    eprintln!("[RestorePoint] Failed to wait on PowerShell: {}", e);
+                    break false;
+                }
+            }
+        };
+        success
     }
 
     #[cfg(not(target_os = "windows"))]

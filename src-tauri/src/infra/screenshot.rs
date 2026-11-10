@@ -456,7 +456,6 @@ pub fn start_global_screenshot_listener() {
     LISTENER_STARTED.get_or_init(|| {
         std::thread::Builder::new()
             .name("synchro-screenshot-hotkey".to_string())
-            .stack_size(64 * 1024)
             .spawn(move || {
                 const HOTKEY_ID: i32 = 0x534E;
                 const VK_SNAPSHOT: u32 = 0x2C;

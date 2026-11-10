@@ -234,7 +234,10 @@ fn main() {
                 }
             }
             if args[i] == "--navigate-to" && i + 1 < args.len() {
-                synchro_lib::commands::set_pending_navigation(args[i + 1].clone());
+                let page = args[i + 1].trim();
+                if matches!(page, "color" | "tweaks" | "binds" | "settings" | "characteristics") {
+                    synchro_lib::commands::set_pending_navigation(page.to_string());
+                }
             }
         }
 

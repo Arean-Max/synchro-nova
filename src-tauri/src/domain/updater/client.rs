@@ -513,7 +513,6 @@ pub fn spawn_download_worker(
 
     std::thread::Builder::new()
         .name("synchro-updater-dl".to_string())
-        .stack_size(128 * 1024)
         .spawn(move || {
             let expected_hash = if let Some(ref sha_url) = sha_manifest_url {
                 let mut sha_cmd = get_curl_cmd();
@@ -772,7 +771,6 @@ pub fn verify_update_package(file_path: &Path, expected_sha256: &str) -> Result<
 pub fn start_background_update_flow(auto_download: bool) {
     std::thread::Builder::new()
         .name("synchro-auto-check".to_string())
-        .stack_size(64 * 1024)
         .spawn(move || {
             match fetch_latest_release_info() {
                 Ok(info) => {

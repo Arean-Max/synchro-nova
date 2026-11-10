@@ -1,3 +1,4 @@
+use bincode::Options;
 use serde::{Deserialize, Serialize};
 use std::{
     fs,
@@ -10,7 +11,7 @@ use crate::app::state::ColorSettings;
 
 pub const FAST_BOOT_MAGIC: &[u8; 4] = b"SNFB";
 pub const FAST_BOOT_VERSION: u32 = 2;
-pub const MAX_FAST_CACHE_BYTES: u64 = 10 * 1024 * 1024;
+pub const MAX_FAST_CACHE_BYTES: u64 = 64 * 1024;
 pub const MAX_SNAPSHOT_AGE_SECS: u64 = 30 * 24 * 3600;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,6 +29,12 @@ pub struct FastBootSnapshot {
 
 static EARLY_WARMUP_SNAPSHOT: OnceLock<Option<FastBootSnapshot>> = OnceLock::new();
 static PERSIST_LOCK: Mutex<()> = Mutex::new(());
+
+fn bincode_options() -> impl bincode::Options {
+    bincode::DefaultOptions::new()
+        .with_limit(MAX_FAST_CACHE_BYTES)
+        .with_fixint_encoding()
+}
 
 pub fn get_fast_boot_path() -> Option<PathBuf> {
     std::env::var_os("LOCALAPPDATA")
@@ -50,25 +57,34 @@ pub fn try_early_warmup() -> bool {
 
     if let Ok(meta) = fs::metadata(&path) {
         if meta.len() < 16 || meta.len() > MAX_FAST_CACHE_BYTES {
+            let _ = fs::remove_file(&path);
             return false;
         }
     } else {
+        let _ = fs::remove_file(&path);
         return false;
     }
 
     let Ok(bytes) = fs::read(&path) else {
+        let _ = fs::remove_file(&path);
         return false;
     };
 
     if bytes.len() < 16 || &bytes[0..4] != FAST_BOOT_MAGIC {
+        let _ = fs::remove_file(&path);
         return false;
     }
 
-    let Ok(snapshot) = bincode::deserialize::<FastBootSnapshot>(&bytes) else {
-        return false;
+    let snapshot = match bincode_options().deserialize::<FastBootSnapshot>(&bytes) {
+        Ok(s) => s,
+        Err(_) => {
+            let _ = fs::remove_file(&path);
+            return false;
+        }
     };
 
     if snapshot.version != FAST_BOOT_VERSION {
+        let _ = fs::remove_file(&path);
         return false;
     }
 
@@ -77,6 +93,7 @@ pub fn try_early_warmup() -> bool {
         .map(|d| d.as_secs())
         .unwrap_or(0);
     if snapshot.timestamp > now + 3600 || now.saturating_sub(snapshot.timestamp) > MAX_SNAPSHOT_AGE_SECS {
+        let _ = fs::remove_file(&path);
         return false;
     }
 
@@ -110,14 +127,23 @@ pub fn get_cached_snapshot() -> Option<FastBootSnapshot> {
     }
     let meta = fs::metadata(&path).ok()?;
     if meta.len() < 16 || meta.len() > MAX_FAST_CACHE_BYTES {
+        let _ = fs::remove_file(&path);
         return None;
     }
     let bytes = fs::read(&path).ok()?;
     if bytes.len() < 16 || &bytes[0..4] != FAST_BOOT_MAGIC {
+        let _ = fs::remove_file(&path);
         return None;
     }
-    let snapshot = bincode::deserialize::<FastBootSnapshot>(&bytes).ok()?;
+    let snapshot = match bincode_options().deserialize::<FastBootSnapshot>(&bytes) {
+        Ok(s) => s,
+        Err(_) => {
+            let _ = fs::remove_file(&path);
+            return None;
+        }
+    };
     if snapshot.version != FAST_BOOT_VERSION {
+        let _ = fs::remove_file(&path);
         return None;
     }
     Some(snapshot)
@@ -162,7 +188,7 @@ pub fn update_disk_cache(
         active_tweak_ids,
     };
 
-    if let Ok(encoded) = bincode::serialize(&snapshot) {
+    if let Ok(encoded) = bincode_options().serialize(&snapshot) {
         let temp_path = target_path.with_extension("bin.tmp");
         if fs::write(&temp_path, &encoded).is_ok() {
             let _ = fs::rename(&temp_path, &target_path);

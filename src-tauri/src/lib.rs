@@ -133,7 +133,6 @@ pub fn hide_main_window(app: &tauri::AppHandle) {
     platform::fullscreen_watcher::set_user_summoned(false);
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.hide();
-        trim_process_memory();
     }
 }
 
@@ -240,7 +239,6 @@ pub fn run() {
             let eac_protect = initial.settings.eac_auto_protect;
             std::thread::Builder::new()
                 .name("synchro-bg-integrity".to_string())
-                .stack_size(64 * 1024)
                 .spawn(move || {
                     #[cfg(target_os = "windows")]
                     {
@@ -712,5 +710,48 @@ a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90  synchro.exe\n"
         println!("  - Working Set: {:.2} MB", cal_mem.working_set_bytes as f64 / (1024.0 * 1024.0));
         println!("  - Worker Thread CPU Load: < 0.1%");
         println!("====================================================\n");
+    }
+
+    #[test]
+    fn test_resolve_system_program_security() {
+        #[cfg(target_os = "windows")]
+        {
+            let netsh = domain::tweaks::runner::resolve_system_program("netsh").expect("netsh should resolve");
+            assert!(netsh.is_file(), "netsh must exist");
+            assert!(netsh.to_string_lossy().to_lowercase().contains("system32"));
+
+            let ps = domain::tweaks::runner::resolve_system_program("powershell").expect("powershell should resolve");
+            assert!(ps.is_file(), "powershell must exist");
+            assert!(ps.to_string_lossy().to_lowercase().contains("windowspowershell"));
+
+            let invalid = domain::tweaks::runner::resolve_system_program("arbitrary_nonexistent_binary");
+            assert!(invalid.is_err(), "Non-system binaries must not resolve to relative paths");
+        }
+    }
+
+    #[test]
+    fn test_fast_boot_bincode_bounded_deserialize() {
+        use bincode::Options;
+        let garbage = vec![0x53, 0x4E, 0x46, 0x42, 0xFF, 0xFF, 0xFF, 0xFF, 0xAA, 0xBB];
+        let opts = bincode::DefaultOptions::new()
+            .with_limit(infra::fast_cache::MAX_FAST_CACHE_BYTES)
+            .with_fixint_encoding();
+        let res = opts.deserialize::<infra::fast_cache::FastBootSnapshot>(&garbage);
+        assert!(res.is_err(), "Corrupted snapshot must fail deserialization cleanly");
+    }
+
+    #[test]
+    fn test_navigate_to_allowlist() {
+        let is_allowed = |p: &str| matches!(p, "color" | "tweaks" | "binds" | "settings" | "characteristics");
+        assert!(is_allowed("color"));
+        assert!(is_allowed("tweaks"));
+        assert!(is_allowed("binds"));
+        assert!(is_allowed("settings"));
+        assert!(is_allowed("characteristics"));
+
+        assert!(!is_allowed(""));
+        assert!(!is_allowed("../evil"));
+        assert!(!is_allowed("powershell.exe"));
+        assert!(!is_allowed("javascript:alert(1)"));
     }
 }

@@ -15,7 +15,6 @@ fn schedule_debounced_save(path: std::path::PathBuf, snap: PersistedState) {
     if !SAVE_WORKER_ACTIVE.swap(true, std::sync::atomic::Ordering::SeqCst) {
         std::thread::Builder::new()
             .name("synchro-async-save".to_string())
-            .stack_size(128 * 1024)
             .spawn(|| {
                 loop {
                     std::thread::sleep(std::time::Duration::from_millis(300));

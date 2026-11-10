@@ -50,17 +50,24 @@ pub fn start_global_hotkey_listener(app: AppHandle) {
     let _ = GLOBAL_APP_HANDLE.set(app);
     static STARTED: std::sync::OnceLock<()> = std::sync::OnceLock::new();
     STARTED.get_or_init(|| {
+        let (ready_tx, ready_rx) = std::sync::mpsc::sync_channel::<()>(1);
+
         std::thread::Builder::new()
             .name("synchro-global-hotkeys".to_string())
-            .stack_size(64 * 1024)
             .spawn(move || {
                 let tid = unsafe { winapi::GetCurrentThreadId() };
-                LISTENER_THREAD_ID.store(tid, Ordering::SeqCst);
 
+                // Force creation of thread message queue BEFORE publishing LISTENER_THREAD_ID
                 let mut dummy_msg = unsafe { std::mem::zeroed::<MSG>() };
                 unsafe {
                     winapi::PeekMessageW(&mut dummy_msg, std::ptr::null_mut(), 0x0400, 0x0400, 0);
                 }
+
+                // Publish thread id now that the message queue is guaranteed to exist
+                LISTENER_THREAD_ID.store(tid, Ordering::SeqCst);
+
+                // Notify spawner that the message queue is ready
+                let _ = ready_tx.send(());
 
                 let mut registered_ids: Vec<i32> = Vec::new();
                 let register_all = |registered: &mut Vec<i32>| {
@@ -127,6 +134,9 @@ pub fn start_global_hotkey_listener(app: AppHandle) {
                 }
             })
             .ok();
+
+        // Wait up to 500ms for queue creation so callers can post immediately
+        let _ = ready_rx.recv_timeout(std::time::Duration::from_millis(500));
     });
 }
 

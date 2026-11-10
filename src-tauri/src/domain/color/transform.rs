@@ -28,11 +28,17 @@ static PIPELINE: PipelineState = PipelineState {
     worker_started: AtomicBool::new(false),
 };
 
+static LAST_APPLIED_MATRIX: Mutex<Option<[f32; 25]>> = Mutex::new(None);
+
+fn matrix_approx_equal(a: &[f32; 25], b: &[f32; 25]) -> bool {
+    const EPSILON: f32 = 1e-5;
+    a.iter().zip(b.iter()).all(|(x, y)| (x - y).abs() < EPSILON)
+}
+
 fn ensure_pipeline_started() {
     if !PIPELINE.worker_started.swap(true, Ordering::SeqCst) {
         std::thread::Builder::new()
             .name("synchro-color-worker".to_string())
-            .stack_size(256 * 1024)
             .spawn(|| {
                 #[cfg(target_os = "windows")]
                 unsafe {
@@ -120,10 +126,10 @@ pub fn apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
     set_active_color(Some((color.clone(), show_on_recordings)));
 
     {
-        let mut lock = PIPELINE
-            .pending
-            .lock()
-            .map_err(|_| "Color pipeline mutex poisoned".to_string())?;
+        let mut lock = match PIPELINE.pending.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         *lock = Some(PipelineCommand {
             color: Some(color.clone()),
             show_on_recordings,
@@ -141,10 +147,10 @@ pub fn reset_color_transform() -> Result<(), String> {
     LAST_APPLIED_GAMMA.store(u32::MAX, Ordering::Relaxed);
 
     {
-        let mut lock = PIPELINE
-            .pending
-            .lock()
-            .map_err(|_| "Color pipeline mutex poisoned".to_string())?;
+        let mut lock = match PIPELINE.pending.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         *lock = Some(PipelineCommand {
             color: None,
             show_on_recordings: false,
@@ -173,8 +179,29 @@ fn raw_apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
         } else {
             identity_matrix()
         };
-        let effect = crate::platform::ffi::MagColorEffect { transform: matrix };
-        let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+
+        let should_apply = {
+            let mut last = match LAST_APPLIED_MATRIX.lock() {
+                Ok(g) => g,
+                Err(p) => p.into_inner(),
+            };
+            if let Some(ref prev) = *last {
+                if matrix_approx_equal(prev, &matrix) {
+                    false
+                } else {
+                    *last = Some(matrix);
+                    true
+                }
+            } else {
+                *last = Some(matrix);
+                true
+            }
+        };
+
+        if should_apply {
+            let effect = crate::platform::ffi::MagColorEffect { transform: matrix };
+            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+        }
     }
 
     Ok(())
@@ -184,10 +211,31 @@ fn raw_apply_color_transform(color: &ColorSettings, show_on_recordings: bool) ->
 fn raw_reset_color_transform() -> Result<(), String> {
     LAST_APPLIED_GAMMA.store(u32::MAX, Ordering::Relaxed);
     unsafe {
-        let effect = crate::platform::ffi::MagColorEffect {
-            transform: identity_matrix(),
+        let id = identity_matrix();
+        let should_apply = {
+            let mut last = match LAST_APPLIED_MATRIX.lock() {
+                Ok(g) => g,
+                Err(p) => p.into_inner(),
+            };
+            if let Some(ref prev) = *last {
+                if matrix_approx_equal(prev, &id) {
+                    false
+                } else {
+                    *last = Some(id);
+                    true
+                }
+            } else {
+                *last = Some(id);
+                true
+            }
         };
-        let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+
+        if should_apply {
+            let effect = crate::platform::ffi::MagColorEffect {
+                transform: id,
+            };
+            let _ = crate::platform::ffi::winapi::MagSetFullscreenColorEffect(&effect);
+        }
     }
     if !super::black_holo::is_black_holo_active() {
         if let Some(orig) = ORIGINAL_GAMMA_RAMP.get() {
@@ -213,7 +261,10 @@ fn ensure_original_gamma_captured() {
             if !hdc.is_null() {
                 let mut orig = crate::platform::ffi::GammaRamp::default();
                 if crate::platform::ffi::winapi::GetDeviceGammaRamp(hdc, &mut orig) != 0 {
-                    let _ = ORIGINAL_GAMMA_RAMP.set(orig);
+                    let is_valid = orig.red[255] > 0 && orig.green[255] > 0 && orig.blue[255] > 0;
+                    if is_valid {
+                        let _ = ORIGINAL_GAMMA_RAMP.set(orig);
+                    }
                 }
                 let _ = crate::platform::ffi::winapi::ReleaseDC(std::ptr::null_mut(), hdc);
             }
@@ -334,16 +385,17 @@ fn shadow_bias_matrix(r_off: f32, g_off: f32, b_off: f32) -> [f32; 25] {
 
 fn black_holo_matrix(strength: f32) -> [f32; 25] {
     let k = strength.clamp(0.0, 1.0);
-    let r_to_g = 0.5 * k;
+    let r_to_r = 1.0 + 0.15 * k;
+    let r_to_g = 0.72 * k;
     let g_to_g = 1.0 - k;
-    let b_to_g = 0.5 * k;
+    let b_to_g = 0.28 * k;
 
     [
-        1.0,    r_to_g, 0.0, 0.0, 0.0,
-        0.0,    g_to_g, 0.0, 0.0, 0.0,
-        0.0,    b_to_g, 1.0, 0.0, 0.0,
-        0.0,    0.0,    0.0, 1.0, 0.0,
-        0.0,    0.0,    0.0, 0.0, 1.0,
+        r_to_r, r_to_g, 0.0,    0.0, 0.0,
+        0.0,    g_to_g, 0.0,    0.0, 0.0,
+        0.0,    b_to_g, 1.0,    0.0, 0.0,
+        0.0,    0.0,    0.0,    1.0, 0.0,
+        0.0,    0.0,    0.0,    0.0, 1.0,
     ]
 }
 
@@ -471,7 +523,7 @@ mod tests {
     #[test]
     fn test_black_holo_matrix_bounds() {
         let m = black_holo_matrix(0.5);
-        assert_eq!(m[0], 1.0);
+        assert!((m[0] - (1.0 + 0.15 * 0.5)).abs() < 1e-6);
         assert_eq!(m[24], 1.0);
     }
 }

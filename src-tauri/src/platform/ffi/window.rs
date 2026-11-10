@@ -57,7 +57,7 @@ static SINGLE_INSTANCE_MUTEX_HANDLE: std::sync::atomic::AtomicPtr<c_void> =
 
 #[cfg(target_os = "windows")]
 pub fn release_single_instance() {
-    let handle = SINGLE_INSTANCE_MUTEX_HANDLE.swap(std::ptr::null_mut(), std::sync::atomic::Ordering::SeqCst);
+    let handle = SINGLE_INSTANCE_MUTEX_HANDLE.swap(std::ptr::null_mut(), std::sync::atomic::Ordering::AcqRel);
     if !handle.is_null() {
         unsafe {
             winapi::CloseHandle(handle);
@@ -75,38 +75,35 @@ pub fn ensure_single_instance(mutex_name: &str, window_title: &str) -> bool {
 
 #[cfg(target_os = "windows")]
 pub fn ensure_single_instance_retry(mutex_name: &str, window_title: &str, is_restart: bool) -> bool {
-    let max_attempts = if is_restart { 50 } else { 5 };
     let name_w = wide_null(mutex_name);
 
-    for attempt in 0..max_attempts {
-        let handle = unsafe {
-            winapi::CreateMutexW(std::ptr::null_mut(), 1, name_w.as_ptr())
-        };
+    // Open or create the mutex without initial ownership.
+    let handle = unsafe {
+        winapi::CreateMutexW(std::ptr::null_mut(), 0, name_w.as_ptr())
+    };
 
-        if handle.is_null() {
-            return true;
-        }
-
-        let last_err = unsafe { winapi::GetLastError() };
-        if last_err == ERROR_ALREADY_EXISTS {
-            unsafe {
-                winapi::CloseHandle(handle);
-            }
-
-            if attempt + 1 < max_attempts {
-                std::thread::sleep(std::time::Duration::from_millis(100));
-                continue;
-            }
-
-            notify_running_instance(window_title);
-            return false;
-        }
-
-        SINGLE_INSTANCE_MUTEX_HANDLE.store(handle, std::sync::atomic::Ordering::SeqCst);
+    if handle.is_null() {
         return true;
     }
 
-    true
+    // When restarting from a previous process (e.g. UAC elevation, auto-updater), wait up to 5s
+    // for the prior process to release its mutex. On normal startup, test immediately (0ms).
+    let wait_timeout_ms = if is_restart { 5000 } else { 0 };
+    let wait_res = unsafe { winapi::WaitForSingleObject(handle, wait_timeout_ms) };
+
+    const WAIT_OBJECT_0: u32 = 0x0000_0000;
+    const WAIT_ABANDONED: u32 = 0x0000_0080;
+
+    if wait_res == WAIT_OBJECT_0 || wait_res == WAIT_ABANDONED {
+        SINGLE_INSTANCE_MUTEX_HANDLE.store(handle, std::sync::atomic::Ordering::SeqCst);
+        true
+    } else {
+        unsafe {
+            winapi::CloseHandle(handle);
+        }
+        notify_running_instance(window_title);
+        false
+    }
 }
 
 #[cfg(target_os = "windows")]
@@ -136,7 +133,6 @@ pub fn notify_running_instance(_window_title: &str) {}
 pub fn start_single_instance_listener(app: tauri::AppHandle) {
     std::thread::Builder::new()
         .name("synchro-instance-pipe".to_string())
-        .stack_size(64 * 1024)
         .spawn(move || {
             #[link(name = "Kernel32")]
             extern "system" {

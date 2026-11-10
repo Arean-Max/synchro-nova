@@ -144,11 +144,10 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
 
         std::thread::Builder::new()
             .name("synchro-fullscreen-watcher".to_string())
-            .stack_size(128 * 1024)
             .spawn(move || {
                 use crate::platform::ffi::{
                     winapi, MSG, EVENT_SYSTEM_FOREGROUND, WINEVENT_OUTOFCONTEXT,
-                    WINEVENT_SKIPOWNPROCESS, WM_TIMER,
+                    WINEVENT_SKIPOWNPROCESS,
                 };
 
                 std::thread::sleep(Duration::from_millis(2000));
@@ -166,7 +165,6 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
                     );
 
                     if !hook.is_null() {
-                        let timer_id = winapi::SetTimer(std::ptr::null_mut(), 0, 3000, None);
                         let mut msg = std::mem::zeroed::<MSG>();
 
                         while !shutdown.load(Ordering::Relaxed) {
@@ -175,17 +173,10 @@ pub fn spawn_fullscreen_watcher(app_handle: AppHandle, shutdown: Arc<AtomicBool>
                                 break;
                             }
 
-                            if msg.message == WM_TIMER {
-                                evaluate_and_update(&app_handle);
-                            } else {
-                                winapi::TranslateMessage(&msg);
-                                winapi::DispatchMessageW(&msg);
-                            }
+                            winapi::TranslateMessage(&msg);
+                            winapi::DispatchMessageW(&msg);
                         }
 
-                        if timer_id != 0 {
-                            winapi::KillTimer(std::ptr::null_mut(), timer_id);
-                        }
                         winapi::UnhookWinEvent(hook);
                     } else {
                         while !shutdown.load(Ordering::Relaxed) {

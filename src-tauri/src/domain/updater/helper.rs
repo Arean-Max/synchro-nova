@@ -1,8 +1,13 @@
 use super::logging::log;
 use std::fs;
+use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, Instant};
+use sha2::{Digest, Sha256};
+
+#[cfg(target_os = "windows")]
+use std::os::windows::fs::OpenOptionsExt;
 
 #[derive(Debug, Clone)]
 pub struct HelperArgs {
@@ -217,9 +222,79 @@ pub fn run_updater_helper(args: &[String]) {
         }
     };
 
-    if let Err(e) = verify_payload_integrity(&parsed.payload, expected_sha) {
-        log("HELPER_ERR", &format!("Payload integrity verification rejected: {}", e));
+    #[cfg(target_os = "windows")]
+    let mut payload_file = {
+        let mut opts = std::fs::OpenOptions::new();
+        opts.read(true);
+        // Exclusively share for read only: prevents external modifications or deletion (anti-TOCTOU)
+        opts.share_mode(1);
+        match opts.open(&parsed.payload) {
+            Ok(f) => f,
+            Err(e) => {
+                log("HELPER_ERR", &format!("Cannot acquire exclusive read lock on payload: {}", e));
+                std::process::exit(1);
+            }
+        }
+    };
+
+    #[cfg(not(target_os = "windows"))]
+    let mut payload_file = match std::fs::File::open(&parsed.payload) {
+        Ok(f) => f,
+        Err(e) => {
+            log("HELPER_ERR", &format!("Cannot open payload: {}", e));
+            std::process::exit(1);
+        }
+    };
+
+    let meta = match payload_file.metadata() {
+        Ok(m) => m,
+        Err(e) => {
+            log("HELPER_ERR", &format!("Failed to read payload metadata: {}", e));
+            std::process::exit(1);
+        }
+    };
+
+    if meta.len() < 500_000 || meta.len() > 150_000_000 {
+        log("HELPER_ERR", &format!("Payload size {} outside valid boundaries [500KB - 150MB]", meta.len()));
         std::process::exit(1);
+    }
+
+    let mut header = [0u8; 2];
+    if payload_file.read_exact(&mut header).is_err() || &header != b"MZ" {
+        log("HELPER_ERR", "Payload is not a valid Windows PE binary (missing MZ header)");
+        std::process::exit(1);
+    }
+
+    if let Err(e) = payload_file.seek(SeekFrom::Start(0)) {
+        log("HELPER_ERR", &format!("Failed to rewind payload: {}", e));
+        std::process::exit(1);
+    }
+
+    let mut hasher = Sha256::new();
+    let mut hash_buf = [0u8; 64 * 1024];
+    loop {
+        match payload_file.read(&mut hash_buf) {
+            Ok(0) => break,
+            Ok(n) => hasher.update(&hash_buf[..n]),
+            Err(e) => {
+                log("HELPER_ERR", &format!("Failed to stream payload bytes for hashing: {}", e));
+                std::process::exit(1);
+            }
+        }
+    }
+    let actual_hash = format!("{:x}", hasher.finalize()).to_lowercase();
+    if actual_hash != expected_sha {
+        log("HELPER_ERR", &format!("Payload SHA-256 mismatch inside helper: expected {}, got {}", expected_sha, actual_hash));
+        std::process::exit(1);
+    }
+    log("HELPER", &format!("Payload SHA-256 verified on locked handle: {}", actual_hash));
+
+    #[cfg(target_os = "windows")]
+    {
+        let payload_signed = crate::platform::ffi::verify_embedded_signature(&parsed.payload);
+        if !payload_signed {
+            log("HELPER_WARN", "Payload is not digitally signed; proceeding with verified SHA-256 hash");
+        }
     }
 
     #[cfg(target_os = "windows")]
@@ -267,17 +342,26 @@ pub fn run_updater_helper(args: &[String]) {
 
         let mut install_ok = false;
         for attempt in 1..=5 {
-            if fs::rename(&parsed.payload, &parsed.target).is_ok() {
-                install_ok = true;
-                break;
+            if let Err(e) = payload_file.seek(SeekFrom::Start(0)) {
+                log("HELPER_WARN", &format!("Seek error on locked payload: {}", e));
+                continue;
             }
-            if fs::copy(&parsed.payload, &parsed.target).is_ok() {
-                let _ = fs::remove_file(&parsed.payload);
-                install_ok = true;
-                break;
+            match fs::File::create(&parsed.target) {
+                Ok(mut target_file) => {
+                    if std::io::copy(&mut payload_file, &mut target_file).is_ok() {
+                        if target_file.sync_all().is_ok() {
+                            install_ok = true;
+                            break;
+                        }
+                    }
+                }
+                Err(_) => {}
             }
             std::thread::sleep(Duration::from_millis(150 + attempt * 50));
         }
+
+        drop(payload_file);
+        let _ = fs::remove_file(&parsed.payload);
 
         if !install_ok {
             log("HELPER_ERR", "Failed to place new payload at target; initiating immediate rollback");

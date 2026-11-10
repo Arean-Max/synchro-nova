@@ -6,7 +6,7 @@ pub(crate) fn restart_as_admin(target_page: Option<&str>) -> Result<(), String> 
     let exe = std::env::current_exe()
         .map_err(|error| format!("Failed to resolve current executable: {error}"))?;
     let pid = std::process::id();
-    let args = if let Some(page) = target_page {
+    let args = if let Some(page) = target_page.filter(|p| matches!(*p, "color" | "tweaks" | "binds" | "settings" | "characteristics")) {
         format!("--restarted-from-pid {pid} --navigate-to {page}")
     } else {
         format!("--restarted-from-pid {pid}")

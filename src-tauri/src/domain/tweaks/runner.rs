@@ -20,40 +20,91 @@ pub fn run_command(program: &str, args: &[&str]) -> Result<(), String> {
     run_command_output(program, args).map(|_| ())
 }
 
-pub fn resolve_system_program(program: &str) -> std::path::PathBuf {
+pub fn resolve_system_program(program: &str) -> Result<std::path::PathBuf, String> {
     #[cfg(target_os = "windows")]
     {
-        if let Ok(system_root) = std::env::var("SystemRoot") {
-            let system32 = std::path::PathBuf::from(system_root).join("System32");
+        let system_root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
+        let system32 = std::path::PathBuf::from(system_root).join("System32");
 
-            if program.eq_ignore_ascii_case("powershell") || program.eq_ignore_ascii_case("powershell.exe") {
-                let ps = system32.join("WindowsPowerShell").join("v1.0").join("powershell.exe");
-                if ps.is_file() {
-                    return ps;
-                }
-            }
-
-            let candidate = if program.ends_with(".exe") {
-                system32.join(program)
-            } else {
-                system32.join(format!("{program}.exe"))
-            };
-            if candidate.is_file() {
-                return candidate;
+        if program.eq_ignore_ascii_case("powershell") || program.eq_ignore_ascii_case("powershell.exe") {
+            let ps = system32.join("WindowsPowerShell").join("v1.0").join("powershell.exe");
+            if ps.is_file() {
+                return Ok(ps);
             }
         }
+
+        let file_name = if program.ends_with(".exe") {
+            program.to_string()
+        } else {
+            format!("{program}.exe")
+        };
+        let candidate = system32.join(&file_name);
+        if candidate.is_file() {
+            return Ok(candidate);
+        }
+
+        Err(format!("System binary '{program}' not found in System32 at '{}'", candidate.display()))
     }
-    std::path::PathBuf::from(program)
+    #[cfg(not(target_os = "windows"))]
+    {
+        Ok(std::path::PathBuf::from(program))
+    }
 }
 
 pub fn run_command_output(program: &str, args: &[&str]) -> Result<Output, String> {
-    let resolved = resolve_system_program(program);
+    let resolved = resolve_system_program(program)?;
     let mut command = Command::new(&resolved);
     command.args(args);
     hide_console(&mut command);
-    let output = command
-        .output()
+
+    use std::io::Read;
+    use std::process::Stdio;
+    use std::time::{Duration, Instant};
+
+    command.stdout(Stdio::piped());
+    command.stderr(Stdio::piped());
+
+    let mut child = command
+        .spawn()
         .map_err(|error| format!("{program}: {error}"))?;
+
+    let start = Instant::now();
+    let timeout = Duration::from_secs(5);
+
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            Ok(None) => {
+                if start.elapsed() >= timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return Err(format!("{program} timed out after 5 seconds and was terminated"));
+                }
+                std::thread::sleep(Duration::from_millis(50));
+            }
+            Err(e) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(format!("Failed waiting for {program}: {e}"));
+            }
+        }
+    };
+
+    let mut stdout = Vec::new();
+    let mut stderr = Vec::new();
+    if let Some(mut out) = child.stdout.take() {
+        let _ = out.read_to_end(&mut stdout);
+    }
+    if let Some(mut err) = child.stderr.take() {
+        let _ = err.read_to_end(&mut stderr);
+    }
+
+    let output = Output {
+        status,
+        stdout,
+        stderr,
+    };
+
     if output.status.success() {
         Ok(output)
     } else {

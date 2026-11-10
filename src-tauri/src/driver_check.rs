@@ -42,19 +42,51 @@ try {
 } catch {}
 @{ nv = $nv; amd = $amd; wu = $wu } | ConvertTo-Json -Compress
 "#;
-    let ps_path = crate::domain::tweaks::runner::resolve_system_program("powershell");
+    let Ok(ps_path) = crate::domain::tweaks::runner::resolve_system_program("powershell") else {
+        return;
+    };
     let mut cmd = std::process::Command::new(&ps_path);
     cmd.args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script]);
     use std::os::windows::process::CommandExt;
     cmd.creation_flags(0x08000000);
-    let output = cmd.output().ok();
-    let parsed = output.and_then(|o| {
-        if o.status.success() {
-            serde_json::from_slice::<serde_json::Value>(&o.stdout).ok()
-        } else {
-            None
+    cmd.stdout(std::process::Stdio::piped());
+    cmd.stderr(std::process::Stdio::null());
+
+    use std::io::Read;
+    use std::time::Duration;
+    let Ok(mut child) = cmd.spawn() else {
+        return;
+    };
+    let start = Instant::now();
+    let timeout = Duration::from_secs(8);
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            Ok(None) => {
+                if start.elapsed() >= timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return;
+                }
+                std::thread::sleep(Duration::from_millis(50));
+            }
+            Err(_) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return;
+            }
         }
-    });
+    };
+
+    if !status.success() {
+        return;
+    }
+
+    let mut stdout = Vec::new();
+    if let Some(mut out) = child.stdout.take() {
+        let _ = out.read_to_end(&mut stdout);
+    }
+    let parsed = serde_json::from_slice::<serde_json::Value>(&stdout).ok();
 
     let nv = parsed.as_ref().and_then(|v| v.get("nv")).and_then(|v| v.as_str()).map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
     let amd = parsed.as_ref().and_then(|v| v.get("amd")).and_then(|v| v.as_str()).map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
