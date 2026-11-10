@@ -60,7 +60,7 @@ import { icon } from "./ui/icons.js";
 import { button } from "./ui/components.js";
 import { renderMain, renderShell, renderPageBody, renderSidebarUpdateWidget, renderNavList, resolveActiveSubSection } from "./ui/layout.js";
 import { escapeHtml } from "./core/html.js";
-import { runIntroSplash, updateSplashUpdater, setSplashDownloading, finishIntroSplash, isSplashActive } from "./ui/splash.js";
+import { runIntroSplash, showSplashChecking, showSplashDownloadCard, updateSplashDownloadCard, setSplashDownloading, finishIntroSplash, isSplashActive } from "./ui/splash.js";
 import { applyTheme, resolveSeasonalTheme, themeFx } from "./ui/themes.js";
 import { registerLifecycleHooks, withErrorBoundary } from "./core/lifecycle.js";
 import { copyTextToClipboard } from "./core/clipboard.js";
@@ -818,14 +818,14 @@ async function applyUpdateInstall() {
 }
 
 async function handleStartupUpdateCheck() {
-  updateSplashUpdater({
-    text: t("checkingUpdates"),
-    isIndeterminate: true,
-    showManual: false
-  });
+  // Initial State: minimal text, NO module card, NO taskbar progress
+  showSplashChecking(t("checkingUpdates") || "Checking for updates...");
+
+  let checkSkipped = false;
 
   try {
     const res = await invokeCommand("check_for_updates");
+    if (checkSkipped) return;
     if (!res) {
       throw new Error("No response from update service");
     }
@@ -841,14 +841,27 @@ async function handleStartupUpdateCheck() {
       viewState.assetSize = res.assetSize || 0;
       viewState.shaManifestUrl = res.shaManifestUrl || "";
 
+      // Signal downloading: prevents auto-timeout and window closing
       setSplashDownloading(true);
 
-      updateSplashUpdater({
-        text: t("downloading"),
-        percent: 0,
-        showManual: true,
-        isIndeterminate: false
+      // Show elegant download card with separate Manual and Skip buttons
+      showSplashDownloadCard({
+        title: t("downloading") || "Downloading update...",
+        pct: 0,
+        onManual: () => {
+          invokeCommand("open_external_url", {
+            url: "https://github.com/Arean-Max/synchro-nova/releases/latest"
+          });
+        },
+        onSkip: () => {
+          checkSkipped = true;
+          setSplashDownloading(false);
+          invokeCommand("set_taskbar_progress", { progress: 0, isError: false }).catch(() => {});
+          finishIntroSplash();
+        }
       });
+
+      // Taskbar progress starts ONLY when download begins
       await invokeCommand("set_taskbar_progress", { progress: 0, isError: false }).catch(() => {});
 
       await invokeCommand("download_update", {
@@ -861,81 +874,74 @@ async function handleStartupUpdateCheck() {
       let installTriggered = false;
 
       const pollStartupProgress = async () => {
+        if (checkSkipped) return;
         try {
           const progress = await invokeCommand("get_update_progress");
-          if (!progress) return;
+          if (!progress || checkSkipped) return;
           const pct = Math.max(0, Math.min(100, Number(progress.percent) || 0));
           const status = progress.status;
 
           if (status === "downloading" || status === "verifying") {
-            updateSplashUpdater({
-              text: t("downloading"),
-              percent: pct,
-              showManual: true,
-              isIndeterminate: false
+            updateSplashDownloadCard({
+              title: t("downloading") || "Downloading update...",
+              pct
             });
             await invokeCommand("set_taskbar_progress", { progress: pct, isError: false }).catch(() => {});
-            setTimeout(pollStartupProgress, 120);
+            setTimeout(pollStartupProgress, 100);
           } else if (status === "ready") {
-            if (installTriggered) return;
+            if (installTriggered || checkSkipped) return;
             installTriggered = true;
 
-            updateSplashUpdater({
-              text: t("installingRestarting") || t("installing") || "Installing update... Restarting",
-              percent: 100,
-              showManual: false,
-              isIndeterminate: false
+            updateSplashDownloadCard({
+              title: t("installingRestarting") || t("installing") || "Installing update... Restarting",
+              pct: 100,
+              isInstalling: true
             });
             await invokeCommand("set_taskbar_progress", { progress: 100, isError: false }).catch(() => {});
 
+            // Keep status on screen for 800ms so user clearly sees the install & restart status
             setTimeout(async () => {
+              if (checkSkipped) return;
               try {
                 await invokeCommand("install_update", { noRelaunch: false });
               } catch (err) {
                 console.error("Install update failed:", err);
-                updateSplashUpdater({
-                  text: t("updateError"),
-                  showManual: true,
-                  isIndeterminate: false
+                updateSplashDownloadCard({
+                  title: t("updateError") || "Download Failed",
+                  isError: true
                 });
                 await invokeCommand("set_taskbar_progress", { progress: 0, isError: true }).catch(() => {});
                 setSplashDownloading(false);
               }
             }, 800);
           } else if (status === "error") {
-            updateSplashUpdater({
-              text: t("updateError"),
-              showManual: true,
-              isIndeterminate: false
+            updateSplashDownloadCard({
+              title: t("updateError") || "Download Failed",
+              isError: true
             });
             await invokeCommand("set_taskbar_progress", { progress: 0, isError: true }).catch(() => {});
             setSplashDownloading(false);
-            setTimeout(() => {
-              finishIntroSplash();
-            }, 2000);
           }
         } catch (_) {
-          setTimeout(pollStartupProgress, 250);
+          if (!checkSkipped) {
+            setTimeout(pollStartupProgress, 200);
+          }
         }
       };
 
       setTimeout(pollStartupProgress, 100);
     } else {
-      updateSplashUpdater({
-        text: t("statusUpToDate") || t("latestVersionInstalled"),
-        percent: 100,
-        showManual: false,
-        isIndeterminate: false
-      });
-      await invokeCommand("set_taskbar_progress", { progress: 0, isError: false }).catch(() => {});
+      // Up to date: clean text feedback, NO taskbar progress
+      showSplashChecking(t("statusUpToDate") || t("latestVersionInstalled") || "Latest version installed", true);
       setTimeout(() => {
-        finishIntroSplash();
-      }, 500);
+        if (!checkSkipped) finishIntroSplash();
+      }, 650);
     }
   } catch (err) {
     console.warn("Startup update check failed:", err);
-    await invokeCommand("set_taskbar_progress", { progress: 0, isError: false }).catch(() => {});
-    finishIntroSplash(400);
+    if (!checkSkipped) {
+      finishIntroSplash(400);
+    }
   }
 }
 

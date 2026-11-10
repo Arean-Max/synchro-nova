@@ -262,16 +262,6 @@ pub fn run() {
             platform::fullscreen_watcher::spawn_fullscreen_watcher(app.handle().clone(), watcher_shutdown);
             platform::ffi::start_single_instance_listener(app.handle().clone());
 
-            let auto_download = initial.settings.auto_update;
-            std::thread::Builder::new()
-                .name("synchro-auto-updater".to_string())
-                .stack_size(64 * 1024)
-                .spawn(move || {
-                    std::thread::sleep(std::time::Duration::from_secs(3));
-                    domain::updater::client::start_background_update_flow(auto_download);
-                })
-                .ok();
-
             Ok(())
         })
         .on_window_event(|window, event| {

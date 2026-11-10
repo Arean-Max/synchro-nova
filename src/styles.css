@@ -6816,30 +6816,31 @@ p, .description {
   user-select: none;
 }
 
-/* Discord-Style Autoupdater Component */
-.intro-splash-updater {
+/* Startup Autoupdater: Minimal text during check, elegant card during download */
+.intro-splash-check-text {
   position: absolute;
-  top: calc(50% + 70px);
+  top: calc(50% + 72px);
   left: 50%;
   transform: translate3d(-50%, 0, 0);
-  width: 340px;
-  max-width: 90vw;
-  background: #1e1f22;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 10px 14px 12px 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
-  box-sizing: border-box;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
   opacity: 0;
-  animation: splashUpdaterFadeIn 0.35s 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: opacity, transform;
-  pointer-events: auto;
+  animation: splashCheckTextFadeIn 0.35s 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: opacity 0.25s ease, color 0.25s ease;
+  z-index: 10;
 }
 
-@keyframes splashUpdaterFadeIn {
+@keyframes splashCheckTextFadeIn {
   0% {
     opacity: 0;
-    transform: translate3d(-50%, 6px, 0);
+    transform: translate3d(-50%, 4px, 0);
   }
   100% {
     opacity: 1;
@@ -6847,41 +6848,62 @@ p, .description {
   }
 }
 
-.splash-updater-row {
+.intro-splash-updater-card {
+  position: absolute;
+  top: calc(50% + 64px);
+  left: 50%;
+  transform: translate3d(-50%, 0, 0);
+  width: 360px;
+  max-width: 90vw;
+  background: rgba(26, 27, 32, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  padding: 14px 16px 14px 16px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
+  opacity: 0;
+  animation: splashCardFadeIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+  pointer-events: auto;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes splashCardFadeIn {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, 6px, 0) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(-50%, 0, 0) scale(1);
+  }
+}
+
+.splash-card-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
   line-height: 1.2;
 }
 
-.splash-updater-left {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  flex: 1;
-}
-
-.splash-updater-status {
+.splash-card-title {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 13px;
   font-weight: 600;
-  color: #f2f3f5;
+  color: #f1f5f9;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: -0.01em;
 }
 
-.splash-updater-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.splash-updater-pct {
+.splash-card-pct {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 13px;
   font-weight: 700;
@@ -6890,58 +6912,83 @@ p, .description {
   letter-spacing: -0.01em;
 }
 
-.splash-updater-manual {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  color: #00a8fc;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  transition: color 0.15s ease;
-  line-height: 1.2;
-}
-
-.splash-updater-manual:hover {
-  color: #5865f2;
-}
-
-.splash-updater-track {
+.splash-card-track {
   width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.12);
+  height: 5px;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 999px;
   overflow: hidden;
   position: relative;
+  margin-bottom: 12px;
 }
 
-.splash-updater-fill {
+.splash-card-fill {
   height: 100%;
-  background: #ffffff;
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
   border-radius: 999px;
-  transition: width 0.18s ease-out;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.55);
+  transition: width 0.16s ease-out;
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
 }
 
-.splash-updater-fill.indeterminate {
-  width: 100% !important;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 20%, #ffffff 50%, rgba(255, 255, 255, 0.15) 80%, transparent 100%);
-  background-size: 200% 100%;
-  animation: discordPulse 1.4s ease-in-out infinite;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+.splash-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-@keyframes discordPulse {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+.splash-btn {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  outline: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  user-select: none;
+  line-height: 1;
+}
+
+.splash-btn:active {
+  transform: scale(0.96);
+}
+
+.splash-btn-manual {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+}
+
+.splash-btn-manual:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+
+.splash-btn-skip {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.splash-btn-skip:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #f8fafc;
+}
+
+.splash-btn-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  stroke: currentColor;
 }
 
 .intro-splash-logo-wrap {
