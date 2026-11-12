@@ -41,11 +41,11 @@ npm run dev
 Before submitting a Pull Request, ensure all tests and lint checks pass:
 
 ```bash
-# 1. Run Rust test suite
+# 1. Run Rust test suite (31 unit tests)
 cargo test --manifest-path src-tauri/Cargo.toml
 
-# 2. Run Clippy checks
-cargo clippy --manifest-path src-tauri/Cargo.toml --no-deps
+# 2. Run Frontend test suite (49 automated tests)
+npm test
 
 # 3. Check JavaScript syntax
 node --check src/app/main.js

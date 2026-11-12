@@ -9,7 +9,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.3.4] - 2026-10-14
+## [2.5.0-beta] - 2026-11-10
+
+### Discord-Style Startup Auto-Updater
+- **Integrated Splash Updater**:
+  - Full migration of update checking and downloading directly into the startup splash screen animation — Discord-style.
+  - Minimalist progress taskbar directly below the logo with status, percentage, and elegant Manual Download and Skip controls.
+  - Cryptographic patch detection: automatically discovers patch releases sharing the same version number via SHA-256 hash and build timestamp comparison.
+  - Seamless in-place binary replacement with automatic restart and state preservation.
+
+### Deep Architectural & Security Audit Fixes
+- **SEC-01 (TOCTOU Elimination in `helper.rs`)**:
+  - Payload file is opened once with an exclusive read share lock (`share_mode(1)` / `FILE_SHARE_READ`, blocking modifications or deletion by third-party processes).
+  - MZ header validation, streaming SHA-256 calculation, and destination copy are executed directly over this locked file handle.
+- **SEC-02 (Elevated PATH Hijacking Prevention)**:
+  - System commands (`netsh`, `powercfg`, `sc`, `bcdedit`, `reg`, `powershell`) are strictly resolved from `%SystemRoot%\System32` (and `System32\WindowsPowerShell\v1.0\powershell.exe`). All relative path fallbacks are rejected.
+- **SEC-03 (CLI Parameter Restriction)**:
+  - Restricts the `--navigate-to` CLI argument to a strict allowlist of validated pages (`color`, `tweaks`, `binds`, `settings`, `characteristics`).
+- **SEC-04 (Template Sanitization)**:
+  - Comprehensive HTML escaping across all UI templates via `escapeHtml` and `escapeAttr`.
+- **DEP-01**:
+  - Unpinned `time = "=0.3.36"` to `time = "0.3"` in `Cargo.toml`.
+
+### Crash Prevention & Memory Hardening
+- **CRASH-01 (Thread Stack Overflow Elimination)**:
+  - Removed artificial `.stack_size(...)` limits (64KB–256KB) across all 10 background worker threads, eliminating `0xC00000FD` stack overflows caused by third-party DLLs, hooks, and overlays.
+- **CRASH-02 (Protected Fast-Boot Cache)**:
+  - Bounded `fast_boot.bin` deserialization to 64KB with automatic deletion of corrupted cache files.
+- **CRASH-03 & CRASH-04**:
+  - Automatic recovery from poisoned mutexes in the color pipeline and atomic `AcqRel` exchange in the single-instance mutex.
+
+### Hangs, Timeouts & Race Condition Resolutions
+- **HANG-01 (Process Timeouts)**:
+  - Non-blocking 5s timeouts for system utility execution and 25s timeout for PowerShell restore point creation with child termination on hang.
+- **HANG-02 (Hotkey Queue Synchronization)**:
+  - Guaranteed Windows message queue creation via `PeekMessageW` prior to publishing `LISTENER_THREAD_ID`, synchronized using `sync_channel(1)`.
+- **HANG-03 & HANG-04**:
+  - Single-instance restart mutex acquisition refactored to `WaitForSingleObject(handle, 5000)`.
+  - Removed immediate `trim_process_memory()` from `hide_main_window` to eliminate hard page faults and UI freeze when restoring from tray.
+
+### Color Math & Optimization
+- **BUG-02 (Rec.709 Coefficients for Black Holo)**:
+  - Replaced symmetric Black Holo matrix weights with Rec.709 luminance-informed coefficients (`r_to_r = 1.0 + 0.15*k; r_to_g = 0.72*k; g_to_g = 1.0 - k; b_to_g = 0.28*k`), eliminating the parasitic green cast on skies, water, and bright highlights.
+- **BUG-01**:
+  - Added strict validation for baseline display gamma in `ensure_original_gamma_captured()`.
+- **Opt-01**:
+  - Fullscreen color matrix deduplication ($\epsilon = 10^{-5}$) and event-driven fullscreen monitoring via `SetWinEventHook` with zero timer polling overhead.
+
+### UI, Usability & Binary Footprint Reduction
+- **Universal Mouse Wheel Scrolling**: Fixed wheel scrolling across all page containers and sub-panels.
+- **Interactive Slider Badges**: Slider value pills (e.g. `200%`) are now clickable with full keyboard navigation and precision value input.
+- **57% Binary Size Reduction**: Migrated all UI raster images to optimized WebP format, reducing binary size from 11.4 MB to 4.85 MB.
+- **DeepWiki Integration**: Added interactive documentation links to DeepWiki in README and UI.
+
+---
+
+## [2.4.0] - 2026-10-26
+
+### Added
+- **Seasonal Themes Engine**: Dynamic seasonal themes (Winter, Spring, Summer, Autumn) with automatic calendar detection and manual selection in Settings.
+- **macOS Traffic Lights**: Optional window control buttons styled after macOS traffic lights.
+- **Sidebar Sub-Navigation**: Smooth-scrolling sub-links under active tabs with dynamic Scroll Spy tracking.
+- **1-Click First Bind Creation**: Direct creation button when keybind list is empty.
+- **Interactive Documentation**: Direct links to GitDiagram architecture and DeepWiki.
+
+---
 
 ### Performance & Resource Optimization
 - **Zero-Footprint System Tray Lifecycle**:

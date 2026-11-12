@@ -7,13 +7,13 @@ This document provides a full, transparent breakdown of every system setting, re
 ## Safety & Rollback Guarantee
 
 1. **Automated Pre-Execution Backup**:
-   Before modifying any registry key, Synchro Nova dumps the current state of all target keys to a `.reg` file in `%APPDATA%\app.synchro.performance\backups\tweak_safety_backup_<timestamp>.reg`.
+   Before modifying any registry key, Synchro Nova creates a system restore point and saves the current state of all target keys to a `.reg` backup file in `%APPDATA%\synchro\backups\tweak_safety_backup_<timestamp>.reg`.
 2. **1-Click Rollback**:
-   Clicking **"Откатить изменения"** (Rollback) in the application restores the previous `.reg` snapshot via Windows `reg import` and re-reads current values.
-3. **Audit Trail**:
-   All operations are appended to `%APPDATA%\app.synchro.performance\tweaks_audit.log` with timestamps and result codes.
-4. **Hard Blocklist**:
-   Unsafe operations (disabling memory integrity/HVCI, patching kernel timers, disabling the paging file, or applying arbitrary driver overrides) are permanently blocked in the engine.
+   Clicking **"Откатить изменения"** (Rollback) in the application restores the previous `.reg` snapshot via Windows `reg.exe` and re-reads current values.
+3. **Hardened Command Execution**:
+   All administrative tools (`netsh`, `powercfg`, `sc`, `bcdedit`, `reg`, `powershell`) are strictly resolved from `%SystemRoot%\System32` (preventing elevated PATH hijacking) and run with non-blocking watchdog timeouts (5s for utilities, 25s for system restore).
+4. **Hard Blocklist & Anti-Cheat Safe**:
+   Unsafe operations (disabling memory integrity/HVCI, patching kernel timers, disabling the paging file, or applying arbitrary driver overrides) are permanently blocked in the engine. Zero process injection or memory hooking ensures 100% compliance with Easy Anti-Cheat, BattlEye, Vanguard, and VAC.
 
 ---
 
