@@ -48,37 +48,43 @@
 
 ---
 
-### Synchro Nova ne yapar?
+### Bunu neden inşa ettim
 
-Kısacası: oyunlarda renk canlılığını ve kontrastını artıran, düşmanların karanlık ortamlarda öne çıkmasına yardımcı olan hafif ve ücretsiz bir yardımcı programdır.
+CS2 veya Apex'i her başlattığımda, NVIDIA Kontrol Panelini açmam, karanlık köşelerdeki düşmanları tespit etmek için Digital Vibrance'ı açmam ve oyunu kapattıktan sonra masaüstümün ve tarayıcımın retinalarımı yakmaması için manuel olarak tekrar kısmam gerekiyordu.
 
-- **Otomatik Oyun Başına Profiller**: Oyununuz için favori titreşim seviyenizi bir kez ayarlayın. CS2, Valorant veya Apex'i başlattığınızda renkler otomatik olarak devreye girer. Alt sekme yaptığınızda veya çıktığınızda ekran renkleri hemen normale döner, böylece masaüstünüzde veya tarayıcınızda gözleriniz ağrımaz.
-- **Gecikme ve Yanıt Verme**: Girişin hızlı olmasını sağlamak için test edilmiş, güvenli Windows yanıt verme ayarlarını (zamanlayıcı çözünürlüğü, ham fare girişi, ağ paketi işleme) içerir.
-- **Sıfır Kaynak Sürüklemesi**: Uygulamanın tamamı 5 MB'ın altındadır, milisaniyeler içinde açılır ve yalnızca ~2 MB RAM kullanarak tepsinizde durur.
+Synchro bunu kesin olarak çözüyor:
+- **Otomatik renk değiştirme**: Oyununuzu başlatın, renkler devreye girer. Alt-Tab tuşuna bastığınızda veya oyunu kapattığınızda masaüstünüzün renkleri anında normale döner.
+- **Gecikme temizleme**: Windows fare hızlandırmasını ortadan kaldırır, zamanlayıcı çözünürlüğünü optimize eder ve girişin anında hissedilmesi için ağ paketi arabelleğini keser.
+- **Sıfır şişkinlik**: 5 MB'ın altında indirme, milisaniyeler içinde başlar ve ~2 MB RAM kullanarak tepside sessizce kalır.
+
+> [!TIP]
+> **Popüler Oyunlar için Test Edilmiş Titreşim Ön Ayarları:**
+> - **CS2 (Dust II, Mirage, Inferno)**: "%150-165" olarak ayarlandı. Oyuncu modelleri duvarlara ve kasalara karışmayı bırakıyor.
+> - **Valorant**: "%135-140" civarında oldukça fazla. Oyunda zaten düşmanın ana hatlarıyla ilgili önemli noktalar var; daha yüksek değerler yalnızca renkleri soluklaştırır.
+> - **Apex Legends & Rust**: "%160–170", çalılıklardaki ve uzun mesafelerdeki silüetleri tespit etmede harikalar yaratır.
+> - **Çift Monitör**: Titreşim yalnızca oyununuzu çalıştıran birincil monitör için geçerlidir. Discord veya Chrome'daki ikinci ekranınız normal renklerde kalıyor.
 
 ---
 
 ### Nasıl İndirilir ve Çalıştırılır (Başlangıç ​​Kılavuzu)
 
-GitHub'u ilk kez ziyaret ediyorsanız tam olarak yapmanız gerekenler şunlardır:
+GitHub'ta yeniyseniz tüm süreç şu şekildedir:
 
-1. Şuraya gidin: [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) sayfasına gidin (veya sağ kenar çubuğundaki "Yayınlar"ı tıklayın).
-2. En son sürüm altında şunu indirin:
-   - **`synchro.exe`** — **taşınabilir sürüm (önerilir)**. Herhangi bir klasöre indirin ve çalıştırmak için çift tıklayın. Kurulum gerekmez.
-   - Veya **`Synchro.Nova_*_x64-setup.exe`** — Masaüstünü ve başlat menüsü kısayollarını tercih ediyorsanız standart Windows yükleyicisini kullanın.
-3. **Windows mavi bir açılır pencere gösteriyorsa ("Windows PC'nizi korudu" / SmartScreen)**:
-   - Bu, Microsoft'tan yılda 500 ABD doları tutarında pahalı bir kurumsal sertifika satın almayan tüm ücretsiz açık kaynak araçlarda gerçekleşir.
-   - Tıklamak **"Daha fazla bilgi"**, sonra tıklayın **"Yine de koş"**.
-   - Kaynak kodunun tamamı burada GitHub'da %100 açıktır; reklam yazılımı yok, telemetri yok, saçmalık yok.
+1. Bu sayfanın sağ tarafındaki [**Sürümler**](https://github.com/Arean-Max/synchro-nova/releases) seçeneğine tıklayın.
+2. **`synchro.exe`**'yi indirin — taşınabilir sürümdür. Herhangi bir yere kaydedin ve başlatmak için çift tıklayın, kurulum gerektirmez. (Veya Başlat menüsü kısayollarını istiyorsanız 'Synchro.Nova__*_x64-setup.exe'yi alın).
+3. **Windows mavi bir SmartScreen açılır penceresi gösteriyorsa ("Windows PC'nizi korudu")**:
+   - Merak etme. Windows bunu, Microsoft'tan yılda 500 ABD Doları tutarında kurumsal imza satın almayan tüm ücretsiz bağımsız programlar için gösterir.
+   - **"Daha fazla bilgi"** ➔ **"Yine de çalıştır"** seçeneğini tıklayın.
+   - Buradaki proje %100 açık kaynaktır. Sıfır telemetri, sıfır madenciler, sıfır reklam.
 
 ---
 
-### Hızlı Başlangıç ​​(1 Dakikalık Kurulum)
+### Hızlı Başlangıç: 3 Basit Adım
 
-1. Öğle yemeği **Synchro Nova**.
-2. Şuraya git: **"Renk"** sekmesine tıklayın ve titreşim düzeyinizi seçin (ör. `150%` veya `200%`).
-3. Bunu oyununuza bağlayın (uygulama, çalışan oyunları otomatik olarak algılar veya `.exe` manuel olarak).
-4. İşte bu! Tepsiye küçültün ve oynatın.
+1. 'Synchro.exe'yi başlatın.
+2. **"Renk"** sekmesi altında canlılık düzeyinizi seçin (ör. "%150").
+3. Listeden oyununuzu seçin (veya `.exe` dosyasının üzerine gelin).
+Tepsiye küçültün ve oynatın. Bir daha asla manuel olarak ayarlamanıza gerek kalmayacak.
 
 ---
 
@@ -86,22 +92,22 @@ GitHub'u ilk kez ziyaret ediyorsanız tam olarak yapmanız gerekenler şunlardı
 
 #### CS2, Valorant, Rust veya Faceit'te yasaklanacak mıyım?
 **%100 Hayır. Yasaklanma riski sıfırdır.**  
-Synchro Nova **oyun belleğine dokunmaz, DLL'leri işlemlere eklemez ve oyun katmanlarını çizmez**. Masaüstü gammasını yalnızca standart Windows API'leri (DWM ve GPU sürücüleri) aracılığıyla ayarlar; tıpkı NVIDIA veya AMD kontrol panelindeki Digital Vibrance kaydırıcısını sürüklemek gibi. Hile önleme motorları (VAC, Faceit, Vanguard, Easy Anti-Cheat, BattlEye) masaüstü renk değişikliklerini işaretlemez.
+Synchro Nova **oyun RAM'ına dokunmaz, DLL'leri işlemlere eklemez ve katmanlar çizmez**. Gamayı tamamen standart Windows görüntüleme API'leri aracılığıyla ayarlar; tıpkı NVIDIA veya AMD kontrol panelindeki kaydırıcıyı sürüklemek gibi. Hile önleme sistemleri (VAC, Faceit, Vanguard, EAC, BattlEye) bunu bir oyun etkileşimi olarak bile görmüyor.
 
-#### Neden sadece NVIDIA veya AMD Kontrol Panelini kullanmıyorsunuz?
-GPU kontrol panelleri, oyunu başlattığınızda veya kapattığınızda renkleri otomatik olarak değiştirmez. Burada titreşimi artırırsanız, tüm Windows masaüstünüz ve tarayıcınız aşırı doymuş kalacaktır. Synchro bunu otomatik olarak anında gerçekleştirir: oyun akışı = zengin renkler; oyun kapandı = masaüstü renklerini temizle.
+#### Bunu neden NVIDIA / AMD Kontrol Paneli üzerinden kullanmalısınız?
+GPU kontrol panelleri oyun başına ayarları otomatik olarak değiştiremez. Burada titreşimi etkinleştirirseniz, videolara göz atarken veya izlerken masaüstünüzün tamamı aşırı doygun kalır. Synchro bunu anında otomatik olarak gerçekleştirir.
 
-#### Sistem ayarları Windows'umu bozar mı?
-Hayır. Tüm ince ayarlar standart, iyi belgelenmiş Windows parametrelerini kullanır. Synchro Nova, herhangi bir şeyi değiştirmeden önce bir Windows Geri Yükleme Noktası ve değiştirilen kayıt defteri anahtarlarının yedeğini oluşturur. seçeneğine tıklayarak her şeyi istediğiniz zaman Windows varsayılanlarına geri döndürebilirsiniz. **"Geri Alma Değişiklikleri"**.
+#### Windows ayarları güvenli mi?
+Evet. Çekirdek işletim sistemi bütünlüğüne dokunmuyoruz, Windows Defender'ı bozmuyoruz ve sayfa dosyanızı devre dışı bırakmıyoruz. Synchro, herhangi bir ayara dokunmadan önce bir Windows Geri Yükleme Noktası ve bir kayıt defteri yedeği oluşturur. Bir ince ayarı beğenmezseniz **"Değişiklikleri Geri Al"** seçeneğini tıkladığınızda her şey anında geri alınır.
 
 ---
 
 ### Dokümantasyon ve Ayrıntılı İnceleme
 
-Bu sayfayı temiz ve okunması kolay tutmak için kapsamlı teknik belgeler özel wiki'mizde bulunmaktadır:
+Ayrıntılı teknik ayrıntılar için özel kaynaklarımıza göz atın:
 - 📖 [DeepWiki'de Tam İnteraktif Belgeler](https://deepwiki.com/Arean-Max/synchro-nova)
 - 🗺️ [GitDiagram'da Mimari Diyagram](https://gitdiagram.com/arean-max/synchro-nova)
-- 📋 [Eksiksiz Düzenlemeler ve Kayıt Defteri Referansı (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
+- 📋 [Eksiksiz Düzenlemeler ve Kayıt Defteri Referansı (TWEAKS_REFERENCE.tr.md)](docs/TWEAKS_REFERENCE.tr.md)
 
 ---
 
@@ -111,8 +117,8 @@ Bu sayfayı temiz ve okunması kolay tutmak için kapsamlı teknik belgeler öze
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
-npm run dev       # run in development mode
-npm run build     # build production release exe
+npm run dev       # geliştirme modu
+npm run build     # derlemeyi yayınla
 ```
 
 ---
@@ -126,4 +132,4 @@ npm run build     # build production release exe
 
 ### Lisans
 
-Altında dağıtılır [MIT License](LICENSE).
+[MIT](LICENSE) — kullanmak, değiştirmek ve paylaşmak ücretsizdir.

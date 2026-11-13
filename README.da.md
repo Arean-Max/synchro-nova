@@ -48,37 +48,43 @@
 
 ---
 
-### Hvad laver Synchro Nova?
+### Hvorfor jeg byggede dette
 
-Kort sagt: det er et let, gratis værktøj, der booster farves liv og kontrast i spil, og hjælper fjender med at skille sig ud i mørke omgivelser.
+Hver gang jeg lancerede CS2 eller Apex, var jeg nødt til at åbne NVIDIA Kontrolpanel, skrue Digital Vibrance op for at få øje på fjender i mørke hjørner og derefter manuelt ringe ned igen efter at have lukket spillet, så mit skrivebord og min browser ikke brændte mine nethinder.
 
-- **Automatiske Per-Game Profiler**: Indstil dit yndlingsniveau for dit spil én gang. Når du starter CS2, Valorant eller Apex, starter farverne automatisk. Når du alt-tab eller afslutter, vender dine skærmfarver straks tilbage til normale, så dine øjne ikke gør ondt på skrivebordet eller i din browser.
-- **Latens og reaktionsevne**: Inkluderer testede, sikre Windows-responstweaks (timeropløsning, rå museindgang, netværkspakkehåndtering) for at få input til at føles hurtig.
-- **Nul ressourcetræk**: Hele appen er under 5 MB, åbner på millisekunder og sidder i din bakke med kun ~2 MB RAM.
+Synchro løser dette én gang for alle:
+- **Automatisk farveskift**: Start dit spil, farverne starter. Alt-Tab eller luk spillet, dine skrivebordsfarver vender straks tilbage til det normale.
+- **Latency oprydning**: Dræber Windows-musacceleration, optimerer timeropløsning og trimmer netværkspakkebuffer, så input føles øjeblikkeligt.
+- **Nul oppustethed**: Under 5 MB download, starter på millisekunder og sidder stille i bakken ved hjælp af ~2 MB RAM.
+
+> [!TIP]
+> **Testede Vibrance Presets for populære spil:**
+> - **CS2 (Dust II, Mirage, Inferno)**: Indstil til `150–165 %`. Spillermodeller holder op med at blande sig ind i vægge og kasser.
+> - **Valorant**: Omkring `135-140%` er rigeligt. Spillet har allerede fjendens højdepunkter; højere værdier udvasker bare farver.
+> - **Apex Legends & Rust**: `160–170%` gør underværker til at se silhuetter i buske og på lange afstande.
+> - **Dobbelte skærme**: Vibrance gælder kun for den primære skærm, der kører dit spil. Din anden skærm med Discord eller Chrome forbliver i normale farver.
 
 ---
 
 ### Sådan downloader og kører du (begyndervejledning)
 
-Hvis du besøger GitHub for første gang, er her præcis, hvad du skal gøre:
+Hvis du er ny til GitHub, her er hele processen:
 
-1. Gå over til [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) side (eller klik på "Udgivelser" i højre sidebjælke).
-2. Under den seneste udgivelse skal du downloade:
-   - **`synchro.exe`** — **bærbar version (anbefales)**. Bare download det til en hvilken som helst mappe og dobbeltklik for at køre. Ingen opsætning nødvendig.
-   - Eller **`Synchro.Nova_*_x64-setup.exe`** — standard Windows-installationsprogram, hvis du foretrækker skrivebords- og startmenugenveje.
-3. **Hvis Windows viser en blå popup ("Windows beskyttede din pc" / SmartScreen)**:
-   - Dette sker med alle gratis open source-værktøjer, der ikke køber et dyrt virksomhedscertifikat på $500/år fra Microsoft.
-   - Klik **"Mere info"**, klik derefter **"Løb alligevel"**.
-   - Hele kildekoden er 100 % åben lige her på GitHub - ingen adware, ingen telemetri, ingen nonsens.
+1. Klik på [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) til højre på denne side.
+2. Download **`synchro.exe`** — det er den bærbare version. Gem det hvor som helst, og dobbeltklik for at starte, ingen installation påkrævet. (Eller tag 'Synchro.Nova_*_x64-setup.exe', hvis du vil have genveje til Start-menuen).
+3. **Hvis Windows viser en blå SmartScreen popup ("Windows beskyttede din pc")**:
+   - Bare rolig. Windows viser dette for ethvert gratis indie-program, der ikke køber en virksomhedssignatur på $500/år fra Microsoft.
+   - Klik på **"Mere info"** ➔ **"Kør alligevel"**.
+   - Projektet er 100% open source lige her. Nul telemetri, nul minearbejdere, nul annoncer.
 
 ---
 
-### Hurtig start (1 minuts opsætning)
+### Hurtig start: 3 enkle trin
 
-1. Lancering **Synchro Nova**.
-2. Gå til **"Farve"** fanen og vælg dit vibreringsniveau (f.eks. `150%` eller `200%`).
-3. Link det til dit spil (appen registrerer automatisk kørende spil, eller du kan vælge `.exe` manuelt).
-4. Det er det! Minimer til bakken og leg.
+1. Start `synchro.exe`.
+2. Under fanen **"Farve"** skal du vælge dit livniveau (f.eks. "150 %)".
+3. Vælg dit spil fra listen (eller peg på dets `.exe`-fil).
+Minimer til bakke og leg. Du behøver aldrig at justere det manuelt igen.
 
 ---
 
@@ -86,22 +92,22 @@ Hvis du besøger GitHub for første gang, er her præcis, hvad du skal gøre:
 
 #### Bliver jeg banned i CS2, Valorant, Rust eller Faceit?
 **100 % Nej. Banrisiko er nul.**  
-Synchro Nova **rører ikke spilhukommelsen, injicerer ikke DLL'er i processer og tegner ikke spiloverlejringer**. Den justerer kun desktop-gamma via standard Windows API'er (DWM- og GPU-drivere) - præcis som at trække skyderen Digital Vibrance i NVIDIA- eller AMD-kontrolpanelet. Anti-cheat-motorer (VAC, Faceit, Vanguard, Easy Anti-Cheat, BattlEye) markerer ikke skrivebordsfarveændringer.
+Synchro Nova **rører ikke spil-RAM, injicerer ikke DLL'er i processer og tegner ikke overlejringer**. Den justerer gamma udelukkende gennem standard Windows-skærm-API'er - præcis som at trække skyderen i NVIDIA- eller AMD-kontrolpanelet. Anti-cheat-systemer (VAC, Faceit, Vanguard, EAC, BattlEye) ser det ikke engang som en spilinteraktion.
 
-#### Hvorfor ikke bare bruge NVIDIA- eller AMD-kontrolpanelet?
-GPU-kontrolpaneler skifter ikke automatisk farver, når du starter eller lukker et spil. Hvis du skruer op for liv der, vil hele dit Windows-skrivebord og din browser forblive overmættet. Synchro håndterer dette automatisk i farten: spil kører = rige farver; spil lukket = rene skrivebordsfarver.
+#### Hvorfor bruge dette over NVIDIA / AMD Kontrolpanel?
+GPU-kontrolpaneler kan ikke automatisk skifte indstillinger pr. spil. Hvis du skruer op for liv der, forbliver hele dit skrivebord overmættet, mens du gennemser eller ser videoer. Synchro håndterer dette automatisk i farten.
 
-#### Vil systemjusteringerne ødelægge mit Windows?
-Nej. Alle tweaks bruger standard, veldokumenterede Windows-parametre. Før du ændrer noget, opretter Synchro Nova et Windows-gendannelsespunkt og en sikkerhedskopi af ændrede registreringsnøgler. Du kan til enhver tid vende alt tilbage til Windows-standarder ved at klikke **"Tilbageføringsændringer"**.
+#### Er Windows tweaks sikre?
+Ja. Vi berører ikke kerne OS-integritet, vi bryder ikke Windows Defender, og vi deaktiverer ikke din sidefil. Inden du trykker på en indstilling, opretter Synchro et Windows-gendannelsespunkt og en sikkerhedskopi af registreringsdatabasen. Hvis du ikke kan lide en tweak, vil et klik på **"Rollback Changes"** vende alt tilbage med det samme.
 
 ---
 
 ### Dokumentation & Deep Dive
 
-For at holde denne side ren og let at læse, findes omfattende teknisk dokumentation på vores dedikerede wiki:
+For dybdegående tekniske detaljer, tjek vores dedikerede ressourcer:
 - 📖 [Fuld interaktiv dokumentation på DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
 - 🗺️ [Arkitekturdiagram på GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
-- 📋 [Komplet Tweaks & Registry Reference (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
+- 📋 [Komplet Tweaks & Registry Reference (TWEAKS_REFERENCE.da.md)](docs/TWEAKS_REFERENCE.da.md)
 
 ---
 
@@ -111,8 +117,8 @@ For at holde denne side ren og let at læse, findes omfattende teknisk dokumenta
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
-npm run dev       # run in development mode
-npm run build     # build production release exe
+npm run dev       # udviklingstilstand
+npm run build     # release build
 ```
 
 ---
@@ -126,4 +132,4 @@ npm run build     # build production release exe
 
 ### Licens
 
-Fordelt under [MIT License](LICENSE).
+[MIT](LICENSE) — gratis at bruge, ændre og dele.

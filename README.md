@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <a href="https://github.com/Arean-Max/synchro-nova">
     <picture>
       <source srcset="docs/logo-dark.png" media="(prefers-color-scheme: dark)">
@@ -50,37 +50,43 @@
 
 ---
 
-### What does Synchro Nova do?
+### Why I built this
 
-In short: it's a lightweight, free utility that boosts color vibrancy and contrast in games, helping enemies stand out against dark environments.
+Every time I launched CS2 or Apex, I had to open NVIDIA Control Panel, crank Digital Vibrance up to spot enemies in dark corners, and then manually dial it back down after closing the game so my desktop and browser wouldn't burn my retinas.
 
-- **Automatic Per-Game Profiles**: Set your favorite vibrance level for your game once. When you launch CS2, Valorant, or Apex, the colors kick in automatically. When you alt-tab or quit, your display colors immediately return to normal so your eyes don't hurt on the desktop or in your browser.
-- **Latency & Responsiveness**: Includes tested, safe Windows responsiveness tweaks (timer resolution, raw mouse input, network packet handling) to make input feel snappy.
-- **Zero Resource Drag**: The entire app is under 5 MB, opens in milliseconds, and sits in your tray using just ~2 MB of RAM.
+Synchro solves this once and for all:
+- **Automatic color switching**: Launch your game, colors kick in. Alt-Tab or close the game, your desktop colors immediately snap back to normal.
+- **Latency cleanup**: Kills Windows mouse acceleration, optimizes timer resolution, and trims network packet buffering so input feels instant.
+- **Zero bloat**: Under 5 MB download, starts in milliseconds, and sits quietly in the tray using ~2 MB of RAM.
+
+> [!TIP]
+> **Tested Vibrance Presets for Popular Games:**
+> - **CS2 (Dust II, Mirage, Inferno)**: Set to `150–165%`. Player models stop blending into walls and crates.
+> - **Valorant**: Around `135–140%` is plenty. The game already has enemy outline highlights; higher values just wash out colors.
+> - **Apex Legends & Rust**: `160–170%` works wonders for spotting silhouettes in bushes and at long distances.
+> - **Dual Monitors**: Vibrance only applies to the primary monitor running your game. Your second screen with Discord or Chrome stays at normal colors.
 
 ---
 
 ### How to Download & Run (Beginner's Guide)
 
-If you're visiting GitHub for the first time, here is exactly what to do:
+If you're new to GitHub, here is the whole process:
 
-1. Head over to the [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) page (or click "Releases" on the right sidebar).
-2. Under the latest release, download:
-   - **`synchro.exe`** — **portable version (recommended)**. Just download it to any folder and double-click to run. No setup needed.
-   - Or **`Synchro.Nova_*_x64-setup.exe`** — standard Windows installer if you prefer desktop and start menu shortcuts.
-3. **If Windows shows a blue popup ("Windows protected your PC" / SmartScreen)**:
-   - This happens with all free open-source tools that don't buy an expensive $500/year enterprise certificate from Microsoft.
-   - Click **"More info"**, then click **"Run anyway"**.
-   - The entire source code is 100% open right here on GitHub — no adware, no telemetry, no nonsense.
+1. Click on [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) on the right side of this page.
+2. Download **`synchro.exe`** — it's the portable version. Save it anywhere and double-click to launch, no installer required. (Or grab `Synchro.Nova_*_x64-setup.exe` if you want Start menu shortcuts).
+3. **If Windows shows a blue SmartScreen popup ("Windows protected your PC")**:
+   - Don't worry. Windows shows this for any free indie program that doesn't buy a $500/year corporate signature from Microsoft.
+   - Click **"More info"** ➔ **"Run anyway"**.
+   - The project is 100% open source right here. Zero telemetry, zero miners, zero ads.
 
 ---
 
-### Quick Start (1-Minute Setup)
+### Quick Start: 3 Simple Steps
 
-1. Launch **Synchro Nova**.
-2. Go to the **"Color"** tab and pick your vibrance level (e.g. `150%` or `200%`).
-3. Link it to your game (the app auto-detects running games, or you can pick the `.exe` manually).
-4. That's it! Minimize to the tray and play.
+1. Launch `synchro.exe`.
+2. Under the **"Color"** tab, pick your vibrance level (e.g. `150%`).
+3. Select your game from the list (or point to its `.exe` file).
+Minimize to tray and play. You never have to adjust it manually again.
 
 ---
 
@@ -88,22 +94,22 @@ If you're visiting GitHub for the first time, here is exactly what to do:
 
 #### Will I get banned in CS2, Valorant, Rust, or Faceit?
 **100% No. Ban risk is zero.**  
-Synchro Nova **does not touch game memory, does not inject DLLs into processes, and does not draw game overlays**. It only adjusts desktop gamma via standard Windows APIs (DWM and GPU drivers) — exactly like dragging the Digital Vibrance slider in the NVIDIA or AMD control panel. Anti-cheat engines (VAC, Faceit, Vanguard, Easy Anti-Cheat, BattlEye) do not flag desktop color changes.
+Synchro Nova **does not touch game RAM, does not inject DLLs into processes, and does not draw overlays**. It adjusts gamma purely through standard Windows display APIs — exactly like dragging the slider in the NVIDIA or AMD control panel. Anti-cheat systems (VAC, Faceit, Vanguard, EAC, BattlEye) don't even see it as a game interaction.
 
-#### Why not just use the NVIDIA or AMD Control Panel?
-GPU control panels don't automatically toggle colors when you launch or close a game. If you crank up vibrance there, your entire Windows desktop and browser will stay oversaturated. Synchro handles this automatically on the fly: game running = rich colors; game closed = clean desktop colors.
+#### Why use this over the NVIDIA / AMD Control Panel?
+GPU control panels cannot automatically toggle settings per game. If you crank vibrance there, your entire desktop stays oversaturated while browsing or watching videos. Synchro handles this automatically on the fly.
 
-#### Will the system tweaks mess up my Windows?
-No. All tweaks use standard, well-documented Windows parameters. Before modifying anything, Synchro Nova creates a Windows Restore Point and a backup of modified registry keys. You can revert everything back to Windows defaults anytime by clicking **"Rollback Changes"**.
+#### Are the Windows tweaks safe?
+Yes. We don't touch core OS integrity, we don't break Windows Defender, and we don't disable your pagefile. Before touching any setting, Synchro creates a Windows Restore Point and a registry backup. If you don't like a tweak, clicking **"Rollback Changes"** reverts everything back immediately.
 
 ---
 
 ### Documentation & Deep Dive
 
-To keep this page clean and easy to read, extensive technical documentation lives on our dedicated wiki:
+For in-depth technical details, check our dedicated resources:
 - 📖 [Full Interactive Documentation on DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
 - 🗺️ [Architecture Diagram on GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
-- 📋 [Complete Tweaks & Registry Reference (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
+- 📋 [Complete Tweaks & Registry Reference (TWEAKS_REFERENCE.en.md)](docs/TWEAKS_REFERENCE.en.md)
 
 ---
 
@@ -113,8 +119,8 @@ To keep this page clean and easy to read, extensive technical documentation live
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
-npm run dev       # run in development mode
-npm run build     # build production release exe
+npm run dev       # development mode
+npm run build     # release build
 ```
 
 ---
@@ -128,4 +134,4 @@ npm run build     # build production release exe
 
 ### License
 
-Distributed under the [MIT License](LICENSE).
+[MIT](LICENSE) — free to use, modify, and share.

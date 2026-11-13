@@ -48,37 +48,43 @@
 
 ---
 
-### Synchro Nova làm gì?
+### Tại sao tôi xây dựng cái này
 
-Tóm lại: đây là một tiện ích nhẹ, miễn phí giúp tăng cường độ sống động và độ tương phản của màu sắc trong trò chơi, giúp kẻ thù nổi bật trong môi trường tối.
+Mỗi lần tôi khởi chạy CS2 hoặc Apex, tôi phải mở Bảng điều khiển NVIDIA, bật Digital Vibrance để phát hiện kẻ thù trong góc tối, sau đó quay số lại theo cách thủ công sau khi đóng trò chơi để máy tính để bàn và trình duyệt không làm cháy võng mạc của tôi.
 
-- **Hồ sơ tự động cho mỗi trò chơi**: Đặt mức độ rung yêu thích cho trò chơi của bạn một lần. Khi bạn khởi chạy CS2, Valorant hoặc Apex, màu sắc sẽ tự động hiển thị. Khi bạn nhấn Alt hoặc thoát, màu sắc hiển thị của bạn sẽ ngay lập tức trở lại bình thường để bạn không bị đau mắt khi sử dụng máy tính để bàn hoặc trong trình duyệt.
-- **Độ trễ & phản hồi**: Bao gồm các chỉnh sửa về khả năng phản hồi an toàn và đã được thử nghiệm của Windows (độ phân giải bộ hẹn giờ, đầu vào chuột thô, xử lý gói mạng) để làm cho đầu vào trở nên linh hoạt.
-- **Không kéo tài nguyên**: Toàn bộ ứng dụng có dung lượng dưới 5 MB, mở trong một phần nghìn giây và nằm trong khay của bạn chỉ sử dụng ~2 MB RAM.
+Synchro giải quyết vấn đề này một lần và mãi mãi:
+- **Tự động chuyển màu**: Khởi chạy trò chơi của bạn, màu sắc bắt đầu xuất hiện. Alt-Tab hoặc đóng trò chơi, màu sắc trên màn hình của bạn ngay lập tức trở lại bình thường.
+- **Dọn dẹp độ trễ**: Loại bỏ khả năng tăng tốc chuột của Windows, tối ưu hóa độ phân giải của bộ hẹn giờ và cắt bớt bộ đệm gói mạng để đầu vào có cảm giác tức thì.
+- **Không đầy hơi**: Tải xuống dưới 5 MB, bắt đầu sau một phần nghìn giây và nằm yên lặng trong khay sử dụng ~ 2 MB RAM.
+
+> [!TIP]
+> **Đã thử nghiệm cài đặt trước độ rung cho các trò chơi phổ biến:**
+> - **CS2 (Dust II, Mirage, Inferno)**: Đặt thành `150–165%`. Mô hình người chơi ngừng hòa vào tường và thùng.
+> - **Có giá trị**: Khoảng `135–140%` là nhiều. Trò chơi đã có những điểm nổi bật về phác thảo kẻ thù; giá trị cao hơn chỉ làm mất đi màu sắc.
+> - **Apex Legends & Rust**: `160–170%` có tác dụng kỳ diệu trong việc phát hiện bóng trong bụi rậm và ở khoảng cách xa.
+> - **Màn hình kép**: Độ rung chỉ áp dụng cho màn hình chính đang chạy trò chơi của bạn. Màn hình thứ hai của bạn với Discord hoặc Chrome vẫn giữ nguyên màu sắc bình thường.
 
 ---
 
 ### Cách tải xuống và chạy (Hướng dẫn cho người mới bắt đầu)
 
-Nếu bạn truy cập GitHub lần đầu tiên, đây chính xác là những việc cần làm:
+Nếu bạn chưa quen với GitHub, đây là toàn bộ quá trình:
 
-1. Đi tới [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) trang (hoặc nhấp vào "Bản phát hành" trên thanh bên phải).
-2. Theo bản phát hành mới nhất, hãy tải xuống:
-   - **`synchro.exe`** — **phiên bản di động (được khuyến nghị)**. Chỉ cần tải nó xuống bất kỳ thư mục nào và nhấp đúp để chạy. Không cần thiết lập.
-   - Hoặc **`Synchro.Nova_*_x64-setup.exe`** — trình cài đặt Windows tiêu chuẩn nếu bạn thích các phím tắt trên màn hình nền và menu bắt đầu.
-3. **Nếu Windows hiển thị cửa sổ bật lên màu xanh lam ("Windows protected your PC" / SmartScreen)**:
-   - Điều này xảy ra với tất cả các công cụ nguồn mở miễn phí không mua chứng chỉ doanh nghiệp đắt tiền 500 USD/năm từ Microsoft.
-   - nhấp chuột **"Thêm thông tin"**, sau đó nhấp vào **"Vẫn chạy"**.
-   - Toàn bộ mã nguồn được mở 100% ngay tại đây trên GitHub - không có phần mềm quảng cáo, không đo từ xa, không vô nghĩa.
+1. Nhấp vào [**Release**](https://github.com/Arean-Max/synchro-nova/releases) ở bên phải trang này.
+2. Tải xuống **`synchro.exe`** — đây là phiên bản di động. Lưu nó ở bất cứ đâu và nhấp đúp để khởi chạy, không cần cài đặt. (Hoặc lấy `Synchro.Nova_*_x64-setup.exe` nếu bạn muốn có các phím tắt menu Bắt đầu).
+3. **Nếu Windows hiển thị cửa sổ bật lên SmartScreen màu xanh ("Windows bảo vệ PC của bạn")**:
+   - Đừng lo lắng. Windows hiển thị điều này cho bất kỳ chương trình độc lập miễn phí nào không mua chữ ký công ty trị giá 500 USD/năm từ Microsoft.
+   - Nhấp vào **"Thông tin thêm"** ➔ **"Vẫn chạy"**.
+   - Dự án là nguồn mở 100% ngay tại đây. Không đo từ xa, không khai thác, không quảng cáo.
 
 ---
 
-### Bắt đầu nhanh (Thiết lập 1 phút)
+### Bắt đầu nhanh: 3 bước đơn giản
 
-1. Phóng **Synchro Nova**.
-2. Đi tới **"Màu sắc"** tab và chọn mức độ rung của bạn (ví dụ: `150%` hoặc `200%`).
-3. Liên kết nó với trò chơi của bạn (ứng dụng tự động phát hiện các trò chơi đang chạy hoặc bạn có thể chọn `.exe` bằng tay).
-4. Thế thôi! Thu nhỏ vào khay và chơi.
+1. Khởi chạy `synchro.exe`.
+2. Trong tab **"Màu"**, chọn mức độ rung của bạn (ví dụ: `150%`).
+3. Chọn trò chơi của bạn từ danh sách (hoặc trỏ tới tệp `.exe` của nó).
+Thu nhỏ vào khay và chơi. Bạn không bao giờ phải điều chỉnh nó bằng tay nữa.
 
 ---
 
@@ -86,22 +92,22 @@ Nếu bạn truy cập GitHub lần đầu tiên, đây chính xác là những 
 
 #### Tôi có bị cấm chơi CS2, Valorant, Rust hay Faceit không?
 **100% Không. Rủi ro cấm là bằng không.**  
-Synchro Nova **không chạm vào bộ nhớ trò chơi, không đưa DLL vào các quy trình và không vẽ lớp phủ trò chơi**. Nó chỉ điều chỉnh gamma của máy tính để bàn thông qua API Windows tiêu chuẩn (trình điều khiển DWM và GPU) - giống hệt như kéo thanh trượt Digital Vibrance trong bảng điều khiển NVIDIA hoặc AMD. Các công cụ chống gian lận (VAC, Faceit, Vanguard, Easy Anti-Cheat, BattlEye) không gắn cờ các thay đổi về màu sắc của màn hình.
+Synchro Nova **không chạm vào RAM trò chơi, không đưa DLL vào các tiến trình và không vẽ lớp phủ**. Nó điều chỉnh gamma hoàn toàn thông qua các API hiển thị tiêu chuẩn của Windows — giống hệt như việc kéo thanh trượt trong bảng điều khiển NVIDIA hoặc AMD. Các hệ thống chống gian lận (VAC, Faceit, Vanguard, EAC, BattlEye) thậm chí không coi đó là sự tương tác trong trò chơi.
 
-#### Tại sao không chỉ sử dụng Bảng điều khiển NVIDIA hoặc AMD?
-Bảng điều khiển GPU không tự động chuyển đổi màu sắc khi bạn khởi chạy hoặc đóng trò chơi. Nếu bạn tăng độ rung ở đó, toàn bộ máy tính để bàn và trình duyệt Windows của bạn sẽ ở trạng thái quá bão hòa. Synchro tự động xử lý việc này một cách nhanh chóng: trò chơi đang chạy = màu sắc phong phú; trò chơi đã đóng = màu màn hình sạch.
+#### Tại sao nên sử dụng tính năng này trên Bảng điều khiển NVIDIA / AMD?
+Bảng điều khiển GPU không thể tự động chuyển đổi cài đặt cho mỗi trò chơi. Nếu bạn chỉnh độ rung ở đó, toàn bộ màn hình của bạn sẽ bị bão hòa trong khi duyệt hoặc xem video. Synchro tự động xử lý việc này một cách nhanh chóng.
 
-#### Các chỉnh sửa hệ thống có làm rối tung Windows của tôi không?
-Không. Tất cả các chỉnh sửa đều sử dụng các thông số Windows tiêu chuẩn, được ghi chép đầy đủ. Trước khi sửa đổi bất cứ điều gì, Synchro Nova tạo Điểm khôi phục Windows và bản sao lưu các khóa đăng ký đã sửa đổi. Bạn có thể hoàn nguyên mọi thứ về mặc định của Windows bất kỳ lúc nào bằng cách nhấp vào **"Hoàn nguyên các thay đổi"**.
+#### Các tinh chỉnh Windows có an toàn không?
+Đúng. Chúng tôi không chạm đến tính toàn vẹn cốt lõi của hệ điều hành, chúng tôi không phá vỡ Windows Defender và chúng tôi không vô hiệu hóa tệp trang của bạn. Trước khi chạm vào bất kỳ cài đặt nào, Synchro sẽ tạo Điểm khôi phục Windows và bản sao lưu sổ đăng ký. Nếu bạn không thích một chỉnh sửa nào, hãy nhấp vào **"Phục hồi các thay đổi"** để hoàn nguyên mọi thứ ngay lập tức.
 
 ---
 
 ### Tài liệu & Tìm hiểu sâu
 
-Để giữ cho trang này sạch sẽ và dễ đọc, tài liệu kỹ thuật mở rộng có trên wiki chuyên dụng của chúng tôi:
+Để biết chi tiết kỹ thuật chuyên sâu, hãy kiểm tra các tài nguyên chuyên dụng của chúng tôi:
 - 📖 [Tài liệu tương tác đầy đủ trên DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
 - 🗺️ [Sơ đồ kiến ​​trúc trên GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
-- 📋 [Hoàn thành các chỉnh sửa & tham khảo sổ đăng ký (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
+- 📋 [Hoàn thành các chỉnh sửa & tham khảo sổ đăng ký (TWEAKS_REFERENCE.vi.md)](docs/TWEAKS_REFERENCE.vi.md)
 
 ---
 
@@ -111,8 +117,8 @@ Không. Tất cả các chỉnh sửa đều sử dụng các thông số Window
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
-npm run dev       # run in development mode
-npm run build     # build production release exe
+npm run dev       #chế độ phát triển
+npm run build     # bản phát hành
 ```
 
 ---
@@ -126,4 +132,4 @@ npm run build     # build production release exe
 
 ### Giấy phép
 
-Phân phối dưới [MIT License](LICENSE).
+[MIT](LICENSE) — tự do sử dụng, sửa đổi và chia sẻ.

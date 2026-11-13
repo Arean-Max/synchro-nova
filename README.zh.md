@@ -48,37 +48,43 @@
 
 ---
 
-### 同步新星有什么作用？
+### 为什么我建造这个
 
-简而言之：它是一款轻量级的免费实用程序，可增强游戏中的色彩活力和对比度，帮助敌人在黑暗环境中脱颖而出。
+每次启动 CS2 或 Apex 时，我都必须打开 NVIDIA 控制面板，调高数字振动以发现黑暗角落中的敌人，然后在关闭游戏后手动将其调低，这样我的桌面和浏览器就不会灼伤我的视网膜。
 
-- **自动每场比赛配置文件**: 为您的游戏设置一次您最喜欢的振动级别。当您启动 CS2、Valorant 或 Apex 时，颜色会自动生效。当您按 alt-tab 或退出时，显示颜色会立即恢复正常，这样您的眼睛就不会在桌面或浏览器中受到伤害。
-- **延迟和响应能力**: 包括经过测试的、安全的 Windows 响应能力调整（计时器分辨率、原始鼠标输入、网络数据包处理），使输入感觉敏捷。
-- **零资源拖累**: 整个应用程序不到 5 MB，可在几毫秒内打开，并且仅使用约 2 MB 的 RAM 即可放置在您的托盘中。
+Synchro 一劳永逸地解决了这个问题：
+- **自动颜色切换**: 启动你的游戏，颜色开始生效。Alt-Tab 或关闭游戏，你的桌面颜色立即恢复正常。
+- **延迟清理**: 终止 Windows 鼠标加速、优化计时器分辨率并修剪网络数据包缓冲，使输入感觉即时。
+- **零膨胀**: 下载量低于 5 MB，在几毫秒内启动，并使用约 2 MB 的 RAM 安静地存放在托盘中。
+
+> [!TIP]
+> **经过测试的流行游戏 Vibrance 预设：**
+> - **CS2（尘埃 II、幻影、地狱）**：设置为“150–165%”。玩家模型不再融入墙壁和板条箱。
+> - **Valorant**：大约“135-140%”就足够了。游戏已有敌人轮廓亮点；较高的值只会洗掉颜色。
+> - **Apex Legends 和 Rust**：“160–170%”对于在灌木丛中和远距离发现剪影具有奇效。
+> - **双显示器**：Vibrance 仅适用于运行游戏的主显示器。您的第二个屏幕与 Discord 或 Chrome 保持正常颜色。
 
 ---
 
 ### 如何下载和运行（初学者指南）
 
-如果您是第一次访问 GitHub，请执行以下操作：
+如果您是 GitHub 的新手，以下是整个过程：
 
-1. 前往 [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) 页面（或单击右侧边栏上的“发布”）。
-2. 在最新版本下，下载：
-   - **`synchro.exe`** — **便携版（推荐）**. 只需将其下载到任意文件夹并双击即可运行。无需设置。
-   - 或者 **`Synchro.Nova_*_x64-setup.exe`** — 如果您喜欢桌面和开始菜单快捷方式，则可以使用标准 Windows 安装程序。
-3. **如果 Windows 显示蓝色弹出窗口（“Windows 保护了您的电脑”/SmartScreen）**:
-   - 所有免费的开源工具都会发生这种情况，而无需从 Microsoft 购买昂贵的每年 500 美元的企业证书。
-   - 点击 **"更多信息"**, 然后单击 **"无论如何都要跑"**.
-   - 整个源代码在 GitHub 上 100% 开放——没有广告软件，没有遥测，没有废话。
+1. 单击此页面右侧的 [**Releases**](https://github.com/Arean-Max/synchro-nova/releases)。
+2. 下载 **`synchro.exe`** — 它是便携式版本。将其保存在任何地方并双击启动，无需安装程序。 （或者如果您想要开始菜单快捷方式，请获取“Synchro.Nova_*_x64-setup.exe”）。
+3. **如果 Windows 显示蓝色 SmartScreen 弹出窗口（“Windows 保护了您的电脑”）**:
+   - 不用担心。 Windows 为任何不从 Microsoft 购买每年 500 美元的公司签名的免费独立程序显示了这一点。
+   - 单击 **“更多信息”** ➔ **“仍然运行”**。
+   - 该项目在这里是 100% 开源的。零遥测、零矿工、零广告。
 
 ---
 
-### 快速启动（1 分钟设置）
+### 快速入门：3 个简单步骤
 
-1. 发射 **Synchro Nova**.
-2. 前往 **"颜色"** 选项卡并选择您的振动级别（例如 `150%` 或者 `200%`).
-3. 将其链接到您的游戏（应用程序会自动检测正在运行的游戏，或者您可以选择 `.exe` 手动）。
-4. 就是这样！最小化到托盘并播放。
+1. 启动“synchro.exe”。
+2. 在 **“颜色”** 选项卡下，选择您的振动级别（例如“150%”）。
+3. 从列表中选择您的游戏（或指向其“.exe”文件）。
+最小化到托盘并播放。您再也不需要手动调整它。
 
 ---
 
@@ -86,22 +92,22 @@
 
 #### 我会在 CS2、Valorant、Rust 或 Faceit 中被禁止吗？
 **100% 不会。禁令风险为零。**  
-Synchro Nova **不接触游戏内存，不将 DLL 注入进程，也不绘制游戏覆盖图**. 它仅通过标准 Windows API（DWM 和 GPU 驱动程序）调整桌面伽玛 — 就像拖动 NVIDIA 或 AMD 控制面板中的 Digital Vibrance 滑块一样。反作弊引擎（VAC、Faceit、Vanguard、Easy Anti-Cheat、BattlEye）不会标记桌面颜色变化。
+Synchro Nova **不接触游戏 RAM，不将 DLL 注入进程，也不绘制覆盖层**. 它纯粹通过标准 Windows 显示 API 来调整伽玛值，就像拖动 NVIDIA 或 AMD 控制面板中的滑块一样。反作弊系统（VAC、Faceit、Vanguard、EAC、BattlEye）甚至不将其视为游戏交互。
 
-#### 为什么不直接使用 NVIDIA 或 AMD 控制面板？
-当您启动或关闭游戏时，GPU 控制面板不会自动切换颜色。如果您在那里增加活力，您的整个 Windows 桌面和浏览器将保持过度饱和状态。 Synchro 会动态自动处理此问题：游戏运行 = 丰富的色彩；游戏关闭=干净的桌面颜色。
+#### 为什么要在 NVIDIA/AMD 控制面板上使用它？
+GPU 控制面板无法自动切换每个游戏的设置。如果您在那里开启振动，您的整个桌面在浏览或观看视频时就会保持过度饱和。 Synchro 会动态自动处理此问题。
 
-#### 系统调整会扰乱我的 Windows 吗？
-不会。所有调整都使用标准的、有据可查的 Windows 参数。在修改任何内容之前，Synchro Nova 会创建一个 Windows 还原点和修改后的注册表项的备份。您可以随时通过单击将所有内容恢复为 Windows 默认设置 **"回滚更改"**.
+#### Windows 调整安全吗？
+是的。我们不会触及核心操作系统的完整性，不会破坏 Windows Defender，也不会禁用您的页面文件。在进行任何设置之前，Synchro 会创建 Windows 还原点和注册表备份。如果您不喜欢调整，请单击 **“回滚更改”** 立即恢复所有内容。
 
 ---
 
 ### 文档和深入研究
 
-为了保持此页面干净且易于阅读，我们的专用 wiki 上有大量的技术文档：
+有关深入的技术细节，请查看我们的专用资源：
 - 📖 [DeepWiki 上的完整交互式文档](https://deepwiki.com/Arean-Max/synchro-nova)
 - 🗺️ [GitDiagram 上的架构图](https://gitdiagram.com/arean-max/synchro-nova)
-- 📋 [完整的调整和注册表参考 (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
+- 📋 [完整的调整和注册表参考 (TWEAKS_REFERENCE.zh.md)](docs/TWEAKS_REFERENCE.zh.md)
 
 ---
 
@@ -111,8 +117,8 @@ Synchro Nova **不接触游戏内存，不将 DLL 注入进程，也不绘制游
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
-npm run dev       # run in development mode
-npm run build     # build production release exe
+npm run dev       # 开发模式
+npm run build     # 发布构建
 ```
 
 ---
@@ -126,4 +132,4 @@ npm run build     # build production release exe
 
 ### 执照
 
-分布在 [MIT License](LICENSE).
+[MIT](LICENSE) — 免费使用、修改和共享。

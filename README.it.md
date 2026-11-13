@@ -48,37 +48,43 @@
 
 ---
 
-### Cosa fa Synchro Nova?
+### Perché l'ho costruito
 
-In breve: è un'utilità leggera e gratuita che aumenta la vivacità dei colori e il contrasto nei giochi, aiutando i nemici a risaltare negli ambienti bui.
+Ogni volta che lanciavo CS2 o Apex, dovevo aprire il pannello di controllo NVIDIA, alzare Digital Vibrance per individuare i nemici negli angoli bui, quindi riattivarlo manualmente dopo aver chiuso il gioco in modo che il desktop e il browser non mi bruciassero la retina.
 
-- **Profili automatici per gioco**: Imposta una volta il livello di vivacità preferito per il tuo gioco. Quando avvii CS2, Valorant o Apex, i colori si attivano automaticamente. Quando premi alt-tab o esci, i colori del display tornano immediatamente alla normalità in modo che gli occhi non ti facciano male sul desktop o nel browser.
-- **Latenza e reattività**: Include modifiche testate e sicure alla reattività di Windows (risoluzione del timer, input non elaborato del mouse, gestione dei pacchetti di rete) per rendere l'input scattante.
-- **Zero trascinamento delle risorse**: L'intera app occupa meno di 5 MB, si apre in millisecondi e si trova nel vassoio utilizzando solo circa 2 MB di RAM.
+Synchro risolve questo problema una volta per tutte:
+- **Cambio colore automatico**: Avvia il gioco, i colori si attivano. Alt-Tab o chiudi il gioco, i colori del desktop torneranno immediatamente alla normalità.
+- **Pulizia della latenza**: Elimina l'accelerazione del mouse di Windows, ottimizza la risoluzione del timer e riduce il buffering dei pacchetti di rete in modo che l'input sia istantaneo.
+- **Zero gonfiore**: Il download inferiore a 5 MB si avvia in pochi millisecondi e rimane silenzioso nel vassoio utilizzando circa 2 MB di RAM.
+
+> [!TIP]
+> **Preimpostazioni di vivacità testate per i giochi più popolari:**
+> - **CS2 (Dust II, Mirage, Inferno)**: impostato su "150–165%". I modelli dei giocatori smettono di mimetizzarsi nei muri e nelle casse.
+> - **Valorant**: circa "135-140%" è sufficiente. Il gioco presenta già i punti salienti dei contorni dei nemici; valori più alti sbiadiscono semplicemente i colori.
+> - **Apex Legends e Rust**: "160–170%" fa miracoli per individuare sagome tra i cespugli e a lunghe distanze.
+> - **Doppio monitor**: la vividezza si applica solo al monitor principale su cui è in esecuzione il gioco. Il tuo secondo schermo con Discord o Chrome rimane con colori normali.
 
 ---
 
 ### Come scaricare ed eseguire (Guida per principianti)
 
-Se stai visitando GitHub per la prima volta, ecco esattamente cosa fare:
+Se sei nuovo su GitHub, ecco l'intero processo:
 
-1. Dirigiti al [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) (o fare clic su "Versioni" nella barra laterale destra).
-2. Nell'ultima versione, scaricare:
-   - **`synchro.exe`** — **versione portatile (consigliata)**. Basta scaricarlo in qualsiasi cartella e fare doppio clic per eseguirlo. Nessuna configurazione necessaria.
-   - O **`Synchro.Nova_*_x64-setup.exe`** — programma di installazione standard di Windows se preferisci i collegamenti sul desktop e sul menu Start.
-3. **Se Windows mostra un popup blu ("Windows protegge il tuo PC"/SmartScreen)**:
-   - Ciò accade con tutti gli strumenti open source gratuiti che non acquistano un costoso certificato aziendale da $ 500 all'anno da Microsoft.
-   - Clic **"Maggiori informazioni"**, quindi fare clic **"Corri comunque"**.
-   - L'intero codice sorgente è aperto al 100% proprio qui su GitHub: nessun adware, nessuna telemetria, nessuna sciocchezza.
+1. Fare clic su [**Versioni**](https://github.com/Arean-Max/synchro-nova/releases) sul lato destro di questa pagina.
+2. Scarica **`synchro.exe`**: è la versione portatile. Salvalo ovunque e fai doppio clic per avviarlo, non è richiesto alcun programma di installazione. (Oppure prendi `Synchro.Nova_*_x64-setup.exe` se desideri le scorciatoie del menu Start).
+3. **Se Windows mostra un popup SmartScreen blu ("Windows ha protetto il tuo PC")**:
+   - Non preoccuparti. Windows lo mostra per qualsiasi programma indipendente gratuito che non acquisti una firma aziendale da $ 500 all'anno da Microsoft.
+   - Fai clic su **"Ulteriori informazioni"** ➔ **"Esegui comunque"**.
+   - Il progetto è open source al 100% proprio qui. Zero telemetria, zero miner, zero pubblicità.
 
 ---
 
-### Avvio rapido (configurazione in 1 minuto)
+### Avvio rapido: 3 semplici passaggi
 
-1. Lancio **Synchro Nova**.
-2. Vai a **"Colore"** scheda e scegli il livello di vivacità (ad es. `150%` O `200%`).
-3. Collegalo al tuo gioco (l'app rileva automaticamente i giochi in esecuzione oppure puoi scegliere il file `.exe` manualmente).
-4. Questo è tutto! Riduci a icona nel vassoio e gioca.
+1. Avvia "synchro.exe".
+2. Nella scheda **"Colore"**, scegli il tuo livello di vivacità (ad esempio `150%`).
+3. Seleziona il tuo gioco dall'elenco (o punta al suo file `.exe`).
+Riduci a icona nel vassoio e riproduci. Non dovrai mai più regolarlo manualmente.
 
 ---
 
@@ -86,22 +92,22 @@ Se stai visitando GitHub per la prima volta, ecco esattamente cosa fare:
 
 #### Verrò bannato in CS2, Valorant, Rust o Faceit?
 **100% No. Il rischio di ban è pari a zero.**  
-Synchro Nova **non tocca la memoria del gioco, non inserisce DLL nei processi e non disegna sovrapposizioni di gioco**. Regola la gamma del desktop solo tramite API Windows standard (driver DWM e GPU), esattamente come trascinando il cursore Digital Vibrance nel pannello di controllo NVIDIA o AMD. I motori anti-cheat (VAC, Faceit, Vanguard, Easy Anti-Cheat, BattlEye) non segnalano le modifiche ai colori del desktop.
+Synchro Nova **non tocca la RAM del gioco, non inserisce DLL nei processi e non disegna sovrapposizioni**. Regola la gamma esclusivamente tramite le API di visualizzazione standard di Windows, esattamente come trascinando il cursore nel pannello di controllo NVIDIA o AMD. I sistemi anti-cheat (VAC, Faceit, Vanguard, EAC, BattlEye) non lo vedono nemmeno come un'interazione di gioco.
 
-#### Perché non utilizzare semplicemente il pannello di controllo NVIDIA o AMD?
-I pannelli di controllo della GPU non cambiano automaticamente i colori quando avvii o chiudi un gioco. Se aumenti la vivacità lì, l'intero desktop e browser di Windows rimarranno saturati. Synchro lo gestisce automaticamente al volo: gioco in esecuzione = colori ricchi; gioco chiuso = colori del desktop puliti.
+#### Perché utilizzarlo sul pannello di controllo NVIDIA/AMD?
+I pannelli di controllo della GPU non possono attivare/disattivare automaticamente le impostazioni per gioco. Se aumenti la vivacità lì, l'intero desktop rimane saturo durante la navigazione o la visione di video. Synchro lo gestisce automaticamente al volo.
 
-#### Le modifiche al sistema rovineranno il mio Windows?
-No. Tutte le modifiche utilizzano parametri Windows standard e ben documentati. Prima di modificare qualsiasi cosa, Synchro Nova crea un punto di ripristino di Windows e un backup delle chiavi di registro modificate. Puoi ripristinare tutto alle impostazioni predefinite di Windows in qualsiasi momento facendo clic **"Modifiche di ripristino"**.
+#### Le modifiche di Windows sono sicure?
+SÌ. Non tocchiamo l'integrità principale del sistema operativo, non interrompiamo Windows Defender e non disabilitiamo il tuo file di paging. Prima di toccare qualsiasi impostazione, Synchro crea un punto di ripristino di Windows e un backup del registro. Se una modifica non ti piace, facendo clic su **"Ripristina modifiche"** si ripristina immediatamente tutto.
 
 ---
 
 ### Documentazione e approfondimento
 
-Per mantenere questa pagina pulita e facile da leggere, un'ampia documentazione tecnica si trova nella nostra wiki dedicata:
+Per dettagli tecnici approfonditi, consulta le nostre risorse dedicate:
 - 📖 [Documentazione interattiva completa su DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
 - 🗺️ [Diagramma dell'architettura su GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
-- 📋 [Tweaks completi e riferimento al registro (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
+- 📋 [Tweaks completi e riferimento al registro (TWEAKS_REFERENCE.it.md)](docs/TWEAKS_REFERENCE.it.md)
 
 ---
 
@@ -111,8 +117,8 @@ Per mantenere questa pagina pulita e facile da leggere, un'ampia documentazione 
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
-npm run dev       # run in development mode
-npm run build     # build production release exe
+npm run dev       # modalità di sviluppo
+npm run build     # rilascio build
 ```
 
 ---
@@ -126,4 +132,4 @@ npm run build     # build production release exe
 
 ### Licenza
 
-Distribuito sotto il [MIT License](LICENSE).
+[MIT](LICENSE) — liberi di utilizzare, modificare e condividere.
