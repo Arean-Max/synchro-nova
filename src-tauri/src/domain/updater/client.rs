@@ -320,16 +320,9 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
         .unwrap_or("")
         .to_string();
 
-    let release_published_at = json
-        .get("published_at")
-        .and_then(|v| v.as_str())
-        .and_then(parse_rfc3339_timestamp)
-        .unwrap_or(0);
-
     let mut download_url = None;
     let mut asset_size: u64 = 0;
     let mut sha_manifest_url = None;
-    let mut asset_updated_at: u64 = 0;
     let mut remote_sha256: Option<String> = None;
 
     if let Some(assets) = json.get("assets").and_then(|v| v.as_array()) {
@@ -347,12 +340,6 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
                     .and_then(|v| v.as_str())
                     .map(|s| s.to_string());
                 asset_size = asset.get("size").and_then(|v| v.as_u64()).unwrap_or(0);
-                asset_updated_at = asset
-                    .get("updated_at")
-                    .or_else(|| asset.get("created_at"))
-                    .and_then(|v| v.as_str())
-                    .and_then(parse_rfc3339_timestamp)
-                    .unwrap_or(0);
                 if let Some(digest) = asset.get("digest").and_then(|v| v.as_str()) {
                     if let Some(hex) = digest.strip_prefix("sha256:") {
                         remote_sha256 = Some(hex.to_lowercase());
@@ -370,12 +357,6 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string());
                     asset_size = asset.get("size").and_then(|v| v.as_u64()).unwrap_or(0);
-                    asset_updated_at = asset
-                        .get("updated_at")
-                        .or_else(|| asset.get("created_at"))
-                        .and_then(|v| v.as_str())
-                        .and_then(parse_rfc3339_timestamp)
-                        .unwrap_or(0);
                     if let Some(digest) = asset.get("digest").and_then(|v| v.as_str()) {
                         if let Some(hex) = digest.strip_prefix("sha256:") {
                             remote_sha256 = Some(hex.to_lowercase());
@@ -399,40 +380,10 @@ pub fn fetch_latest_release_info() -> Result<UpdateCheckResult, String> {
         }
     }
 
-    let (local_sha256, local_size, _) = get_local_executable_details();
-    let local_build_time = get_local_build_timestamp();
-    let effective_remote_time = if asset_updated_at > 0 {
-        asset_updated_at
-    } else {
-        release_published_at
-    };
-
-    let mut update_available = is_newer_version(tag_name, &current_version);
-
-    if let (Some(ref r_hash), Some(ref l_hash)) = (&remote_sha256, &local_sha256) {
-        if r_hash.eq_ignore_ascii_case(l_hash) {
-            update_available = false;
-        } else if !update_available && is_same_or_compatible_version(tag_name, &current_version) {
-            log("CHECK", &format!(
-                "Patch build detected for v{} (remote sha: {:.8}..., local sha: {:.8}..., remote_time={}, local_time={})",
-                clean_version, r_hash, l_hash, effective_remote_time, local_build_time
-            ));
-            update_available = true;
-        }
-    } else if !update_available && is_same_or_compatible_version(tag_name, &current_version) {
-        let is_newer = if effective_remote_time > 0 && local_build_time > 0 {
-            effective_remote_time + 5 >= local_build_time
-        } else {
-            asset_size != local_size && asset_size > 0 && local_size > 0
-        };
-        if is_newer {
-            log("CHECK", &format!(
-                "Patch update detected for v{} (remote_time={}, local_time={}, remote_size={}, local_size={})",
-                clean_version, effective_remote_time, local_build_time, asset_size, local_size
-            ));
-            update_available = true;
-        }
-    }
+    // An update is ONLY available if the remote version tag is strictly newer (SemVer comparison).
+    // If the remote version matches current_version (e.g. 2.5.0-beta == 2.5.0-beta), it is NEVER an update.
+    // This stops unwanted downloads on every launch and eliminates artificial GitHub download counter inflation.
+    let update_available = is_newer_version(tag_name, &current_version);
 
     let result = UpdateCheckResult {
         update_available,
@@ -496,7 +447,6 @@ pub fn spawn_download_worker(
     let part_file = staging_dir.join("synchro.exe.part");
     let manifest_file = staging_dir.join("SHA256SUMS.txt");
 
-    let _ = fs::remove_file(&target_file);
     let _ = fs::remove_file(&part_file);
 
     super::set_progress(super::UpdateProgress {
@@ -547,6 +497,28 @@ pub fn spawn_download_worker(
             } else {
                 None
             };
+
+            if target_file.is_file() {
+                if let Some(ref exp_hash) = expected_hash {
+                    if let Ok(staged_hash) = crate::infra::hash::sha256_file(&target_file) {
+                        if staged_hash.eq_ignore_ascii_case(exp_hash) {
+                            log("DOWNLOAD", "Staged binary already exists and matches verified SHA-256; reusing cached payload without re-downloading");
+                            super::set_progress(super::UpdateProgress {
+                                status: "ready".to_string(),
+                                downloaded_bytes: expected_size,
+                                total_bytes: expected_size,
+                                percent: 100,
+                                latest_version: Some(latest_version),
+                                current_version: get_app_version(),
+                                error: None,
+                            });
+                            IS_DOWNLOADING.store(false, Ordering::SeqCst);
+                            return;
+                        }
+                    }
+                }
+                let _ = fs::remove_file(&target_file);
+            }
 
             let mut bin_cmd = get_curl_cmd();
             bin_cmd.args([
