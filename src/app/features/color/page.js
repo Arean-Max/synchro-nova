@@ -181,7 +181,9 @@ export function updateTemplateSliderDom(field, values) {
   const value = Number(values?.[field] ?? 100);
   const pct = Math.max(0, Math.min(100, sliderPercent(field, value)));
   if (input) input.value = String(value);
-  if (valueLabel) valueLabel.textContent = formatSliderValue(field, value);
+  if (valueLabel && !valueLabel.querySelector("input")) {
+    valueLabel.textContent = formatSliderValue(field, value);
+  }
   if (track) track.style.setProperty("--slider-percent", `${pct}%`);
   if (thumb) thumb.style.left = `${pct}%`;
   if (fill) fill.style.cssText = sliderFillStyle(field, value);
