@@ -8,9 +8,7 @@
   </a>
 </p>
 
-<p align="center">Легка утиліта для робочого столу для оптимізації яскравості монітора та затримки Windows.</p>
-<p align="center">📖 <b><a href="https://deepwiki.com/Arean-Max/synchro-nova">Повна інтерактивна документація на DeepWiki</a></b></p>
-
+<p align="center">Швидка та легка утиліта для соковитості кольорів монітора та оптимізації затримок Windows.</p>
 <p align="center">
   <a href="https://t.me/synchronova"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-Channel-229ED9?style=flat-square&logo=telegram&logoColor=white" /></a>
   <a href="https://deepwiki.com/Arean-Max/synchro-nova"><img alt="Docs" src="https://img.shields.io/badge/Docs-DeepWiki-blueviolet?style=flat-square" /></a>

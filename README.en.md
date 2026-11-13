@@ -9,8 +9,6 @@
 </p>
 
 <p align="center">A lightweight desktop utility for monitor vibrance and Windows latency optimization.</p>
-<p align="center">📖 <b><a href="https://deepwiki.com/Arean-Max/synchro-nova">Full Interactive Documentation on DeepWiki</a></b></p>
-
 <p align="center">
   <a href="https://t.me/synchronova"><img alt="Telegram" src="https://img.shields.io/badge/Telegram-Channel-229ED9?style=flat-square&logo=telegram&logoColor=white" /></a>
   <a href="https://deepwiki.com/Arean-Max/synchro-nova"><img alt="Docs" src="https://img.shields.io/badge/Docs-DeepWiki-blueviolet?style=flat-square" /></a>
