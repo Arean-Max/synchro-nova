@@ -50,56 +50,82 @@
 
 ---
 
-### Installation
+### What does Synchro Nova do?
 
-Grab the latest build from [**Releases**](https://github.com/Arean-Max/synchro-nova/releases):
+In short: it's a lightweight, free utility that boosts color vibrancy and contrast in games, helping enemies stand out against dark environments.
 
-- **Portable (`synchro.exe`)** — Standalone executable. Run without installation.
-- **Installer (`Synchro.Nova_*_x64-setup.exe`)** — Standard Windows setup with shortcuts and uninstaller.
+- **Automatic Per-Game Profiles**: Set your favorite vibrance level for your game once. When you launch CS2, Valorant, or Apex, the colors kick in automatically. When you alt-tab or quit, your display colors immediately return to normal so your eyes don't hurt on the desktop or in your browser.
+- **Latency & Responsiveness**: Includes tested, safe Windows responsiveness tweaks (timer resolution, raw mouse input, network packet handling) to make input feel snappy.
+- **Zero Resource Drag**: The entire app is under 5 MB, opens in milliseconds, and sits in your tray using just ~2 MB of RAM.
+
+---
+
+### How to Download & Run (Beginner's Guide)
+
+If you're visiting GitHub for the first time, here is exactly what to do:
+
+1. Head over to the [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) page (or click "Releases" on the right sidebar).
+2. Under the latest release, download:
+   - **`synchro.exe`** — **portable version (recommended)**. Just download it to any folder and double-click to run. No setup needed.
+   - Or **`Synchro.Nova_*_x64-setup.exe`** — standard Windows installer if you prefer desktop and start menu shortcuts.
+3. **If Windows shows a blue popup ("Windows protected your PC" / SmartScreen)**:
+   - This happens with all free open-source tools that don't buy an expensive $500/year enterprise certificate from Microsoft.
+   - Click **"More info"**, then click **"Run anyway"**.
+   - The entire source code is 100% open right here on GitHub — no adware, no telemetry, no nonsense.
+
+---
+
+### Quick Start (1-Minute Setup)
+
+1. Launch **Synchro Nova**.
+2. Go to the **"Color"** tab and pick your vibrance level (e.g. `150%` or `200%`).
+3. Link it to your game (the app auto-detects running games, or you can pick the `.exe` manually).
+4. That's it! Minimize to the tray and play.
 
 ---
 
 ### FAQ
 
-#### What is this tool?
-A lightweight gamer utility. It makes colors in competitive games pop, improves target visibility, and trims unnecessary Windows latency. When you launch a game it switches profiles automatically, and resets back to normal when you exit.
+#### Will I get banned in CS2, Valorant, Rust, or Faceit?
+**100% No. Ban risk is zero.**  
+Synchro Nova **does not touch game memory, does not inject DLLs into processes, and does not draw game overlays**. It only adjusts desktop gamma via standard Windows APIs (DWM and GPU drivers) — exactly like dragging the Digital Vibrance slider in the NVIDIA or AMD control panel. Anti-cheat engines (VAC, Faceit, Vanguard, Easy Anti-Cheat, BattlEye) do not flag desktop color changes.
 
-#### Will I get banned?
-No. Synchro Nova does not touch game memory, inject DLLs, or draw overlays. It adjusts color output through standard Windows APIs (DWM & gamma ramp), exactly like the NVIDIA or AMD control panels. It is completely safe with VAC, Faceit, Vanguard, EAC, and BattlEye.
+#### Why not just use the NVIDIA or AMD Control Panel?
+GPU control panels don't automatically toggle colors when you launch or close a game. If you crank up vibrance there, your entire Windows desktop and browser will stay oversaturated. Synchro handles this automatically on the fly: game running = rich colors; game closed = clean desktop colors.
 
-#### Why choose Synchro Nova over standard GPU control panels?
-Built with Rust + Tauri: ultra-lightweight, starts in milliseconds with binary caching, uses 0% CPU and ~2 MB RAM in the tray (zero-footprint lifecycle). Includes automatic per-game profiles and safe Windows responsiveness tweaks.
-
-#### Will the Windows tweaks break my system?
-No. They only apply tested responsiveness settings (timer resolution, MMCSS, network stack). Synchro Nova automatically creates a Windows Restore Point and a registry backup before any changes, so you can revert anytime with one click.
+#### Will the system tweaks mess up my Windows?
+No. All tweaks use standard, well-documented Windows parameters. Before modifying anything, Synchro Nova creates a Windows Restore Point and a backup of modified registry keys. You can revert everything back to Windows defaults anytime by clicking **"Rollback Changes"**.
 
 ---
 
-### Documentation & Architecture
+### Documentation & Deep Dive
 
-- [Documentation on DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
-- [Architecture Diagram on GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
+To keep this page clean and easy to read, extensive technical documentation lives on our dedicated wiki:
+- 📖 [Full Interactive Documentation on DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
+- 🗺️ [Architecture Diagram on GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
+- 📋 [Complete Tweaks & Registry Reference (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
 
-### Build from source
+---
+
+### Build from source (for developers)
 
 ```bash
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
 npm run dev       # run in development mode
-npm run build     # build release installer
+npm run build     # build production release exe
 ```
 
 ---
 
 ### Contributors
 
-- [sotoykor-source](https://github.com/sotoykor-source) — Original creator and upstream author
-- [Arean-Max](https://github.com/Arean-Max) — Maintainer
+- [sotoykor-source](https://github.com/sotoykor-source) — Original creator & upstream author
+- [Arean-Max](https://github.com/Arean-Max) — Development & maintenance
 
 ---
 
 ### License
 
-[MIT](LICENSE)
-
+Distributed under the [MIT License](LICENSE).
