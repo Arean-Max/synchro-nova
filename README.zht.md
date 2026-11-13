@@ -48,51 +48,82 @@
 
 ---
 
-### 安裝
+### 同步新星有什麼作用？
 
-從 [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) 下載最新版本：
+簡而言之：它是一款輕量級的免費實用程序，可增強遊戲中的色彩活力和對比度，幫助敵人在黑暗環境中脫穎而出。
 
-- **免安裝版 (`synchro.exe`)** — 解壓縮即可執行 `synchro.exe`，無需安裝。
-- **安裝程式 (`Synchro.Nova_*_x64-setup.exe`)** — 標準 Windows 安裝程式，含捷徑與解除安裝功能。
-
----
-
-### 常見問題 (FAQ)
-
-#### 這是什麼工具？
-專為競技遊戲打造的輕巧工具。讓畫面色彩更鮮明、提升目標能見度，並消除 Windows 額外延遲。啟動遊戲時自動切換設定，退出後自動還原。
-
-#### 會被防作弊系統封鎖嗎？
-不會。Synchro Nova 不讀寫遊戲記憶體、不注入 DLL、不繪製懸浮窗。完全使用原生 Windows WinAPI 調整螢幕輸出，對 VAC、Faceit、Vanguard、EAC 與 BattlEye 100% 安全。
-
-#### 比起一般顯卡控制面板，Synchro Nova 好在哪裡？
-採用 Rust + Tauri 架構：極速啟動，背景常駐僅耗用約 4 MB 記憶體及 0% CPU。支援遊戲專屬自動設定切換與安全的系統延遲調校。
-
-#### 系統優化會損壞 Windows 嗎？
-不會。所有調校皆經測試驗證，且在套用前會自動建立系統還原點與登錄檔備份，隨時可一鍵還原。
+- **自動每場比賽設定檔**: 為您的遊戲設定一次您最喜歡的振動等級。當您啟動 CS2、Valorant 或 Apex 時，顏色會自動生效。當您按 alt-tab 或退出時，顯示顏色會立即恢復正常，因此您的眼睛不會在桌面或瀏覽器中受到傷害。
+- **延遲和響應能力**: 包括經過測試的、安全的 Windows 響應能力調整（計時器解析度、原始滑鼠輸入、網路封包處理），讓輸入感覺敏捷。
+- **零資源拖累**: 整個應用程式不到 5 MB，可在幾毫秒內打開，並且僅使用約 2 MB 的 RAM 即可放置在您的托盤中。
 
 ---
 
-### 從原始碼編譯
+### 如何下載和運行（初學者指南）
+
+如果您是第一次造訪 GitHub，請執行以下操作：
+
+1. 前往 [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) 頁面（或按一下右側邊欄上的「發布」）。
+2. 在最新版本下，下載：
+   - **`synchro.exe`** — **隨身版（推薦）**. 只需將其下載到任何資料夾並雙擊即可運行。無需設定。
+   - 或者 **`Synchro.Nova_*_x64-setup.exe`** — 如果您喜歡桌面和開始功能表捷徑，則可以使用標準 Windows 安裝程式。
+3. **如果 Windows 顯示藍色彈出視窗（「Windows 保護了您的電腦」/SmartScreen）**:
+   - 所有免費的開源工具都會發生這種情況，而無需從 Microsoft 購買昂貴的每年 500 美元的企業憑證。
+   - 點選 **"更多資訊"**, 然後單擊 **"無論如何都要跑"**.
+   - 整個原始碼在 GitHub 上 100% 開放——沒有廣告軟體，沒有遙測，沒有廢話。
+
+---
+
+### 快速啟動（1 分鐘設定）
+
+1. 發射 **Synchro Nova**.
+2. 前往 **"顏色"** 選項卡並選擇您的振動等級（例如 `150%` 或者 `200%`).
+3. 將其連結到您的遊戲（應用程式會自動檢測正在運行的遊戲，或者您可以選擇 `.exe` 手動）。
+4. 就是這樣！最小化到托盤並播放。
+
+---
+
+### 常問問題
+
+#### 我會在 CS2、Valorant、Rust 或 Faceit 中被禁止嗎？
+**100% 不會。禁令風險為零。**  
+Synchro Nova **不接觸遊戲內存，不將 DLL 注入進程，也不繪製遊戲覆蓋圖**. 它僅透過標準 Windows API（DWM 和 GPU 驅動程式）調整桌面伽瑪 — 就像拖曳 NVIDIA 或 AMD 控制面板中的 Digital Vibrance 滑桿一樣。反作弊引擎（VAC、Faceit、Vanguard、Easy Anti-Cheat、BattlEye）不會標記桌面顏色變更。
+
+#### 為什麼不直接使用 NVIDIA 或 AMD 控制面板？
+當您啟動或關閉遊戲時，GPU 控制面板不會自動切換顏色。如果您在那裡增加活力，您的整個 Windows 桌面和瀏覽器將保持過度飽和狀態。 Synchro 會動態自動處理此問題：遊戲運行 = 豐富的色彩；遊戲關閉=乾淨的桌面顏色。
+
+#### 系統調整會擾亂我的 Windows 嗎？
+不會。所有調整都使用標準的、有據可查的 Windows 參數。在修改任何內容之前，Synchro Nova 會建立一個 Windows 還原點和修改後的登錄項目的備份。您可以隨時透過點擊將所有內容還原為 Windows 預設設定 **"復原更改"**.
+
+---
+
+### 文件和深入研究
+
+為了保持此頁面乾淨且易於閱讀，我們的專用 wiki 上有大量的技術文件：
+- 📖 [DeepWiki 上的完整互動式文檔](https://deepwiki.com/Arean-Max/synchro-nova)
+- 🗺️ [GitDiagram 上的架構圖](https://gitdiagram.com/arean-max/synchro-nova)
+- 📋 [完整的調整和註冊表參考 (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
+
+---
+
+### 從原始碼建置（針對開發人員）
 
 ```bash
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
-npm run dev       # 以開發模式啟動
-npm run build     # 編譯發行安裝檔
+npm run dev       # run in development mode
+npm run build     # build production release exe
 ```
 
 ---
 
-### 授權條款
+### 貢獻者
 
-[MIT](LICENSE)
+- [sotoykor-source](https://github.com/sotoykor-source) — 原創者&上游作者
+- [Arean-Max](https://github.com/Arean-Max) — 開發與維護
 
 ---
 
-### Documentation & Architecture
+### 執照
 
-- [Documentation on DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
-- [Architecture Diagram on GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
-
+分佈在 [MIT License](LICENSE).

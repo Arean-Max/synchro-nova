@@ -48,51 +48,82 @@
 
 ---
 
-### 설치
+### 싱크로노바는 무슨 일을 하나요?
 
-[**Releases**](https://github.com/Arean-Max/synchro-nova/releases)에서 최신 빌드를 다운로드하세요:
+간단히 말해서, 게임의 색상 선명도와 대비를 높여 어두운 환경에서 적들이 눈에 띄게 만드는 경량의 무료 유틸리티입니다.
 
-- **포터블 버전 (`synchro.exe`)** — 압축을 풀고 `synchro.exe`를 실행하세요. 설치가 필요 없습니다.
-- **설치 프로그램 (`Synchro.Nova_*_x64-setup.exe`)** — 바로가기 및 제거 프로그램을 포함한 기본 설치 파일.
-
----
-
-### 자주 묻는 질문 (FAQ)
-
-#### 어떤 프로그램인가요?
-경쟁 게임을 위한 가벼운 모니터 튜닝 도구입니다. 게임 속 색감을 생생하게 만들고 적 식별을 쉽게 돕고 불필요한 Windows 인풋렉을 줄여줍니다. 게임 실행 시 자동으로 프로필이 적용됩니다.
-
-#### 안티치트에 걸리나요?
-아닙니다. Synchro Nova는 게임 메모리에 접근하지 않으며 DLL을 인젝션하거나 오버레이를 띄우지 않습니다. NVIDIA나 AMD 패널과 동일하게 표준 Windows WinAPI로 디스플레이를 제어하므로 VAC, Faceit, Vanguard, EAC, BattlEye에서 100% 안전합니다.
-
-#### Synchro Nova는 일반 그래픽카드 제어판보다 무엇이 좋나요?
-Rust + Tauri 기반으로 제작되어 즉시 실행되며, 트레이에서 0% CPU와 약 4MB 메모리만 사용합니다. 게임별 자동 프로필 전환과 안전한 시스템 지연 최적화를 지원합니다.
-
-#### 윈도우 트윅으로 시스템이 고장 나지 않나요?
-안전합니다. 철저히 검증된 설정만 적용되며, 변경 전 시스템 복원 지점과 레지스트리 백업을 자동으로 생성하여 언제든 원클릭으로 되돌릴 수 있습니다.
+- **자동 게임별 프로필**: 게임에 대해 가장 좋아하는 활기 수준을 한 번 설정하세요. CS2, Valorant 또는 Apex를 시작하면 색상이 자동으로 시작됩니다. Alt 키를 누르거나 종료하면 디스플레이 색상이 즉시 정상으로 돌아가므로 데스크탑이나 브라우저에서 눈이 아프지 않습니다.
+- **지연 시간 및 응답성**: 테스트를 거쳐 안전한 Windows 응답성 조정(타이머 해상도, 원시 마우스 입력, 네트워크 패킷 처리)이 포함되어 있어 입력이 빠르게 느껴집니다.
+- **제로 리소스 드래그**: 전체 앱은 5MB 미만이고, 밀리초 안에 열리며, 단지 ~2MB의 RAM을 사용하여 트레이에 위치합니다.
 
 ---
 
-### 소스코드 빌드
+### 다운로드 및 실행 방법(초보자 가이드)
+
+GitHub를 처음 방문하는 경우 정확히 수행할 작업은 다음과 같습니다.
+
+1. 다음으로 향하세요. [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) 페이지를 방문하세요(또는 오른쪽 사이드바에서 "릴리스"를 클릭하세요).
+2. 최신 릴리스에서 다음을 다운로드하십시오.
+   - **`synchro.exe`** — **휴대용 버전(권장)**. 아무 폴더에나 다운로드하고 두 번 클릭하여 실행하면 됩니다. 설정이 필요하지 않습니다.
+   - 또는 **`Synchro.Nova_*_x64-setup.exe`** — 바탕 화면 및 시작 메뉴 바로 가기를 선호하는 경우 표준 Windows 설치 프로그램.
+3. **Windows에서 파란색 팝업이 표시되는 경우("Windows가 PC를 보호했습니다"/SmartScreen)**:
+   - 이는 Microsoft에서 연간 500달러의 값비싼 기업 인증서를 구입하지 않는 모든 무료 오픈 소스 도구에서 발생합니다.
+   - 딸깍 하는 소리 **"추가 정보"**, 그런 다음 클릭 **"어쨌든 실행"**.
+   - 전체 소스 코드는 바로 여기 GitHub에 100% 공개되어 있습니다. 애드웨어도, 원격 측정도, 넌센스도 없습니다.
+
+---
+
+### 빠른 시작(1분 설정)
+
+1. 시작하다 **Synchro Nova**.
+2. 로 이동 **"색상"** 탭을 클릭하고 활기 수준을 선택하세요(예: `150%` 또는 `200%`).
+3. 게임에 연결하세요(앱이 실행 중인 게임을 자동으로 감지하거나 `.exe` 수동으로).
+4. 그게 다야! 트레이로 최소화해서 놀아보세요.
+
+---
+
+### FAQ
+
+#### CS2, Valorant, Rust 또는 Faceit에서 금지되나요?
+**100% 아니요. 금지 위험은 0입니다.**  
+Synchro Nova **게임 메모리를 건드리지 않고, 프로세스에 DLL을 삽입하지 않으며, 게임 오버레이를 그리지 않습니다.**. 표준 Windows API(DWM 및 GPU 드라이버)를 통해서만 데스크탑 감마를 조정합니다. 이는 NVIDIA 또는 AMD 제어판에서 Digital Vibrance 슬라이더를 드래그하는 것과 똑같습니다. 치트 방지 엔진(VAC, Faceit, Vanguard, Easy Anti-Cheat, BattlEye)은 데스크탑 색상 변경에 플래그를 지정하지 않습니다.
+
+#### NVIDIA 또는 AMD 제어판을 사용하지 않는 이유는 무엇입니까?
+GPU 제어판은 게임을 시작하거나 닫을 때 색상을 자동으로 전환하지 않습니다. 여기서 활력을 높이면 전체 Windows 데스크톱과 브라우저가 과포화 상태를 유지하게 됩니다. 싱크로는 이를 즉시 자동으로 처리합니다. 게임 실행 = 풍부한 색상; 게임 종료 = 깨끗한 바탕 화면 색상.
+
+#### 시스템을 조정하면 Windows가 엉망이 될까요?
+아니요. 모든 조정은 잘 문서화된 표준 Windows 매개변수를 사용합니다. 무엇이든 수정하기 전에 Synro Nova는 Windows 복원 지점과 수정된 레지스트리 키의 백업을 생성합니다. 클릭하면 언제든지 모든 것을 Windows 기본값으로 되돌릴 수 있습니다. **"롤백 변경 사항"**.
+
+---
+
+### 문서화 및 심층 분석
+
+이 페이지를 깔끔하고 읽기 쉽게 유지하기 위해 광범위한 기술 문서가 전용 위키에 있습니다.
+- 📖 [DeepWiki의 전체 대화형 문서](https://deepwiki.com/Arean-Max/synchro-nova)
+- 🗺️ [GitDiagram의 아키텍처 다이어그램](https://gitdiagram.com/arean-max/synchro-nova)
+- 📋 [완전한 조정 및 레지스트리 참조 (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
+
+---
+
+### 소스에서 빌드(개발자용)
 
 ```bash
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
-npm run dev       # 개발 모드로 실행
-npm run build     # 설치 파일 빌드
+npm run dev       # run in development mode
+npm run build     # build production release exe
 ```
 
 ---
 
-### 라이선스
+### 기여자
 
-[MIT](LICENSE)
+- [sotoykor-source](https://github.com/sotoykor-source) — 원본 작성자 및 업스트림 작성자
+- [Arean-Max](https://github.com/Arean-Max) — 개발 및 유지보수
 
 ---
 
-### Documentation & Architecture
+### 특허
 
-- [Documentation on DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
-- [Architecture Diagram on GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
-
+아래에 배포됨 [MIT License](LICENSE).

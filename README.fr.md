@@ -48,51 +48,82 @@
 
 ---
 
-### Installation
+### Que fait Synchro Nova ?
 
-Téléchargez la dernière version sur [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) :
+En bref : il s'agit d'un utilitaire léger et gratuit qui améliore l'éclat et le contraste des couleurs dans les jeux, aidant ainsi les ennemis à se démarquer des environnements sombres.
 
-- **Version portable (`synchro.exe`)** — Décompressez et lancez `synchro.exe`. Aucune installation requise.
-- **Installateur (`Synchro.Nova_*_x64-setup.exe`)** — Programme d'installation standard pour Windows.
+- **Profils automatiques par jeu**: Définissez une fois votre niveau de vibrance préféré pour votre jeu. Lorsque vous lancez CS2, Valorant ou Apex, les couleurs apparaissent automatiquement. Lorsque vous alt-tab ou quittez, les couleurs de votre affichage reviennent immédiatement à la normale afin que vos yeux ne vous fassent pas mal sur le bureau ou dans votre navigateur.
+- **Latence et réactivité**: Comprend des ajustements de réactivité Windows testés et sûrs (résolution de la minuterie, saisie brute de la souris, gestion des paquets réseau) pour rendre la saisie plus rapide.
+- **Glissement de ressources nul**: L'application entière fait moins de 5 Mo, s'ouvre en millisecondes et se trouve dans votre barre d'état en utilisant seulement ~ 2 Mo de RAM.
+
+---
+
+### Comment télécharger et exécuter (Guide du débutant)
+
+Si vous visitez GitHub pour la première fois, voici exactement ce qu'il faut faire :
+
+1. Rendez-vous au [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) page (ou cliquez sur « Communications » dans la barre latérale droite).
+2. Sous la dernière version, téléchargez :
+   - **`synchro.exe`** — **version portable (recommandée)**. Téléchargez-le simplement dans n'importe quel dossier et double-cliquez pour l'exécuter. Aucune configuration nécessaire.
+   - Ou **`Synchro.Nova_*_x64-setup.exe`** — programme d'installation Windows standard si vous préférez les raccourcis du bureau et du menu Démarrer.
+3. **Si Windows affiche une fenêtre contextuelle bleue ("Windows a protégé votre PC" / SmartScreen)**:
+   - Cela se produit avec tous les outils open source gratuits qui n'achètent pas un certificat d'entreprise coûteux de 500 $/an auprès de Microsoft.
+   - Cliquez **"Plus d'informations"**, puis cliquez **"Courez quand même"**.
+   - L'intégralité du code source est 100 % ouvert ici même sur GitHub : pas de logiciel publicitaire, pas de télémétrie, pas de bêtises.
+
+---
+
+### Démarrage rapide (installation en 1 minute)
+
+1. Lancement **Synchro Nova**.
+2. Allez au **"Couleur"** et choisissez votre niveau de vibrance (par ex. `150%` ou `200%`).
+3. Liez-le à votre jeu (l'application détecte automatiquement les jeux en cours, ou vous pouvez choisir le `.exe` manuellement).
+4. C'est ça! Réduisez-le dans le plateau et jouez.
 
 ---
 
 ### FAQ
 
-#### Qu'est-ce que cet outil ?
-Un utilitaire ultra-léger pour les joueurs. Il renforce les couleurs en jeu, améliore la visibilité des ennemis et réduit la latence Windows. Les profils basculent automatiquement au lancement des jeux.
+#### Vais-je être banni dans CS2, Valorant, Rust ou Faceit ?
+**100% Non. Le risque d’interdiction est nul.**  
+Synchro Nova **ne touche pas à la mémoire du jeu, n'injecte pas de DLL dans les processus et ne dessine pas de superpositions de jeu**. Il ajuste uniquement le gamma du bureau via les API Windows standard (pilotes DWM et GPU) – exactement comme si vous faisiez glisser le curseur Digital Vibrance dans le panneau de configuration NVIDIA ou AMD. Les moteurs anti-triche (VAC, Faceit, Vanguard, Easy Anti-Cheat, BattlEye) ne signalent pas les changements de couleur du bureau.
 
-#### Est-ce bannissable par les anticheats ?
-Non. Synchro Nova n'accède pas à la mémoire du jeu, n'injecte aucune DLL et n'utilise pas d'overlay. L'affichage est ajusté via les WinAPI standards de Windows, exactement comme les panneaux NVIDIA ou AMD. 100% sûr pour VAC, Faceit, Vanguard, EAC et BattlEye.
+#### Pourquoi ne pas simplement utiliser le panneau de configuration NVIDIA ou AMD ?
+Les panneaux de contrôle GPU ne changent pas automatiquement les couleurs lorsque vous lancez ou fermez un jeu. Si vous y augmentez la vibrance, l’ensemble de votre bureau et de votre navigateur Windows resteront sursaturés. Synchro gère cela automatiquement à la volée : jeu en cours = couleurs riches ; jeu fermé = couleurs propres du bureau.
 
-#### Pourquoi choisir Synchro Nova par rapport aux panneaux GPU classiques ?
-Développé en Rust + Tauri : démarrage instantané, 0% de CPU et seulement ~4 Mo de RAM en arrière-plan. Prend en charge les profils automatiques par jeu et des optimisations saines de latence.
-
-#### Les réglages peuvent-ils endommager Windows ?
-Non. Seuls des paramètres fiables sont appliqués. Un point de restauration Windows et une sauvegarde du registre sont créés automatiquement avant toute modification.
+#### Les modifications du système vont-elles gâcher mon Windows ?
+Non. Tous les ajustements utilisent des paramètres Windows standard et bien documentés. Avant de modifier quoi que ce soit, Synchro Nova crée un point de restauration Windows et une sauvegarde des clés de registre modifiées. Vous pouvez tout rétablir aux paramètres par défaut de Windows à tout moment en cliquant sur **"Annulation des modifications"**.
 
 ---
 
-### Compiler depuis les sources
+### Documentation et analyse approfondie
+
+Pour que cette page reste claire et facile à lire, une documentation technique complète se trouve sur notre wiki dédié :
+- 📖 [Documentation interactive complète sur DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
+- 🗺️ [Diagramme d'architecture sur GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
+- 📋 [Modifications complètes et référence du registre (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
+
+---
+
+### Construire à partir des sources (pour les développeurs)
 
 ```bash
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
-npm run dev       # lancer en mode développement
-npm run build     # compiler l'installateur
+npm run dev       # run in development mode
+npm run build     # build production release exe
 ```
+
+---
+
+### Contributeurs
+
+- [sotoykor-source](https://github.com/sotoykor-source) — Créateur original et auteur en amont
+- [Arean-Max](https://github.com/Arean-Max) — Développement & maintenance
 
 ---
 
 ### Licence
 
-[MIT](LICENSE)
-
----
-
-### Documentation & Architecture
-
-- [Documentation on DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
-- [Architecture Diagram on GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
-
+Distribué sous le [MIT License](LICENSE).

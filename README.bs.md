@@ -48,51 +48,82 @@
 
 ---
 
-### Instalacija
+### Šta radi Synchro Nova?
 
-Preuzmite najnoviju verziju sa stranice [**Releases**](https://github.com/Arean-Max/synchro-nova/releases):
+Ukratko: to je lagani, besplatni uslužni program koji povećava živost boja i kontrast u igrama, pomažući neprijateljima da se istaknu u mračnom okruženju.
 
-- **Portabilna verzija (`synchro.exe`)** — Raspakujte i pokrenite `synchro.exe`. Instalacija nije potrebna.
-- **Instaler (`Synchro.Nova_*_x64-setup.exe`)** — Standardni instalacioni paket za Windows.
-
----
-
-### Često postavljana pitanja (FAQ)
-
-#### Šta je Synchro Nova?
-Kompaktna aplikacija za gejmere. Čini boje u igrama živopisnim, olakšava uočavanje neprijatelja i smanjuje kašnjenje unosa (input lag). Automatski aktivira profile pri pokretanju igara.
-
-#### Mogu li dobiti ban?
-Ne. Synchro Nova ne dira memoriju igara, ne ubacuje DLL-ove i ne koristi preklapanja (overlays). Boje podešava kroz zvanični Windows WinAPI, identično kao NVIDIA ili AMD paneli. Potpuno sigurno za VAC, Faceit, Vanguard, EAC i BattlEye.
-
-#### Zašto odabrati Synchro Nova umjesto standardnih GPU panela?
-Napisana u Rust + Tauri: pokreće se u sekundi, troši 0% procesora i samo oko 4 MB RAM-a. Posjeduje automatske profile za igre i bezbjedne optimizacije sistema.
-
-#### Mogu li podešavanja oštetiti Windows?
-Ne. Prije svake izmjene program automatski kreira tačku vraćanja sistema (Restore Point) i rezervnu kopiju registra.
+- **Automatski profili po igrici**: Postavite svoj omiljeni nivo vibracije za svoju igru ​​jednom. Kada pokrenete CS2, Valorant ili Apex, boje se automatski pojavljuju. Kada pritisnete alt-tab ili zatvorite, boje vašeg ekrana se odmah vraćaju u normalu tako da vas oči ne bole na radnoj površini ili u vašem pretraživaču.
+- **Latencija i odziv**: Uključuje testirana, sigurna podešavanja Windows odziva (rezolucija tajmera, neobrađeni unos mišem, rukovanje mrežnim paketima) kako bi unos bio brz.
+- **Zero Resource Drag**: Cijela aplikacija je manja od 5 MB, otvara se za milisekunde i nalazi se u vašoj traci koristeći samo ~2 MB RAM-a.
 
 ---
 
-### Kompajliranje iz koda
+### Kako preuzeti i pokrenuti (Vodič za početnike)
+
+Ako prvi put posjećujete GitHub, evo šta trebate učiniti:
+
+1. Idite do [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) stranicu (ili kliknite na "Izdanja" na desnoj bočnoj traci).
+2. Pod najnovijim izdanjem preuzmite:
+   - **`synchro.exe`** — **prenosiva verzija (preporučuje se)**. Samo ga preuzmite u bilo koju mapu i dvaput kliknite za pokretanje. Nije potrebno podešavanje.
+   - Or **`Synchro.Nova_*_x64-setup.exe`** — standardni Windows instalater ako više volite prečice na radnoj površini i start meniju.
+3. **Ako Windows prikaže plavi skočni prozor ("Windows je zaštitio vaš računar" / SmartScreen)**:
+   - Ovo se dešava sa svim besplatnim alatima otvorenog koda koji ne kupuju skupi sertifikat preduzeća od 500 USD godišnje od Microsofta.
+   - Kliknite **"Više informacija"**, zatim kliknite **"Ipak trči"**.
+   - Cijeli izvorni kod je 100% otvoren upravo ovdje na GitHubu — bez advera, bez telemetrije, bez gluposti.
+
+---
+
+### Brzi početak (1-minutna postavka)
+
+1. Pokreni **Synchro Nova**.
+2. Idi na **"Boja"** karticu i odaberite nivo vibrance (npr. `150%` ili `200%`).
+3. Povežite ga sa svojom igrom (aplikacija automatski detektuje pokrenute igre ili možete odabrati `.exe` ručno).
+4. To je to! Smanjite na tacnu i igrajte.
+
+---
+
+### FAQ
+
+#### Da li ću biti zabranjen u CS2, Valorantu, Rustu ili Faceitu?
+**100% Ne. Rizik zabrane je nula.**  
+Synchro Nova **ne dodiruje memoriju igre, ne ubacuje DLL-ove u procese i ne crta prekrivače igre**. Podešava gamu desktopa samo preko standardnih Windows API-ja (DWM i GPU drajvera) — baš kao što prevlačite klizač Digital Vibrance na NVIDIA ili AMD kontrolnoj tabli. Anti-cheat motori (VAC, Faceit, Vanguard, Easy Anti-Cheat, BattlEye) ne označavaju promjene boje radne površine.
+
+#### Zašto jednostavno ne koristite NVIDIA ili AMD Control Panel?
+GPU kontrolne ploče ne mijenjaju automatski boje kada pokrenete ili zatvorite igru. Ako tu pojačate živost, cijela Windows radna površina i pretraživač će ostati prezasićeni. Synchro to automatski rješava u hodu: igra radi = bogate boje; igra zatvorena = čiste boje radne površine.
+
+#### Hoće li sistemska podešavanja upropastiti moj Windows?
+Ne. Sva podešavanja koriste standardne, dobro dokumentovane Windows parametre. Prije izmjene bilo čega, Synchro Nova kreira Windows Restore Tačku i rezervnu kopiju modificiranih ključeva registratora. Sve možete vratiti na Windows zadane postavke bilo kada klikom **"Povratne promjene"**.
+
+---
+
+### Dokumentacija i duboko ronjenje
+
+Da bi ova stranica bila čista i laka za čitanje, opsežna tehnička dokumentacija nalazi se na našem namjenskom wikiju:
+- 📖 [Potpuna interaktivna dokumentacija na DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
+- 🗺️ [Dijagram arhitekture na GitDiagramu](https://gitdiagram.com/arean-max/synchro-nova)
+- 📋 [Kompletna referenca za podešavanja i registar (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
+
+---
+
+### Napravi iz izvora (za programere)
 
 ```bash
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
-npm run dev       # pokretanje u dev modu
-npm run build     # izrada instalera
+npm run dev       # run in development mode
+npm run build     # build production release exe
 ```
+
+---
+
+### Saradnici
+
+- [sotoykor-source](https://github.com/sotoykor-source) — Originalni kreator i uzvodni autor
+- [Arean-Max](https://github.com/Arean-Max) — Razvoj i održavanje
 
 ---
 
 ### Licenca
 
-[MIT](LICENSE)
-
----
-
-### Documentation & Architecture
-
-- [Documentation on DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
-- [Architecture Diagram on GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
-
+Distribuirano pod [MIT License](LICENSE).

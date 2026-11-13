@@ -48,51 +48,82 @@
 
 ---
 
-### Cài đặt
+### Synchro Nova làm gì?
 
-Tải bản dựng mới nhất tại trang [**Releases**](https://github.com/Arean-Max/synchro-nova/releases):
+Tóm lại: đây là một tiện ích nhẹ, miễn phí giúp tăng cường độ sống động và độ tương phản của màu sắc trong trò chơi, giúp kẻ thù nổi bật trong môi trường tối.
 
-- **Bản Portable (`synchro.exe`)** — Giải nén và chạy `synchro.exe`. Không cần cài đặt.
-- **Bộ cài đặt (`Synchro.Nova_*_x64-setup.exe`)** — Bộ cài Windows tiêu chuẩn có phím tắt và trình gỡ cài đặt.
-
----
-
-### Câu hỏi thường gặp (FAQ)
-
-#### Công cụ này là gì?
-Một tiện ích nhẹ dành cho game thủ. Giúp màu sắc trong game trở nên sống động, giúp phát hiện kẻ địch dễ dàng hơn và giảm độ trễ dư thừa của Windows. Tự động chuyển đổi cấu hình khi mở và đóng game.
-
-#### Có bị cấm (ban) trong game không?
-Không hề. Synchro Nova không can thiệp vào bộ nhớ game, không chèn DLL và không vẽ overlay. Màu sắc được điều chỉnh thông qua WinAPI chính thức của Windows, tương tự bảng điều khiển NVIDIA/AMD. Hoàn toàn an toàn với VAC, Faceit, Vanguard, EAC và BattlEye.
-
-#### Synchro Nova có gì vượt trội hơn bảng điều khiển GPU thông thường?
-Được viết bằng Rust + Tauri: khởi động tức thì, tiêu tốn 0% CPU và chỉ khoảng 4 MB RAM ở khay hệ thống. Hỗ trợ tự động chuyển đổi cấu hình theo game cùng các tinh chỉnh độ trễ an toàn.
-
-#### Tinh chỉnh có làm lỗi Windows không?
-Không. Trước mỗi lần thay đổi, ứng dụng tự động tạo Điểm khôi phục hệ thống (Restore Point) và sao lưu registry để bạn có thể hoàn tác bất cứ lúc nào.
+- **Hồ sơ tự động cho mỗi trò chơi**: Đặt mức độ rung yêu thích cho trò chơi của bạn một lần. Khi bạn khởi chạy CS2, Valorant hoặc Apex, màu sắc sẽ tự động hiển thị. Khi bạn nhấn Alt hoặc thoát, màu sắc hiển thị của bạn sẽ ngay lập tức trở lại bình thường để bạn không bị đau mắt khi sử dụng máy tính để bàn hoặc trong trình duyệt.
+- **Độ trễ & phản hồi**: Bao gồm các chỉnh sửa về khả năng phản hồi an toàn và đã được thử nghiệm của Windows (độ phân giải bộ hẹn giờ, đầu vào chuột thô, xử lý gói mạng) để làm cho đầu vào trở nên linh hoạt.
+- **Không kéo tài nguyên**: Toàn bộ ứng dụng có dung lượng dưới 5 MB, mở trong một phần nghìn giây và nằm trong khay của bạn chỉ sử dụng ~2 MB RAM.
 
 ---
 
-### Build từ mã nguồn
+### Cách tải xuống và chạy (Hướng dẫn cho người mới bắt đầu)
+
+Nếu bạn truy cập GitHub lần đầu tiên, đây chính xác là những việc cần làm:
+
+1. Đi tới [**Releases**](https://github.com/Arean-Max/synchro-nova/releases) trang (hoặc nhấp vào "Bản phát hành" trên thanh bên phải).
+2. Theo bản phát hành mới nhất, hãy tải xuống:
+   - **`synchro.exe`** — **phiên bản di động (được khuyến nghị)**. Chỉ cần tải nó xuống bất kỳ thư mục nào và nhấp đúp để chạy. Không cần thiết lập.
+   - Hoặc **`Synchro.Nova_*_x64-setup.exe`** — trình cài đặt Windows tiêu chuẩn nếu bạn thích các phím tắt trên màn hình nền và menu bắt đầu.
+3. **Nếu Windows hiển thị cửa sổ bật lên màu xanh lam ("Windows protected your PC" / SmartScreen)**:
+   - Điều này xảy ra với tất cả các công cụ nguồn mở miễn phí không mua chứng chỉ doanh nghiệp đắt tiền 500 USD/năm từ Microsoft.
+   - nhấp chuột **"Thêm thông tin"**, sau đó nhấp vào **"Vẫn chạy"**.
+   - Toàn bộ mã nguồn được mở 100% ngay tại đây trên GitHub - không có phần mềm quảng cáo, không đo từ xa, không vô nghĩa.
+
+---
+
+### Bắt đầu nhanh (Thiết lập 1 phút)
+
+1. Phóng **Synchro Nova**.
+2. Đi tới **"Màu sắc"** tab và chọn mức độ rung của bạn (ví dụ: `150%` hoặc `200%`).
+3. Liên kết nó với trò chơi của bạn (ứng dụng tự động phát hiện các trò chơi đang chạy hoặc bạn có thể chọn `.exe` bằng tay).
+4. Thế thôi! Thu nhỏ vào khay và chơi.
+
+---
+
+### Câu hỏi thường gặp
+
+#### Tôi có bị cấm chơi CS2, Valorant, Rust hay Faceit không?
+**100% Không. Rủi ro cấm là bằng không.**  
+Synchro Nova **không chạm vào bộ nhớ trò chơi, không đưa DLL vào các quy trình và không vẽ lớp phủ trò chơi**. Nó chỉ điều chỉnh gamma của máy tính để bàn thông qua API Windows tiêu chuẩn (trình điều khiển DWM và GPU) - giống hệt như kéo thanh trượt Digital Vibrance trong bảng điều khiển NVIDIA hoặc AMD. Các công cụ chống gian lận (VAC, Faceit, Vanguard, Easy Anti-Cheat, BattlEye) không gắn cờ các thay đổi về màu sắc của màn hình.
+
+#### Tại sao không chỉ sử dụng Bảng điều khiển NVIDIA hoặc AMD?
+Bảng điều khiển GPU không tự động chuyển đổi màu sắc khi bạn khởi chạy hoặc đóng trò chơi. Nếu bạn tăng độ rung ở đó, toàn bộ máy tính để bàn và trình duyệt Windows của bạn sẽ ở trạng thái quá bão hòa. Synchro tự động xử lý việc này một cách nhanh chóng: trò chơi đang chạy = màu sắc phong phú; trò chơi đã đóng = màu màn hình sạch.
+
+#### Các chỉnh sửa hệ thống có làm rối tung Windows của tôi không?
+Không. Tất cả các chỉnh sửa đều sử dụng các thông số Windows tiêu chuẩn, được ghi chép đầy đủ. Trước khi sửa đổi bất cứ điều gì, Synchro Nova tạo Điểm khôi phục Windows và bản sao lưu các khóa đăng ký đã sửa đổi. Bạn có thể hoàn nguyên mọi thứ về mặc định của Windows bất kỳ lúc nào bằng cách nhấp vào **"Hoàn nguyên các thay đổi"**.
+
+---
+
+### Tài liệu & Tìm hiểu sâu
+
+Để giữ cho trang này sạch sẽ và dễ đọc, tài liệu kỹ thuật mở rộng có trên wiki chuyên dụng của chúng tôi:
+- 📖 [Tài liệu tương tác đầy đủ trên DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
+- 🗺️ [Sơ đồ kiến ​​trúc trên GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
+- 📋 [Hoàn thành các chỉnh sửa & tham khảo sổ đăng ký (TWEAKS_REFERENCE.md)](docs/TWEAKS_REFERENCE.md)
+
+---
+
+### Xây dựng từ nguồn (dành cho nhà phát triển)
 
 ```bash
 git clone https://github.com/Arean-Max/synchro-nova.git
 cd synchro-nova
 npm install
-npm run dev       # chạy ở chế độ phát triển
-npm run build     # build bộ cài đặt phát hành
+npm run dev       # run in development mode
+npm run build     # build production release exe
 ```
+
+---
+
+### Người đóng góp
+
+- [sotoykor-source](https://github.com/sotoykor-source) — Người sáng tạo ban đầu và tác giả ngược dòng
+- [Arean-Max](https://github.com/Arean-Max) — Phát triển và bảo trì
 
 ---
 
 ### Giấy phép
 
-[MIT](LICENSE)
-
----
-
-### Documentation & Architecture
-
-- [Documentation on DeepWiki](https://deepwiki.com/Arean-Max/synchro-nova)
-- [Architecture Diagram on GitDiagram](https://gitdiagram.com/arean-max/synchro-nova)
-
+Phân phối dưới [MIT License](LICENSE).
