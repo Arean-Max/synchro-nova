@@ -632,8 +632,10 @@ mod tests {
 
     #[test]
     fn test_app_settings_template_overrides_roundtrip() {
-        let mut settings = AppSettings::default();
-        settings.accent_color = "#34d399".to_string();
+        let mut settings = AppSettings {
+            accent_color: "#34d399".to_string(),
+            ..Default::default()
+        };
         settings.template_overrides.insert(
             "rust_cold_tactical".to_string(),
             ColorTemplateOverride {
@@ -659,23 +661,31 @@ mod tests {
 
     #[test]
     fn test_accent_color_sanitization() {
-        let mut s1 = AppSettings::default();
-        s1.accent_color = "<script>alert(1)</script>".to_string();
+        let s1 = AppSettings {
+            accent_color: "<script>alert(1)</script>".to_string(),
+            ..Default::default()
+        };
         let sanitized = s1.sanitized();
         assert_eq!(sanitized.accent_color, "#ffffff");
 
-        let mut s2 = AppSettings::default();
-        s2.accent_color = "#FF00AA".to_string();
+        let s2 = AppSettings {
+            accent_color: "#FF00AA".to_string(),
+            ..Default::default()
+        };
         let sanitized2 = s2.sanitized();
         assert_eq!(sanitized2.accent_color, "#ff00aa");
 
-        let mut s3 = AppSettings::default();
-        s3.theme = "invalid_theme".to_string();
+        let s3 = AppSettings {
+            theme: "invalid_theme".to_string(),
+            ..Default::default()
+        };
         let sanitized3 = s3.sanitized();
         assert_eq!(sanitized3.theme, "default");
 
-        let mut s4 = AppSettings::default();
-        s4.theme = "winter".to_string();
+        let s4 = AppSettings {
+            theme: "winter".to_string(),
+            ..Default::default()
+        };
         let sanitized4 = s4.sanitized();
         assert_eq!(sanitized4.theme, "winter");
     }

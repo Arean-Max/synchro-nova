@@ -384,7 +384,7 @@ pub fn verify_embedded_signature(path: &Path) -> bool {
             *mut WinTrustData,
         ) -> i32;
 
-        let proc = winapi::GetProcAddress(wintrust_dll, b"WinVerifyTrust\0".as_ptr());
+        let proc = winapi::GetProcAddress(wintrust_dll, c"WinVerifyTrust".as_ptr());
         if proc.is_null() {
             winapi::FreeLibrary(wintrust_dll);
             return false;
@@ -434,7 +434,7 @@ pub fn create_native_system_restore_point(description: &str) -> bool {
             *mut StateMgrStatus,
         ) -> i32;
 
-        let proc = winapi::GetProcAddress(srclient, b"SRSetRestorePointW\0".as_ptr());
+        let proc = winapi::GetProcAddress(srclient, c"SRSetRestorePointW".as_ptr());
         if proc.is_null() {
             winapi::FreeLibrary(srclient);
             return false;

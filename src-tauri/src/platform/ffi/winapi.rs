@@ -1,6 +1,6 @@
 
 #[cfg(target_os = "windows")]
-use std::ffi::c_void;
+use std::ffi::{c_char, c_void};
 use super::types::*;
 
 #[cfg(target_os = "windows")]
@@ -49,7 +49,7 @@ unsafe extern "system" {
     ) -> i32;
     pub fn HeapCompact(heap_handle: *mut c_void, flags: u32) -> usize;
     pub fn LoadLibraryW(lib_file_name: *const u16) -> *mut c_void;
-    pub fn GetProcAddress(module: *mut c_void, proc_name: *const u8) -> *mut c_void;
+    pub fn GetProcAddress(module: *mut c_void, proc_name: *const c_char) -> *mut c_void;
     pub fn FreeLibrary(module: *mut c_void) -> i32;
     pub fn SetConsoleCtrlHandler(
         handler_routine: Option<unsafe extern "system" fn(u32) -> i32>,
@@ -195,12 +195,16 @@ fn get_magnification_module() -> *mut c_void {
 
 #[cfg(target_os = "windows")]
 #[allow(non_snake_case)]
+/// # Safety
+///
+/// Calls dynamic `MagInitialize` from `Magnification.dll`. Must be called from a thread
+/// with a valid desktop window station.
 pub unsafe fn MagInitialize() -> i32 {
     let mod_handle = get_magnification_module();
     if mod_handle.is_null() {
         return 0;
     }
-    let proc = GetProcAddress(mod_handle, b"MagInitialize\0".as_ptr());
+    let proc = GetProcAddress(mod_handle, c"MagInitialize".as_ptr());
     if proc.is_null() {
         return 0;
     }
@@ -210,12 +214,15 @@ pub unsafe fn MagInitialize() -> i32 {
 
 #[cfg(target_os = "windows")]
 #[allow(non_snake_case)]
+/// # Safety
+///
+/// `effect` must be a valid pointer to a 5x5 float color transformation matrix.
 pub unsafe fn MagSetFullscreenColorEffect(effect: *const MagColorEffect) -> i32 {
     let mod_handle = get_magnification_module();
     if mod_handle.is_null() {
         return 0;
     }
-    let proc = GetProcAddress(mod_handle, b"MagSetFullscreenColorEffect\0".as_ptr());
+    let proc = GetProcAddress(mod_handle, c"MagSetFullscreenColorEffect".as_ptr());
     if proc.is_null() {
         return 0;
     }
@@ -224,12 +231,15 @@ pub unsafe fn MagSetFullscreenColorEffect(effect: *const MagColorEffect) -> i32 
 }
 
 #[cfg(target_os = "windows")]
+/// # Safety
+///
+/// Uninitializes the magnification API runtime for the process.
 pub unsafe fn mag_uninitialize() -> i32 {
     let mod_handle = get_magnification_module();
     if mod_handle.is_null() {
         return 0;
     }
-    let proc = GetProcAddress(mod_handle, b"MagUninitialize\0".as_ptr());
+    let proc = GetProcAddress(mod_handle, c"MagUninitialize".as_ptr());
     if proc.is_null() {
         return 0;
     }

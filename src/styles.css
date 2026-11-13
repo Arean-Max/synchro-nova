@@ -936,9 +936,14 @@ p, .description {
 
 .slider-meta span:last-child:hover,
 .slider-value-badge:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.32);
   color: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.12);
+}
+
+.slider-value-badge:active {
+  transform: scale(0.97);
 }
 
 .slider-value-badge:focus-within,

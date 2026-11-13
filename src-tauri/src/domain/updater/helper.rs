@@ -346,16 +346,13 @@ pub fn run_updater_helper(args: &[String]) {
                 log("HELPER_WARN", &format!("Seek error on locked payload: {}", e));
                 continue;
             }
-            match fs::File::create(&parsed.target) {
-                Ok(mut target_file) => {
-                    if std::io::copy(&mut payload_file, &mut target_file).is_ok() {
-                        if target_file.sync_all().is_ok() {
-                            install_ok = true;
-                            break;
-                        }
-                    }
+            if let Ok(mut target_file) = fs::File::create(&parsed.target) {
+                if std::io::copy(&mut payload_file, &mut target_file).is_ok()
+                    && target_file.sync_all().is_ok()
+                {
+                    install_ok = true;
+                    break;
                 }
-                Err(_) => {}
             }
             std::thread::sleep(Duration::from_millis(150 + attempt * 50));
         }

@@ -55,14 +55,16 @@ pub fn runas_executable_with_hwnd_and_args(path: &Path, _hwnd: isize, args: Opti
     let dir = dir_buf.as_deref().map(wide_null);
     let dir_ptr = dir.as_ref().map(|d| d.as_ptr()).unwrap_or(std::ptr::null());
 
-    let mut sei = ShellExecuteInfoW::default();
-    sei.f_mask = 0;
-    sei.hwnd = std::ptr::null_mut();
-    sei.lp_verb = operation.as_ptr();
-    sei.lp_file = file.as_ptr();
-    sei.lp_parameters = params_ptr;
-    sei.lp_directory = dir_ptr;
-    sei.n_show = SW_SHOWNORMAL;
+    let mut sei = ShellExecuteInfoW {
+        f_mask: 0,
+        hwnd: std::ptr::null_mut(),
+        lp_verb: operation.as_ptr(),
+        lp_file: file.as_ptr(),
+        lp_parameters: params_ptr,
+        lp_directory: dir_ptr,
+        n_show: SW_SHOWNORMAL,
+        ..Default::default()
+    };
 
     let success = unsafe { winapi::ShellExecuteExW(&mut sei) };
     if success == 0 {

@@ -2990,33 +2990,43 @@ window.addEventListener("wheel", (event) => {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
 
+  // 1. Normalize delta across different input devices (mouse wheel, precision touchpad, etc.)
+  let deltaY = event.deltaY;
+  if (event.deltaMode === 1) {
+    // DOM_DELTA_LINE: standard Windows mouse notch is 3 lines -> normalize to ~108px per notch
+    deltaY *= 36;
+  } else if (event.deltaMode === 2) {
+    // DOM_DELTA_PAGE
+    deltaY *= (window.innerHeight || 600) * 0.85;
+  }
+
+  // 2. Modals, dropdowns, and dialogs priority
   const modalScroll = target.closest(
     ".modal-body, .modal-card, .dropdown-menu, .template-config-dialog, .backup-name-dialog, .language-dropdown-menu, .font-dropdown-menu"
-  );
+  ) || document.querySelector(".modal-backdrop:not(.hidden) .modal-body, .modal-backdrop:not(.hidden) .modal-card");
   if (modalScroll && modalScroll.scrollHeight > modalScroll.clientHeight + 2) {
-    modalScroll.scrollTop += event.deltaY;
+    modalScroll.scrollTop += deltaY;
     event.preventDefault();
     return;
   }
 
+  // 3. Navigation sidebar list
   const navList = target.closest(".nav-list");
   if (navList && navList.scrollHeight > navList.clientHeight + 2) {
-    navList.scrollTop += event.deltaY;
+    navList.scrollTop += deltaY;
     event.preventDefault();
     return;
   }
 
-  const mainPanel = document.querySelector(".main-panel");
-  if (!mainPanel || !mainPanel.contains(target)) return;
-
+  // 4. Main content page scroll container
   const scrollContainer = target.closest(
     ".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page, .page-body"
-  ) || mainPanel.querySelector(
-    ".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page, .page-body"
+  ) || document.querySelector(
+    ".global-color-page, .page-tweaks .scroll-panel, .page-characteristics .scroll-panel, .settings-page, .storage-page-container, .page-binds, .scroll-panel"
   );
 
   if (scrollContainer && scrollContainer.scrollHeight > scrollContainer.clientHeight) {
-    scrollContainer.scrollTop += event.deltaY;
+    scrollContainer.scrollTop += deltaY;
     event.preventDefault();
   }
 }, { passive: false });

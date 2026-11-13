@@ -81,6 +81,7 @@ const DIB_RGB_COLORS: u32 = 0;
 const CF_DIB: u32 = 8;
 const GMEM_MOVEABLE: u32 = 0x0002;
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Default)]
 struct POINT {
@@ -88,6 +89,7 @@ struct POINT {
     pub y: i32,
 }
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Default)]
 struct RECT {
@@ -97,6 +99,7 @@ struct RECT {
     pub bottom: i32,
 }
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[repr(C)]
 struct MONITORINFO {
     pub cb_size: u32,
@@ -105,6 +108,7 @@ struct MONITORINFO {
     pub dw_flags: u32,
 }
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[repr(C)]
 struct MSG {
     pub hwnd: *mut c_void,
@@ -115,6 +119,7 @@ struct MSG {
     pub pt: POINT,
 }
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Default)]
 struct BITMAPINFOHEADER {
@@ -131,6 +136,7 @@ struct BITMAPINFOHEADER {
     bi_clr_important: u32,
 }
 
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[repr(C)]
 struct BITMAPINFO {
     bmi_header: BITMAPINFOHEADER,
@@ -468,12 +474,12 @@ pub fn start_global_screenshot_listener() {
                 if registered != 0 {
                     let mut msg = unsafe { std::mem::zeroed::<MSG>() };
                     while unsafe { GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) } > 0 {
-                        if msg.message == WM_HOTKEY {
-                            if SCREENSHOT_INTERCEPTION_ENABLED.load(std::sync::atomic::Ordering::SeqCst) {
-                                if let Some(color) = crate::domain::color::get_active_color() {
-                                    if color.enabled {
-                                        let _ = capture_juicy_screenshot(&color);
-                                    }
+                        if msg.message == WM_HOTKEY
+                            && SCREENSHOT_INTERCEPTION_ENABLED.load(std::sync::atomic::Ordering::SeqCst)
+                        {
+                            if let Some(color) = crate::domain::color::get_active_color() {
+                                if color.enabled {
+                                    let _ = capture_juicy_screenshot(&color);
                                 }
                             }
                         }

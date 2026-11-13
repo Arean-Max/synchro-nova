@@ -140,13 +140,18 @@ pub fn destroy_main_window(app: &tauri::AppHandle) {
     hide_main_window(app);
 }
 
-pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::WebviewWindow> {
+pub fn create_main_window_with_visibility(app: &tauri::AppHandle, visible: bool) -> tauri::Result<tauri::WebviewWindow> {
     for attempt in 0..10 {
         if let Some(existing) = app.get_webview_window("main") {
             configure_main_window(&existing);
-            let _ = existing.unminimize();
-            let _ = existing.show();
-            let _ = existing.set_focus();
+            if visible {
+                let _ = existing.unminimize();
+                let _ = existing.show();
+                let _ = existing.set_focus();
+            } else {
+                let _ = existing.hide();
+                trim_process_memory();
+            }
             return Ok(existing);
         }
 
@@ -157,7 +162,7 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
             .maximizable(false)
             .decorations(false)
             .shadow(false)
-            .visible(true)
+            .visible(visible)
             .center()
             .on_navigation(|url| {
                 let scheme = url.scheme();
@@ -184,8 +189,13 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
         {
             Ok(window) => {
                 configure_main_window(&window);
-                let _ = window.show();
-                let _ = window.set_focus();
+                if visible {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                } else {
+                    let _ = window.hide();
+                    trim_process_memory();
+                }
                 return Ok(window);
             }
             Err(e) => {
@@ -199,6 +209,10 @@ pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::Webvie
     Err(tauri::Error::WindowNotFound)
 }
 
+pub fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<tauri::WebviewWindow> {
+    create_main_window_with_visibility(app, true)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -208,7 +222,9 @@ pub fn run() {
 
             let runtime = RuntimeState::load(app.handle())?;
             let initial = runtime.snapshot()?;
-            if initial.settings.start_minimized || initial.settings.disable_splash {
+            let is_autostart = std::env::args().any(|a| a == "--autostart" || a == "--minimized");
+            let start_hidden = is_autostart || initial.settings.start_minimized;
+            if start_hidden || initial.settings.disable_splash {
                 runtime.splash_consumed.store(true, std::sync::atomic::Ordering::SeqCst);
             }
             if initial.settings.auto_backup_on_start {
@@ -230,11 +246,7 @@ pub fn run() {
             let _ = settings::set_autostart(app.handle(), initial.settings.autostart_windows);
             app::tray::install_tray(app.handle())?;
 
-            let window = create_main_window(app.handle())?;
-            if initial.settings.start_minimized {
-                let _ = window.hide();
-                trim_process_memory();
-            }
+            let _ = create_main_window_with_visibility(app.handle(), !start_hidden)?;
 
             let eac_protect = initial.settings.eac_auto_protect;
             std::thread::Builder::new()
@@ -429,8 +441,8 @@ mod tests {
         assert_eq!((w_1080, h_1080), (1024.0, 656.0));
 
         let (w_small, h_small) = calculate_adaptive_window_size(1280.0, 720.0);
-        assert!(w_small >= 860.0 && w_small <= 1280.0);
-        assert!(h_small >= 540.0 && h_small <= 720.0);
+        assert!((860.0..=1280.0).contains(&w_small));
+        assert!((540.0..=720.0).contains(&h_small));
     }
 
     #[test]
@@ -694,8 +706,10 @@ a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90  synchro.exe\n"
         let t1 = Instant::now();
         let color_iterations = 5000;
         for i in 0..color_iterations {
-            let mut c = ColorSettings::default();
-            c.saturation = (i % 200) as f32;
+            let c = ColorSettings {
+                saturation: (i % 200) as f32,
+                ..Default::default()
+            };
             let _ = domain::color::apply_color_transform(&c, false);
         }
         let cal_elapsed = t1.elapsed();

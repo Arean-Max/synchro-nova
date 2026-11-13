@@ -156,7 +156,7 @@ pub fn enrich_with_real_version_checks(drivers: &mut [DriverInfo]) {
         if let Some((_, title)) = wu_match {
             driver.is_outdated = true;
             let ver = extract_version_from_text(title).unwrap_or_else(|| {
-                title.split('-').last().map(|s| s.trim()).unwrap_or(title).to_string()
+                title.split('-').next_back().map(|s| s.trim()).unwrap_or(title).to_string()
             });
             driver.latest_version = ver.clone();
             driver.status = format!("Update Available: v{}", ver.trim_start_matches('v'));
@@ -340,7 +340,7 @@ fn parse_nvidia_branch(version: &str) -> f32 {
         let p3 = parts[3];
         if p3.len() >= 4 {
             let last_digit = p2.chars().last().unwrap_or('0');
-            let combined = format!("{}.{}", format!("{}{}", last_digit, &p3[..2]), &p3[2..]);
+            let combined = format!("{}{}.{}", last_digit, &p3[..2], &p3[2..]);
             return combined.parse::<f32>().unwrap_or(0.0);
         }
     }
@@ -392,7 +392,7 @@ fn extract_year(date: &str) -> u32 {
 }
 
 fn extract_version_from_text(text: &str) -> Option<String> {
-    for part in text.split(|c: char| c == ' ' || c == '-' || c == '_') {
+    for part in text.split([' ', '-', '_']) {
         let dots = part.chars().filter(|c| *c == '.').count();
         if dots >= 1 && part.chars().any(|c| c.is_ascii_digit()) {
             let cleaned: String = part.chars().filter(|c| c.is_ascii_digit() || *c == '.').collect();
