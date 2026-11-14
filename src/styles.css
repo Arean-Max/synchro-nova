@@ -7243,6 +7243,7 @@ body.no-animations *::after {
   max-height: 240px;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -8202,6 +8203,7 @@ body.paused-animations *::after {
   max-height: 240px;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 2px;

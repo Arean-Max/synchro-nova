@@ -535,6 +535,7 @@ async function switchLanguage(nextLang) {
   }
   isLanguageSwitching = true;
   viewState.languageDropdownOpen = false;
+  viewState.fontDropdownOpen = false;
 
   const workspace = document.querySelector(".workspace") || document.querySelector(".app-shell");
   const scrollPanel = document.querySelector(".scroll-panel");
@@ -555,6 +556,8 @@ async function switchLanguage(nextLang) {
   appState.settings.language = nextLang;
   document.documentElement.lang = nextLang;
   document.documentElement.dir = nextLang === "ar" ? "rtl" : "ltr";
+
+  router.clearCache();
 
   const minBtn = document.querySelector('.window-btn[data-action="window-minimize"]');
   if (minBtn) minBtn.title = t("minimize");
@@ -601,7 +604,13 @@ async function switchLanguage(nextLang) {
   const body = document.querySelector(".page-body");
   if (body) {
     body.className = `page-body page-${activePage}`;
-    body.innerHTML = renderPageBody(viewState, t);
+    body.innerHTML = renderPageBody(viewState, t, true);
+    const mountContext = {
+      appState,
+      viewState,
+      showAdminBanner: showAdminNotificationBanner
+    };
+    router.mount(activePage, body, mountContext);
     const newScrollPanel = document.querySelector(".scroll-panel");
     if (newScrollPanel) {
       newScrollPanel.scrollTop = savedScrollTop;
@@ -2990,43 +2999,40 @@ window.addEventListener("wheel", (event) => {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
 
-  // 1. Normalize delta across different input devices (mouse wheel, precision touchpad, etc.)
+  // 1. Normalize delta across devices (Windows notches, lines, pages, high-res precision mice)
   let deltaY = event.deltaY;
   if (event.deltaMode === 1) {
-    // DOM_DELTA_LINE: standard Windows mouse notch is 3 lines -> normalize to ~108px per notch
+    // DOM_DELTA_LINE: lines to px (~36px per line)
     deltaY *= 36;
   } else if (event.deltaMode === 2) {
-    // DOM_DELTA_PAGE
+    // DOM_DELTA_PAGE: pages to px
     deltaY *= (window.innerHeight || 600) * 0.85;
+  } else if (Math.abs(deltaY) < 30 && Math.abs(deltaY) > 0) {
+    // High-resolution wheel ticks / precision mouse reporting small delta per notch
+    deltaY = Math.sign(deltaY) * Math.max(Math.abs(deltaY) * 3, 50);
   }
 
-  // 2. Modals, dropdowns, and dialogs priority
-  const modalScroll = target.closest(
-    ".modal-body, .modal-card, .dropdown-menu, .template-config-dialog, .backup-name-dialog, .language-dropdown-menu, .font-dropdown-menu"
-  ) || document.querySelector(".modal-backdrop:not(.hidden) .modal-body, .modal-backdrop:not(.hidden) .modal-card");
-  if (modalScroll && modalScroll.scrollHeight > modalScroll.clientHeight + 2) {
-    modalScroll.scrollTop += deltaY;
-    event.preventDefault();
-    return;
-  }
-
-  // 3. Navigation sidebar list
-  const navList = target.closest(".nav-list");
-  if (navList && navList.scrollHeight > navList.clientHeight + 2) {
-    navList.scrollTop += deltaY;
-    event.preventDefault();
-    return;
-  }
-
-  // 4. Main content page scroll container
-  const scrollContainer = target.closest(
-    ".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page, .page-body"
-  ) || document.querySelector(
-    ".global-color-page, .page-tweaks .scroll-panel, .page-characteristics .scroll-panel, .settings-page, .storage-page-container, .page-binds, .scroll-panel"
+  // 2. Check if cursor is over a dedicated scrollable container (modals, dropdowns, page panels, nav)
+  const scrollable = target.closest(
+    ".language-dropdown-menu, .font-dropdown-menu, .modal-body, .apply-complete-list, .template-config-dialog, .backup-name-dialog, .nav-list, .scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page"
   );
 
-  if (scrollContainer && scrollContainer.scrollHeight > scrollContainer.clientHeight) {
-    scrollContainer.scrollTop += deltaY;
+  if (scrollable && scrollable.scrollHeight > scrollable.clientHeight + 1) {
+    scrollable.scrollBy({ top: deltaY, behavior: "auto" });
+    event.preventDefault();
+    return;
+  }
+
+  // 3. Fallback: cursor is over non-scrollable header, padding, or action bar
+  // Forward scroll to active page's primary content scroll container!
+  const activeContainer = document.querySelector(
+    `.page-${activePage} .scroll-panel, .page-${activePage} .settings-page, .page-${activePage} .storage-page-container, .page-${activePage} .page-binds, .page-${activePage} .global-color-page`
+  ) || document.querySelector(
+    ".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page"
+  );
+
+  if (activeContainer && activeContainer.scrollHeight > activeContainer.clientHeight + 1) {
+    activeContainer.scrollBy({ top: deltaY, behavior: "auto" });
     event.preventDefault();
   }
 }, { passive: false });
