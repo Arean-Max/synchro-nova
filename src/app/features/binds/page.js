@@ -135,14 +135,16 @@ export function renderBindsPage(appState, viewState, t) {
 
   if (!binds.length) {
     return `
-      <section class="card binds-card empty-card">
-        <div class="binds-empty-state">
-          <div class="binds-empty-icon">${icon("keyboard")}</div>
-          <h3 class="binds-empty-title">${escapeHtml(t("noBinds"))}</h3>
-          <p class="binds-empty-desc">${escapeHtml(t("noBindsDesc"))}</p>
-          <button class="btn btn-primary" type="button" data-action="add-bind">${icon("plus")}<span>${escapeHtml(t("createFirstBind"))}</span></button>
-        </div>
-      </section>
+      <div class="binds-page-container scroll-panel">
+        <section class="card binds-card empty-card">
+          <div class="binds-empty-state">
+            <div class="binds-empty-icon">${icon("keyboard")}</div>
+            <h3 class="binds-empty-title">${escapeHtml(t("noBinds"))}</h3>
+            <p class="binds-empty-desc">${escapeHtml(t("noBindsDesc"))}</p>
+            <button class="btn btn-primary" type="button" data-action="add-bind">${icon("plus")}<span>${escapeHtml(t("createFirstBind"))}</span></button>
+          </div>
+        </section>
+      </div>
     `;
   }
 
@@ -150,19 +152,21 @@ export function renderBindsPage(appState, viewState, t) {
   const clearText = rawClear && rawClear !== "clearAllBinds" ? rawClear : (isRu ? "Форматировать" : "Format");
 
   return `
-    <section class="card binds-card">
-      <div class="binds-list">${rows}</div>
-      <div class="binds-footer-row">
-        <button class="btn btn-primary bind-add-btn" type="button" data-action="add-bind" title="${escapeAttr(t("addBind"))}">
-          ${icon("plus")}
-          <span>${escapeHtml(t("addBind"))}</span>
-        </button>
-        <button class="btn btn-danger bind-clear-btn" type="button" data-action="clear-all-binds" title="${escapeAttr(clearText)}">
-          ${icon("trash")}
-          <span>${escapeHtml(clearText)}</span>
-        </button>
-      </div>
-    </section>
+    <div class="binds-page-container scroll-panel">
+      <section class="card binds-card">
+        <div class="binds-list">${rows}</div>
+        <div class="binds-footer-row">
+          <button class="btn btn-primary bind-add-btn" type="button" data-action="add-bind" title="${escapeAttr(t("addBind"))}">
+            ${icon("plus")}
+            <span>${escapeHtml(t("addBind"))}</span>
+          </button>
+          <button class="btn btn-danger bind-clear-btn" type="button" data-action="clear-all-binds" title="${escapeAttr(clearText)}">
+            ${icon("trash")}
+            <span>${escapeHtml(clearText)}</span>
+          </button>
+        </div>
+      </section>
+    </div>
   `;
 }
 

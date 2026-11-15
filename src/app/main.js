@@ -537,112 +537,46 @@ async function switchLanguage(nextLang) {
   viewState.languageDropdownOpen = false;
   viewState.fontDropdownOpen = false;
 
+  const scrollPanel = document.querySelector(".scroll-panel") || document.querySelector(".page-body");
+  const savedScrollTop = scrollPanel ? scrollPanel.scrollTop : 0;
+
   const workspace = document.querySelector(".workspace") || document.querySelector(".app-shell");
-  const scrollPanel = document.querySelector(".scroll-panel");
-  const pageBody = document.querySelector(".page-body");
-  const savedScrollTop = scrollPanel ? scrollPanel.scrollTop : (pageBody ? pageBody.scrollTop : 0);
-
-  document.querySelectorAll("[data-language]").forEach((btn) => {
-    btn.classList.toggle("active", btn.getAttribute("data-language") === nextLang);
-  });
-
   if (workspace) {
     workspace.classList.remove("lang-fade-in");
     workspace.classList.add("lang-fade-out");
   }
 
-  await new Promise((resolve) => window.setTimeout(resolve, 100));
+  await new Promise((resolve) => window.setTimeout(resolve, 60));
 
   appState.settings.language = nextLang;
   document.documentElement.lang = nextLang;
   document.documentElement.dir = nextLang === "ar" ? "rtl" : "ltr";
 
   router.clearCache();
+  render(true);
 
-  const minBtn = document.querySelector('.window-btn[data-action="window-minimize"]');
-  if (minBtn) minBtn.title = t("minimize");
-  const closeBtn = document.querySelector('.window-btn[data-action="window-close"]');
-  if (closeBtn) closeBtn.title = t("close");
-
-  const navLabel = document.querySelector(".nav-label");
-  if (navLabel) navLabel.textContent = t("main");
-
-  const toggleBtn = document.querySelector(".sidebar-toggle-btn");
-  if (toggleBtn) {
-    const isCollapsed = Boolean(viewState?.sidebarCollapsed);
-    const toggleTitle = isCollapsed ? t("expandSidebar") : t("collapseSidebar");
-    toggleBtn.title = toggleTitle;
-    toggleBtn.setAttribute("aria-label", toggleTitle);
-  }
-
-  pageOrder.forEach((key) => {
-    const page = pageDefs[key];
-    const navItem = document.querySelector(`.nav-item[data-page="${key}"]`);
-    if (navItem && page) {
-      const label = t(page.nav);
-      navItem.setAttribute("title", label);
-      const span = navItem.querySelector("span");
-      if (span) span.textContent = label;
-    }
-  });
-
-  const exitBtn = document.querySelector(".exit-button");
-  if (exitBtn) {
-    exitBtn.setAttribute("title", t("exit"));
-    const span = exitBtn.querySelector("span");
-    if (span) span.textContent = t("exit");
-  }
-  updateSidebarUpdateWidgetDom();
-  updateNavState();
-
-  const page = pageDefs[activePage];
-  const title = document.querySelector(".page-header h1");
-  const subtitle = document.querySelector(".page-header p");
-  if (title) title.textContent = t(page.title);
-  if (subtitle) subtitle.textContent = t(page.subtitle);
-
+  const mountContext = {
+    appState,
+    viewState,
+    showAdminBanner: showAdminNotificationBanner
+  };
   const body = document.querySelector(".page-body");
   if (body) {
-    body.className = `page-body page-${activePage}`;
-    body.innerHTML = renderPageBody(viewState, t, true);
-    const mountContext = {
-      appState,
-      viewState,
-      showAdminBanner: showAdminNotificationBanner
-    };
     router.mount(activePage, body, mountContext);
-    const newScrollPanel = document.querySelector(".scroll-panel");
-    if (newScrollPanel) {
-      newScrollPanel.scrollTop = savedScrollTop;
-    } else {
-      body.scrollTop = savedScrollTop;
+    const newScroll = document.querySelector(".scroll-panel") || body;
+    if (newScroll && savedScrollTop > 0) {
+      newScroll.scrollTop = savedScrollTop;
     }
   }
 
-  syncAllSliders(appState);
-  if (viewState.editingTemplate && viewState.editingTemplateColor) {
-    syncAllTemplateSliders(viewState.editingTemplateColor);
-  }
-  renderBackupModalDom();
-  renderApplyModalDom();
-  if (viewState.activeImpactBanner) {
-    if (appState.isAdmin && viewState.activeImpactBanner.isAdminPrompt) {
-      viewState.activeImpactBanner = null;
-      document.querySelectorAll(".ios-banner-container").forEach((c) => c.remove());
-    } else {
-      renderNotificationBannerDom();
-    }
-  }
-  updateNavState();
-  syncNavIndicator();
-
-  if (workspace) {
-    workspace.classList.remove("lang-fade-out");
-    workspace.classList.add("lang-fade-in");
+  const nextWorkspace = document.querySelector(".workspace") || document.querySelector(".app-shell");
+  if (nextWorkspace) {
+    nextWorkspace.classList.remove("lang-fade-out");
+    nextWorkspace.classList.add("lang-fade-in");
     window.setTimeout(() => {
-      workspace.classList.remove("lang-fade-in");
+      nextWorkspace.classList.remove("lang-fade-in");
       isLanguageSwitching = false;
-    }, 220);
+    }, 180);
   } else {
     isLanguageSwitching = false;
   }
@@ -2996,39 +2930,39 @@ document.addEventListener("keydown", withErrorBoundary(handleKeydown, "Keydown")
 
 window.addEventListener("wheel", (event) => {
   if (event.ctrlKey || event.altKey) return;
-  const target = event.target instanceof Element ? event.target : null;
-  if (!target) return;
+  const target = event.target instanceof Element
+    ? event.target
+    : (event.target?.parentElement instanceof Element ? event.target.parentElement : null);
 
   // 1. Normalize delta across devices (Windows notches, lines, pages, high-res precision mice)
   let deltaY = event.deltaY;
   if (event.deltaMode === 1) {
-    // DOM_DELTA_LINE: lines to px (~36px per line)
     deltaY *= 36;
   } else if (event.deltaMode === 2) {
-    // DOM_DELTA_PAGE: pages to px
     deltaY *= (window.innerHeight || 600) * 0.85;
   } else if (Math.abs(deltaY) < 30 && Math.abs(deltaY) > 0) {
-    // High-resolution wheel ticks / precision mouse reporting small delta per notch
     deltaY = Math.sign(deltaY) * Math.max(Math.abs(deltaY) * 3, 50);
   }
 
   // 2. Check if cursor is over a dedicated scrollable container (modals, dropdowns, page panels, nav)
-  const scrollable = target.closest(
-    ".language-dropdown-menu, .font-dropdown-menu, .modal-body, .apply-complete-list, .template-config-dialog, .backup-name-dialog, .nav-list, .scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page"
-  );
+  if (target) {
+    const scrollable = target.closest(
+      ".language-dropdown-menu, .font-dropdown-menu, .modal-body, .apply-complete-list, .template-config-dialog, .backup-name-dialog, .nav-list, .scroll-panel, .settings-page, .storage-page-container, .binds-page-container, .page-binds, .global-color-page"
+    );
 
-  if (scrollable && scrollable.scrollHeight > scrollable.clientHeight + 1) {
-    scrollable.scrollBy({ top: deltaY, behavior: "auto" });
-    event.preventDefault();
-    return;
+    if (scrollable && scrollable.scrollHeight > scrollable.clientHeight + 1) {
+      scrollable.scrollBy({ top: deltaY, behavior: "auto" });
+      event.preventDefault();
+      return;
+    }
   }
 
-  // 3. Fallback: cursor is over non-scrollable header, padding, or action bar
+  // 3. Fallback: cursor is over non-scrollable header, padding, sidebar, or action bar
   // Forward scroll to active page's primary content scroll container!
   const activeContainer = document.querySelector(
-    `.page-${activePage} .scroll-panel, .page-${activePage} .settings-page, .page-${activePage} .storage-page-container, .page-${activePage} .page-binds, .page-${activePage} .global-color-page`
+    `.page-${activePage} .scroll-panel, .page-${activePage} .settings-page, .page-${activePage} .storage-page-container, .page-${activePage} .binds-page-container, .page-${activePage}.page-binds, .page-${activePage} .global-color-page`
   ) || document.querySelector(
-    ".scroll-panel, .settings-page, .storage-page-container, .page-binds, .global-color-page"
+    ".scroll-panel, .settings-page, .storage-page-container, .binds-page-container, .page-binds, .global-color-page"
   );
 
   if (activeContainer && activeContainer.scrollHeight > activeContainer.clientHeight + 1) {
@@ -3053,15 +2987,43 @@ window.addEventListener(
       (isCtrl && ["f", "g", "p", "u", "s", "h", "j", "o", "n", "t", "w", "r", "d"].includes(k?.toLowerCase())) ||
       (isAlt && (k === "ArrowLeft" || k === "ArrowRight"));
 
-    if (isBrowserShortcut) {
-      const targetTag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
-      const isEditingText = targetTag === "input" || targetTag === "textarea";
-      const isTextEditCommand = isCtrl && ["c", "v", "x", "a", "z", "y"].includes(k?.toLowerCase());
+    const targetTag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    const isEditingText = targetTag === "input" || targetTag === "textarea";
+    const isTextEditCommand = isCtrl && ["c", "v", "x", "a", "z", "y"].includes(k?.toLowerCase());
 
+    if (isBrowserShortcut) {
       if (!isEditingText || !isTextEditCommand) {
         if (!viewState.recordingBindId) {
           e.preventDefault();
           e.stopPropagation();
+        }
+      }
+    }
+
+    const isNavKey = ["PageDown", "PageUp", "ArrowDown", "ArrowUp", "Home", "End"].includes(k);
+    if (isNavKey && !isEditingText && !viewState.recordingBindId) {
+      const scrollable = document.querySelector(
+        `.page-${activePage} .scroll-panel, .page-${activePage} .settings-page, .page-${activePage} .storage-page-container, .page-${activePage} .binds-page-container, .page-${activePage}.page-binds, .page-${activePage} .global-color-page`
+      ) || document.querySelector(".scroll-panel, .settings-page, .storage-page-container, .binds-page-container, .page-binds, .global-color-page");
+
+      if (scrollable && scrollable.scrollHeight > scrollable.clientHeight + 1) {
+        let scrollAmount = 0;
+        if (k === "PageDown") scrollAmount = scrollable.clientHeight * 0.85;
+        else if (k === "PageUp") scrollAmount = -scrollable.clientHeight * 0.85;
+        else if (k === "ArrowDown") scrollAmount = 56;
+        else if (k === "ArrowUp") scrollAmount = -56;
+        else if (k === "Home") {
+          scrollable.scrollTo({ top: 0, behavior: "smooth" });
+          e.preventDefault();
+          return;
+        } else if (k === "End") {
+          scrollable.scrollTo({ top: scrollable.scrollHeight, behavior: "smooth" });
+          e.preventDefault();
+          return;
+        }
+        if (scrollAmount !== 0) {
+          scrollable.scrollBy({ top: scrollAmount, behavior: "smooth" });
+          e.preventDefault();
         }
       }
     }

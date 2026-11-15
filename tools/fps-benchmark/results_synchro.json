@@ -1,0 +1,17 @@
+{
+  "totalFrames": 11515,
+  "durationMs": 6000,
+  "avgFps": 1919,
+  "onePercentLowFps": 476.2,
+  "zeroPointOnePercentLowFps": 294.1,
+  "avgFrametimeMs": 0.52,
+  "minFrametimeMs": 0,
+  "maxFrametimeMs": 5.2,
+  "frametimeStdDevMs": 0.379,
+  "timestamp": "2026-11-15T01:38:39.603Z",
+  "mode": "synchro",
+  "gpu": "NVIDIA GeForce RTX 3060",
+  "driver": "32.0.16.2124 (D3D11/WDDM)",
+  "cpu": "12th Gen Intel Core i5-12400F",
+  "os": "Windows 10/11 x64"
+}

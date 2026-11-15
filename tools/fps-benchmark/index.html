@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Synchro Hardware FPS & Latency Benchmark</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #070709; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; }
+    #canvas { width: 100%; height: 100%; display: block; }
+    #hud {
+      position: absolute; top: 16px; left: 16px; z-index: 10;
+      background: rgba(16, 16, 20, 0.88); backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px;
+      padding: 18px 24px; font-size: 13px; line-height: 1.7; min-width: 300px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+    }
+    .hud-title { font-size: 15px; font-weight: 700; color: #38bdf8; margin-bottom: 10px; letter-spacing: 0.5px; }
+    .hud-val { font-weight: 600; color: #fff; }
+    .hud-stat { display: flex; justify-content: space-between; gap: 20px; }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <div class="hud-title">SYNCHRO HARDWARE ENGINE BENCHMARK</div>
+    <div class="hud-stat"><span>Progress:</span><span id="stat-progress" class="hud-val">0%</span></div>
+    <div class="hud-stat"><span>Current FPS:</span><span id="stat-fps" class="hud-val">0</span></div>
+    <div class="hud-stat"><span>Frametime:</span><span id="stat-ms" class="hud-val">0.0 ms</span></div>
+    <div class="hud-stat"><span>Elapsed:</span><span id="stat-time" class="hud-val">0.0 s</span></div>
+    <div class="hud-stat"><span>Frames:</span><span id="stat-frames" class="hud-val">0</span></div>
+  </div>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const DURATION_MS = 6000; // 6 seconds duration
+    const WARMUP_MS = 2000;   // 2000ms GPU clock ramp & stabilization warmup
+    const PARTICLE_COUNT = 100000; // 100,000 simulated particles with complex physics
+
+    const canvas = document.getElementById("canvas");
+    canvas.width = window.innerWidth || 1280;
+    canvas.height = window.innerHeight || 720;
+
+    const gl = canvas.getContext("webgl2", {
+      powerPreference: "high-performance",
+      antialias: false,
+      alpha: false,
+      preserveDrawingBuffer: false
+    }) || canvas.getContext("webgl");
+
+    if (!gl) {
+      document.body.innerHTML = "WebGL unsupported";
+      window.__BENCHMARK_ERROR__ = "WebGL not supported";
+    }
+
+    const vsSource = `
+      attribute vec3 aPosition;
+      attribute vec3 aVelocity;
+      attribute vec4 aColor;
+      uniform mat4 uMatrix;
+      uniform float uTime;
+      varying vec4 vColor;
+      void main() {
+        // High complexity per-vertex simulation
+        float angle = uTime * 0.8 + length(aPosition.xz) * 0.2;
+        mat3 rot = mat3(
+          cos(angle), 0.0, sin(angle),
+          0.0, 1.0, 0.0,
+          -sin(angle), 0.0, cos(angle)
+        );
+        vec3 p = rot * (aPosition + aVelocity * sin(uTime * 2.0 + aPosition.y));
+        gl_Position = uMatrix * vec4(p, 1.0);
+        gl_PointSize = clamp(3.5 / (gl_Position.w + 0.05), 1.0, 6.0);
+        vColor = aColor;
+      }
+    `;
+
+    const fsSource = `
+      precision mediump float;
+      varying vec4 vColor;
+      void main() {
+        float dist = length(gl_PointCoord - vec2(0.5));
+        if (dist > 0.5) discard;
+        float intensity = pow(1.0 - (dist * 2.0), 1.8);
+        gl_FragColor = vec4(vColor.rgb * (1.0 + intensity * 0.5), vColor.a * intensity);
+      }
+    `;
+
+    function createShader(gl, type, source) {
+      const shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      return shader;
+    }
+
+    const program = gl.createProgram();
+    gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, vsSource));
+    gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, fsSource));
+    gl.linkProgram(program);
+    gl.useProgram(program);
+
+    // Dynamic arrays
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
+    const velocities = new Float32Array(PARTICLE_COUNT * 3);
+    const colors = new Float32Array(PARTICLE_COUNT * 4);
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = 1.0 + Math.random() * 12.0;
+
+      positions[i * 3 + 0] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = (r * Math.sin(phi) * Math.sin(theta)) * 0.4;
+      positions[i * 3 + 2] = r * Math.cos(phi);
+
+      velocities[i * 3 + 0] = (Math.random() - 0.5) * 1.5;
+      velocities[i * 3 + 1] = (Math.random() - 0.5) * 0.8;
+      velocities[i * 3 + 2] = (Math.random() - 0.5) * 1.5;
+
+      const hue = (r / 13.0) + Math.random() * 0.15;
+      colors[i * 4 + 0] = 0.3 + 0.7 * Math.sin(hue * 6.28);
+      colors[i * 4 + 1] = 0.3 + 0.7 * Math.sin(hue * 6.28 + 2.09);
+      colors[i * 4 + 2] = 0.3 + 0.7 * Math.sin(hue * 6.28 + 4.18);
+      colors[i * 4 + 3] = 0.9;
+    }
+
+    const posBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+    const posLoc = gl.getAttribLocation(program, "aPosition");
+    gl.enableVertexAttribArray(posLoc);
+    gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+
+    const velBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, velBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, velocities, gl.STATIC_DRAW);
+    const velLoc = gl.getAttribLocation(program, "aVelocity");
+    gl.enableVertexAttribArray(velLoc);
+    gl.vertexAttribPointer(velLoc, 3, gl.FLOAT, false, 0, 0);
+
+    const colorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+    const colLoc = gl.getAttribLocation(program, "aColor");
+    gl.enableVertexAttribArray(colLoc);
+    gl.vertexAttribPointer(colLoc, 4, gl.FLOAT, false, 0, 0);
+
+    const uMatrix = gl.getUniformLocation(program, "uMatrix");
+    const uTime = gl.getUniformLocation(program, "uTime");
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+    gl.clearColor(0.02, 0.02, 0.03, 1.0);
+
+    function createPerspectiveMatrix(fov, aspect, near, far) {
+      const f = 1.0 / Math.tan(fov / 2);
+      const rangeInv = 1.0 / (near - far);
+      return [
+        f / aspect, 0, 0, 0,
+        0, f, 0, 0,
+        0, 0, (near + far) * rangeInv, -1,
+        0, 0, near * far * rangeInv * 2, 0
+      ];
+    }
+
+    function multiplyMatrices(a, b) {
+      const out = new Float32Array(16);
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+          let sum = 0;
+          for (let k = 0; k < 4; k++) sum += a[i * 4 + k] * b[k * 4 + j];
+          out[i * 4 + j] = sum;
+        }
+      }
+      return out;
+    }
+
+    const frameDeltas = [];
+    let initialTime = performance.now();
+    let benchmarkStartTime = 0;
+    let lastFrameTime = performance.now();
+    let isFinished = false;
+
+    const statProgress = document.getElementById("stat-progress");
+    const statFps = document.getElementById("stat-fps");
+    const statMs = document.getElementById("stat-ms");
+    const statTime = document.getElementById("stat-time");
+    const statFrames = document.getElementById("stat-frames");
+
+    function renderLoop(now) {
+      if (isFinished) return;
+
+      const delta = now - lastFrameTime;
+      lastFrameTime = now;
+
+      const elapsedTotal = now - initialTime;
+
+      // Heavy CPU-side load simulating game engine physics tick and matrix recalculations
+      let acc = 0;
+      for (let j = 0; j < 12000; j++) {
+        acc += Math.sin(j + now * 0.001);
+      }
+
+      if (elapsedTotal > WARMUP_MS) {
+        if (!benchmarkStartTime) benchmarkStartTime = now;
+        const benchmarkElapsed = now - benchmarkStartTime;
+        frameDeltas.push(delta);
+
+        if (frameDeltas.length % 20 === 0) {
+          const progressPct = Math.min(100, Math.round((benchmarkElapsed / DURATION_MS) * 100));
+          statProgress.textContent = progressPct + "%";
+          statFps.textContent = delta > 0 ? (1000 / delta).toFixed(1) : "0";
+          statMs.textContent = delta.toFixed(2) + " ms";
+          statTime.textContent = (benchmarkElapsed / 1000).toFixed(1) + " s";
+          statFrames.textContent = frameDeltas.length;
+        }
+
+        if (benchmarkElapsed >= DURATION_MS) {
+          isFinished = true;
+          finishBenchmark();
+          return;
+        }
+      }
+
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      const aspect = canvas.width / canvas.height;
+      const proj = createPerspectiveMatrix(Math.PI / 3, aspect, 0.1, 100.0);
+      const angle = (now * 0.0006);
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      const view = [
+        cosA, 0.2 * sinA, -sinA, 0,
+        0, 1, 0, 0,
+        sinA, -0.2 * cosA, cosA, 0,
+        0, 0, -18, 1
+      ];
+
+      const mvp = multiplyMatrices(view, proj);
+      gl.uniformMatrix4fv(uMatrix, false, mvp);
+      gl.uniform1f(uTime, now * 0.001);
+
+      gl.drawArrays(gl.POINTS, 0, PARTICLE_COUNT);
+
+      requestAnimationFrame(renderLoop);
+    }
+
+    function finishBenchmark() {
+      const sorted = [...frameDeltas].sort((a, b) => a - b);
+      const totalFrames = sorted.length;
+      const sum = sorted.reduce((acc, v) => acc + v, 0);
+      const avgMs = sum / totalFrames;
+      const avgFps = 1000 / avgMs;
+
+      // 1% Low is 99th percentile frametime
+      const p99Index = Math.min(totalFrames - 1, Math.floor(totalFrames * 0.99));
+      const p99Ms = sorted[p99Index];
+      const onePercentLowFps = 1000 / p99Ms;
+
+      // 0.1% Low is 99.9th percentile frametime
+      const p999Index = Math.min(totalFrames - 1, Math.floor(totalFrames * 0.999));
+      const p999Ms = sorted[p999Index];
+      const zeroPointOnePercentLowFps = 1000 / p999Ms;
+
+      const variance = sorted.reduce((acc, v) => acc + Math.pow(v - avgMs, 2), 0) / totalFrames;
+      const stdDevMs = Math.sqrt(variance);
+
+      const minMs = sorted[0];
+      const maxMs = sorted[totalFrames - 1];
+
+      const result = {
+        totalFrames,
+        durationMs: Math.round(sum),
+        avgFps: Number(avgFps.toFixed(1)),
+        onePercentLowFps: Number(onePercentLowFps.toFixed(1)),
+        zeroPointOnePercentLowFps: Number(zeroPointOnePercentLowFps.toFixed(1)),
+        avgFrametimeMs: Number(avgMs.toFixed(2)),
+        minFrametimeMs: Number(minMs.toFixed(2)),
+        maxFrametimeMs: Number(maxMs.toFixed(2)),
+        frametimeStdDevMs: Number(stdDevMs.toFixed(3)),
+        timestamp: new Date().toISOString()
+      };
+
+      window.__BENCHMARK_RESULTS__ = result;
+      statProgress.textContent = "100% (Complete)";
+      statFps.textContent = result.avgFps;
+      statMs.textContent = result.avgFrametimeMs + " ms";
+      console.log("SYNCHRO_BENCHMARK_DONE:", JSON.stringify(result));
+    }
+
+    requestAnimationFrame((t) => {
+      initialTime = t;
+      lastFrameTime = t;
+      requestAnimationFrame(renderLoop);
+    });
+  </script>
+</body>
+</html>

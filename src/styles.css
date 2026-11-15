@@ -846,7 +846,8 @@ p, .description {
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  height: 100%;
+  height: auto;
+  max-height: calc(100% - 66px);
   overflow: hidden;
   box-sizing: border-box;
   animation: iosPagePush 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -1340,20 +1341,21 @@ p, .description {
 }
 
 .global-color-page::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .global-color-page::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 999px;
 }
 
 .global-color-page::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.28);
   border-radius: 999px;
 }
 
 .global-color-page::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .global-color-grid {
@@ -2583,8 +2585,12 @@ p, .description {
 }
 
 .scroll-panel::-webkit-scrollbar-thumb {
-  background: #5d5d64;
+  background: rgba(255, 255, 255, 0.28);
   border-radius: 999px;
+}
+
+.scroll-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .tweak-group,
@@ -3608,20 +3614,21 @@ p, .description {
 }
 
 .storage-page-container::-webkit-scrollbar {
-  width: 5px;
+  width: 8px;
 }
 
 .storage-page-container::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 999px;
 }
 
 .storage-page-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.28);
   border-radius: 999px;
 }
 
 .storage-page-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .backup-card,
@@ -3924,20 +3931,21 @@ p, .description {
 }
 
 .settings-page::-webkit-scrollbar {
-  width: 5px;
+  width: 8px;
 }
 
 .settings-page::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 999px;
 }
 
 .settings-page::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.28);
   border-radius: 999px;
 }
 
 .settings-page::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .settings-page .scroll-panel {
@@ -6342,21 +6350,38 @@ p, .description {
   padding-right: 4px;
 }
 
+.binds-page-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  box-sizing: border-box;
+}
+
+.binds-page-container::-webkit-scrollbar,
 .page-binds::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
+.binds-page-container::-webkit-scrollbar-track,
 .page-binds::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.page-binds::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.035);
   border-radius: 999px;
 }
 
+.binds-page-container::-webkit-scrollbar-thumb,
+.page-binds::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+}
+
+.binds-page-container::-webkit-scrollbar-thumb:hover,
 .page-binds::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .binds-card {
