@@ -844,10 +844,9 @@ p, .description {
   position: relative;
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
-  height: auto;
-  max-height: calc(100% - 66px);
+  height: 100%;
   overflow: hidden;
   box-sizing: border-box;
   animation: iosPagePush 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -855,6 +854,13 @@ p, .description {
 
 .scroll-panel {
   scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+.settings-page,
+.storage-page-container,
+.binds-page-container {
+  overscroll-behavior: contain;
 }
 
 .two-column {

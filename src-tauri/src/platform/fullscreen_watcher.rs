@@ -108,6 +108,7 @@ pub fn evaluate_and_update(_app_handle: &AppHandle) {
             if let Ok(mut lock) = CURRENT_STATE.lock() {
                 *lock = FullscreenState::FullscreenForeground;
             }
+            crate::platform::ffi::enable_process_eco_qos();
             crate::domain::color::reapply_active_color();
         }
     } else {
@@ -115,6 +116,7 @@ pub fn evaluate_and_update(_app_handle: &AppHandle) {
             if let Ok(mut lock) = CURRENT_STATE.lock() {
                 *lock = FullscreenState::NormalDesktop;
             }
+            crate::platform::ffi::disable_process_eco_qos();
             crate::domain::color::reapply_active_color();
         }
     }

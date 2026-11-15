@@ -13,17 +13,8 @@ export function scheduleTrimMemory(delayMs = 200) {
 export function registerLifecycleHooks() {
   if (typeof window === "undefined") return;
 
-  window.addEventListener("blur", () => {
-    scheduleTrimMemory(100);
-  });
-
-  if (typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        scheduleTrimMemory(50);
-      }
-    });
-  }
+  // Do not perform aggressive working set trimming on window blur,
+  // as it causes page-fault stutter in active foreground games.
 }
 
 export function withErrorBoundary(fn, contextName = "Action") {

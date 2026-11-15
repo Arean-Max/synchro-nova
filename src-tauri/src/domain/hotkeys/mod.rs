@@ -155,7 +155,7 @@ fn execute_action(action: &str, app: &AppHandle) {
                         crate::platform::set_user_summoned(true);
                         #[cfg(target_os = "windows")]
                         crate::platform::ffi::disable_process_eco_qos();
-                        crate::resume_window_webview(&window.as_ref().window());
+                        crate::resume_window_webview(&window);
                         let _ = window.unminimize();
                         let _ = window.show();
                         let _ = window.set_focus();

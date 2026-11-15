@@ -29,6 +29,22 @@ pub fn set_pending_navigation(page: String) {
 }
 
 #[tauri::command]
+pub fn get_monitor_refresh_rate() -> u32 {
+    #[cfg(target_os = "windows")]
+    unsafe {
+        let mut dm = std::mem::zeroed::<crate::platform::ffi::DevModeW>();
+        dm.dm_size = std::mem::size_of::<crate::platform::ffi::DevModeW>() as u16;
+        const ENUM_CURRENT_SETTINGS: u32 = 0xFFFF_FFFF;
+        if crate::platform::ffi::winapi::EnumDisplaySettingsW(std::ptr::null(), ENUM_CURRENT_SETTINGS, &mut dm) != 0 {
+            if dm.dm_display_frequency >= 30 && dm.dm_display_frequency <= 1000 {
+                return dm.dm_display_frequency;
+            }
+        }
+    }
+    60
+}
+
+#[tauri::command]
 pub fn get_pending_navigation() -> Option<String> {
     if let Ok(mut lock) = PENDING_NAVIGATION.lock() {
         lock.take()

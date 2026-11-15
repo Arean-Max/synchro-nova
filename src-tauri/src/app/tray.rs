@@ -75,7 +75,7 @@ pub fn show_main_window(app: &AppHandle) {
         crate::platform::fullscreen_watcher::set_user_summoned(true);
 
         if let Some(window) = app_handle.get_webview_window("main") {
-            crate::resume_window_webview(&window.as_ref().window());
+            crate::resume_window_webview(&window);
             let _ = window.unminimize();
             let _ = window.show();
             let _ = window.set_focus();
@@ -89,7 +89,7 @@ pub fn show_main_window(app: &AppHandle) {
             }
             let _ = window.emit("window-restored", ());
         } else if let Ok(window) = crate::create_main_window(&app_handle) {
-            crate::resume_window_webview(&window.as_ref().window());
+            crate::resume_window_webview(&window);
             let _ = window.unminimize();
             let _ = window.show();
             let _ = window.set_focus();

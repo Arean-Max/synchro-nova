@@ -52,26 +52,35 @@ fn calculate_adaptive_window_size(screen_w: f64, screen_h: f64) -> (f64, f64) {
     (final_w, final_h)
 }
 
-pub fn suspend_window_webview(_window: &tauri::Window) {}
-
 #[cfg(target_os = "windows")]
-pub fn resume_window_webview(window: &tauri::Window) {
-    if let Some(wv) = window.app_handle().get_webview_window(window.label()) {
-        let _ = wv.with_webview(|webview| {
-            let controller = webview.controller();
-            unsafe {
-                let _ = controller.SetIsVisible(true);
-                let _ = controller.NotifyParentWindowPositionChanged();
-                let _ = controller.MoveFocus(
-                    webview2_com_sys::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC,
-                );
-            }
-        });
-    }
+pub fn suspend_window_webview(window: &tauri::WebviewWindow) {
+    let _ = window.with_webview(|webview| {
+        let controller = webview.controller();
+        unsafe {
+            let _ = controller.SetIsVisible(false);
+        }
+    });
 }
 
 #[cfg(not(target_os = "windows"))]
-pub fn resume_window_webview(_window: &tauri::Window) {}
+pub fn suspend_window_webview(_window: &tauri::WebviewWindow) {}
+
+#[cfg(target_os = "windows")]
+pub fn resume_window_webview(window: &tauri::WebviewWindow) {
+    let _ = window.with_webview(|webview| {
+        let controller = webview.controller();
+        unsafe {
+            let _ = controller.SetIsVisible(true);
+            let _ = controller.NotifyParentWindowPositionChanged();
+            let _ = controller.MoveFocus(
+                webview2_com_sys::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC,
+            );
+        }
+    });
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn resume_window_webview(_window: &tauri::WebviewWindow) {}
 
 pub fn configure_main_window(window: &tauri::WebviewWindow) {
     let _ = window.set_resizable(false);
@@ -132,6 +141,7 @@ pub fn configure_main_window(window: &tauri::WebviewWindow) {
 pub fn hide_main_window(app: &tauri::AppHandle) {
     platform::fullscreen_watcher::set_user_summoned(false);
     if let Some(window) = app.get_webview_window("main") {
+        suspend_window_webview(&window);
         let _ = window.hide();
     }
 }
@@ -145,10 +155,12 @@ pub fn create_main_window_with_visibility(app: &tauri::AppHandle, visible: bool)
         if let Some(existing) = app.get_webview_window("main") {
             configure_main_window(&existing);
             if visible {
+                resume_window_webview(&existing);
                 let _ = existing.unminimize();
                 let _ = existing.show();
                 let _ = existing.set_focus();
             } else {
+                suspend_window_webview(&existing);
                 let _ = existing.hide();
                 trim_process_memory();
             }
@@ -282,9 +294,26 @@ pub fn run() {
             match event {
                 WindowEvent::Focused(true) => {
                     platform::fullscreen_watcher::set_user_summoned(true);
+                    #[cfg(target_os = "windows")]
+                    platform::ffi::disable_process_eco_qos();
                     domain::color::reapply_active_color();
-                    resume_window_webview(window);
+                    if let Some(wv) = window.app_handle().get_webview_window(window.label()) {
+                        resume_window_webview(&wv);
+                    }
                     let _ = window.emit("window-restored", ());
+                    let _ = window.emit("window-focus", ());
+                }
+                WindowEvent::Focused(false) => {
+                    #[cfg(target_os = "windows")]
+                    platform::ffi::enable_process_eco_qos();
+                    if let Ok(minimized) = window.is_minimized() {
+                        if minimized {
+                            if let Some(wv) = window.app_handle().get_webview_window(window.label()) {
+                                suspend_window_webview(&wv);
+                            }
+                        }
+                    }
+                    let _ = window.emit("window-blur", ());
                 }
                 WindowEvent::ScaleFactorChanged { .. } => {
                     if let Some(wv) = window.app_handle().get_webview_window("main") {
@@ -363,6 +392,7 @@ pub fn run() {
             commands::open_windows_driver_updates,
             commands::open_external_url,
             commands::get_pending_navigation,
+            commands::get_monitor_refresh_rate,
             commands::check_for_updates,
             commands::download_update,
             commands::get_update_progress,

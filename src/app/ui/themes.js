@@ -244,16 +244,14 @@ class ParticleSystem {
 
   loop(timestamp = 0) {
     if (!this.running || this.paused) return;
-    if (typeof document !== "undefined" && document.hidden) {
+    if (typeof document !== "undefined" && (document.hidden || (typeof document.hasFocus === "function" && !document.hasFocus()))) {
       this.paused = true;
       return;
     }
 
-    if (timestamp - this.lastFrameTime < 14) {
-      this.animId = requestAnimationFrame((ts) => this.loop(ts));
-      return;
-    }
+    const deltaMs = this.lastFrameTime > 0 ? (timestamp - this.lastFrameTime) : 16.667;
     this.lastFrameTime = timestamp;
+    const timeScale = Math.min(Math.max(deltaMs / 16.667, 0.1), 3.0);
 
     this.ctx.clearRect(0, 0, this.width, this.height);
     const theme = this.currentTheme;
@@ -262,10 +260,10 @@ class ParticleSystem {
       const p = this.particles[i];
 
       if (theme === "winter") {
-        p.y += p.speedY;
-        p.x += Math.sin(p.phase) * 0.6;
-        p.phase += 0.02;
-        p.rot += p.vRot;
+        p.y += p.speedY * timeScale;
+        p.x += Math.sin(p.phase) * 0.6 * timeScale;
+        p.phase += 0.02 * timeScale;
+        p.rot += p.vRot * timeScale;
 
         if (p.y > this.height + 10) {
           p.y = -10;
@@ -324,12 +322,12 @@ class ParticleSystem {
           this.ctx.fill();
         }
       } else if (theme === "autumn") {
-        p.phase += 0.025;
-        p.flipPhase += p.flipSpeed;
+        p.phase += 0.025 * timeScale;
+        p.flipPhase += p.flipSpeed * timeScale;
 
         if (p.isEmber) {
-          p.y += p.speedY;
-          p.x += Math.sin(p.phase) * 0.4 + p.speedX;
+          p.y += p.speedY * timeScale;
+          p.x += (Math.sin(p.phase) * 0.4 + p.speedX) * timeScale;
           if (p.y < -10) {
             p.y = this.height + 10;
             p.x = Math.random() * this.width;
@@ -345,9 +343,9 @@ class ParticleSystem {
           this.ctx.arc(p.x, p.y, glow, 0, Math.PI * 2);
           this.ctx.fill();
         } else {
-          p.y += p.speedY;
-          p.x += Math.sin(p.phase) * (p.speedX * 1.8);
-          p.rot += p.vRot;
+          p.y += p.speedY * timeScale;
+          p.x += Math.sin(p.phase) * (p.speedX * 1.8) * timeScale;
+          p.rot += p.vRot * timeScale;
           if (p.y > this.height + 14) {
             p.y = -14;
             p.x = Math.random() * this.width;
@@ -375,11 +373,11 @@ class ParticleSystem {
           this.ctx.restore();
         }
       } else if (theme === "spring") {
-        p.x += p.speedX;
-        p.y += Math.sin(p.phase) * 0.6 + p.speedY;
-        p.phase += 0.03;
-        p.rot += p.vRot;
-        p.flipPhase += p.flipSpeed;
+        p.x += p.speedX * timeScale;
+        p.y += (Math.sin(p.phase) * 0.6 + p.speedY) * timeScale;
+        p.phase += 0.03 * timeScale;
+        p.rot += p.vRot * timeScale;
+        p.flipPhase += p.flipSpeed * timeScale;
 
         if (p.x > this.width + 12 || p.y > this.height + 12) {
           p.x = Math.random() > 0.5 ? -12 : Math.random() * this.width;
@@ -411,9 +409,9 @@ class ParticleSystem {
           this.ctx.restore();
         }
       } else if (theme === "summer") {
-        p.y += p.speedY;
-        p.x += Math.sin(p.phase) * 0.6 + p.speedX;
-        p.phase += 0.025;
+        p.y += p.speedY * timeScale;
+        p.x += (Math.sin(p.phase) * 0.6 + p.speedX) * timeScale;
+        p.phase += 0.025 * timeScale;
 
         if (p.y < -12) {
           p.y = this.height + 12;
@@ -453,6 +451,24 @@ class ParticleSystem {
 }
 
 export const themeFx = new ParticleSystem();
+
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  window.addEventListener("blur", () => {
+    themeFx.pause();
+  });
+  window.addEventListener("focus", () => {
+    themeFx.resume();
+  });
+  if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        themeFx.pause();
+      } else if (typeof document.hasFocus === "function" && document.hasFocus()) {
+        themeFx.resume();
+      }
+    });
+  }
+}
 
 export function applyTheme(themeId, options = {}) {
   const validThemes = ["default", "winter", "autumn", "spring", "summer"];

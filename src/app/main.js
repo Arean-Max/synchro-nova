@@ -2919,6 +2919,11 @@ async function boot() {
   loadTweakStatuses();
   scheduleTrimMemory(600);
   checkSecurityIncidents();
+  invokeCommand("get_monitor_refresh_rate").then((hz) => {
+    if (hz && hz >= 30) {
+      document.documentElement.style.setProperty("--monitor-refresh-rate", `${hz}Hz`);
+    }
+  }).catch(() => {});
 }
 
 document.addEventListener("input", withErrorBoundary(handleInput, "Input"));
@@ -2934,39 +2939,41 @@ window.addEventListener("wheel", (event) => {
     ? event.target
     : (event.target?.parentElement instanceof Element ? event.target.parentElement : null);
 
-  // 1. Normalize delta across devices (Windows notches, lines, pages, high-res precision mice)
-  let deltaY = event.deltaY;
-  if (event.deltaMode === 1) {
-    deltaY *= 36;
-  } else if (event.deltaMode === 2) {
-    deltaY *= (window.innerHeight || 600) * 0.85;
-  } else if (Math.abs(deltaY) < 30 && Math.abs(deltaY) > 0) {
-    deltaY = Math.sign(deltaY) * Math.max(Math.abs(deltaY) * 3, 50);
-  }
-
-  // 2. Check if cursor is over a dedicated scrollable container (modals, dropdowns, page panels, nav)
+  // If the cursor is already over ANY scrollable container, let the browser scroll it natively!
   if (target) {
-    const scrollable = target.closest(
-      ".language-dropdown-menu, .font-dropdown-menu, .modal-body, .apply-complete-list, .template-config-dialog, .backup-name-dialog, .nav-list, .scroll-panel, .settings-page, .storage-page-container, .binds-page-container, .page-binds, .global-color-page"
-    );
-
-    if (scrollable && scrollable.scrollHeight > scrollable.clientHeight + 1) {
-      scrollable.scrollBy({ top: deltaY, behavior: "auto" });
-      event.preventDefault();
-      return;
+    let el = target;
+    while (el && el !== document.body && el !== document.documentElement) {
+      const isScrollableClass = el.classList?.contains("scroll-panel")
+        || el.classList?.contains("settings-page")
+        || el.classList?.contains("storage-page-container")
+        || el.classList?.contains("binds-page-container")
+        || el.classList?.contains("global-color-page")
+        || el.classList?.contains("language-dropdown-menu")
+        || el.classList?.contains("font-dropdown-menu")
+        || el.classList?.contains("modal-body")
+        || el.classList?.contains("nav-list");
+      if (isScrollableClass && el.scrollHeight > el.clientHeight + 1) {
+        // Native scrolling works with 100% precision, do not intercept!
+        return;
+      }
+      el = el.parentElement;
     }
   }
 
-  // 3. Fallback: cursor is over non-scrollable header, padding, sidebar, or action bar
+  // Fallback: cursor is over non-scrollable header, padding, sidebar, or action bar
   // Forward scroll to active page's primary content scroll container!
+  const curPage = router.activePageName() || activePage;
   const activeContainer = document.querySelector(
-    `.page-${activePage} .scroll-panel, .page-${activePage} .settings-page, .page-${activePage} .storage-page-container, .page-${activePage} .binds-page-container, .page-${activePage}.page-binds, .page-${activePage} .global-color-page`
+    `.page-${curPage} .scroll-panel, .page-${curPage} .settings-page, .page-${curPage} .storage-page-container, .page-${curPage} .binds-page-container, .page-${curPage}.page-binds, .page-${curPage} .global-color-page`
   ) || document.querySelector(
     ".scroll-panel, .settings-page, .storage-page-container, .binds-page-container, .page-binds, .global-color-page"
   );
 
   if (activeContainer && activeContainer.scrollHeight > activeContainer.clientHeight + 1) {
-    activeContainer.scrollBy({ top: deltaY, behavior: "auto" });
+    let delta = event.deltaY;
+    if (event.deltaMode === 1) delta *= 36;
+    else if (event.deltaMode === 2) delta *= activeContainer.clientHeight * 0.85;
+    activeContainer.scrollBy({ top: delta, behavior: "auto" });
     event.preventDefault();
   }
 }, { passive: false });
