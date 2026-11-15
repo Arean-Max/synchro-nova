@@ -129,11 +129,7 @@ const safeCharacteristics = safeRender(renderCharacteristicsPage, "Hardware Driv
 const safeBackups = safeRender(renderBackupsPage, "System Backups");
 const safeSettings = safeRender(renderSettingsPage, "Preferences");
 
-export function renderPageBody(viewState, t, bypassCache = false) {
-  if (!bypassCache) {
-    const cached = router.getCachedPageHtml(activePage);
-    if (cached) return cached;
-  }
+export function renderPageBody(viewState, t, _bypassCache = true) {
   let html = "";
   if (activePage === "color") html = safeColor(appState, viewState, t);
   else if (activePage === "tweaks") html = safeTweaks(viewState, t);
@@ -142,7 +138,6 @@ export function renderPageBody(viewState, t, bypassCache = false) {
   else if (activePage === "backups") html = safeBackups(viewState, t);
   else if (activePage === "settings") html = safeSettings(appState, viewState, t);
   else html = safeColor(appState, viewState, t);
-  router.cachePageHtml(activePage, html);
   return html;
 }
 

@@ -72,9 +72,6 @@ pub fn resume_window_webview(window: &tauri::WebviewWindow) {
         unsafe {
             let _ = controller.SetIsVisible(true);
             let _ = controller.NotifyParentWindowPositionChanged();
-            let _ = controller.MoveFocus(
-                webview2_com_sys::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC,
-            );
         }
     });
 }

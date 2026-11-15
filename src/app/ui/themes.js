@@ -101,10 +101,15 @@ class ParticleSystem {
     const rawW = Math.max(window.innerWidth || 0, (typeof document !== "undefined" ? document.documentElement?.clientWidth : 0) || 0, 980);
     const rawH = Math.max(window.innerHeight || 0, (typeof document !== "undefined" ? document.documentElement?.clientHeight : 0) || 0, 620);
     const dpr = Math.min((typeof window !== "undefined" && window.devicePixelRatio) || 1, 2);
+    const targetW = Math.floor(rawW * dpr);
+    const targetH = Math.floor(rawH * dpr);
+    if (this.canvas.width === targetW && this.canvas.height === targetH && this.width === rawW && this.height === rawH) {
+      return;
+    }
     this.width = rawW;
     this.height = rawH;
-    this.canvas.width = Math.floor(rawW * dpr);
-    this.canvas.height = Math.floor(rawH * dpr);
+    this.canvas.width = targetW;
+    this.canvas.height = targetH;
     this.canvas.style.width = `${rawW}px`;
     this.canvas.style.height = `${rawH}px`;
     if (this.ctx) {

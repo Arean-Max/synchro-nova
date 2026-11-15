@@ -84,7 +84,6 @@ pub fn show_main_window(app: &AppHandle) {
                 unsafe {
                     crate::platform::ffi::winapi::ShowWindow(hwnd.0 as _, 5);
                     crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
-                    crate::platform::ffi::winapi::SetFocus(hwnd.0 as _);
                 }
             }
             let _ = window.emit("window-restored", ());
@@ -98,7 +97,6 @@ pub fn show_main_window(app: &AppHandle) {
                 unsafe {
                     crate::platform::ffi::winapi::ShowWindow(hwnd.0 as _, 5);
                     crate::platform::ffi::winapi::SetForegroundWindow(hwnd.0 as _);
-                    crate::platform::ffi::winapi::SetFocus(hwnd.0 as _);
                 }
             }
             let _ = window.emit("window-restored", ());

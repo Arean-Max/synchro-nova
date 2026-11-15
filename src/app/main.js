@@ -2974,9 +2974,8 @@ window.addEventListener("wheel", (event) => {
     if (event.deltaMode === 1) delta *= 36;
     else if (event.deltaMode === 2) delta *= activeContainer.clientHeight * 0.85;
     activeContainer.scrollBy({ top: delta, behavior: "auto" });
-    event.preventDefault();
   }
-}, { passive: false });
+}, { passive: true });
 window.addEventListener(
   "keydown",
   (e) => {
@@ -3037,16 +3036,20 @@ window.addEventListener(
   },
   { capture: true }
 );
+let restoreDebounceTimer = 0;
 function handleWindowRestored() {
   document.body.style.pointerEvents = "";
   document.documentElement.style.pointerEvents = "";
   document.body.classList.remove("paused-animations");
-  window.dispatchEvent(new Event("resize"));
   syncNavIndicator();
-  checkSecurityIncidents();
-  if (typeof themeFx !== "undefined" && themeFx && typeof themeFx.resume === "function") {
-    themeFx.resume();
-  }
+  if (restoreDebounceTimer) return;
+  restoreDebounceTimer = window.setTimeout(() => {
+    restoreDebounceTimer = 0;
+    checkSecurityIncidents();
+    if (typeof themeFx !== "undefined" && themeFx && typeof themeFx.resume === "function") {
+      themeFx.resume();
+    }
+  }, 100);
 }
 
 window.addEventListener("resize", syncNavIndicator);
