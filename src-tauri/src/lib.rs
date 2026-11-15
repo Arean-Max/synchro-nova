@@ -501,6 +501,19 @@ mod tests {
     }
 
     #[test]
+    fn test_updater_staging_dir_traversal_prevention() {
+        use domain::updater::client::{get_staging_dir, get_update_dir};
+        let base = get_update_dir();
+        let safe = get_staging_dir("../../evil_dir");
+        assert!(safe.starts_with(&base));
+        assert!(!safe.to_string_lossy().contains(".."));
+
+        let win_trav = get_staging_dir("..\\..\\Windows");
+        assert!(win_trav.starts_with(&base));
+        assert!(!win_trav.to_string_lossy().contains(".."));
+    }
+
+    #[test]
     fn test_rfc3339_timestamp_parser() {
         use domain::updater::client::parse_rfc3339_timestamp;
         assert_eq!(parse_rfc3339_timestamp("1970-01-01T00:00:00Z"), Some(0));

@@ -125,7 +125,9 @@ fn log_tweaks_audit(app_dir: &Path, results: &[TweakApplyResult]) {
     if let Ok(meta) = file.metadata() {
         if meta.len() > 512 * 1024 {
             drop(file);
-            let _ = fs::rename(&log_path, app_dir.join("tweaks_audit.old.log"));
+            let old_log = app_dir.join("tweaks_audit.old.log");
+            let _ = fs::remove_file(&old_log);
+            let _ = fs::rename(&log_path, &old_log);
             file = match OpenOptions::new()
                 .create(true)
                 .write(true)

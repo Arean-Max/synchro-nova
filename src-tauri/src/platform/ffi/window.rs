@@ -186,8 +186,10 @@ pub fn start_single_instance_listener(app: tauri::AppHandle) {
                 if connected != 0 || unsafe { winapi::GetLastError() } == 535 {
                     let mut buf = [0u8; 16];
                     let mut read_bytes = 0u32;
-                    let _ = unsafe { ReadFile(handle, buf.as_mut_ptr(), 16, &mut read_bytes, std::ptr::null_mut()) };
-                    crate::app::tray::show_main_window(&app);
+                    let read_ok = unsafe { ReadFile(handle, buf.as_mut_ptr(), 16, &mut read_bytes, std::ptr::null_mut()) };
+                    if read_ok != 0 && read_bytes >= 4 && &buf[..4] == b"SHOW" {
+                        crate::app::tray::show_main_window(&app);
+                    }
                     unsafe { DisconnectNamedPipe(handle); }
                 }
                 unsafe { winapi::CloseHandle(handle); }

@@ -259,8 +259,16 @@ pub fn get_update_dir() -> PathBuf {
 }
 
 pub fn get_staging_dir(version: &str) -> PathBuf {
-    let clean = version.trim().trim_start_matches('v').trim_start_matches('V').replace(' ', "_");
-    get_update_dir().join(format!("staging_{clean}"))
+    let mut clean: String = version
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric() || *c == '.' || *c == '-' || *c == '_')
+        .collect();
+    while clean.contains("..") {
+        clean = clean.replace("..", ".");
+    }
+    let clean = clean.trim_matches(['.', '-', '_']).trim_start_matches('v').trim_start_matches('V');
+    let safe_stem = if clean.is_empty() { "latest" } else { clean };
+    get_update_dir().join(format!("staging_{safe_stem}"))
 }
 
 pub fn get_update_file_path() -> PathBuf {

@@ -35,10 +35,10 @@ pub fn get_monitor_refresh_rate() -> u32 {
         let mut dm = std::mem::zeroed::<crate::platform::ffi::DevModeW>();
         dm.dm_size = std::mem::size_of::<crate::platform::ffi::DevModeW>() as u16;
         const ENUM_CURRENT_SETTINGS: u32 = 0xFFFF_FFFF;
-        if crate::platform::ffi::winapi::EnumDisplaySettingsW(std::ptr::null(), ENUM_CURRENT_SETTINGS, &mut dm) != 0 {
-            if dm.dm_display_frequency >= 30 && dm.dm_display_frequency <= 1000 {
-                return dm.dm_display_frequency;
-            }
+        if crate::platform::ffi::winapi::EnumDisplaySettingsW(std::ptr::null(), ENUM_CURRENT_SETTINGS, &mut dm) != 0
+            && (30..=1000).contains(&dm.dm_display_frequency)
+        {
+            return dm.dm_display_frequency;
         }
     }
     60

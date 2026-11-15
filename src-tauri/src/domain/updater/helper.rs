@@ -128,7 +128,12 @@ pub fn validate_payload_path(payload: &Path) -> Result<(), String> {
         .canonicalize()
         .unwrap_or_else(|_| payload.to_path_buf());
 
-    if !canonical_payload.starts_with(&canonical_dir) {
+    let dir_raw = canonical_dir.to_string_lossy();
+    let payload_raw = canonical_payload.to_string_lossy();
+    let dir_str = dir_raw.strip_prefix(r"\\?\").unwrap_or(&dir_raw).to_lowercase();
+    let payload_str = payload_raw.strip_prefix(r"\\?\").unwrap_or(&payload_raw).to_lowercase();
+
+    if !payload_str.starts_with(&dir_str) {
         return Err("Payload must reside within the authenticated Synchro update directory".to_string());
     }
     Ok(())

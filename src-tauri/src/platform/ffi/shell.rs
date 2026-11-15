@@ -6,8 +6,9 @@ use super::winapi;
 
 #[cfg(target_os = "windows")]
 pub fn open_path_or_url(target: &str) -> Result<(), String> {
+    let clean_target = target.strip_prefix(r"\\?\").unwrap_or(target);
     let operation = wide_null("open");
-    let file = wide_null(target);
+    let file = wide_null(clean_target);
     let result = unsafe {
         winapi::ShellExecuteW(
             std::ptr::null_mut(),
@@ -19,7 +20,7 @@ pub fn open_path_or_url(target: &str) -> Result<(), String> {
         )
     };
     if result <= 32 {
-        Err(format!("ShellExecuteW failed for target: {target}"))
+        Err(format!("ShellExecuteW failed for target: {clean_target}"))
     } else {
         Ok(())
     }

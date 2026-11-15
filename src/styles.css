@@ -859,7 +859,10 @@ p, .description {
 
 .settings-page,
 .storage-page-container,
-.binds-page-container {
+.binds-page-container,
+.page-binds,
+.global-color-page {
+  scrollbar-gutter: stable;
   overscroll-behavior: contain;
 }
 
@@ -8868,8 +8871,24 @@ h1, h2, h3, .page-header h1, .modal-title, .card-title {
 }
 
 [dir="rtl"] .nav-item,
-[dir="rtl"] .exit-button {
+[dir="rtl"] .exit-button,
+[dir="rtl"] .nav-sub-item,
+[dir="rtl"] .check-row,
+[dir="rtl"] .tweak-tile,
+[dir="rtl"] .game-card,
+[dir="rtl"] .game-card-title,
+[dir="rtl"] .backup-item,
+[dir="rtl"] .config-item,
+[dir="rtl"] .dialog-box,
+[dir="rtl"] .bind-item,
+[dir="rtl"] .language-option,
+[dir="rtl"] .font-option,
+[dir="rtl"] .page-header {
   text-align: right;
+}
+
+[dir="rtl"] .nav-sub-item {
+  padding: 0 28px 0 10px;
 }
 
 [dir="rtl"] .sidebar::after {
@@ -8889,6 +8908,14 @@ h1, h2, h3, .page-header h1, .modal-title, .card-title {
 [dir="rtl"] .nav-beta-badge {
   margin-left: 0;
   margin-right: 6px;
+}
+
+[dir="rtl"] .brand-lockup {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .check-row-actions {
+  flex-direction: row-reverse;
 }
 
 .tweak-title-group {
