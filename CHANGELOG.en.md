@@ -9,22 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.5.0-beta] - 2026-11-13
+## [2.5.0-beta] - 2026-11-14
 
 ### Added
+- **Autonomous hardware FPS benchmarker (`benchmarks/fps_benchmarker.ps1`)**: dedicated script to autonomously benchmark framerates, 1% low, 99th percentile frametime jitter, and rendering stability with Synchro Nova active vs disabled.
+- **Adaptive refresh rate sync**: automatically adapts UI rendering to the user's primary monitor refresh rate (`EnumDisplaySettingsW` from 60 to 360+ Hz) with ultra-smooth animations and zero impact on competitive gaming FPS.
 - **Direct numeric input**: clicking any slider value badge (`200%`, `100%`, `-1 deg`) enables an inline input field to enter precise values via keyboard. Supports Enter to commit and Escape to cancel.
 - **Dual-layer Windows autostart**: HKCU Run registry entry combined with a Task Scheduler task for elevated runs to bypass UAC prompts cleanly.
 - **Silent background startup**: supported `--autostart` and `--minimized` flags to initialize silently in the tray without window flash.
 - **Accessibility & focus**: improved keyboard navigation, `:focus-visible` styling, and control affordance across all settings.
 
 ### Fixed
+- **Mouse wheel scroll freeze loop (0.5s freeze)**: resolved root cause resize event recursion (`window.dispatchEvent("resize")`) and native focus loops on window restore from tray. Mouse wheel scrolling now operates smoothly, freely, and continuously on all pages, panels, and modals.
+- **Language dropdown synchronization (two-click bug)**: invalidated stale template cache in layout router; language changes now take effect immediately on the first click.
+- **Security hardening & path traversal fix**: sanitized updater staging directory generation (`get_staging_dir`) against special characters and relative path traversal sequences.
+- **Folder explorer launcher**: stripped `\\?\` extended-length UNC prefixes before dispatching to `ShellExecuteW`, fixing "Failed to open folder" on backups and configs.
+- **Log rotation reliability**: secured `tweaks_audit.log` rotation on NTFS by proactively unlinking stale backup log files.
+- **IPC communication verification**: strictly verified `b"SHOW"` token on the single instance named pipe `\\.\pipe\SynchroNovaInstancePipe`.
+- **Cumulative Layout Shift (CLS)**: applied `scrollbar-gutter: stable;` across all scrollable containers to eliminate layout jumping.
+- **RTL localization polish**: refined alignment of toggles, cards, inputs, and sub-navigation links when right-to-left direction is active for Arabic.
 - **Updater check logic**: strict SemVer comparison now prevents redundant re-downloads of the installed version and eliminates artificial release download counter inflation.
 - **Update payload caching**: pre-existing staged binaries matching the verified SHA-256 hash are reused without extra network calls.
-- **Mouse wheel scrolling**: normalized `deltaMode` (DOM_DELTA_LINE) for Windows, ensuring smooth scrolling across all pages, scroll panels, and dialogs.
-- **Template slider synchronization**: resolved race condition where background sync could overwrite an active inline input field.
 - **Black Holo color balance**: updated color matrix coefficients to photometric Rec.709 standard, eliminating green tint on bright surfaces.
 - **Process execution stability**: eliminated pipe buffer deadlock risks in command runners and added reliable watchdog timeouts.
-- **Rust code hardening**: fixed all compiler and Clippy warnings with zero diagnostics under `-D warnings`.
+- **Rust code hardening**: fixed all compiler and Clippy warnings (`collapsible_if`) with zero diagnostics under `-D warnings`.
 
 ### Changed
 - **Binary size optimization**: converted preview assets to high-efficiency WebP and tuned release profiles (LTO `fat`, `opt-level = "z"`, `strip = true`), reducing the binary footprint to ~4.8 MB.
